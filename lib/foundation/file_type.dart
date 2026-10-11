@@ -34,25 +34,53 @@ final _resolver = MimeTypeResolver()
     0x1C,
   ], 'application/x-7z-compressed')
   // rar
-  ..addMagicNumber([0x52, 0x61, 0x72, 0x21, 0x1A, 0x07], 'application/vnd.rar')
-  // avif
-  ..addMagicNumber([
-    0x00,
-    0x00,
-    0x00,
-    0x18,
-    0x66,
-    0x74,
-    0x79,
-    0x70,
-    0x61,
-    0x76,
-    0x69,
-    0x66,
-  ], 'image/avif');
+  ..addMagicNumber([0x52, 0x61, 0x72, 0x21, 0x1A, 0x07], 'application/vnd.rar');
+
+int _uint32(List<int> data, int offset) =>
+    (data[offset] << 24) |
+    (data[offset + 1] << 16) |
+    (data[offset + 2] << 8) |
+    data[offset + 3];
+
+String _fourcc(List<int> data, int offset) =>
+    String.fromCharCodes(data.getRange(offset, offset + 4));
+
+bool _isAvif(List<int> data) {
+  var offset = 0;
+  // Inspect top-level file type metadata, never strings inside media payloads.
+  while (offset + 8 <= data.length) {
+    var size = _uint32(data, offset);
+    final type = _fourcc(data, offset + 4);
+    var header = 8;
+    if (size == 1) {
+      if (offset + 16 > data.length) return false;
+      final high = _uint32(data, offset + 8);
+      if (high > 0x7fffffff) return false;
+      size = high * 0x100000000 + _uint32(data, offset + 12);
+      header = 16;
+    } else if (size == 0) {
+      size = data.length - offset;
+    }
+    if (size < header || size > data.length - offset) return false;
+    if (type == 'ftyp') {
+      if (size < header + 8 || (size - header) % 4 != 0) return false;
+      bool avif(int at) => const ['avif', 'avis'].contains(_fourcc(data, at));
+      if (avif(offset + header)) return true;
+      for (var at = offset + header + 8; at + 4 <= offset + size; at += 4) {
+        if (avif(at)) return true;
+      }
+      return false;
+    }
+    if (type != 'free' && type != 'skip' && type != 'wide') return false;
+    offset += size;
+  }
+  return false;
+}
 
 FileType detectFileType(List<int> data, {String? fallbackExtension}) {
-  var mime = _resolver.lookup('no-file', headerBytes: data);
+  var mime = _isAvif(data)
+      ? 'image/avif'
+      : _resolver.lookup('no-file', headerBytes: data);
   if ((mime == null || mime == 'application/octet-stream') &&
       fallbackExtension != null) {
     final fallback = FileType.fromExtension(fallbackExtension);
