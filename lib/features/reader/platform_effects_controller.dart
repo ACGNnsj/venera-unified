@@ -26,15 +26,18 @@ class ReaderPlatformEffectsCoordinator {
     required this.applyOrientation,
     required this.applySystemBars,
     required this.onError,
+    this.applyScreenAwake,
   });
 
   final Future<void> Function(ReaderOrientation) applyOrientation;
   final Future<void> Function(bool visible) applySystemBars;
   final void Function(Object, StackTrace) onError;
+  final Future<void> Function(bool awake)? applyScreenAwake;
   final _owners = <ReaderPlatformEffectsHandle>[];
   Future<void>? _tail;
   ReaderOrientation? _orientation;
   bool? _systemBars;
+  bool? _screenAwake = false;
   bool _orientationOwned = false;
 
   ReaderPlatformEffectsHandle createOwner({
@@ -92,6 +95,7 @@ class ReaderPlatformEffectsCoordinator {
         ? owner.orientation
         : ReaderOrientation.system;
     final bars = owner == null || owner.held || owner._systemBarsVisible;
+    final awake = owner != null && !owner.held && owner._screenAwake;
     Future<ReaderPlatformFailure?> attempt(
       String effect,
       Future<void> Function() apply,
@@ -104,8 +108,8 @@ class ReaderPlatformEffectsCoordinator {
       }
     }
 
-    // Neither effect prevents the other from attempting restoration. A later
-    // policy waits for both actual requests before it can reach the platform.
+    // Every effect attempts restoration independently. A later policy waits
+    // for all actual requests before it can reach the platform.
     final results = await Future.wait([
       if (_orientationOwned && _orientation != orientation)
         attempt('orientation', () async {
@@ -118,6 +122,12 @@ class ReaderPlatformEffectsCoordinator {
           _systemBars = null;
           await applySystemBars(bars);
           _systemBars = bars;
+        }),
+      if (_screenAwake != awake && applyScreenAwake != null)
+        attempt('screen awake', () async {
+          _screenAwake = null;
+          await applyScreenAwake!(awake);
+          _screenAwake = awake;
         }),
     ]);
     if (_orientation == ReaderOrientation.system &&
@@ -145,6 +155,7 @@ class ReaderPlatformEffectsHandle {
   final ReaderPlatformEffectsCoordinator _coordinator;
   final bool orientationEnabled;
   bool _systemBarsVisible;
+  bool _screenAwake = false;
   ReaderOrientation _orientation = ReaderOrientation.system;
   ReaderOrientation get orientation => _orientation;
   bool _attached = false;
@@ -182,6 +193,15 @@ class ReaderPlatformEffectsHandle {
   Future<void> setSystemBarsVisible(bool visible) {
     if (_disposed) return _closing ?? Future.value();
     _systemBarsVisible = visible;
+    return refresh();
+  }
+
+  Future<void> setScreenAwake(bool awake) {
+    if (_disposed) return _closing ?? Future.value();
+    if (_screenAwake == awake && _coordinator._screenAwake == awake) {
+      return Future.value();
+    }
+    _screenAwake = awake;
     return refresh();
   }
 

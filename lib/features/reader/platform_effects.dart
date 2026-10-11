@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:venera_next/components/window_frame.dart';
 import 'package:venera_next/components/window_selection_task.dart';
 import 'package:venera_next/foundation/log.dart';
+import 'package:venera_next/foundation/app.dart';
 import 'package:venera_next/foundation/selection_operation.dart';
 
 import 'platform_effects_controller.dart';
@@ -13,6 +14,14 @@ import 'platform_effects_controller.dart';
 export 'platform_effects_controller.dart' show ReaderOrientation;
 
 final _nativeEffects = ReaderPlatformEffectsCoordinator(
+  applyScreenAwake: (awake) async {
+    if (App.isAndroid || App.isIOS) {
+      await const MethodChannel('venera/method_channel').invokeMethod<void>(
+        'setScreenOn',
+        App.isAndroid ? <String, bool>{'set': awake} : awake,
+      );
+    }
+  },
   applyOrientation: (orientation) =>
       SystemChrome.setPreferredOrientations(switch (orientation) {
         ReaderOrientation.system => const [],
@@ -93,6 +102,8 @@ class ReaderPlatformEffectsBinding {
 
   void setSystemBarsVisible(bool visible) =>
       _observe(handle.setSystemBarsVisible(visible));
+
+  void setScreenAwake(bool awake) => _observe(handle.setScreenAwake(awake));
 
   bool cycleOrientation() {
     final operation = handle.cycleOrientation();

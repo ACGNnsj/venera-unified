@@ -2,6 +2,7 @@ import 'package:venera_next/features/favorites/favorites_scope.dart';
 import 'package:venera_next/features/history/history_scope.dart';
 import 'package:venera_next/features/reader/platform_effects.dart'
     show ReaderPlatformEffectsScope;
+import 'package:venera_next/features/reader/platform_effects_controller.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -47,6 +48,13 @@ void main() {
         final previousLogMuted = Log.isMuted;
         final directory = Directory.systemTemp.createTempSync('auto-reader-');
         final key = GlobalKey<_TestReaderState>();
+        var screenAwake = false;
+        final effects = ReaderPlatformEffectsCoordinator(
+          applyOrientation: (_) async {},
+          applySystemBars: (_) async {},
+          applyScreenAwake: (awake) async => screenAwake = awake,
+          onError: (error, _) => fail('$error'),
+        );
         try {
           App.dataPath = directory.path;
           App.cachePath = directory.path;
@@ -63,6 +71,7 @@ void main() {
           settings['autoScrollSpeed'] = 100;
           settings['autoPageTurningInterval'] = 1;
           settings['autoReadingAcrossChapters'] = true;
+          settings['autoReadingKeepScreenOn'] = true;
           settings['enableClockAndBatteryInfoInReader'] = false;
           settings['showPageNumberInReader'] = false;
           settings['eInkMode'] = false;
@@ -112,8 +121,10 @@ void main() {
           await tester.pumpWidget(
             _libraryView(
               MaterialApp(
-                builder: (context, child) =>
-                    ReaderPlatformEffectsScope(child: child!),
+                builder: (context, child) => ReaderPlatformEffectsScope(
+                  coordinator: effects,
+                  child: child!,
+                ),
                 navigatorKey: appNavigation.rootNavigatorKey,
                 home: Scaffold(body: OverlayWidget(_TestReader(key: key))),
               ),
@@ -200,6 +211,21 @@ void main() {
           settings['autoReadingAcrossChapters'] = false;
           reader.autoReading.start();
           await tester.pump();
+          expect(screenAwake, isTrue);
+          reader.didChangeAppLifecycleState(AppLifecycleState.paused);
+          await tester.pump();
+          expect(screenAwake, isFalse);
+          reader.didChangeAppLifecycleState(AppLifecycleState.resumed);
+          await tester.pump();
+          expect(screenAwake, isTrue);
+          settings['autoReadingKeepScreenOn'] = false;
+          reader.update();
+          await tester.pump();
+          expect(screenAwake, isFalse);
+          settings['autoReadingKeepScreenOn'] = true;
+          reader.update();
+          await tester.pump();
+          expect(screenAwake, isTrue);
           if (!mode.isGallery) {
             final flow = reader.imageViewController as ContinuousModeState;
             final start = flow.scrollController.offset;
@@ -222,6 +248,8 @@ void main() {
           }
           expect(reader.chapter, 2);
           expect(reader.autoReading.status, AutoReadingStatus.stopped);
+          await tester.pump();
+          expect(screenAwake, isFalse);
           expect(tester.takeException(), isNull);
         } finally {
           key.currentState?.autoReading.stop();

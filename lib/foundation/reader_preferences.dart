@@ -150,6 +150,10 @@ abstract final class ReaderPreferences {
     'autoReadingAcrossChapters',
     true,
   );
+  static const autoReadingKeepScreenOn = BoolPreference(
+    'autoReadingKeepScreenOn',
+    true,
+  );
   static const autoReadingPauseOnLongPress = BoolPreference(
     'autoReadingPauseOnLongPress',
     true,
@@ -232,6 +236,7 @@ abstract final class ReaderPreferences {
     eInkRefreshInterval,
     preloadImageCount,
     autoReadingAcrossChapters,
+    autoReadingKeepScreenOn,
     autoReadingPauseOnLongPress,
     enableTapToTurnPages,
     reverseTapToTurnPages,

@@ -379,6 +379,18 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
             comicSource: isEnabledSpecificSettings ? widget.comicSource : null,
             useDeviceSettings: useDeviceSpecificSettings,
           ).toSliver(),
+          if (App.isAndroid || App.isIOS)
+            SwitchSetting.reader(
+              title: 'Keep screen on during automatic reading'.tl,
+              preference: ReaderPreferences.autoReadingKeepScreenOn,
+              onChanged: () =>
+                  widget.onChanged?.call('autoReadingKeepScreenOn'),
+              comicId: isEnabledSpecificSettings ? widget.comicId : null,
+              comicSource: isEnabledSpecificSettings
+                  ? widget.comicSource
+                  : null,
+              useDeviceSettings: useDeviceSpecificSettings,
+            ).toSliver(),
           SliverAnimatedVisibility(
             visible: _usesMode((mode) => mode.startsWith('gallery')),
             child: SliderSetting.reader(

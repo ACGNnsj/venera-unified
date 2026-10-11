@@ -51,6 +51,7 @@ import 'package:venera_next/features/reader/platform_effects.dart';
 import 'package:venera_next/foundation/app.dart';
 import 'package:venera_next/foundation/appdata.dart';
 import 'package:venera_next/foundation/reader_settings.dart';
+import 'package:venera_next/foundation/reader_preferences.dart';
 import 'package:venera_next/foundation/comic_type.dart';
 import 'package:venera_next/foundation/comic_layout.dart';
 import 'package:venera_next/foundation/log.dart';
@@ -813,6 +814,7 @@ class ReaderState extends State<Reader>
   void update() {
     if (!_stateDisposed) _targetValidity.value++;
     if (_sessionClosing != null || _sessionFrozen) return;
+    _updateScreenAwake();
     _cancelOutdatedLayout();
     if (mounted) setState(() {});
   }
@@ -1001,9 +1003,22 @@ class ReaderState extends State<Reader>
       appdata.settings.readerSettings(cid, type.sourceKey);
 
   bool _automaticReadingRefreshQueued = false;
+  bool _screenAwakePaused = false;
+
+  void _updateScreenAwake() {
+    final effects = _platformEffects;
+    if (effects == null) return;
+    effects.setScreenAwake(
+      !_sessionFrozen &&
+          !_screenAwakePaused &&
+          autoReading.isActive &&
+          preferences.read(ReaderPreferences.autoReadingKeepScreenOn),
+    );
+  }
 
   void _automaticReadingChanged() {
     if (_stateDisposed) return;
+    _updateScreenAwake();
     // Input ownership can end while a replacement gesture widget is built.
     // Release the pause synchronously; defer only the ancestor's UI refresh.
     if (WidgetsBinding.instance.schedulerPhase ==
@@ -1311,6 +1326,7 @@ class ReaderState extends State<Reader>
     final lifecycle = WidgetsBinding.instance.lifecycleState;
     _volumeForeground =
         lifecycle == null || lifecycle == AppLifecycleState.resumed;
+    _screenAwakePaused = !_volumeForeground;
     _session = ReaderSession(
       imageWork: imageWork,
       durations: ReadingSessionTracker(
@@ -1334,7 +1350,9 @@ class ReaderState extends State<Reader>
         ),
       ),
       pauseAutoReading: (paused) {
+        _screenAwakePaused = paused;
         autoReading.pause('lifecycle', paused);
+        _updateScreenAwake();
         _observeVolume(_updateVolume());
       },
       onClosed: () {
