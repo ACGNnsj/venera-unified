@@ -49,3 +49,25 @@ build/avif-candidate-probe.exe <flutter_avif.dll 的绝对路径> test/fixtures/
 优先评估兼容 SDK 的 libavif 方案，或在单独的 SDK 升级中重新评估 `flutter_libavif`。接入前须验证损坏数据能返回有界错误并释放解码器、输入和帧缓冲区；与阅读器退出／取消、缓存和动画帧的所有权兼容。
 
 功能验证需覆盖普通静态图、透明度、旋转／镜像、网格、不同位深及动画帧。原生 RGBA 的预乘 alpha 语义必须与 Flutter 接口匹配，并验证色彩和尺寸。新增依赖按[依赖治理](../development/dependencies.zh.md)记录固定来源、许可证、上游状态和替代方案，完成目标平台构建与真机测试后再合入。
+
+## 2026-10-11 独立新版 SDK 实验
+
+使用单独下载并校验 SHA-256 的 Dart 3.13.5，在独立工程验证 `libavif 0.1.1`；主应用仍固定 Flutter 3.41.4 / Dart 3.11.4。工程模板、Dart 依赖锁和 Windows 构建实验补丁见 [探测工具](../../tool/avif_candidate_probe/README.md)。
+
+来源校验：pub.dev 的 `libavif 0.1.1` 归档 SHA-256 为 `e96c31379cd472786133085ec18b977c79d3965a1a339bf283447e7b85955268`；`flutter_libavif 0.1.1` 为 `94954d197390dda27afced5a6c4d6e8e38f5e23bc1aeca19003237d32d40a757`。本轮实际运行的是底层 Dart 解码库，Flutter adapter 仅完成源码检查。
+
+原版包在本机 Windows 原生构建中失败：native-assets 输出目录过深，MSVC 报 `FTK1011`；缩短工程目录仍不足以覆盖其嵌套构建路径。在独立源码副本中改用 Ninja、指定短 CMake 输出目录后完成原生编译，又发现 dav1d 产物名为 `libdav1d.a`，而构建脚本查找 `dav1d.lib`。为该副本补上档案别名后，探测程序成功退出。以上均为构建实验，不是已验证的应用依赖升级方案。
+
+运行时报告 libavif 1.4.2、dav1d 1.5.4、libyuv 1924；Windows 上创建 3 个 worker，每个最多 2 个解码线程。结果见 [原始 JSONL](data/avif_candidate_windows_20261011.jsonl)：
+
+| 场景 | 结果 |
+|---|---|
+| `white_1x1.avif` | 成功；RGBA 为 `[253,253,253,255]`，与 Pillow 独立解码的 RGB 一致；此有损样本不是 255 白色 |
+| 旋转／透明样本 | 返回 `unsupported`；库明确拒绝 clean aperture、rotation、mirror、pixel aspect 变换 |
+| 普通动画 | 完整读取 5 帧，150×150，累计 166,665 μs，重置后可重新读取 |
+| 透明动画 | 完整读取 5 帧，150×150，累计 833,335 μs，报告 alpha，重置后可重新读取 |
+| 截断和非法输入 | 返回 `invalidInput`，没有出现前一候选库的无回包情况 |
+| 输入字节上限 | 返回 `limitExceeded` |
+| 32 个请求立即取消 | 32 个均返回取消；随后正常解码成功 |
+
+结论：新版 SDK 能解决 Dart 版本约束，这个候选库也能提供完整动画和可观察的错误／取消结果。但接入仍需要可复现的 Windows 构建修复、图像变换支持、色彩／高位深／网格样本验证，以及图片流所有权和持续内存测量。不能以本轮实验关闭 #94，也不宜仅为此直接升级主应用 SDK。
