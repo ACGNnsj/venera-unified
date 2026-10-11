@@ -8,6 +8,7 @@ import 'package:venera_next/features/reader/image_position.dart';
 import 'package:venera_next/foundation/context.dart';
 import 'package:venera_next/foundation/translations.dart';
 import 'image_dimensions.dart';
+import 'auto_reading.dart';
 
 class ComicImage extends StatefulWidget {
   /// Modified from flutter Image
@@ -125,7 +126,14 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
   Object? _lastException;
   ImageStreamCompleterHandle? _completerHandle;
 
-  bool get readyForAutoReading => _imageInfo != null && _lastException == null;
+  AutoReadingImageState get autoReadingImageState => _lastException != null
+      ? AutoReadingImageState.failed
+      : _imageInfo != null && _frameNumber != null
+      ? AutoReadingImageState.ready
+      : AutoReadingImageState.loading;
+
+  bool get readyForAutoReading =>
+      autoReadingImageState == AutoReadingImageState.ready;
 
   bool get visibleInReader {
     if (!mounted) return false;
@@ -291,6 +299,7 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
 
     setState(() {
       _loadingProgress = null;
+      _lastException = null;
       _frameNumber = null;
       _wasSynchronouslyLoaded = false;
     });

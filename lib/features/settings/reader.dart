@@ -379,6 +379,33 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
             comicSource: isEnabledSpecificSettings ? widget.comicSource : null,
             useDeviceSettings: useDeviceSpecificSettings,
           ).toSliver(),
+          SwitchSetting.reader(
+            title: 'Skip unavailable images during automatic reading'.tl,
+            subtitle:
+                'Skip failed images at the normal pace; wait for loading images before continuing.'
+                    .tl,
+            preference: ReaderPreferences.autoReadingSkipUnavailableImages,
+            onChanged: () {
+              setState(() {});
+              widget.onChanged?.call('autoReadingSkipUnavailableImages');
+            },
+            comicId: isEnabledSpecificSettings ? widget.comicId : null,
+            comicSource: isEnabledSpecificSettings ? widget.comicSource : null,
+            useDeviceSettings: useDeviceSpecificSettings,
+          ).toSliver(),
+          if (_value(ReaderPreferences.autoReadingSkipUnavailableImages))
+            SliderSetting.reader(
+              title: 'Wait for loading images (seconds)'.tl,
+              preference: ReaderPreferences.autoReadingImageWaitSeconds,
+              valueFormatter: (value) => '${value.toInt()} s',
+              onChanged: () =>
+                  widget.onChanged?.call('autoReadingImageWaitSeconds'),
+              comicId: isEnabledSpecificSettings ? widget.comicId : null,
+              comicSource: isEnabledSpecificSettings
+                  ? widget.comicSource
+                  : null,
+              useDeviceSettings: useDeviceSpecificSettings,
+            ).toSliver(),
           if (App.isAndroid || App.isIOS)
             SwitchSetting.reader(
               title: 'Keep screen on during automatic reading'.tl,

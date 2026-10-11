@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'auto_reading.dart';
 import 'package:venera_next/foundation/image_provider/base_image_provider.dart';
 import 'package:venera_next/foundation/translations.dart';
 
@@ -15,8 +16,12 @@ class ReaderImageDimensions extends StatefulWidget {
     required this.image,
     this.child,
     this.builder,
+    this.showDimensions = true,
+    this.onLoadState,
   }) : assert((child == null) != (builder == null));
   final ImageProvider image;
+  final bool showDimensions;
+  final ValueChanged<AutoReadingImageState>? onLoadState;
   final Widget? child;
   final Widget Function(VoidCallback reload)? builder;
 
@@ -47,9 +52,12 @@ class _ReaderImageDimensionsState extends State<ReaderImageDimensions> {
     _detach();
     _size = null;
     _stream = stream;
+    widget.onLoadState?.call(AutoReadingImageState.loading);
     _listener = ImageStreamListener(
       (info, synchronous) {
         try {
+          if (!mounted || !identical(_stream, stream)) return;
+          widget.onLoadState?.call(AutoReadingImageState.ready);
           final size = decodedOriginalSize(stream, info);
           if (_size == size || !mounted) return;
           if (synchronous) {
@@ -62,7 +70,9 @@ class _ReaderImageDimensionsState extends State<ReaderImageDimensions> {
         }
       },
       onError: (Object error, StackTrace? stack) {
-        if (mounted && _size != null) setState(() => _size = null);
+        if (!mounted || !identical(_stream, stream)) return;
+        widget.onLoadState?.call(AutoReadingImageState.failed);
+        if (_size != null) setState(() => _size = null);
       },
     );
     stream.addListener(_listener!);
@@ -89,7 +99,7 @@ class _ReaderImageDimensionsState extends State<ReaderImageDimensions> {
 
   @override
   Widget build(BuildContext context) => ImageDimensionsOverlay(
-    size: _size,
+    size: widget.showDimensions ? _size : null,
     child: widget.builder?.call(_reload) ?? widget.child!,
   );
 }

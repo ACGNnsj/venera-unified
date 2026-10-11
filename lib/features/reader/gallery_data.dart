@@ -20,6 +20,7 @@ class ReaderGalleryData {
     required this.comicId,
     required this.chapterId,
     this.showImageDimensions = false,
+    this.observeImageReadiness = false,
   });
 
   final ReaderContentState content;
@@ -37,6 +38,7 @@ class ReaderGalleryData {
   final String comicId;
   final String chapterId;
   final bool showImageDimensions;
+  final bool observeImageReadiness;
 
   List<String> get images => content.images ?? const [];
   int get imagePages => layout.pageCount(images.length);

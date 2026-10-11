@@ -78,7 +78,10 @@ class ReaderContinuousView extends StatefulWidget {
 }
 
 class ContinuousModeState extends State<ReaderContinuousView>
-    implements ReaderImageViewController, AutoReadingViewport {
+    implements
+        ReaderImageViewController,
+        AutoReadingViewport,
+        AutoReadingImageViewport {
   late var _imageDownloads = ReaderImageDownloads(work: widget.imageWork);
 
   @override
@@ -448,28 +451,51 @@ class ContinuousModeState extends State<ReaderContinuousView>
   }
 
   @override
-  bool get autoReadingReady {
+  bool get autoReadingReady =>
+      autoReadingImages.state == AutoReadingImageState.ready;
+
+  @override
+  AutoReadingImageReadiness get autoReadingImages {
     final controller = _scrollController;
-    if (controller == null ||
+    if (_disposed ||
+        !mounted ||
+        controller == null ||
         !controller.hasClients ||
         isZoomedIn ||
+        isLongPressing ||
         fingers > 0 ||
         _isRestoringPrependedSegmentPosition ||
         _isNavigatingWaterfallLocation ||
         controller.position.isScrollingNotifier.value) {
-      return false;
+      return AutoReadingImageReadiness(
+        AutoReadingImageState.blocked,
+        navigation.content,
+      );
     }
     final visible = imageStates
         .whereType<ComicImageState>()
         .where((image) => image.visibleInReader)
         .toList();
-    return visible.isNotEmpty &&
-        visible.every((image) => image.readyForAutoReading);
+    final state = combineAutoReadingImageStates(
+      visible.map((image) => image.autoReadingImageState),
+    );
+    return AutoReadingImageReadiness(state, <Object>{
+      for (final image in visible) image.widget.image,
+    });
   }
 
   @override
-  AutoReadingStep autoScroll(double distance, {required bool acrossChapters}) {
-    if (!autoReadingReady) return AutoReadingStep.waiting;
+  AutoReadingStep autoScroll(
+    double distance, {
+    required bool acrossChapters,
+    bool skipUnavailableImages = false,
+  }) {
+    final images = autoReadingImages;
+    if (images.state == AutoReadingImageState.blocked ||
+        (!skipUnavailableImages &&
+            images.state != AutoReadingImageState.ready)) {
+      return AutoReadingStep.waiting;
+    }
     final position = scrollController.position;
     final lastIndex = crossChapter && !acrossChapters
         ? _waterfallIndexOfChapterPage(currentChapter, maxPage)!
@@ -496,6 +522,17 @@ class ContinuousModeState extends State<ReaderContinuousView>
             currentChapter < data.maxChapter) {
           navigation.toChapter(currentChapter + 1);
           return AutoReadingStep.waiting;
+        }
+        if (crossChapter && acrossChapters && skipUnavailableImages) {
+          final finalImage = _imageRefAt(lastIndex);
+          if (finalImage != null &&
+              finalImage.position.chapter != currentChapter) {
+            // Short error placeholders can expose the final chapter before
+            // scrolling moves the active location into that chapter.
+            itemScrollController.jumpTo(index: lastIndex);
+            _setReaderLocation(finalImage);
+            return AutoReadingStep.advanced;
+          }
         }
         return AutoReadingStep.finished;
       }

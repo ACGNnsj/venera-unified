@@ -98,6 +98,10 @@ class ReaderSettings {
   bool get autoReaderMode => _values['autoReaderMode'] as bool;
   bool get autoReadingAcrossChapters =>
       _values['autoReadingAcrossChapters'] as bool;
+  bool get autoReadingSkipUnavailableImages =>
+      _values['autoReadingSkipUnavailableImages'] as bool;
+  double get autoReadingImageWaitSeconds =>
+      _values['autoReadingImageWaitSeconds'] as double;
   bool get autoReadingPauseOnLongPress =>
       _values['autoReadingPauseOnLongPress'] as bool;
   bool get enableTapToTurnPages => _values['enableTapToTurnPages'] as bool;

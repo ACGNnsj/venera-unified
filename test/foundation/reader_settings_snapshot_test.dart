@@ -6,6 +6,57 @@ import 'package:venera_next/foundation/comic_layout.dart';
 import 'package:venera_next/foundation/reader_settings.dart';
 
 void main() {
+  test(
+    'unavailable image policy defaults off and inherits validated scope settings',
+    () {
+      final defaults = ReaderSettings.resolve(global: {});
+      expect(defaults.autoReadingSkipUnavailableImages, false);
+      expect(defaults.autoReadingImageWaitSeconds, 10);
+      final global = {
+        'autoReadingSkipUnavailableImages': true,
+        'autoReadingImageWaitSeconds': 20,
+      };
+      final device = {
+        'enabled': true,
+        'autoReadingSkipUnavailableImages': false,
+        'autoReadingImageWaitSeconds': 30,
+      };
+      final comic = <String, Object?>{
+        'enabled': true,
+        'autoReadingSkipUnavailableImages': true,
+        'autoReadingImageWaitSeconds': 70,
+      };
+      var settings = ReaderSettings.resolve(
+        global: global,
+        device: device,
+        comic: comic,
+      );
+      expect(settings.autoReadingSkipUnavailableImages, true);
+      expect(settings.autoReadingImageWaitSeconds, 60);
+      comic['enabled'] = false;
+      settings = ReaderSettings.resolve(
+        global: global,
+        device: device,
+        comic: comic,
+      );
+      expect(settings.autoReadingSkipUnavailableImages, false);
+      expect(settings.autoReadingImageWaitSeconds, 30);
+      device['enabled'] = false;
+      settings = ReaderSettings.resolve(
+        global: global,
+        device: device,
+        comic: comic,
+      );
+      expect(settings.autoReadingSkipUnavailableImages, true);
+      expect(settings.autoReadingImageWaitSeconds, 20);
+      expect(
+        ReaderSettings.resolve(
+          global: {'autoReadingImageWaitSeconds': -1},
+        ).autoReadingImageWaitSeconds,
+        1,
+      );
+    },
+  );
   test('scope precedence skips nulls and disabled overrides', () {
     final global = {'readerSideMargin': 5, 'limitImageWidth': true};
     final device = {'enabled': true, 'readerSideMargin': 10};

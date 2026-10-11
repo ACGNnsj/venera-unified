@@ -154,6 +154,18 @@ abstract final class ReaderPreferences {
     'autoReadingKeepScreenOn',
     true,
   );
+  static const autoReadingSkipUnavailableImages = BoolPreference(
+    'autoReadingSkipUnavailableImages',
+    false,
+  );
+  static const autoReadingImageWaitSeconds = NumericPreference(
+    'autoReadingImageWaitSeconds',
+    10,
+    min: 1,
+    max: 60,
+    step: 1,
+    integer: false,
+  );
   static const autoReadingPauseOnLongPress = BoolPreference(
     'autoReadingPauseOnLongPress',
     true,
@@ -241,6 +253,8 @@ abstract final class ReaderPreferences {
     preloadImageCount,
     autoReadingAcrossChapters,
     autoReadingKeepScreenOn,
+    autoReadingSkipUnavailableImages,
+    autoReadingImageWaitSeconds,
     autoReadingPauseOnLongPress,
     enableTapToTurnPages,
     reverseTapToTurnPages,

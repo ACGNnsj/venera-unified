@@ -1,5 +1,8 @@
 {
   "zh_CN": {
+    "Skip unavailable images during automatic reading": "自动阅读时跳过不可用图片",
+    "Skip failed images at the normal pace; wait for loading images before continuing.": "失败图片按正常节奏跳过；加载中的图片等待设定时间后继续。",
+    "Wait for loading images (seconds)": "图片加载等待时间（秒）",
     "Show image pixel dimensions": "显示图片像素尺寸",
     "Image dimensions: @width × @height pixels": "图片尺寸：@width × @height 像素",
     "Keep screen on during automatic reading": "自动阅读时保持屏幕常亮",
@@ -882,6 +885,9 @@
     "Failed to load source": "无法加载来源"
   },
   "zh_TW": {
+    "Skip unavailable images during automatic reading": "自動閱讀時跳過不可用圖片",
+    "Skip failed images at the normal pace; wait for loading images before continuing.": "失敗圖片按正常節奏跳過；載入中的圖片等待設定時間後繼續。",
+    "Wait for loading images (seconds)": "圖片載入等待時間（秒）",
     "Show image pixel dimensions": "顯示圖片像素尺寸",
     "Image dimensions: @width × @height pixels": "圖片尺寸：@width × @height 像素",
     "Keep screen on during automatic reading": "自動閱讀時保持螢幕常亮",

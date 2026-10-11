@@ -1044,6 +1044,8 @@ class ReaderState extends State<Reader>
         stepped: current.autoScrollStyle == 'stepped',
         stepsPerSecond: current.autoScrollFrequency,
         pixelsPerStep: current.autoScrollDistance,
+        skipUnavailableImages: current.autoReadingSkipUnavailableImages,
+        imageWaitSeconds: current.autoReadingImageWaitSeconds,
       );
     },
     canAdvance: () {
@@ -1054,7 +1056,18 @@ class ReaderState extends State<Reader>
           !isPageAnimating &&
           (ModalRoute.of(context)?.isCurrent ?? true) &&
           viewport is AutoReadingViewport &&
-          (viewport as AutoReadingViewport).autoReadingReady;
+          (viewport is AutoReadingImageViewport
+              ? (viewport as AutoReadingImageViewport)
+                        .autoReadingImages
+                        .state !=
+                    AutoReadingImageState.blocked
+              : (viewport as AutoReadingViewport).autoReadingReady);
+    },
+    imageReadiness: () {
+      final viewport = imageViewController;
+      return viewport is AutoReadingImageViewport
+          ? (viewport as AutoReadingImageViewport).autoReadingImages
+          : const AutoReadingImageReadiness(AutoReadingImageState.ready, 0);
     },
     advance: (distance) {
       final across = preferences.autoReadingAcrossChapters;
@@ -1062,6 +1075,7 @@ class ReaderState extends State<Reader>
         return (imageViewController as AutoReadingViewport).autoScroll(
           distance,
           acrossChapters: across,
+          skipUnavailableImages: preferences.autoReadingSkipUnavailableImages,
         );
       }
       if (page < maxPage) {

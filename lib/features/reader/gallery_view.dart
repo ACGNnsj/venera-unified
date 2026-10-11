@@ -53,7 +53,10 @@ class ReaderGalleryView extends StatefulWidget {
 }
 
 class GalleryModeState extends State<ReaderGalleryView>
-    implements ReaderImageViewController, AutoReadingViewport {
+    implements
+        ReaderImageViewController,
+        AutoReadingViewport,
+        AutoReadingImageViewport {
   late var _imageDownloads = ReaderImageDownloads(work: widget.imageWork);
   late var _imagePrecache = ReaderImagePrecache(work: widget.imageWork);
 
@@ -81,6 +84,7 @@ class GalleryModeState extends State<ReaderGalleryView>
       ReaderDisplayImageProvider(_imageProvider(key), widget.imageWork);
 
   final imageStates = <State<ComicImage>, int>{};
+  final _singleImageStates = <int, AutoReadingImageState>{};
 
   bool isLongPressing = false;
   bool _disposed = false;
@@ -101,6 +105,10 @@ class GalleryModeState extends State<ReaderGalleryView>
   @override
   void didUpdateWidget(covariant ReaderGalleryView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.data.content, data.content) ||
+        !identical(oldWidget.imageWork, widget.imageWork)) {
+      _singleImageStates.clear();
+    }
     if (!identical(oldWidget.imageWork, widget.imageWork)) {
       unawaited(_imageDownloads.dispose());
       unawaited(_imagePrecache.dispose());
@@ -126,36 +134,59 @@ class GalleryModeState extends State<ReaderGalleryView>
   }
 
   @override
-  bool get autoReadingReady {
+  bool get autoReadingReady =>
+      autoReadingImages.state == AutoReadingImageState.ready;
+
+  @override
+  AutoReadingImageReadiness get autoReadingImages {
+    final identity = (data.content, widget.imageWork, page);
+    AutoReadingImageReadiness result(AutoReadingImageState state) =>
+        AutoReadingImageReadiness(state, identity);
     if (_disposed ||
         !mounted ||
         !controller.hasClients ||
         fingers > 0 ||
         isLongPressing ||
         controller.position.isScrollingNotifier.value) {
-      return false;
+      return result(AutoReadingImageState.blocked);
     }
-    if (data.isCommentsPage(page)) return true;
+    if (data.isCommentsPage(page)) return result(AutoReadingImageState.ready);
     final photo = photoViewControllers[page];
     final initialScale = photo?.getInitialScale?.call();
-    // PhotoView installs this callback only after its image is decoded.
-    if (initialScale == null ||
+    if (initialScale != null &&
         ((photo?.scale ?? initialScale) - initialScale).abs() > 0.01) {
-      return false;
+      return result(AutoReadingImageState.blocked);
     }
     final (start, end) = getPageImagesRange(page);
-    if (end - start == 1) return true;
-    final visible = imageStates.keys
+    if (end - start == 1) {
+      final observed = data.showImageDimensions || data.observeImageReadiness;
+      return result(
+        observed
+            ? _singleImageStates[page] ?? AutoReadingImageState.loading
+            : initialScale == null
+            ? AutoReadingImageState.loading
+            : AutoReadingImageState.ready,
+      );
+    }
+    final visible = imageStates.entries
+        .where((entry) => entry.value >= start && entry.value < end)
+        .map((entry) => entry.key)
         .whereType<ComicImageState>()
         .where((image) => image.visibleInReader)
         .toList();
-    return visible.isNotEmpty &&
-        visible.every((image) => image.readyForAutoReading);
+    return result(
+      combineAutoReadingImageStates(
+        visible.map((image) => image.autoReadingImageState),
+      ),
+    );
   }
 
   @override
-  AutoReadingStep autoScroll(double distance, {required bool acrossChapters}) =>
-      AutoReadingStep.finished;
+  AutoReadingStep autoScroll(
+    double distance, {
+    required bool acrossChapters,
+    bool skipUnavailableImages = false,
+  }) => AutoReadingStep.finished;
 
   /// Get the range of images for the given page. [page] is 1-based.
   (int start, int end) getPageImagesRange(int page) =>
@@ -307,6 +338,8 @@ class GalleryModeState extends State<ReaderGalleryView>
         ),
       );
     }
+    final originalContent = data.content;
+    final originalWork = widget.imageWork;
     final (start, end) = getPageImagesRange(index);
     final images = List.generate(end - start, (i) => start + i);
     cache(index);
@@ -349,8 +382,20 @@ class GalleryModeState extends State<ReaderGalleryView>
               },
             ),
           );
-          return data.showImageDimensions
-              ? ReaderImageDimensions(image: image, builder: photo)
+          return data.showImageDimensions || data.observeImageReadiness
+              ? ReaderImageDimensions(
+                  image: image,
+                  showDimensions: data.showImageDimensions,
+                  onLoadState: (state) {
+                    if (mounted &&
+                        !_disposed &&
+                        identical(originalContent, data.content) &&
+                        identical(originalWork, widget.imageWork)) {
+                      _singleImageStates[index] = state;
+                    }
+                  },
+                  builder: photo,
+                )
               : photo();
         }
         return PhotoView.customChild(

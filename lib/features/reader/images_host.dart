@@ -148,6 +148,7 @@ class ReaderImagesHost extends StatelessWidget {
           comicId: reader.cid,
           chapterId: reader.eid,
           showImageDimensions: preferences.showImageDimensions,
+          observeImageReadiness: preferences.autoReadingSkipUnavailableImages,
         ),
         navigation: reader.controller,
         onViewportChanged: viewportChanged,

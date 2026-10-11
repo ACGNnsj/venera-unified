@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:venera_next/features/reader/comic_image.dart';
+import 'package:venera_next/features/reader/auto_reading.dart';
 import 'package:venera_next/features/reader/display_image_provider.dart';
 import 'package:venera_next/features/reader/image_dimensions.dart';
 import 'package:venera_next/foundation/image_provider/reader_image.dart';
@@ -219,6 +220,7 @@ void main() {
     tester,
   ) async {
     final provider = _RetryProvider();
+    final states = <AutoReadingImageState>[];
     final work = ImageWork();
     final image = ReaderDisplayImageProvider(provider, work);
     try {
@@ -229,6 +231,7 @@ void main() {
             height: 120,
             child: ReaderImageDimensions(
               image: image,
+              onLoadState: states.add,
               builder: (reload) =>
                   TextButton(onPressed: reload, child: const Text('Retry')),
             ),
@@ -242,6 +245,10 @@ void main() {
         await tester.pump();
       }
       expect(find.text('24 × 48'), findsNothing);
+      expect(states, [
+        AutoReadingImageState.loading,
+        AutoReadingImageState.failed,
+      ]);
       await tester.tap(find.text('Retry'));
       for (var i = 0; i < 80 && find.text('24 × 48').evaluate().isEmpty; i++) {
         await tester.runAsync(
@@ -251,6 +258,12 @@ void main() {
       }
       expect(find.text('24 × 48'), findsOneWidget);
       expect(provider.loads, 2);
+      expect(states, [
+        AutoReadingImageState.loading,
+        AutoReadingImageState.failed,
+        AutoReadingImageState.loading,
+        AutoReadingImageState.ready,
+      ]);
     } finally {
       await tester.pumpWidget(const SizedBox());
       final closed = work.dispose();
