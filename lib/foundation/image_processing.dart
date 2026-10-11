@@ -92,12 +92,9 @@ class Image {
       );
     }
     var data = Uint32List(width * height);
-    for (var j = 0; j < height; j++) {
-      for (var i = 0; i < width; i++) {
-        data[j * width + i] = _data[(j + y) * this.width + i + x];
-      }
-    }
-    return Image(data, width, height);
+    final result = Image(data, width, height);
+    result._copyRows(0, 0, this, x, y, width, height);
+    return result;
   }
 
   void fillImageAt(int x, int y, Image image) {
@@ -119,11 +116,7 @@ class Image {
             .trim(),
       );
     }
-    for (var j = 0; j < image.height && (j + y) < height; j++) {
-      for (var i = 0; i < image.width && (i + x) < width; i++) {
-        _data[(j + y) * width + i + x] = image._data[j * image.width + i];
-      }
-    }
+    _copyRows(x, y, image, 0, 0, image.width, image.height);
   }
 
   void fillImageRangeAt(
@@ -171,12 +164,7 @@ class Image {
             .trim(),
       );
     }
-    for (var j = 0; j < height; j++) {
-      for (var i = 0; i < width; i++) {
-        _data[(j + y) * this.width + i + x] =
-            image._data[(j + srcY) * image.width + i + srcX];
-      }
-    }
+    _copyRows(x, y, image, srcX, srcY, width, height);
   }
 
   Image copyAndRotate90() {
@@ -189,13 +177,59 @@ class Image {
     return Image(data, height, width);
   }
 
+  void _copyRows(
+    int x,
+    int y,
+    Image image,
+    int srcX,
+    int srcY,
+    int copyWidth,
+    int copyHeight,
+  ) {
+    if (_data.buffer == image._data.buffer) {
+      // Scripts historically copy aliased pixels in row order. Preserve that
+      // behavior for self-copies and overlapping views of the same buffer.
+      for (var row = 0; row < copyHeight; row++) {
+        for (var col = 0; col < copyWidth; col++) {
+          _data[(y + row) * width + x + col] =
+              image._data[(srcY + row) * image.width + srcX + col];
+        }
+      }
+    } else if (x == 0 &&
+        srcX == 0 &&
+        copyWidth == width &&
+        copyWidth == image.width) {
+      _data.setRange(
+        y * width,
+        (y + copyHeight) * width,
+        image._data,
+        srcY * image.width,
+      );
+    } else {
+      for (var row = 0; row < copyHeight; row++) {
+        final target = (y + row) * width + x;
+        final source = (srcY + row) * image.width + srcX;
+        _data.setRange(target, target + copyWidth, image._data, source);
+      }
+    }
+  }
+
   Uint8List encodePng() {
-    var data = lodepng.encodePngToPointer(
-      lodepng.Image(_data.buffer.asUint8List(), width, height),
+    final data = lodepng.encodePngToPointer(
+      lodepng.Image(
+        _data.buffer.asUint8List(_data.offsetInBytes, _data.lengthInBytes),
+        width,
+        height,
+      ),
     );
-    return Pointer<Uint8>.fromAddress(
-      data.address,
-    ).asTypedList(data.length, finalizer: lodepng.ByteBuffer.finalizer);
+    final pointer = Pointer<Uint8>.fromAddress(data.address);
+    try {
+      return Uint8List.fromList(pointer.asTypedList(data.length));
+    } finally {
+      lodepng.ByteBuffer.finalizer.asFunction<void Function(Pointer<Void>)>()(
+        pointer.cast(),
+      );
+    }
   }
 }
 
@@ -408,9 +442,9 @@ Future<Uint8List> runImageScript(
     if (modified == null) {
       throw StateError('modifyImage must return an Image synchronously');
     }
-    result = Uint8List.fromList(
-      (encodeImage ?? (image) => image.encodePng())(modified),
-    );
+    result = encodeImage == null
+        ? modified.encodePng()
+        : Uint8List.fromList(encodeImage(modified));
   } catch (error, stack) {
     // JavaScript may throw a graph containing native references as well.
     values.add(error);

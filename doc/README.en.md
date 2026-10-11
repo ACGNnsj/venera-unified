@@ -48,6 +48,7 @@ Source developers can follow the [authoring guide](api/comic_source.en.md) → [
 - [Source installation task design (Chinese)](experiments/source_installation_tasks.zh.md)
 - [Source repository management design (Chinese)](experiments/source_repositories.zh.md)
 - [图片增强实验](experiments/image_enhancement.zh.md)
+- [去混淆像素复制优化](experiments/image_descrambling.zh.md)
 
 ## Maintenance Rules
 

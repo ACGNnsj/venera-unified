@@ -41,6 +41,30 @@ void main() {
       processing.Image(Uint32List.fromList([0xff0000ff, 0xffff0000]), 2, 1);
 
   test(
+    'native PNG encoding reads only the typed view and returns owned bytes',
+    () async {
+      final backing = Uint32List.fromList([
+        0xff000000,
+        0xff0000ff,
+        0xffff0000,
+        0xffffffff,
+      ]);
+      final view = processing.Image(
+        Uint32List.sublistView(backing, 1, 3),
+        2,
+        1,
+      );
+      final bytes = view.encodePng();
+      backing.fillRange(0, backing.length, 0);
+      final output = await processing.Image.decodeImage(bytes);
+      expect((output.width, output.height), (2, 1));
+      expect(output.getPixelAtIndex(0).value, 0xff0000ff);
+      expect(output.getPixelAtIndex(1).value, 0xffff0000);
+    },
+    skip: !Platform.isWindows,
+  );
+
+  test(
     'native script transforms pixels and closes runtime and dispatch per task',
     () async {
       for (var attempt = 0; attempt < 3; attempt++) {

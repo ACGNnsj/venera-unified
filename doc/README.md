@@ -48,6 +48,7 @@ English index: [README.en.md](README.en.md)
 - [漫画源安装任务交互设计](experiments/source_installation_tasks.zh.md)
 - [漫画源与源仓库管理设计](experiments/source_repositories.zh.md)
 - [图片增强实验](experiments/image_enhancement.zh.md)
+- [去混淆像素复制优化](experiments/image_descrambling.zh.md)
 
 ## 维护原则
 
