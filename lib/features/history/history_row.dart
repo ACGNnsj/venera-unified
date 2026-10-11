@@ -17,5 +17,7 @@ History historyFromRow(Row row) => History(
   ),
   maxPage: row['max_page'],
   group: row['chapter_group'],
+  chapterTitle: row['chapter_title'],
+  groupTitle: row['group_title'],
   readDurationMs: (row['read_duration_ms'] as num).round(),
 );

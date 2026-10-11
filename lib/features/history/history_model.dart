@@ -27,6 +27,10 @@ class History implements Comic {
   /// If [group] is not null, [ep] is the index of chapter in the group.
   int? group;
 
+  /// Last read names remain available when the source or chapter list is gone.
+  String? chapterTitle;
+  String? groupTitle;
+
   @override
   String id;
 
@@ -55,6 +59,8 @@ class History implements Comic {
     required this.maxPage,
     required this.readDurationMs,
     this.group,
+    this.chapterTitle,
+    this.groupTitle,
   });
 
   /// Detached values for a submitted storage operation, including read keys.
@@ -71,6 +77,8 @@ class History implements Comic {
     maxPage: maxPage,
     readDurationMs: readDurationMs,
     group: group,
+    chapterTitle: chapterTitle,
+    groupTitle: groupTitle,
   );
 
   History.fromModel({
@@ -102,6 +110,9 @@ class History implements Comic {
         (map["readEpisode"] as List<dynamic>?)?.toSet() ?? const <String>{},
       ),
       maxPage = map["max_page"],
+      group = map['chapter_group'] as int?,
+      chapterTitle = map['chapter_title'] as String?,
+      groupTitle = map['group_title'] as String?,
       readDurationMs = (map["read_duration_ms"] as num?)?.round() ?? 0;
 
   @override
@@ -120,14 +131,17 @@ class History implements Comic {
   @override
   String get description {
     var res = "";
-    if (group != null) {
-      res += "${"Group @group".tlParams({"group": group!})} - ";
+    if (groupTitle?.trim().isNotEmpty == true || group != null) {
+      res +=
+          '${groupTitle?.trim().isNotEmpty == true ? groupTitle!.trim() : "Group @group".tlParams({"group": group!})} - ';
     }
-    if (ep >= 1) {
+    if (chapterTitle?.trim().isNotEmpty == true) {
+      res += chapterTitle!.trim();
+    } else if (ep >= 1) {
       res += "Chapter @ep".tlParams({"ep": ep});
     }
     if (page >= 1) {
-      if (ep >= 1) {
+      if (res.isNotEmpty) {
         res += " - ";
       }
       res += "Page @page".tlParams({"page": page});

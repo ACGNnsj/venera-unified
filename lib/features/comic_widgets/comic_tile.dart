@@ -45,12 +45,14 @@ class ComicTileState {
     this.isFavorite = false,
     this.historyPage,
     this.historyMaxPage,
+    this.historyDescription,
     this.hasNewUpdate = false,
   });
 
   final bool isFavorite;
   final int? historyPage;
   final int? historyMaxPage;
+  final String? historyDescription;
   final bool hasNewUpdate;
 }
 
@@ -319,13 +321,18 @@ class ComicTile extends StatelessWidget {
                   ? 4
                   : 6,
               top: compact ? 6 : 8,
+              right: type == 'detailed'
+                  ? 16
+                  : compact
+                  ? 4
+                  : 6,
               child: Container(
-                height: badgeSize,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isFavorite)
                       Container(
@@ -338,7 +345,9 @@ class ComicTile extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-                    if (historyPage != null)
+                    if (state.historyDescription case final description?)
+                      Flexible(child: _ReadingProgressBadge(description)),
+                    if (historyPage != null && state.historyDescription == null)
                       Container(
                         height: badgeSize,
                         color: Colors.blue.toOpacity(0.9),
@@ -1016,6 +1025,33 @@ class _ReadingHistoryPainter extends CustomPainter {
   }
 }
 
+class _ReadingProgressBadge extends StatelessWidget {
+  const _ReadingProgressBadge(this.description);
+  final String description;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: description,
+    child: Semantics(
+      label: description,
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+        color: context.colorScheme.primaryContainer,
+        child: Text(
+          description.replaceAll('\n', ' '),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 12,
+            color: context.colorScheme.onPrimaryContainer,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class SimpleComicTile extends StatelessWidget {
   const SimpleComicTile({
     super.key,
@@ -1062,23 +1098,32 @@ class SimpleComicTile extends StatelessWidget {
       child: child,
     );
 
-    if (_tileState(comic).hasNewUpdate) {
+    final state = _tileState(comic);
+    if (state.hasNewUpdate || state.historyDescription != null) {
       child = Stack(
         children: [
           child,
-          Positioned(
-            left: 0,
-            top: 0,
-            child: Container(
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  bottomRight: Radius.circular(4),
+          if (state.hasNewUpdate)
+            Positioned(
+              left: 0,
+              top: 0,
+              child: Container(
+                decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    bottomRight: Radius.circular(4),
+                  ),
                 ),
+                clipBehavior: Clip.antiAlias,
+                child: _buildUpdateBadge(context),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: _buildUpdateBadge(context),
             ),
-          ),
+          if (state.historyDescription case final description?)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _ReadingProgressBadge(description),
+            ),
         ],
       );
     }

@@ -30,9 +30,30 @@ void main() {
         read_duration_ms INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (id, type)
       );
     ''');
-    repository = HistoryRepository(db);
+    repository = HistoryRepository(db)..initialize();
   });
   tearDown(() => db.dispose());
+
+  test(
+    'chapter snapshots survive reload, duration writes and metadata refresh',
+    () {
+      final value = item()
+        ..chapterTitle = '第100话'
+        ..groupTitle = '第二部'
+        ..group = 2;
+      repository.writeProgress(value);
+      repository.addReadDuration(value, 100);
+      repository.updateMetadata(value.id, 0, title: 'New title');
+      final restored = repository.find(value.id, 0)!;
+      expect(restored.chapterTitle, '第100话');
+      expect(restored.groupTitle, '第二部');
+      expect(restored.copy().chapterTitle, '第100话');
+      expect(restored.description, contains('第二部 - 第100话'));
+      expect(restored.readDurationMs, 100);
+      repository.writeProgress(value..chapterTitle = '番外');
+      expect(repository.find(value.id, 0)!.chapterTitle, '番外');
+    },
+  );
 
   test('metadata updates only supplied fields on the requested source', () {
     repository.writeProgress(item());

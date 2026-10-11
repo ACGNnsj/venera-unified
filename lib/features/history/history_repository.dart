@@ -26,6 +26,8 @@ class HistoryRepository {
           readEpisode text,
           max_page int,
           chapter_group int,
+          chapter_title text,
+          group_title text,
           read_duration_ms integer not null default 0
         );
       """);
@@ -38,6 +40,11 @@ class HistoryRepository {
       db.execute(
         "alter table $_table add column read_duration_ms integer not null default 0;",
       );
+    }
+    for (final name in ['chapter_title', 'group_title']) {
+      if (!columns.any((element) => element['name'] == name)) {
+        db.execute('alter table $_table add column $name text;');
+      }
     }
   }
 
@@ -165,8 +172,8 @@ class HistoryRepository {
 
   String get _insertHistorySql =>
       """
-        insert or replace into $_table (id, title, subtitle, cover, time, type, ep, page, readEpisode, max_page, chapter_group)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        insert or replace into $_table (id, title, subtitle, cover, time, type, ep, page, readEpisode, max_page, chapter_group, chapter_title, group_title)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       """;
 
   /// Metadata refreshes never replace progress or recreate deleted records.
@@ -199,14 +206,16 @@ class HistoryRepository {
           page = ?,
           readEpisode = ?,
           max_page = ?,
-          chapter_group = ?
+          chapter_group = ?,
+          chapter_title = ?,
+          group_title = ?
         where id = ? and type = ?;
       """;
 
   String get _insertReadDurationSql =>
       """
-        insert or replace into $_table (id, title, subtitle, cover, time, type, ep, page, readEpisode, max_page, chapter_group, read_duration_ms)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        insert or replace into $_table (id, title, subtitle, cover, time, type, ep, page, readEpisode, max_page, chapter_group, chapter_title, group_title, read_duration_ms)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       """;
 
   String get _incrementReadDurationSql =>
@@ -229,6 +238,8 @@ class HistoryRepository {
       item.readEpisode.join(','),
       item.maxPage,
       item.group,
+      item.chapterTitle,
+      item.groupTitle,
     ];
   }
 
@@ -250,6 +261,8 @@ class HistoryRepository {
         item.readEpisode.join(','),
         item.maxPage,
         item.group,
+        item.chapterTitle,
+        item.groupTitle,
         item.id,
         item.type.value,
       ]);

@@ -44,6 +44,8 @@ void main() {
       expect(item.maxPage, 10);
       expect(item.ep, 1);
       expect(item.group, 2);
+      expect(item.chapterTitle, 'Different chapter');
+      expect(item.groupTitle, 'second');
       expect(item.readEpisode, {'1', '2-1'});
       expect(item.time, time);
       expect(item.readDurationMs, 9000);
@@ -72,6 +74,8 @@ void main() {
         );
         expect(item.page, 9);
         expect(item.ep, 2);
+        expect(item.chapterTitle, 'B');
+        expect(item.groupTitle, isNull);
         expect(item.maxPage, 9);
         expect(item.readEpisode, {'1', '2'});
         // The original ungrouped update leaves an existing group untouched.

@@ -15,6 +15,20 @@ void applyReaderHistoryProgress({
 }) {
   history.page = layout.historyImage(page, imageCount);
   history.maxPage = imageCount;
+  history.chapterTitle = null;
+  history.groupTitle = null;
+  if (chapters != null && chapter >= 1 && chapter <= chapters.length) {
+    final position = chapters.positionAt(chapter);
+    if (position.group case final group?) {
+      history.groupTitle = chapters.groups.elementAt(group - 1);
+      history.chapterTitle = chapters
+          .getGroupByIndex(group - 1)
+          .values
+          .elementAt(position.chapter - 1);
+    } else {
+      history.chapterTitle = chapters.allChapters.values.elementAt(chapter - 1);
+    }
+  }
   if (chapters?.isGrouped ?? false) {
     final position = chapters!.positionAt(chapter);
     history.readEpisode.add(position.historyKey);

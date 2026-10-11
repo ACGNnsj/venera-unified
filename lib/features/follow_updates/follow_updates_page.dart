@@ -1,4 +1,6 @@
 import 'package:venera_next/features/favorites/favorites_scope.dart';
+import 'package:venera_next/features/history/history_scope.dart';
+import 'package:venera_next/features/history/history_manager.dart';
 import 'package:venera_next/foundation/global_preference_store.dart';
 import 'package:venera_next/foundation/application_preferences.dart';
 import 'dart:async';
@@ -35,10 +37,22 @@ class FollowUpdatesWidget extends StatefulWidget {
 class _FollowUpdatesWidgetState extends SettingsSaveState<FollowUpdatesWidget> {
   String? _repairing;
   FollowUpdatesRuntime? _runtime;
+  HistoryManager? _history;
+
+  void _progressChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    context.dependOnInheritedWidgetOfExactType<HistoryScope>();
+    final history = HistoryScope.read(context);
+    if (!identical(history, _history)) {
+      _history?.removeListener(_progressChanged);
+      _history = history;
+      history.addListener(_progressChanged);
+    }
     final runtime = FollowUpdatesScope.of(context);
     if (identical(runtime, _runtime)) return;
     _runtime?.changes.removeListener(updateCount);
@@ -101,6 +115,7 @@ class _FollowUpdatesWidgetState extends SettingsSaveState<FollowUpdatesWidget> {
 
   @override
   void dispose() {
+    _history?.removeListener(_progressChanged);
     _runtime?.changes.removeListener(updateCount);
     super.dispose();
   }

@@ -83,6 +83,7 @@ ComicTileState _resolveComicTileState(Comic comic) {
         LocalFavoritesManager().isExist(comic.id, type),
     historyPage: history?.page,
     historyMaxPage: history?.maxPage,
+    historyDescription: history?.description,
     hasNewUpdate:
         preferences.read(DiscoveryPreferences.showUpdateStatusOnTile) &&
         type != ComicType.local &&
