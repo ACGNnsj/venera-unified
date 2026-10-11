@@ -82,6 +82,10 @@
       "favorites"
     ],
     [
+      "follow_updates",
+      "history"
+    ],
+    [
       "history",
       "comic_details"
     ],
@@ -604,6 +608,7 @@
     "features/reader/gallery_view.dart",
     "features/reader/gesture.dart",
     "features/reader/gesture_host.dart",
+    "features/reader/image_dimensions.dart",
     "features/reader/image_export_binding.dart",
     "features/reader/image_selection.dart",
     "features/reader/images.dart",
@@ -979,6 +984,7 @@
     "foundation/keyword_filter.dart",
     "foundation/keyword_settings_store.dart",
     "foundation/log.dart",
+    "foundation/log_file_writer.dart",
     "foundation/opencc.dart",
     "foundation/opencc_table.dart",
     "foundation/operation_failure.dart",
