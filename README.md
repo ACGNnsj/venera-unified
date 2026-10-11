@@ -240,6 +240,10 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 
 先检查扩展、登录/Cookie、源站状态和网络。追更还需要扩展返回有效的更新日期。具体站点和内容问题应联系相应维护者；可脱离具体站点复现的阅读器或扩展运行时问题可按[贡献指南](CONTRIBUTING.md)反馈。
 
+### 平板上怎样缩小条漫？
+
+在阅读器设置中选择纵向连续或瀑布流模式，调整「条漫缩小（每侧边距）」。每侧设为 20% 时，图片宽度缩小到原来的 60%，高度按比例变化，并保留阅读进度。详见[条漫缩小与左右边距](doc/user/reader_width.zh.md)。
+
 ### Windows 怎样更新？
 
 使用 `winget upgrade --id CyrilPeng.VeneraNext --exact`。公共源收录新版本可能晚于 GitHub Release，可先运行 `winget source update`。便携版需要下载新版本手动覆盖更新。

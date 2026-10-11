@@ -55,7 +55,7 @@ void main() {
       );
       await tester.scrollUntilVisible(setting, 400, maxScrolls: 40);
       await tester.pumpAndSettle();
-      expect(find.text('左右边距（每侧）'), findsOneWidget);
+      expect(find.text('条漫缩小（每侧边距）'), findsOneWidget);
       final slider = find.descendant(
         of: setting,
         matching: find.byType(Slider),
@@ -87,7 +87,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('左右边距（每侧）'), findsOneWidget);
+      expect(find.text('条漫缩小（每侧边距）'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();

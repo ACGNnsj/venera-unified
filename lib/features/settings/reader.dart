@@ -521,7 +521,7 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
           SliverAnimatedVisibility(
             visible: _isVerticalFlowMode,
             child: SliderSetting.reader(
-              title: 'Side margins (each side)'.tl,
+              title: 'Shrink strip comics (margin per side)'.tl,
               preference: ReaderPreferences.readerSideMargin,
               valueFormatter: (value) => '${value.toInt()}%',
               onChanged: () => widget.onChanged?.call('readerSideMargin'),

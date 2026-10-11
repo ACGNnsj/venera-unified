@@ -242,6 +242,10 @@ No source or recommended catalog is bundled. Import local comics or configure a 
 
 Check the extension, login/cookies, service availability, and network. Update tracking additionally requires a valid update date. Contact the relevant maintainer for site/content issues. Reader or extension-runtime problems reproducible independently of a particular site can be reported under the [contribution guidelines](CONTRIBUTING.en.md).
 
+### How do I shrink strip comics on a tablet?
+
+Select vertical continuous or waterfall reading in reader settings, then adjust **Shrink strip comics (margin per side)**. At 20% per side, image width becomes 60% of its original size, with proportional height and the same reading progress. See [strip comic size and side margins](doc/user/reader_width.en.md).
+
 ### How do I update on Windows?
 
 Run `winget upgrade --id CyrilPeng.VeneraNext --exact`. Public-source availability may lag behind GitHub Release; try `winget source update` first. Portable installations require downloading and applying an update manually.
