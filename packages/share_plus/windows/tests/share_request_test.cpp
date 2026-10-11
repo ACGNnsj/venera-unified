@@ -505,6 +505,28 @@ void CallbackFailureIsNotSilentlyIgnored() {
   CHECK(PopulateShare(*Text("one"), args.Get()) == E_ABORT);
 }
 
+BY_HANDLE_FILE_INFORMATION FileIdentity(const wchar_t* path) {
+  const HANDLE handle = CreateFileW(
+      path, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  CHECK(handle != INVALID_HANDLE_VALUE);
+  struct Cleanup {
+    HANDLE handle;
+    ~Cleanup() { CloseHandle(handle); }
+  } cleanup{handle};
+  BY_HANDLE_FILE_INFORMATION identity{};
+  CHECK(GetFileInformationByHandle(handle, &identity));
+  return identity;
+}
+
+bool SameFile(const wchar_t* first, const wchar_t* second) {
+  const auto a = FileIdentity(first);
+  const auto b = FileIdentity(second);
+  return a.dwVolumeSerialNumber == b.dwVolumeSerialNumber &&
+         a.nFileIndexHigh == b.nFileIndexHigh &&
+         a.nFileIndexLow == b.nFileIndexLow;
+}
+
 void RealStorageFile() {
   wchar_t directory[MAX_PATH];
   CHECK(GetTempPathW(MAX_PATH, directory) != 0);
@@ -514,12 +536,18 @@ void RealStorageFile() {
     const wchar_t* path;
     ~Cleanup() { DeleteFileW(path); }
   } cleanup{path};
+  wchar_t other_path[MAX_PATH];
+  CHECK(GetTempFileNameW(directory, L"vsh", 0, other_path) != 0);
+  Cleanup other_cleanup{other_path};
+  CHECK(!SameFile(path, other_path));
+  // WinRT expands short temp paths and normalizes their spelling. Compare
+  // file identities so aliases pass while a different file still fails.
   {
     WRL::ComPtr<WindowsStorage::IStorageItem> file;
     OK(ResolveStorageItem(path, &file));
     HString actual;
     OK(file->get_Path(actual.GetAddressOf()));
-    CHECK(std::wstring(actual.GetRawBuffer(nullptr)) == path);
+    CHECK(SameFile(actual.GetRawBuffer(nullptr), path));
     std::shared_ptr<const PreparedShare> prepared;
     OK(PrepareShare({L"File", L"", {path}}, &prepared));
     auto manager = WRL::Make<Manager>();
@@ -562,7 +590,7 @@ void RealStorageFile() {
     OK(items->GetAt(0, &returned));
     HString returned_path;
     OK(returned->get_Path(returned_path.GetAddressOf()));
-    CHECK(std::wstring(returned_path.GetRawBuffer(nullptr)) == path);
+    CHECK(SameFile(returned_path.GetRawBuffer(nullptr), path));
   }
   CHECK(DeleteFileW(path));
   WRL::ComPtr<WindowsStorage::IStorageItem> missing;

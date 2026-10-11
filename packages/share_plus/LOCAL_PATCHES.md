@@ -141,6 +141,11 @@ final tests also cover Show settling during concurrent GetDeferral and complete
 deferrals after rejection or data failure. They do not open a share panel or
 exercise an external recipient.
 
+The real-file regression compares volume/file IDs instead of path strings:
+WinRT may expand the runner's 8.3 temporary-directory path. A second temporary
+file is explicitly rejected, so path normalization does not weaken the check
+that the prepared and returned storage items refer to the original file.
+
 From the application's `android/` directory, run:
 
 ```powershell
