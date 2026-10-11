@@ -17,6 +17,7 @@ import 'package:venera_next/foundation/app.dart';
 import 'package:venera_next/routing/app_navigation.dart';
 import 'package:venera_next/foundation/appdata.dart';
 import 'package:venera_next/foundation/cache_manager.dart';
+import 'package:venera_next/foundation/log.dart';
 import 'package:venera_next/foundation/js_engine.dart';
 import 'package:venera_next/network/cookie_jar.dart';
 
@@ -47,7 +48,12 @@ void main() {
         if (await root.exists()) await root.delete(recursive: true);
       });
       configureHeadlessBindings();
+      final muted = Log.isMuted;
+      Log.isMuted = false;
+      addTearDown(() => Log.isMuted = muted);
+      Log.info('core test', 'before core startup');
       await core.start();
+      Log.warning('core test', 'during core session');
       final contender = createCoreBootstrap(
         environment: () async {},
         onDataChanged: () => fail('A rejected core cannot publish changes'),
@@ -132,6 +138,10 @@ void main() {
         releasePersistence.complete();
       }
       expect(await closing, isTrue);
+      final diskLogs = await File('${root.path}/logs.txt').readAsString();
+      expect(diskLogs, contains('before core startup'));
+      expect(diskLogs, contains('during core session'));
+      expect(Log.filePath, isNull);
       expect(core.close(), same(core.close()));
       nextOwnership.acquire();
       nextOwnership.release();

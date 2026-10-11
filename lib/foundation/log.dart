@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:venera_next/foundation/app.dart';
 import 'package:venera_next/foundation/file_system.dart';
 import 'package:venera_next/foundation/extensions.dart';
+import 'log_file_writer.dart';
 
 class LogItem {
   final LogLevel level;
@@ -38,20 +38,36 @@ class Log {
     debugPrint('\x1B[31m$text\x1B[0m');
   }
 
-  static IOSink? _file;
+  static LogFileWriter? _file;
+  static final _beforeFile = <LogItem>[];
+
+  static String? get filePath => _file?.file.path;
+
+  /// A core session owns its destination; closing an old session cannot detach
+  /// a replacement writer. Logs emitted before startup are replayed once.
+  static Future<Future<void> Function()> startFileSession(File file) async {
+    await _file?.flush();
+    final writer = LogFileWriter(
+      file,
+      onError: (error, stack) {
+        printWarning('Unable to persist logs: $error');
+      },
+    );
+    _file = writer;
+    for (final item in _beforeFile) {
+      writer.add(item.toString());
+    }
+    _beforeFile.clear();
+    return () async {
+      if (identical(_file, writer)) _file = null;
+      await writer.flush();
+    };
+  }
+
+  static Future<void> flush() => _file?.flush() ?? Future<void>.value();
 
   static void addLog(LogLevel level, String title, String content) {
     if (isMuted) return;
-    if (_file == null && App.isInitialized) {
-      Directory dir;
-      if (App.isAndroid) {
-        dir = Directory(App.externalStoragePath!);
-      } else {
-        dir = Directory(App.dataPath);
-      }
-      var file = dir.joinFile("logs.txt");
-      _file = file.openWrite();
-    }
 
     if (!ignoreLimitation && content.length > maxLogLength) {
       content = "${content.substring(0, maxLogLength)}...";
@@ -75,8 +91,12 @@ class Log {
     }
 
     _logs.add(newLog);
-    if (_file != null) {
-      _file!.write(newLog.toString());
+    final writer = _file;
+    if (writer != null) {
+      writer.add(newLog.toString());
+    } else {
+      _beforeFile.add(newLog);
+      if (_beforeFile.length > maxLogNumber) _beforeFile.removeAt(0);
     }
     if (_logs.length > maxLogNumber) {
       var res = _logs.remove(
@@ -104,7 +124,10 @@ class Log {
     addLog(LogLevel.error, title, info);
   }
 
-  static void clear() => _logs.clear();
+  static void clear() {
+    _logs.clear();
+    _beforeFile.clear();
+  }
 
   @override
   String toString() {

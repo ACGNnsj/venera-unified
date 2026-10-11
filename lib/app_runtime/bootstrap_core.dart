@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_saf/flutter_saf.dart';
@@ -72,6 +73,13 @@ CoreBootstrap createCoreBootstrap({
       final ownershipForApplication = applicationOwnership =
           SqliteDataSyncOwnership.applicationData(() => App.dataPath);
       ownershipForApplication.acquire();
+      final logDirectory = App.isAndroid
+          ? (App.externalStoragePath ?? App.dataPath)
+          : App.dataPath;
+      final closeLogs = await Log.startFileSession(
+        File(path.join(logDirectory, 'logs.txt')),
+      );
+      cleanup.add((name: 'logs', close: closeLogs));
       // Import recovery precedes settings fallback and every database opener.
       // No live application resource may observe a partly replaced snapshot.
       final ownership = SqliteDataSyncOwnership(() => App.dataPath);

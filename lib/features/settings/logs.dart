@@ -176,6 +176,8 @@ class _LogsPageState extends State<LogsPage> {
   }
 
   Future<void> saveLog(String log) async {
+    await Log.flush();
+    if (!mounted) return;
     await saveFileForWindow(
       context,
       data: utf8.encode(log),
