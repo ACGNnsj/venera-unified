@@ -795,6 +795,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
           fit: BoxFit.contain,
           splitWideImage: _splitWideImages,
           splitWideImageInvert: _splitWideImagesInvert,
+          showImageDimensions: data.showImageDimensions,
           onInit: (state) => imageStates.add(state),
           onDispose: (state) => imageStates.remove(state),
         );

@@ -18,6 +18,15 @@ import 'package:venera_next/network/image_stream.dart';
 
 import 'image_provider_lifecycle.dart';
 
+/// Metadata belongs to the cached stream, so cache hits keep the encoded size.
+abstract interface class OriginalImageSize {
+  Size? get originalImageSize;
+}
+
+class _ImageDimensions {
+  Size? size;
+}
+
 abstract class BaseImageProvider<T extends BaseImageProvider<T>>
     extends ImageProvider<T> {
   const BaseImageProvider();
@@ -118,6 +127,7 @@ abstract class BaseImageProvider<T extends BaseImageProvider<T>>
   ImageStreamCompleter loadImage(T key, ImageDecoderCallback decode) {
     final chunkEvents = StreamController<ImageChunkEvent>();
     final consumer = _ImageConsumer();
+    final dimensions = _ImageDimensions();
     late final ImageStreamCompleter completer;
     void evictOwnedStream() {
       final cache = PaintingBinding.instance.imageCache;
@@ -135,7 +145,14 @@ abstract class BaseImageProvider<T extends BaseImageProvider<T>>
 
     completer = _CancellableImageStreamCompleter(
       consumer: consumer,
-      codec: _loadBufferAsync(chunkEvents, decode, consumer, evictOwnedStream),
+      dimensions: dimensions,
+      codec: _loadBufferAsync(
+        chunkEvents,
+        decode,
+        consumer,
+        evictOwnedStream,
+        dimensions,
+      ),
       chunkEvents: chunkEvents.stream,
       scale: 1.0,
       informationCollector: () sync* {
@@ -154,6 +171,7 @@ abstract class BaseImageProvider<T extends BaseImageProvider<T>>
     ImageDecoderCallback decode,
     _ImageConsumer consumer,
     VoidCallback evictOwnedStream,
+    _ImageDimensions dimensions,
   ) async {
     try {
       while (true) {
@@ -170,7 +188,12 @@ abstract class BaseImageProvider<T extends BaseImageProvider<T>>
         Object? failure;
         StackTrace? failureStack;
         try {
-          final loading = _loadAttempt(chunkEvents, decode, attempt);
+          final loading = _loadAttempt(
+            chunkEvents,
+            decode,
+            attempt,
+            dimensions,
+          );
           consumer.loading = (load: loading, attempt: attempt);
           final codec = await loading;
           if (attempt.isCancelled) {
@@ -212,6 +235,7 @@ abstract class BaseImageProvider<T extends BaseImageProvider<T>>
     StreamController<ImageChunkEvent> chunkEvents,
     ImageDecoderCallback decode,
     ImageProviderLoadAttempt attempt,
+    _ImageDimensions dimensions,
   ) async {
     void checkStop() => attempt.check();
     _cancelSignals[checkStop] = attempt.whenCancelled;
@@ -267,7 +291,12 @@ abstract class BaseImageProvider<T extends BaseImageProvider<T>>
       // never reaches decode above belongs to this provider for disposal.
       return await decode(
         buffer,
-        getTargetSize: enableResize ? _getTargetSize : null,
+        getTargetSize: (width, height) {
+          dimensions.size = Size(width.toDouble(), height.toDouble());
+          return enableResize
+              ? _getTargetSize(width, height)
+              : TargetImageSize(width: width, height: height);
+        },
       );
     } catch (error) {
       if (attempt.isCancelled || isCancellation(error)) rethrow;
@@ -592,14 +621,17 @@ Future<void> _joinReleasedImageWork(Iterable<Future<void>> work) async {
 }
 
 /// Cancellation is expected after the final consumer releases an image.
-class _CancellableImageStreamCompleter extends MultiFrameImageStreamCompleter {
+class _CancellableImageStreamCompleter extends MultiFrameImageStreamCompleter
+    implements OriginalImageSize {
   _CancellableImageStreamCompleter({
     required _ImageConsumer consumer,
+    required _ImageDimensions dimensions,
     required super.codec,
     required super.chunkEvents,
     required super.scale,
     super.informationCollector,
-  }) : _consumer = consumer {
+  }) : _consumer = consumer,
+       _dimensions = dimensions {
     _unlisten = BaseImageProvider._lifecycle.listen(
       hold: () {},
       resume: _resumeImage,
@@ -607,6 +639,9 @@ class _CancellableImageStreamCompleter extends MultiFrameImageStreamCompleter {
   }
 
   final _ImageConsumer _consumer;
+  final _ImageDimensions _dimensions;
+  @override
+  Size? get originalImageSize => _dimensions.size;
   late final VoidCallback _unlisten;
   ImageInfo? _heldImage;
   bool _disposed = false;

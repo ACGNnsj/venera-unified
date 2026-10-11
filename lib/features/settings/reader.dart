@@ -645,6 +645,14 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
             useDeviceSettings: useDeviceSpecificSettings,
           ).toSliver(),
           SwitchSetting.reader(
+            title: 'Show image pixel dimensions'.tl,
+            preference: ReaderPreferences.showImageDimensions,
+            onChanged: () => widget.onChanged?.call('showImageDimensions'),
+            comicId: isEnabledSpecificSettings ? widget.comicId : null,
+            comicSource: isEnabledSpecificSettings ? widget.comicSource : null,
+            useDeviceSettings: useDeviceSpecificSettings,
+          ).toSliver(),
+          SwitchSetting.reader(
             title: "Show Chapter Comments".tl,
             preference: ReaderPreferences.showChapterComments,
             onChanged: _onShowChapterCommentsChanged,

@@ -52,8 +52,12 @@ class ReaderDisplayImageProvider
   int get hashCode => Object.hash(image, identityHashCode(work));
 }
 
-class _ReaderDisplayStream extends ImageStreamCompleter {
+class _ReaderDisplayStream extends ImageStreamCompleter
+    implements OriginalImageSize {
   _ReaderDisplayStream(this.image, this.work, this.configuration);
+
+  @override
+  Size? originalImageSize;
 
   final ReaderImageProvider image;
   final ImageWork work;
@@ -142,6 +146,9 @@ class _DisplayImageAttempt {
             info.dispose();
             return;
           }
+          owner.originalImageSize = stream.completer is OriginalImageSize
+              ? (stream.completer as OriginalImageSize).originalImageSize
+              : null;
           owner.receiveImage(info);
         },
         onChunk: (event) {

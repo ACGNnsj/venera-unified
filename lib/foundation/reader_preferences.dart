@@ -188,6 +188,10 @@ abstract final class ReaderPreferences {
     'showPageNumberInReader',
     true,
   );
+  static const showImageDimensions = BoolPreference(
+    'showImageDimensions',
+    false,
+  );
   static const showSingleImageOnFirstPage = BoolPreference(
     'showSingleImageOnFirstPage',
     false,
@@ -247,6 +251,7 @@ abstract final class ReaderPreferences {
     enableTurnPageByVolumeKey,
     enableClockAndBatteryInfoInReader,
     showPageNumberInReader,
+    showImageDimensions,
     showSingleImageOnFirstPage,
     enableDoubleTapToZoom,
     showSystemStatusBar,

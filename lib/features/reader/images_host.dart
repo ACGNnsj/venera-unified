@@ -147,6 +147,7 @@ class ReaderImagesHost extends StatelessWidget {
           sourceKey: source?.key,
           comicId: reader.cid,
           chapterId: reader.eid,
+          showImageDimensions: preferences.showImageDimensions,
         ),
         navigation: reader.controller,
         onViewportChanged: viewportChanged,
@@ -191,6 +192,7 @@ class ReaderImagesHost extends StatelessWidget {
           scrollSpeed: preferences.readerScrollSpeed,
           limitImageWidth: preferences.limitImageWidth == true,
           sideMargin: preferences.readerSideMargin,
+          showImageDimensions: preferences.showImageDimensions,
           doubleTapCollect:
               appdata.settings.globalReaderSettings.quickCollectImage ==
               'DoubleTap',

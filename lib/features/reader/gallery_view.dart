@@ -14,6 +14,7 @@ import 'package:venera_next/foundation/image_provider/reader_image.dart';
 
 import 'gallery_data.dart';
 import 'display_image_provider.dart';
+import 'image_dimensions.dart';
 import 'image_position.dart';
 import 'reader_controller.dart';
 import 'reader_viewport.dart';
@@ -332,16 +333,25 @@ class GalleryModeState extends State<ReaderGalleryView>
       },
       builder: (context, controller) {
         if (data.layout.imagesPerPage == 1 || images.length == 1) {
-          return PhotoView(
+          final image = _displayImage(data.images[images[0]]);
+          Widget photo([VoidCallback? reload]) => PhotoView(
             backgroundDecoration: decoration,
             filterQuality: FilterQuality.medium,
             controller: controller,
-            imageProvider: _displayImage(data.images[images[0]]),
+            imageProvider: image,
             fit: BoxFit.contain,
             loadingBuilder: _buildLoading,
-            errorBuilder: (_, error, stack, retry) =>
-                NetworkError(message: error.toString(), retry: retry),
+            errorBuilder: (_, error, stack, retry) => NetworkError(
+              message: error.toString(),
+              retry: () {
+                retry();
+                reload?.call();
+              },
+            ),
           );
+          return data.showImageDimensions
+              ? ReaderImageDimensions(image: image, builder: photo)
+              : photo();
         }
         return PhotoView.customChild(
           backgroundDecoration: decoration,
@@ -394,6 +404,7 @@ class GalleryModeState extends State<ReaderGalleryView>
             width: double.infinity,
             height: double.infinity,
             image: _displayImage(data.images[images[0]]),
+            showImageDimensions: data.showImageDimensions,
             fit: BoxFit.contain,
             alignment: axis == Axis.vertical
                 ? Alignment.bottomCenter
@@ -407,6 +418,7 @@ class GalleryModeState extends State<ReaderGalleryView>
             width: double.infinity,
             height: double.infinity,
             image: _displayImage(data.images[images[1]]),
+            showImageDimensions: data.showImageDimensions,
             fit: BoxFit.contain,
             alignment: axis == Axis.vertical
                 ? Alignment.topCenter
@@ -422,6 +434,7 @@ class GalleryModeState extends State<ReaderGalleryView>
         return Expanded(
           child: ComicImage(
             image: imageProvider,
+            showImageDimensions: data.showImageDimensions,
             fit: BoxFit.contain,
             onInit: (state) => imageStates[state] = imageIndex,
             onDispose: (state) => imageStates.remove(state),

@@ -1,5 +1,7 @@
 {
   "zh_CN": {
+    "Show image pixel dimensions": "显示图片像素尺寸",
+    "Image dimensions: @width × @height pixels": "图片尺寸：@width × @height 像素",
     "Keep screen on during automatic reading": "自动阅读时保持屏幕常亮",
     "Save is paused after an incomplete source change. Copy your edits before closing.": "上次源修改未完整完成，已暂停保存。关闭前请复制保留你的编辑内容。",
     "Wait for local file operations to finish before changing the local library.": "请等待本地文件操作完成后，再修改漫画库位置。",
@@ -879,6 +881,8 @@
     "Failed to load source": "无法加载来源"
   },
   "zh_TW": {
+    "Show image pixel dimensions": "顯示圖片像素尺寸",
+    "Image dimensions: @width × @height pixels": "圖片尺寸：@width × @height 像素",
     "Keep screen on during automatic reading": "自動閱讀時保持螢幕常亮",
     "Overwrite local data?": "覆寫本機資料？",
     "Save is paused after an incomplete source change. Copy your edits before closing.": "上次來源修改未完整完成，已暫停儲存。關閉前請複製保留你的編輯內容。",

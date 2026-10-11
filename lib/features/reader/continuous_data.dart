@@ -18,6 +18,7 @@ class ReaderContinuousData {
     required this.centerLongPressZoom,
     required this.sourceKey,
     required this.comicId,
+    this.showImageDimensions = false,
   });
 
   final bool vertical;
@@ -36,4 +37,5 @@ class ReaderContinuousData {
   final bool centerLongPressZoom;
   final String? sourceKey;
   final String comicId;
+  final bool showImageDimensions;
 }

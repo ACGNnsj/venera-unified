@@ -7,6 +7,7 @@ import 'package:venera_next/features/reader/reader_tap_scope.dart';
 import 'package:venera_next/features/reader/image_position.dart';
 import 'package:venera_next/foundation/context.dart';
 import 'package:venera_next/foundation/translations.dart';
+import 'image_dimensions.dart';
 
 class ComicImage extends StatefulWidget {
   /// Modified from flutter Image
@@ -31,6 +32,7 @@ class ComicImage extends StatefulWidget {
     this.isAntiAlias = false,
     this.splitWideImage = false,
     this.splitWideImageInvert = false,
+    this.showImageDimensions = false,
     Map<String, String>? headers,
     int? cacheWidth,
     int? cacheHeight,
@@ -75,6 +77,7 @@ class ComicImage extends StatefulWidget {
   final bool splitWideImage;
 
   final bool splitWideImageInvert;
+  final bool showImageDimensions;
 
   final void Function(State<ComicImage> state)? onInit;
 
@@ -476,7 +479,12 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
             height: height,
             child: Center(child: result),
           );
-          return result;
+          return widget.showImageDimensions
+              ? ImageDimensionsOverlay(
+                  size: decodedOriginalSize(_imageStream, _imageInfo!),
+                  child: result,
+                )
+              : result;
         } else {
           // build progress
           return SizedBox(

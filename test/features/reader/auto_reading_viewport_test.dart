@@ -74,6 +74,7 @@ void main() {
           settings['autoReadingKeepScreenOn'] = true;
           settings['enableClockAndBatteryInfoInReader'] = false;
           settings['showPageNumberInReader'] = false;
+          settings['showImageDimensions'] = true;
           settings['eInkMode'] = false;
           settings['limitImageWidth'] = false;
           settings['readerSideMargin'] = 20;
@@ -156,6 +157,17 @@ void main() {
             isTrue,
           );
           settings['longPressAction'] = 'zoom';
+          expect(
+            find.text(mode.isTopToBottom ? '100 × 400' : '400 × 100'),
+            findsWidgets,
+          );
+          settings['showImageDimensions'] = false;
+          reader.update();
+          await pumpFrames(5);
+          expect(
+            find.text(mode.isTopToBottom ? '100 × 400' : '400 × 100'),
+            findsNothing,
+          );
           if (!mode.isGallery) {
             PhotoView flowPhoto() => tester.widget<PhotoView>(
               find.byWidgetPredicate(

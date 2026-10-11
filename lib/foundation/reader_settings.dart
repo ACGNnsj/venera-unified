@@ -112,6 +112,7 @@ class ReaderSettings {
   bool get enableClockAndBatteryInfoInReader =>
       _values['enableClockAndBatteryInfoInReader'] as bool;
   bool get showPageNumberInReader => _values['showPageNumberInReader'] as bool;
+  bool get showImageDimensions => _values['showImageDimensions'] as bool;
   bool get showSingleImageOnFirstPage =>
       _values['showSingleImageOnFirstPage'] as bool;
   bool get enableDoubleTapToZoom => _values['enableDoubleTapToZoom'] as bool;
