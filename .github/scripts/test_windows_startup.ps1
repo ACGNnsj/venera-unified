@@ -92,11 +92,18 @@ function Wait-ForExit(
     }
 }
 
-function Start-TestProcess([string]$Path, [string]$Name, [string[]]$Arguments = @()) {
-    $options = @{}
+function Start-TestProcess(
+    [string]$Path,
+    [string]$Name,
+    [string[]]$Arguments = @(),
+    [switch]$Interactive
+) {
+    # Hidden overrides the first native show request. Interactive smoke tests
+    # need a normal launch on this disposable runner to assert window visibility.
+    $options = @{ WindowStyle = if ($Interactive) { 'Normal' } else { 'Hidden' } }
     if ($Arguments.Count -gt 0) { $options.ArgumentList = $Arguments }
     $process = Start-Process -FilePath $Path -WorkingDirectory $testRoot `
-        -WindowStyle Hidden -PassThru @options `
+        -PassThru @options `
         -RedirectStandardOutput (Join-Path $testRoot "$Name.stdout.log") `
         -RedirectStandardError (Join-Path $testRoot "$Name.stderr.log")
     $started.Add($process)
@@ -200,7 +207,7 @@ try {
     Test-HeadlessCommand 'cli-subscriptions' @('--headless', 'updatesubscribe', '--ignore-disheadless-log') `
         'Updated comics list.' 0 'success'
 
-    $primary = Start-TestProcess $appPath 'primary'
+    $primary = Start-TestProcess $appPath 'primary' -Interactive
     Wait-ForCondition {
         $primary.Refresh()
         if ($primary.HasExited) { throw "First launch exited early: $($primary.ExitCode)" }
@@ -218,7 +225,7 @@ try {
     [StartupSmokeWindow]::ShowWindowAsync($window, 6) | Out-Null
     Wait-ForCondition { [StartupSmokeWindow]::IsIconic($window) } 'Could not minimize the primary window.'
     foreach ($attempt in 1..5) {
-        $secondary = Start-TestProcess $appPath "secondary-$attempt"
+        $secondary = Start-TestProcess $appPath "secondary-$attempt" -Interactive
         Wait-ForExit $secondary 10 0
         if (-not (Has-StartupEvent $secondary.Id 'Existing instance handled; exiting successfully')) {
             throw 'Repeated launch did not report an existing-instance handoff.'
