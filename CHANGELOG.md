@@ -6,6 +6,8 @@
 
 ### 变更
 
+- 更新 Rhttp 的 Chrono、Futures、Tokio 和 Tokio-util 常规依赖及相关锁定依赖，保留 Flutter Rust Bridge 2.11.1、取消回调补丁及现有安全修复（#101）。
+
 - 定向升级 Rhttp 的 Rust 依赖，修复 10 条 GitHub 告警及全量扫描发现的 HTTP/2、QUIC 和内存安全问题；工具链更新至 1.92.0，补齐 Cargo 每周更新和完整锁文件审计，漏洞及 unsound 告警均阻断 CI，保留现有 Dart 桥接和取消回调补丁。
 
 - 阅读模式自动识别的集成回归等待新视图实际绘制首帧，保留图片展示断言，避免异步解码尚未完成时误报图片缺失。
