@@ -236,7 +236,7 @@ void main() {
 
   for (final status in [301, 302, 307, 308]) {
     test(
-      'GET PUT DELETE $status cannot redirect outside the endpoint',
+      'PUT DELETE and listing $status cannot redirect outside the endpoint',
       () async {
         final fixture = _Fixture(
           (_) => _response(
@@ -248,15 +248,10 @@ void main() {
         );
         addTearDown(fixture.remote.dispose);
         for (final operation in <Future<Object?> Function()>[
-          () => fixture.remote.probeArchive('Snapshot.venera'),
           () => create(fixture),
           () => fixture.remote.removeArchiveIfUnchanged(
             'Snapshot.venera',
             strongEtag: '"old"',
-          ),
-          () => fixture.remote.readToFile(
-            'Snapshot.venera',
-            '${directory.path}/untouched.venera',
           ),
           fixture.remote.listNames,
         ]) {
@@ -271,7 +266,7 @@ void main() {
             ),
           );
         }
-        expect(fixture.requests, hasLength(5));
+        expect(fixture.requests, hasLength(3));
         expect(
           fixture.requests.every((r) => r.options.uri.host == 'example.test'),
           isTrue,

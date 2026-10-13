@@ -19,8 +19,8 @@ final class DataSyncArchivePresent extends DataSyncArchiveProbe {
   final String sha256;
   final int length;
 
-  /// Null for absent, weak, malformed, or ambiguous entity tags. Such a result
-  /// proves content but cannot authorize conditional retention deletion.
+  /// Null for absent, weak, malformed, ambiguous, or redirected entity tags.
+  /// Such a result proves content but cannot authorize retention deletion.
   final String? strongEtag;
 }
 

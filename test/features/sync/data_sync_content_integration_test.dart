@@ -250,22 +250,32 @@ void main() {
     },
   );
 
-  test(
-    'missing baseline stops automatic direction selection until explicit upload',
-    () async {
-      fixture.publishRemoteMetadata();
-      appdata.implicitData['webdavSyncMode'] = 'realtime';
-      fixture.controller.start();
-      await _until(() => fixture.controller.lastError != null);
-      expect(fixture.controller.lastError, contains('Complete an upload'));
-      expect(fixture.remote.reads, 0);
-      expect(fixture.remote.puts, 0);
-      expect((await fixture.controller.uploadData()).success, isTrue);
-      fixture.controller.stop();
-      expect(await fixture.inspect(), DataSyncContentState.clean);
-      await fixture.controller.flushPersistence();
-    },
-  );
+  for (final upload in [true, false]) {
+    test(
+      'missing baseline stops automatic direction selection until explicit ${upload ? "upload" : "download"}',
+      () async {
+        fixture.publishRemoteMetadata();
+        appdata.implicitData['webdavSyncMode'] = 'realtime';
+        fixture.controller.start();
+        await _until(() => fixture.controller.lastError != null);
+        expect(fixture.controller.lastError, contains('Complete an upload'));
+        expect(fixture.remote.reads, 0);
+        expect(fixture.remote.puts, 0);
+        final result = upload
+            ? await fixture.controller.uploadData()
+            : await fixture.controller.downloadData();
+        expect(result.success, isTrue, reason: result.errorMessage);
+        fixture.controller.stop();
+        expect(fixture.controller.lastError, isNull);
+        expect(await fixture.inspect(), DataSyncContentState.clean);
+        expect(fixture.remote.puts, upload ? 1 : 0);
+        expect(fixture.remote.reads, upload ? 0 : 1);
+        await fixture.controller.flushPersistence();
+        await fixture.rebuild();
+        expect(await fixture.inspect(), DataSyncContentState.clean);
+      },
+    );
+  }
 
   test('baseline scope changes require a new explicit direction', () async {
     expect((await fixture.controller.uploadData()).success, isTrue);

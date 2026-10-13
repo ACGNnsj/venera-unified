@@ -166,7 +166,14 @@ class WebDavDataSyncRemote implements DataSyncRemote {
       return DataSyncArchivePresent(
         sha256: digest.toString(),
         length: length,
-        strongEtag: tag != null && _isStrongEtag(tag) ? tag : null,
+        // A download/CDN validator does not identify the original DAV resource
+        // and must never authorize a conditional DELETE there.
+        strongEtag:
+            response.requestOptions.uri == _uri(name) &&
+                tag != null &&
+                _isStrongEtag(tag)
+            ? tag
+            : null,
       );
     } finally {
       // Dio does not forward downstream subscription cancellation to the
@@ -186,10 +193,9 @@ class WebDavDataSyncRemote implements DataSyncRemote {
     }
     final base = Uri.parse(_connection.url);
     final directory = base.path.endsWith('/') ? base.path : '${base.path}/';
-    return base.replace(
-      path: '$directory${Uri.encodeComponent(name)}',
-      fragment: '',
-    );
+    return base
+        .replace(path: '$directory${Uri.encodeComponent(name)}')
+        .removeFragment();
   }
 
   void _checkOpen() {
@@ -208,10 +214,14 @@ class WebDavDataSyncRemote implements DataSyncRemote {
     Map<String, Object> headers = const {},
   }) async {
     _checkOpen();
-    final uri = _uri(name);
+    var uri = _uri(name);
+    final visited = <Uri>{uri};
+    var redirects = 0;
+    var challenges = 0;
+    var credentialsAllowed = true;
     // WdDio.req follows 301/302 itself even when followRedirects is false.
-    // Use its public auth objects with explicit, bounded challenge retries.
-    for (var attempt = 0; ; attempt++) {
+    // Use its auth objects with bounded challenges and read-only redirects.
+    for (;;) {
       _checkOpen();
       final target = '${uri.path}${uri.hasQuery ? '?${uri.query}' : ''}';
       final auth = _client.auth;
@@ -225,30 +235,89 @@ class WebDavDataSyncRemote implements DataSyncRemote {
               dParts: _WireDigestParts(auth.dParts, target),
             )
           : auth;
-      final authorization = signer.authorize(method, target);
-      final response = await _client.c.requestUri<ResponseBody>(
-        uri,
-        data: data,
-        cancelToken: CancelToken(),
-        options: Options(
-          method: method,
-          followRedirects: false,
-          maxRedirects: 0,
-          responseType: ResponseType.stream,
-          validateStatus: (_) => true,
-          headers: {
-            HttpHeaders.acceptEncodingHeader: 'identity',
-            ...headers,
-            HttpHeaders.authorizationHeader: ?authorization,
-          },
-        ),
-      );
-      if (response.statusCode != HttpStatus.unauthorized) return response;
-      await _discard(response);
-      if (attempt >= 2 || !_authenticate(response)) {
+      final authorization = credentialsAllowed
+          ? signer.authorize(method, target)
+          : null;
+      final options =
+          Options(
+            method: method,
+            followRedirects: false,
+            maxRedirects: 0,
+            responseType: ResponseType.stream,
+            validateStatus: (_) => true,
+            headers: {
+              HttpHeaders.acceptEncodingHeader: 'identity',
+              ...headers,
+              HttpHeaders.authorizationHeader: ?authorization,
+            },
+          ).compose(
+            _client.c.options,
+            uri.toString(),
+            data: data,
+            cancelToken: CancelToken(),
+          );
+      if (!credentialsAllowed) {
+        // Do not inherit DAV credentials, cookies, custom headers or default
+        // query parameters on a signed/public download URL. Once anonymous,
+        // the entire redirect chain stays anonymous, even if it returns home.
+        options.headers.removeWhere(
+          (name, _) => !{
+            HttpHeaders.acceptHeader,
+            HttpHeaders.acceptEncodingHeader,
+            HttpHeaders.userAgentHeader,
+          }.contains(name.toLowerCase()),
+        );
+        options.queryParameters.clear();
+      }
+      final response = await _client.c.fetch<ResponseBody>(options);
+      if (response.statusCode == HttpStatus.unauthorized) {
+        await _discard(response);
+        if (!credentialsAllowed ||
+            challenges++ >= 2 ||
+            !_authenticate(response)) {
+          throw _statusError(response);
+        }
+        continue;
+      }
+      final redirect = method == 'GET' ? _downloadRedirect(response) : null;
+      if (redirect != null && redirects < 5 && visited.add(redirect)) {
+        await _discard(response);
+        credentialsAllowed = credentialsAllowed && _sameOrigin(uri, redirect);
+        uri = redirect;
+        redirects++;
+        continue;
+      }
+      // A missing/expired CDN link is not proof that the DAV archive is absent.
+      if (redirects > 0 && response.statusCode == HttpStatus.notFound) {
+        await _discard(response);
         throw _statusError(response);
       }
+      return response;
     }
+  }
+
+  Uri? _downloadRedirect(Response<ResponseBody> response) {
+    if (!{301, 302, 303, 307, 308}.contains(response.statusCode)) return null;
+    final locations = response.headers.map[HttpHeaders.locationHeader];
+    if (locations == null || locations.length != 1) return null;
+    final location = locations.single.trim();
+    if (location.isEmpty || location.contains(RegExp(r'[\\\x00-\x1f\x7f]'))) {
+      return null;
+    }
+    final current = response.requestOptions.uri;
+    Uri next;
+    try {
+      next = current.resolve(location).removeFragment();
+      if (!{'http', 'https'}.contains(next.scheme) ||
+          next.host.isEmpty ||
+          next.userInfo.isNotEmpty ||
+          current.scheme == 'https' && next.scheme != 'https') {
+        return null;
+      }
+    } on FormatException {
+      return null;
+    }
+    return next;
   }
 
   bool _authenticate(Response<ResponseBody> response) {
@@ -315,6 +384,11 @@ class WebDavDataSyncRemote implements DataSyncRemote {
 
 bool _isStrongEtag(String value) =>
     RegExp(r'^"[\x21\x23-\x7e\x80-\xff]*"$').hasMatch(value);
+
+bool _sameOrigin(Uri first, Uri second) =>
+    first.scheme == second.scheme &&
+    first.host == second.host &&
+    first.port == second.port;
 
 class _WireDigestParts extends DigestParts {
   _WireDigestParts(DigestParts source, this.target) : super(null) {

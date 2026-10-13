@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rhttp/rhttp.dart' as rhttp;
 import 'package:venera_next/foundation/app.dart';
 import 'package:venera_next/features/sync/data_sync_remote.dart';
+import 'package:venera_next/features/sync/data_sync_remote_port.dart';
 import 'package:venera_next/network/app_dio.dart';
 import 'package:venera_next/network/rhttp_stream_request.dart';
 import 'package:venera_next/network/webdav.dart';
@@ -232,6 +233,93 @@ void main() {
       },
     );
   }
+
+  for (final nativeFails in [false, true]) {
+    test(
+      'GET redirect waits for native completion before replay; failure=$nativeFails',
+      () async {
+        final first = _HeldCall();
+        final second = _HeldCall();
+        var calls = 0;
+        final adapter = _Adapter(
+          (options, settings, upload) =>
+              (++calls == 1 ? first : second).start(options, settings, upload),
+        );
+        final remote = WebDavDataSyncRemote(
+          WebDavEndpoint(
+            url: 'https://example.test/dav',
+            user: '',
+            password: '',
+          ),
+          createClient: (connection) =>
+              connection.createClient(adapter: adapter),
+        );
+        final probing = remote.probeArchive('snapshot.venera');
+        final checked = nativeFails
+            ? expectLater(probing, throwsA(isA<RHttpCleanupFailure>()))
+            : expectLater(probing, completion(isA<DataSyncArchivePresent>()));
+        await first.started.future;
+        first.response.complete((
+          statusCode: 302,
+          headers: {
+            'location': ['https://cdn.test/download?sign=token'],
+          },
+        ));
+        first.body.add(Uint8List.fromList([1]));
+        await first.body.close();
+        await pumpEventQueue();
+        expect(calls, 1);
+        expect(second.started.isCompleted, isFalse);
+        if (nativeFails) {
+          first.finished.completeError(StateError('redirect did not finish'));
+          await checked;
+          expect(calls, 1);
+          await expectLater(
+            remote.dispose(),
+            throwsA(isA<WebDavClientCleanupFailure>()),
+          );
+        } else {
+          first.finished.complete();
+          final redirected = await second.started.future;
+          expect(redirected.uri.host, 'cdn.test');
+          second.response.complete((
+            statusCode: 200,
+            headers: <String, List<String>>{},
+          ));
+          second.body.add(Uint8List.fromList([1, 2, 3]));
+          await second.body.close();
+          second.finished.complete();
+          await checked;
+          await remote.dispose();
+        }
+      },
+    );
+  }
+
+  test('disposing during a redirect drain prevents the next GET', () async {
+    final native = _HeldCall();
+    final adapter = _Adapter(native.start);
+    final remote = WebDavDataSyncRemote(
+      WebDavEndpoint(url: 'https://example.test/dav', user: '', password: ''),
+      createClient: (connection) => connection.createClient(adapter: adapter),
+    );
+    final probing = remote.probeArchive('snapshot.venera');
+    final checked = expectLater(probing, throwsA(isA<DioException>()));
+    await native.started.future;
+    native.response.complete((
+      statusCode: 302,
+      headers: {
+        'location': ['https://cdn.test/download'],
+      },
+    ));
+    await native.body.close();
+    await pumpEventQueue();
+    final closing = remote.dispose();
+    native.finished.complete();
+    await checked;
+    await closing;
+    expect(native.calls, 1);
+  });
 }
 
 class _Adapter extends RHttpAdapter {

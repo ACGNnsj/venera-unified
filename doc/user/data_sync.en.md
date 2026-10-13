@@ -4,6 +4,8 @@ Open **Settings → App → Data Sync** and enter a WebDAV directory URL, userna
 
 App data includes settings, favorites, history, cookies, and source files, but excludes local comic images. Comic archive backups and the online WebDAV library are configured separately.
 
+File downloads support redirect links supplied by the WebDAV service, such as 123 Cloud's HTTPS download hosts. Cross-origin downloads do not receive WebDAV credentials or cookies, and HTTPS-to-HTTP downgrades are rejected. Directory listing, upload, and deletion remain restricted to the configured WebDAV endpoint; if those requests redirect, use the final WebDAV directory URL supplied by the service.
+
 ## Modes
 
 | Mode | Behavior |
@@ -25,3 +27,9 @@ For real-time or scheduled mode, choose an initial upload or download and select
 Changing the mode or interval reschedules the next check. Clear the URL, username, and password and save to disconnect. Existing automatic-sync preferences map to real-time when enabled and manual when disabled; upgrading does not enable scheduled sync automatically.
 
 Excluded settings affect only the named fields. The sync mode, interval, and WebDAV connection settings are already device-local and cannot be overwritten by another device.
+
+## First sync after upgrading
+
+If automatic sync reports `Complete an upload or download a newer backup to resume automatic sync.`, this device has no verified synchronized-content baseline; it does not necessarily indicate a connection failure. After upgrading or changing the endpoint or excluded fields, choose which device's data to keep and complete a manual sync. Upload to keep local data, or download and confirm replacement of local edits to use the remote backup. A download that only checks for updates without importing data does not establish a baseline.
+
+Once an upload or import succeeds, automatic sync can compare local changes again. If it fails, do not clear app data or delete recovery records; export a local backup first and resolve the specific transfer error.
