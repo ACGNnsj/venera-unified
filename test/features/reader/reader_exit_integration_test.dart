@@ -152,6 +152,13 @@ void main() {
                   ? isA<GalleryModeState>()
                   : isA<ContinuousModeState>(),
             );
+            // Mode selection can finish before the new viewport decodes a frame.
+            await _pumpUntil(
+              tester,
+              () => _paintedImages(
+                find.byType(ReaderImagesHost),
+              ).evaluate().isNotEmpty,
+            );
             expect(_paintedImages(find.byType(ReaderImagesHost)), findsWidgets);
             final saved = await tester.runAsync(
               () async => jsonDecode(

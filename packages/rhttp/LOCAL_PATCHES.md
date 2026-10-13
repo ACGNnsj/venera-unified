@@ -2,8 +2,9 @@
 
 Source: the published `rhttp` 0.15.1 package from pub.dev, upstream repository
 https://codeberg.org/Tienisto/rhttp. The upstream MIT license and the separate
-Cargokit license are retained unchanged. No Dart or Rust dependency versions are
-upgraded. Example projects and upstream Dart test fixtures are omitted; runtime,
+Cargokit license are retained unchanged. The Dart bridge remains at 2.11.1;
+Rust dependency security updates are recorded below. Example projects and
+upstream Dart test fixtures are omitted; runtime,
 generated bridge, Rust sources, Cargo.lock and all five native platform build
 integrations are retained.
 
@@ -46,11 +47,12 @@ versions of all fifteen files were formatted with that same formatter outside
 the repository; each pair produced identical SHA-256 hashes. The pub cache was
 not modified. No formatting exclusions or changes to the check were added.
 
-The only upstream file with behavior changes remains `rust/src/api/http.rs`,
+Application-specific Rust source changes remain in `rust/src/api/http.rs`,
 including its callback-drain tests and Rust formatting normalization. Other
 local additions are this document, `.gitignore`, and `rust/cargokit.yaml`.
-All remaining retained upstream files are byte-for-byte unchanged, including
-licenses, Cargo.lock, generated bridge code and platform build entry points.
+Apart from the Cargo.lock security updates below, all remaining retained
+upstream files are byte-for-byte unchanged, including licenses, generated
+bridge code and platform build entry points.
 
 `git diff --check` reports inherited trailing spaces or final blank lines in
 eight unchanged upstream files: `README.md`, `cargokit/LICENSE`,
@@ -59,6 +61,41 @@ eight unchanged upstream files: `README.md`, `cargokit/LICENSE`,
 `rust/src/frb_generated.rs`. Their SHA-256 hashes were compared with upstream
 and match byte-for-byte. They are retained as published; no repository
 whitespace rule or formatting gate is disabled.
+
+## Rust dependency security updates (2026-10-13)
+
+The application pins Rust 1.92.0 in `rust-toolchain.toml` and the CI toolchain
+preparation script. This satisfies the Rust 1.88 minimum required by the fixed
+`time` release. Direct dependency declarations and generated bridge APIs remain
+unchanged; the following Cargo.lock updates address the ten GitHub alerts and
+additional findings from a complete RustSec scan:
+
+| Crate | Previous | Updated | Security advisories |
+|---|---|---|---|
+| anyhow | 1.0.100 | 1.0.103 | RUSTSEC-2026-0190 |
+| bytes | 1.11.0 | 1.11.1 | GHSA-434x-w66g-qw3r |
+| h2 | 0.4.12 | 0.4.16 | RUSTSEC-2026-0258 |
+| quinn-proto | 0.11.13 | 0.11.18 | GHSA-6xvm-j4wr-6v98, GHSA-4w2j-m93h-cj5j; RUSTSEC-2026-0338 through RUSTSEC-2026-0342 |
+| rand | 0.9.2 | 0.10.3 | GHSA-cq8v-f236-94qc |
+| rustls | 0.23.35 | 0.23.45 | GHSA-2mjx-qc3c-rqvc |
+| rustls-webpki | 0.103.8 | 0.103.15 | GHSA-pwjx-qhcg-rvj4, GHSA-965h-392x-2mh5, GHSA-xgp8-3hg3-c2mh, GHSA-82j2-j2ch-gfr8 |
+| time | 0.3.44 | 0.3.47 | GHSA-r6v5-fh4h-64xc |
+
+The `time` update also requires `num-conv` 0.2.2, `time-core` 0.1.8 and
+`time-macros` 0.2.27. Existing `serde_core` replaces `serde` on that dependency
+edge. Updating `quinn-proto` to 0.11.18 replaces its Rand 0.9 dependency graph
+with Rand 0.10: `rand_core` 0.10.1, `rand_pcg` 0.10.2, `chacha20` 0.10.2,
+`cpufeatures` 0.3.1 and `getrandom` 0.4.3 (with `r-efi` 6.0.0). The older
+`rand_chacha`, `ppv-lite86`, `zerocopy`, `zerocopy-derive`, `wasip2` and
+`wit-bindgen` entries are no longer needed. The separate `getrandom` 0.2.16
+entry remains unchanged. No unrelated dependency versions are downgraded.
+
+Dependabot checks this Rust package weekly while keeping Flutter Rust Bridge
+updates separate from its generated Dart code. The dependency security workflow
+runs cargo-audit 0.22.2 against the complete lockfile on pull requests, pushes to
+main, manual dispatch and a weekly schedule. It fetches current RustSec
+advisories and fails on known vulnerabilities and unsoundness warnings without
+advisory exclusions.
 
 ## Building the patched source
 
@@ -72,5 +109,6 @@ this patch. The normal platform Rust toolchain/SDK remains required.
 Use `cargo test --locked --manifest-path packages/rhttp/rust/Cargo.toml --lib`
 with `RUSTFLAGS="--cfg reqwest_unstable"` for the callback regressions. This flag
 is required by the existing reqwest HTTP/3 feature and is already set by the
-included Cargokit builder on native platform builds. Native Flutter regressions must load a newly
-compiled library from this source, not an older DLL left in the app output.
+included Cargokit builder on native platform builds. Native Flutter regressions
+must load a newly compiled library from this source, not an older DLL left in
+the app output.

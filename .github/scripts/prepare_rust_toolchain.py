@@ -29,7 +29,7 @@ def prepare_toolchain(version: str, targets: list[str]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--version", default="1.85.1")
+    parser.add_argument("--version", default="1.92.0")
     parser.add_argument("--target", action="append", default=[])
     args = parser.parse_args()
     prepare_toolchain(args.version, args.target)

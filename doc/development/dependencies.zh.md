@@ -50,6 +50,21 @@ English version: [dependencies.en.md](dependencies.en.md)
 
 真实 PhotoView 回归覆盖缓存命中与异步首帧、帧替换、卸载释放、适配尺寸和缩放。PR 构建规则已覆盖 `packages/`，此包修改会触发现有平台验证，无需单独调整规则。恢复 Git 来源时必须一起恢复 `pubspec.yaml`、`pubspec.lock` 和 Git 清单，并重新验证图片生命周期。
 
+## 本地 Rhttp 的 Rust 安全维护
+
+`packages/rhttp` 保留本地取消回调补丁及 `flutter_rust_bridge =2.11.1`；Rust 传递依赖的来源、版本和安全公告记录在 [LOCAL_PATCHES.md](../../packages/rhttp/LOCAL_PATCHES.md)。项目与 CI 固定 Rust 1.92.0，满足当前安全修复依赖的最低编译器要求。
+
+Dependabot 每周检查 `/packages/rhttp/rust`。Rust 桥接 crate 的升级需要与 Dart 依赖和生成代码一起验证，因此不自动单独升级。完整 Rust 锁文件在 PR、主分支推送、手动触发及每周任务中由[依赖安全工作流](../../.github/workflows/dependency_review.yml)扫描，已知漏洞和 `unsound` 内存安全告警都会使扫描失败；这项检查同时覆盖已存在于锁文件中的依赖。
+
+本地执行相同检查：
+
+```sh
+cargo install cargo-audit --version 0.22.2 --locked --no-default-features
+cargo audit --file packages/rhttp/rust/Cargo.lock --deny unsound
+```
+
+更新锁文件后须重新构建 Rhttp 原生库，再运行取消回调和 Flutter 网络回归，避免测试加载旧 DLL。工具链变更同时更新 `rust-toolchain.toml` 和 `.github/scripts/prepare_rust_toolchain.py`，并验证各平台构建。
+
 ## 上游化流程
 
 1. 将当前 commit 与上游对应版本进行差异比较。

@@ -20,6 +20,20 @@ updates:
       - dependency-name: sqlite3_flutter_libs
         versions: [">= 0.6.0"]
 
+  - package-ecosystem: cargo
+    directory: /packages/rhttp/rust
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      rust-dependencies:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      # The Rust crate and generated Dart bridge must be upgraded together.
+      - dependency-name: flutter_rust_bridge
+        versions: ["> 2.11.1"]
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

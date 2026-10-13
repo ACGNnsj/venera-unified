@@ -50,6 +50,34 @@ The migration retains the existing fork's reader interfaces and behavior; it doe
 
 Real PhotoView regressions cover cached and asynchronous first frames, replacement, unmount cleanup, contained sizing, and zoom. The PR build rules already include `packages/`, so changes to this package trigger existing platform validation without a separate rule change. Restoring the Git source requires restoring `pubspec.yaml`, `pubspec.lock`, and the Git inventory together, then revalidating image lifetimes.
 
+## Rust Security Maintenance for Local Rhttp
+
+`packages/rhttp` retains the local callback cancellation patch and
+`flutter_rust_bridge =2.11.1`. Rust transitive dependency versions and security
+advisories are recorded in [LOCAL_PATCHES.md](../../packages/rhttp/LOCAL_PATCHES.md).
+The project and CI pin Rust 1.92.0 to satisfy the fixed dependencies' compiler
+requirements.
+
+Dependabot checks `/packages/rhttp/rust` weekly. Rust bridge updates must be
+validated with the Dart dependency and generated code, so they are not upgraded
+independently. The [dependency security workflow](../../.github/workflows/dependency_review.yml)
+audits the complete Rust lockfile on pull requests, main pushes, manual dispatch
+and a weekly schedule. Known vulnerabilities and unsoundness warnings fail the
+audit, including those in dependencies already present in the lockfile.
+
+Run the same check locally:
+
+```sh
+cargo install cargo-audit --version 0.22.2 --locked --no-default-features
+cargo audit --file packages/rhttp/rust/Cargo.lock --deny unsound
+```
+
+After updating the lockfile, rebuild the native Rhttp library before running
+callback cancellation and Flutter network regressions so tests cannot use an
+old DLL. Update both `rust-toolchain.toml` and
+`.github/scripts/prepare_rust_toolchain.py` when changing the toolchain, then
+validate platform builds.
+
 ## Upstreaming Process
 
 1. Compare the pinned commit with the corresponding upstream version.
