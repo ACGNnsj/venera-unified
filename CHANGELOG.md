@@ -6,7 +6,7 @@
 
 ### 变更
 
-- 将 libc 暂时固定为 0.2.189，避开 0.2.190 删除 iOS dyld API 导致的 backtrace 编译失败；忽略该故障版本，并增加 PR 的 iOS Rhttp 原生编译门禁与依赖锁定回归检查，防止跨平台依赖更新回退（#103）。
+- 将 libc 暂时固定为 0.2.189，避开 0.2.190 删除 iOS dyld API 导致的 backtrace 编译失败；忽略该故障版本，并增加 PR 的 iOS Rhttp 原生编译门禁与依赖锁定回归检查，防止跨平台依赖更新回退；同步补全本地修改范围说明（#103）。
 
 - 更新 battery_plus、Dio、enough_convert 和 url_launcher 四项 Dart 依赖；撤回未生效的 Flutter Rust Bridge 升级，统一保持 2.11.1，并在 Pub 侧增加忽略规则，等待 Dart、Rust 和生成桥接代码协调升级（#103）。
 

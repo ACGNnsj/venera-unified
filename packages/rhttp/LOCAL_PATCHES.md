@@ -50,9 +50,9 @@ not modified. No formatting exclusions or changes to the check were added.
 Application-specific Rust source changes remain in `rust/src/api/http.rs`,
 including its callback-drain tests and Rust formatting normalization. Other
 local additions are this document, `.gitignore`, and `rust/cargokit.yaml`.
-Apart from the Cargo.lock dependency updates below, all remaining retained
-upstream files are byte-for-byte unchanged, including licenses, generated
-bridge code and platform build entry points.
+Apart from the Cargo.lock dependency updates and Cargo.toml compatibility
+pins below, all remaining retained upstream files are byte-for-byte unchanged,
+including licenses, generated bridge code and platform build entry points.
 
 `git diff --check` reports inherited trailing spaces or final blank lines in
 eight unchanged upstream files: `README.md`, `cargokit/LICENSE`,
