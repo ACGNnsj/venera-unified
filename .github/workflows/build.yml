@@ -335,10 +335,19 @@ jobs:
           fi
           IOS_VERSION="${IOS_VERSION%%-*}"
           echo "正在根据 ${APP_VERSION} 构建 iOS 包版本 ${IOS_VERSION}+${IOS_BUILD}"
-          cp pubspec.yaml pubspec.yaml.release
-          trap 'mv pubspec.yaml.release pubspec.yaml' EXIT
-          perl -0pi -e "s/^version:.*/version: ${IOS_VERSION}+${IOS_BUILD}/m" pubspec.yaml
-          flutter build ios --release --no-codesign
+          flutter build ios --release --no-codesign \
+            --build-name "$IOS_VERSION" --build-number "$IOS_BUILD"
+      - name: 校验 iOS 原生版本与应用更新渠道
+        run: |
+          APP_VERSION=$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | tr -d '\r\n')
+          IOS_VERSION="${APP_VERSION%%+*}"
+          IOS_BUILD="${APP_VERSION#*+}"
+          IOS_VERSION="${IOS_VERSION%%-*}"
+          APP_BUNDLE="build/ios/iphoneos/Runner.app"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_BUNDLE/Info.plist")" = "$IOS_VERSION"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_BUNDLE/Info.plist")" = "$IOS_BUILD"
+          BUNDLED_VERSION=$(sed -n 's/^version:[[:space:]]*//p' "$APP_BUNDLE/Frameworks/App.framework/flutter_assets/pubspec.yaml" | tr -d '\r\n')
+          test "$BUNDLED_VERSION" = "$APP_VERSION"
       - name: 创建 IPA
         run: |
           mkdir -p build/ios/iphoneos/Payload
