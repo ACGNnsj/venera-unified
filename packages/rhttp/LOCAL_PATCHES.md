@@ -107,6 +107,11 @@ with the existing manifest constraints and Rust 1.92.0 toolchain. Generated
 bridge code, the exact Flutter Rust Bridge 2.11.1 pin, callback-drain patch,
 and the security-fixed crate entries above remain unchanged.
 
+Dependabot PR #102 updates Reqwest 0.12.25 to 0.12.28 and cookie_store 0.21.1
+to 0.22.1 in the same lockfile. HTTP settings, streaming cancellation and
+callback acknowledgment handling remain unchanged. The two routine updates
+are combined without reverting any of the security fixes listed above.
+
 ## Building the patched source
 
 Windows/Linux CMake, Android Gradle and iOS/macOS pod scripts all invoke the
