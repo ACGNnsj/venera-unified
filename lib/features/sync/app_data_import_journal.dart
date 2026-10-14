@@ -874,6 +874,8 @@ void _checkPath(String root, String path) {
 }
 
 void _checkTree(String path) {
+  // 应用数据根和缓存根的系统别名应由入口先解析；这里仍须拒绝根目录内的链接。
+  // 不能为兼容 Android 路径别名而直接放行 resolved，否则导入、回滚和清理可能越界。
   final absolute = p.normalize(p.absolute(path));
   final type = _type(absolute);
   if (type == FileSystemEntityType.notFound) return;

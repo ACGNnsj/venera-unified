@@ -28,7 +28,11 @@ import 'package:venera_next/network/cookie_jar.dart';
 import 'package:venera_next/features/comic_source/comic_source_api.dart';
 import 'package:venera_next/foundation/js_engine.dart';
 import 'package:venera_next/app_runtime/data_sync.dart';
+import 'package:venera_next/app_runtime/data_sync_content.dart';
 import 'package:venera_next/app_runtime/data_sync_transfer.dart';
+import 'package:venera_next/features/sync/data_sync_content.dart';
+
+import '../../support/directory_alias.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -69,6 +73,8 @@ void main() {
     Object? version, {
     bool includeSources = false,
     bool includeFavorites = false,
+    bool includeDatabases = false,
+    String? sourceScript,
   }) {
     final metadata = File('${directory.path}/appdata.json')
       ..writeAsStringSync(
@@ -84,11 +90,23 @@ void main() {
       final marker = File('${directory.path}/empty-source-marker')
         ..writeAsStringSync('No source scripts');
       zip.addFile('comic_source/.keep', marker.path);
+      if (sourceScript != null) {
+        final script = File('${directory.path}/incoming-source.js')
+          ..writeAsStringSync(sourceScript);
+        zip.addFile('comic_source/cache_alias.js', script.path);
+      }
     }
-    if (includeFavorites) {
+    if (includeFavorites || includeDatabases) {
       final incoming = '${directory.path}/local_favorite.db';
       _writeMarker(incoming, 'remote-favorite');
       zip.addFile('local_favorite.db', incoming);
+    }
+    if (includeDatabases) {
+      for (final name in ['history.db', 'cookie.db']) {
+        final incoming = '${directory.path}/$name';
+        _writeMarker(incoming, 'remote-$name');
+        zip.addFile(name, incoming);
+      }
     }
     zip.close();
     return file;
@@ -184,6 +202,352 @@ void main() {
     );
     expect(appdata.settings['dataVersion'], 7);
     expect(appdata.searchHistory, ['remote']);
+  });
+
+  group('aliased import cache', () {
+    Future<({Link alias, String cachePath})> prepare(
+      bool sharedAncestor,
+    ) async {
+      final physical = Directory('${directory.path}/private')..createSync();
+      final data = Directory('${physical.path}/data')..createSync();
+      final cache = Directory('${physical.path}/cache')..createSync();
+      final dataPath = data.resolveSymbolicLinksSync();
+      final cachePath = cache.resolveSymbolicLinksSync();
+      final alias = await createDirectoryAlias(
+        '${directory.path}/android-user',
+        sharedAncestor ? physical.path : cachePath,
+      );
+      App.dataPath = sharedAncestor ? '${alias.path}/data' : dataPath;
+      App.cachePath = sharedAncestor ? '${alias.path}/cache' : alias.path;
+      addTearDown(() async {
+        App.dataPath = dataPath;
+        App.cachePath = cachePath;
+        await alias.delete();
+      });
+      expect(
+        p.equals(
+          App.cachePath,
+          Directory(App.cachePath).resolveSymbolicLinksSync(),
+        ),
+        isFalse,
+      );
+      final previousCookies = SingleInstanceCookieJar.instance;
+      SingleInstanceCookieJar.instance = null;
+      addTearDown(() async {
+        await HistoryManager().waitForAsyncWrites();
+        HistoryManager().close();
+        await LocalFavoritesManager().closeAndWait();
+        SingleInstanceCookieJar.instance?.dispose();
+        SingleInstanceCookieJar.instance = previousCookies;
+      });
+      for (final name in ['history.db', 'local_favorite.db', 'cookie.db']) {
+        _writeMarker('${App.dataPath}/$name', 'local-$name');
+      }
+      await HistoryManager().init();
+      await LocalFavoritesManager().init();
+      await LocalFavoritesManager().debugWaitForHashedIdsRefresh();
+      SingleInstanceCookieJar('${App.dataPath}/cookie.db');
+      Directory('${App.dataPath}/comic_source').createSync();
+      appdata.implicitData['webdavSyncMode'] = 'manual';
+      await appdata.saveData(false);
+      return (alias: alias, cachePath: cachePath);
+    }
+
+    void expectNoImportFiles() {
+      expect(Directory(App.cachePath).listSync(), isEmpty);
+      expect(
+        Directory(App.dataPath).listSync().where(
+          (entry) => p.basename(entry.path).startsWith('.app-data-import-'),
+        ),
+        isEmpty,
+      );
+    }
+
+    for (final sharedAncestor in [false, true]) {
+      for (final force in [false, true]) {
+        test(
+          'production download replaces databases and establishes a baseline; ancestor=$sharedAncestor, force=$force',
+          () async {
+            await prepare(sharedAncestor);
+            final version = force ? 6 : 8;
+            final remote = _LocalArchiveRemote(
+              archive(version, includeDatabases: true),
+            );
+            final transfer = createDataSyncTransfer(openRemote: (_) => remote);
+            final sync = createApplicationDataSync(
+              transfer: () => transfer,
+              uploadRecovery: transfer,
+            );
+            addTearDown(sync.closeAndWait);
+
+            final result = await sync.downloadData(force: force);
+            expect(result.success, isTrue, reason: result.errorMessage);
+            expect(appdata.settings['dataVersion'], version);
+            expect(appdata.searchHistory, ['remote']);
+            expect(
+              _readMarker('${App.dataPath}/history.db'),
+              'remote-history.db',
+            );
+            expect(
+              _readMarker('${App.dataPath}/cookie.db'),
+              'remote-cookie.db',
+            );
+            expect(
+              LocalFavoritesManager().getFolderComics('original').single.id,
+              'remote-favorite',
+            );
+            expect(sync.hasPendingChanges, isFalse);
+            expect(appdata.implicitData['webdavSyncOperation'], isNull);
+            expect(remote.reads, 1);
+            expect(remote.closes, 1);
+            expectNoImportFiles();
+            await sync.closeAndWait();
+            final content = ApplicationDataSyncContent();
+            addTearDown(content.close);
+            expect(
+              await content.inspect(
+                List<String>.from(appdata.settings['webdav'] as List),
+                appdata.settings['disableSyncFields'] as String,
+              ),
+              DataSyncContentState.clean,
+            );
+            final journal = AppDataImportJournal.open(App.dataPath);
+            try {
+              expect(journal.receipts, isEmpty);
+              journal.checkReadyForImport();
+            } finally {
+              journal.close();
+            }
+          },
+        );
+      }
+    }
+
+    test(
+      'source directory import uses the same physical staging root',
+      () async {
+        await prepare(true);
+        await appdata.init();
+        final previousAppVersion = App.version;
+        App.version = '1.18.0';
+        addTearDown(() => App.version = previousAppVersion);
+        final native = Directory(
+          'build/windows/x64/runner/Release',
+        ).absolute.path;
+        DynamicLibrary.open('$native/flutter_windows.dll');
+        DynamicLibrary.open('$native/flutter_qjs_plugin.dll');
+        JsEngine.cacheJsInit(await File('assets/init.js').readAsBytes());
+        final engine = JsEngine();
+        await engine.init();
+        addTearDown(engine.closeAndWait);
+        final manager = ComicSourceManager();
+        addTearDown(manager.closeAndWait);
+        await manager.init();
+        final source = archive(
+          8,
+          includeSources: true,
+          includeDatabases: true,
+          sourceScript: '''
+class CacheAliasSource extends ComicSource {
+  name = 'Cache alias'; key = 'cache_alias'; version = '1.0.0';
+  minAppVersion = '1.0.0';
+  comic = {
+    loadInfo: async () => ({title: 'Comic', cover: '', tags: {}}),
+    loadEp: async () => []
+  };
+}
+''',
+        );
+
+        expect(
+          await importSyncAppData(source, checkActive: () {}, force: true),
+          DataSyncCommitState.applied,
+        );
+        expect(
+          File('${App.dataPath}/comic_source/.keep').readAsStringSync(),
+          'No source scripts',
+        );
+        expect(_readMarker('${App.dataPath}/history.db'), 'remote-history.db');
+        expect(manager.all().map((source) => source.key), ['cache_alias']);
+        expect(appdata.searchHistory, ['remote']);
+        expectNoImportFiles();
+      },
+      skip: !Platform.isWindows,
+    );
+
+    test(
+      'cancellation after extraction preserves data and removes staging',
+      () async {
+        await prepare(true);
+        var checks = 0;
+        await expectLater(
+          importSyncAppData(
+            archive(8, includeDatabases: true),
+            checkActive: () {
+              if (++checks == 2) throw const RequestCancelled();
+            },
+          ),
+          throwsA(isA<RequestCancelled>()),
+        );
+        expect(checks, 2);
+        for (final name in ['history.db', 'local_favorite.db', 'cookie.db']) {
+          expect(_readMarker('${App.dataPath}/$name'), 'local-$name');
+        }
+        expect(appdata.searchHistory, ['local']);
+        expectNoImportFiles();
+      },
+    );
+
+    test('metadata failure rolls back every replaced database', () async {
+      await prepare(true);
+      final source = archive(8, includeDatabases: true);
+      final writeError = StateError('injected imported metadata failure');
+      var replaced = false;
+      final hooks = _ImportIOHooks()
+        ..beforeWrite = (path, content) async {
+          if (p.basename(path) != 'appdata.json.tmp' ||
+              !content.contains('"dataVersion":8')) {
+            return;
+          }
+          expect(
+            _readMarker('${App.dataPath}/history.db'),
+            'remote-history.db',
+          );
+          expect(_readMarker('${App.dataPath}/cookie.db'), 'remote-cookie.db');
+          expect(
+            _readMarker('${App.dataPath}/local_favorite.db'),
+            'remote-favorite',
+          );
+          replaced = true;
+          throw writeError;
+        };
+      final captured = await _captureImport(
+        IOOverrides.runWithIOOverrides(
+          () => importSyncAppData(source, checkActive: () {}, force: true),
+          hooks,
+        ),
+      );
+      expect(replaced, isTrue);
+      final failure = captured.error as DataSyncImportFailure;
+      expect(failure.commitState, DataSyncCommitState.notApplied);
+      expect(failure.cause, same(writeError));
+      expect(failure.failures, hasLength(1));
+      for (final name in ['history.db', 'local_favorite.db', 'cookie.db']) {
+        expect(_readMarker('${App.dataPath}/$name'), 'local-$name');
+      }
+      expect(appdata.settings['dataVersion'], 7);
+      expect(appdata.searchHistory, ['local']);
+      expectNoImportFiles();
+    });
+
+    test(
+      'failed overwrite can retry and establish a content baseline',
+      () async {
+        await prepare(true);
+        final remote = _LocalArchiveRemote(archive(8, includeDatabases: true));
+        final transfer = createDataSyncTransfer(openRemote: (_) => remote);
+        final sync = createApplicationDataSync(
+          transfer: () => transfer,
+          uploadRecovery: transfer,
+        );
+        addTearDown(sync.closeAndWait);
+        final writeError = StateError('injected download metadata failure');
+        final hooks = _ImportIOHooks()
+          ..beforeWrite = (path, content) async {
+            if (p.basename(path) == 'appdata.json.tmp' &&
+                content.contains('"dataVersion":8')) {
+              throw writeError;
+            }
+          };
+
+        final first = await IOOverrides.runWithIOOverrides(
+          () => sync.downloadData(force: true),
+          hooks,
+        );
+        expect(first.error, isTrue);
+        expect(
+          first.failure,
+          isA<DataSyncFailure>().having(
+            (failure) => failure.commitState,
+            'commitState',
+            DataSyncCommitState.notApplied,
+          ),
+        );
+        expect(appdata.settings['dataVersion'], 7);
+        expect(appdata.searchHistory, ['local']);
+        for (final name in ['history.db', 'local_favorite.db', 'cookie.db']) {
+          expect(_readMarker('${App.dataPath}/$name'), 'local-$name');
+        }
+        expectNoImportFiles();
+        final content = ApplicationDataSyncContent();
+        addTearDown(content.close);
+        Future<DataSyncContentState> inspect() => content.inspect(
+          List<String>.from(appdata.settings['webdav'] as List),
+          appdata.settings['disableSyncFields'] as String,
+        );
+        expect(await inspect(), DataSyncContentState.unknown);
+
+        final retried = await sync.downloadData(force: true);
+        expect(retried.success, isTrue, reason: retried.errorMessage);
+        expect(remote.reads, 2);
+        expect(remote.closes, 2);
+        expect(appdata.settings['dataVersion'], 8);
+        expect(appdata.searchHistory, ['remote']);
+        expect(_readMarker('${App.dataPath}/history.db'), 'remote-history.db');
+        expect(_readMarker('${App.dataPath}/cookie.db'), 'remote-cookie.db');
+        expect(
+          LocalFavoritesManager().getFolderComics('original').single.id,
+          'remote-favorite',
+        );
+        expect(sync.hasPendingChanges, isFalse);
+        expect(appdata.implicitData['webdavSyncOperation'], isNull);
+        expectNoImportFiles();
+        await sync.closeAndWait();
+        expect(await inspect(), DataSyncContentState.clean);
+      },
+    );
+
+    test(
+      'cleanup retry stays on the original physical cache after retargeting',
+      () async {
+        final paths = await prepare(false);
+        final source = archive(8, includeDatabases: true);
+        var allowCleanup = false;
+        String? stagingPath;
+        final hooks = _ImportIOHooks()
+          ..beforeDeleteDirectory = (path) {
+            if (!p.basename(path).startsWith('app-data-import-')) return;
+            stagingPath = path;
+            if (!allowCleanup) {
+              throw FileSystemException('cache cleanup held', path);
+            }
+          };
+        final captured = await _captureImport(
+          IOOverrides.runWithIOOverrides(() => importAppData(source), hooks),
+        );
+        final failure = captured.error as DataSyncImportFailure;
+        expect(failure.commitState, DataSyncCommitState.applied);
+        expect(failure.failures.single.stage, 'remove import staging');
+        expect(p.dirname(stagingPath!), paths.cachePath);
+
+        final otherCache = Directory('${directory.path}/other-cache')
+          ..createSync();
+        final decoy = Directory(
+          '${otherCache.path}/${p.basename(stagingPath!)}',
+        )..createSync();
+        final sentinel = File('${decoy.path}/preserve')
+          ..writeAsStringSync('untouched');
+        await paths.alias.delete();
+        await createDirectoryAlias(paths.alias.path, otherCache.path);
+        allowCleanup = true;
+        expect(await failure.resume!(), DataSyncCommitState.applied);
+        expect(await failure.resume!(), DataSyncCommitState.applied);
+        expect(Directory(stagingPath!).existsSync(), isFalse);
+        expect(sentinel.readAsStringSync(), 'untouched');
+        expect(appdata.searchHistory, ['remote']);
+        expect(_readMarker('${App.dataPath}/history.db'), 'remote-history.db');
+      },
+    );
   });
 
   test(

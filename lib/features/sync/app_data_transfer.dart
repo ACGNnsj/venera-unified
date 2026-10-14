@@ -158,9 +158,13 @@ Future<DataSyncCommitState> _importAppData(
   String? syncOperationId,
 }) async {
   checkActive?.call();
-  final cacheDir = await Directory(
-    App.cachePath,
-  ).createTemp('app-data-import-');
+  // Android 的 /data/user/0 与 /data/data 系统别名也会影响 cache，不只是数据根。
+  // rc.3 曾在 WebDAV 下载成功后，因别名解压路径被 _checkTree 误报
+  // Import filesystem entry is an alias，导致 history.db 等文件无法覆盖导入。
+  // 创建暂存目录前固定可信缓存根的物理路径，解压、替换和失败清理都使用它；
+  // 不能逐个解析并放行归档内的链接，也不能放宽导入日志的内部路径检查。
+  final cacheRoot = Directory(App.cachePath).resolveSymbolicLinksSync();
+  final cacheDir = await Directory(cacheRoot).createTemp('app-data-import-');
   final cacheDirPath = cacheDir.path;
   AppDataImportJournal? journal;
   AppDataImportTransaction? transaction;

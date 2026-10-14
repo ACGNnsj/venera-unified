@@ -6,6 +6,8 @@ import 'package:sqlite3/sqlite3.dart';
 import 'package:venera_next/features/sync/app_data_import_journal.dart';
 import 'package:venera_next/features/sync/data_sync_commit.dart';
 
+import '../../support/directory_alias.dart';
+
 void main() {
   late Directory root;
   late Directory data;
@@ -374,6 +376,73 @@ void main() {
       }
     },
   );
+
+  test('an aliased incoming file must use its trusted physical root', () async {
+    final alias = await createDirectoryAlias(
+      p.join(root.path, 'android-cache'),
+      incoming.resolveSymbolicLinksSync(),
+    );
+    addTearDown(alias.delete);
+    final transaction = await journal.prepare(resources: {'history.db'});
+    final physicalSource = source('history.db');
+    await expectLater(
+      transaction.replaceFile(
+        'history.db',
+        File(p.join(alias.path, 'history.db')),
+      ),
+      throwsA(
+        isA<FileSystemException>().having(
+          (error) => error.message,
+          'message',
+          'Import filesystem entry is an alias',
+        ),
+      ),
+    );
+    expect(transaction.state, DataSyncCommitState.notApplied);
+    expect(live('history.db').readAsStringSync(), 'original history');
+    await transaction.replaceFile('history.db', physicalSource);
+    expect(live('history.db').readAsStringSync(), 'incoming');
+    expect(await transaction.restore(), isEmpty);
+    await transaction.markRolledBack();
+    await transaction.cleanup();
+    expect(live('history.db').readAsStringSync(), 'original history');
+  });
+
+  for (final nested in [false, true]) {
+    test('incoming source aliases remain forbidden; nested=$nested', () async {
+      final outside = Directory(p.join(root.path, 'outside'))..createSync();
+      final sentinel = File(p.join(outside.path, 'preserve.data'))
+        ..writeAsStringSync('foreign content');
+      final sourceRoot = Directory(
+        p.join(incoming.resolveSymbolicLinksSync(), 'comic_source'),
+      );
+      if (nested) sourceRoot.createSync();
+      final alias = await createDirectoryAlias(
+        nested ? p.join(sourceRoot.path, 'nested') : sourceRoot.path,
+        outside.resolveSymbolicLinksSync(),
+      );
+      try {
+        final transaction = await journal.prepare(resources: {'comic_source'});
+        await expectLater(
+          transaction.replaceDirectory('comic_source', sourceRoot),
+          throwsA(isA<FileSystemException>()),
+        );
+        expect(transaction.state, DataSyncCommitState.notApplied);
+        expect(
+          Directory(p.join(data.path, 'comic_source')).existsSync(),
+          isFalse,
+        );
+        expect(sentinel.readAsStringSync(), 'foreign content');
+        expect(await transaction.restore(), isEmpty);
+        await transaction.markRolledBack();
+        await transaction.cleanup();
+        expect(sentinel.readAsStringSync(), 'foreign content');
+        expect(outside.listSync(), hasLength(1));
+      } finally {
+        await alias.delete();
+      }
+    });
+  }
 
   test(
     'rejects a source directory junction without touching its target',
