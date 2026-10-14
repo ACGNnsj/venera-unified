@@ -123,7 +123,7 @@ Windows 安装器、便携包和 winget manifest 维护说明见 [doc/distributi
 | Arch Linux（x86_64） | `sudo pacman -U ./venera-next-xxx-x86_64.pkg.tar.zst` |
 | AppImage（x86_64 / ARM64） | `chmod +x VeneraNext-xxx-x86_64.AppImage`，再执行 `./VeneraNext-xxx-x86_64.AppImage`（ARM64 选择 `aarch64` 文件） |
 
-`xxx` 请替换为下载文件中的实际版本号。v1.17.0 稳定版提供 x86_64 和 ARM64 的 RPM 与 AppImage；可用 `uname -m` 查看机器架构。
+`xxx` 请替换为下载文件中的实际版本号。v1.18.0 稳定版提供 x86_64 和 ARM64 的 RPM 与 AppImage；可用 `uname -m` 查看机器架构。
 
 Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定版 AppImage 已包含 GTK 3 和 WebKitGTK 4.1，无需额外安装 GTK/WebKit；仍需系统提供 glibc 2.35 或更新版本及兼容的 OpenGL/EGL 显卡驱动。依赖安装、FUSE 问题及发行版兼容范围见 [Linux 安装与分发](doc/distribution/linux.zh.md)。
 
