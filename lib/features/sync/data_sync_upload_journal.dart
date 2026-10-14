@@ -232,12 +232,18 @@ class DataSyncUploadJournal {
   DataSyncUploadJournal._(this.dataPath, this._db);
 
   factory DataSyncUploadJournal.open(String dataPath) {
-    final root = Directory(p.normalize(p.absolute(dataPath)));
-    root.createSync(recursive: true);
+    final directory = Directory(p.normalize(p.absolute(dataPath)));
+    directory.createSync(recursive: true);
+    // Android 的 /data/user/0 与 /data/data 可能是同一应用目录的系统别名；
+    // 要求原路径等于物理路径会误报 Upload data path contains a link。
+    // 错误发生在本地恢复初始化（read import recovery），联网前就阻断上传和下载，
+    // 不是 WebDAV 账号认证或 302 跳转失败，不能通过放宽网络校验来修复。
+    // 先解析并固定可信数据根，SQLite、快照及清理统一使用该物理路径。
+    // 仅放行根路径的别名；内部链接和越界仍由 _checkPath/_checkTree 拒绝，不能移除。
+    final root = Directory(p.normalize(directory.resolveSymbolicLinksSync()));
     if (FileSystemEntity.typeSync(root.path, followLinks: false) !=
-            FileSystemEntityType.directory ||
-        !p.equals(p.normalize(root.resolveSymbolicLinksSync()), root.path)) {
-      throw const FormatException('Upload data path contains a link');
+        FileSystemEntityType.directory) {
+      throw const FormatException('Upload data path is not a directory');
     }
     final path = p.join(root.path, '.data-sync-upload.sqlite');
     for (final suffix in ['', '-journal', '-wal', '-shm']) {
@@ -391,6 +397,8 @@ bool _strongEtag(Object? value) =>
     value is String && RegExp(r'^"[\x21\x23-\x7e\x80-\xff]*"$').hasMatch(value);
 
 void _checkPath(String root, String path) {
+  // root 必须是 open 已解析并固定的物理根，不能改回 Android 系统别名路径。
+  // 根的别名兼容不代表内部链接可信；这些检查仍须阻止越界访问和误清理。
   if (!p.isWithin(root, path)) {
     throw const FormatException('Upload path escaped data directory');
   }

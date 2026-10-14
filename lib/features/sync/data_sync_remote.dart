@@ -166,8 +166,8 @@ class WebDavDataSyncRemote implements DataSyncRemote {
       return DataSyncArchivePresent(
         sha256: digest.toString(),
         length: length,
-        // A download/CDN validator does not identify the original DAV resource
-        // and must never authorize a conditional DELETE there.
+        // 下载/CDN 的 ETag 不代表原 WebDAV 文件，不能用于原文件的条件删除；
+        // 只有原归档 URL 直接返回的强 ETag 才能作为删除凭据。
         strongEtag:
             response.requestOptions.uri == _uri(name) &&
                 tag != null &&
@@ -219,15 +219,16 @@ class WebDavDataSyncRemote implements DataSyncRemote {
     var redirects = 0;
     var challenges = 0;
     var credentialsAllowed = true;
-    // WdDio.req follows 301/302 itself even when followRedirects is false.
-    // Use its auth objects with bounded challenges and read-only redirects.
+    // 兼容性回归：123 云盘目录 PROPFIND 返回 207，归档 GET 却会以 302
+    // 跳到 HTTPS 下载/CDN 域名。rc.1 一刀切拒绝跳转导致 Android、Windows 同步失败。
+    // WdDio.req 即使关闭 followRedirects 也会自行重试 301/302，不能改回该入口；
+    // 这里复用 SDK 认证并自行限制重试。修改策略须保留 data_sync_download_redirect_test.dart 的断言。
     for (;;) {
       _checkOpen();
       final target = '${uri.path}${uri.hasQuery ? '?${uri.query}' : ''}';
       final auth = _client.auth;
-      // SDK DigestAuth normally encodes its argument again. Preserve the exact
-      // wire target (including escaped reserved characters and query) while
-      // retaining the SDK's algorithm and the client's cached challenge.
+      // 同源跳转也必须按新路径和查询重新签名。SDK DigestAuth 会再次编码参数，
+      // 此处保留实际发送的转义路径及查询，并复用 SDK 算法和已缓存的认证挑战。
       final signer = auth is DigestAuth
           ? DigestAuth(
               user: auth.user,
@@ -238,6 +239,8 @@ class WebDavDataSyncRemote implements DataSyncRemote {
       final authorization = credentialsAllowed
           ? signer.authorize(method, target)
           : null;
+      // 关闭的是传输层自动跳转，不是禁止下载跳转。validateStatus 必须放行 3xx，
+      // 再由下方 GET 分支检查 Location；收紧为仅 2xx 会重现 rc.1 的 302 错误。
       final options =
           Options(
             method: method,
@@ -257,9 +260,9 @@ class WebDavDataSyncRemote implements DataSyncRemote {
             cancelToken: CancelToken(),
           );
       if (!credentialsAllowed) {
-        // Do not inherit DAV credentials, cookies, custom headers or default
-        // query parameters on a signed/public download URL. Once anonymous,
-        // the entire redirect chain stays anonymous, even if it returns home.
+        // 跨源下载不能继承 WebDAV 认证、Cookie、自定义私有头或默认查询参数。
+        // 仅清除客户端默认查询，必须保留 Location 自带的签名查询，否则 CDN 会拒绝下载。
+        // 一旦跨源，整条跳转链都不再携带原凭据，即使后来跳回原 WebDAV 域名。
         options.headers.removeWhere(
           (name, _) => !{
             HttpHeaders.acceptHeader,
@@ -279,6 +282,8 @@ class WebDavDataSyncRemote implements DataSyncRemote {
         }
         continue;
       }
+      // 仅 GET 可受控跳转；不能为了修复下载而放开 PUT、DELETE 或 PROPFIND，
+      // 否则会破坏原端点的认证及条件写入/删除边界。次数上限和循环检测必须保留。
       final redirect = method == 'GET' ? _downloadRedirect(response) : null;
       if (redirect != null && redirects < 5 && visited.add(redirect)) {
         await _discard(response);
@@ -287,7 +292,8 @@ class WebDavDataSyncRemote implements DataSyncRemote {
         redirects++;
         continue;
       }
-      // A missing/expired CDN link is not proof that the DAV archive is absent.
+      // CDN 链接失效返回 404 不代表原 WebDAV 归档不存在，必须报错；
+      // 不能按“远端无备份”处理，否则同步可能误判并继续上传。
       if (redirects > 0 && response.statusCode == HttpStatus.notFound) {
         await _discard(response);
         throw _statusError(response);
@@ -307,7 +313,9 @@ class WebDavDataSyncRemote implements DataSyncRemote {
     final current = response.requestOptions.uri;
     Uri next;
     try {
+      // 允许相对 Location，并保留其转义路径和签名查询；不能重新拼接或解码下载 URL。
       next = current.resolve(location).removeFragment();
+      // 下载跳转不等于信任任意目标：必须拒绝 URL 内嵌凭据和 HTTPS 降级。
       if (!{'http', 'https'}.contains(next.scheme) ||
           next.host.isEmpty ||
           next.userInfo.isNotEmpty ||
@@ -354,6 +362,8 @@ class WebDavDataSyncRemote implements DataSyncRemote {
   }
 
   Future<void> _discard(Response<ResponseBody> response) async {
+    // 认证重试及下一跳请求前，必须读完本次响应并等待原生请求真正收尾；
+    // 不能只收到响应头就重发，也不能用固定延时替代 waitForIdle。
     var length = 0;
     await for (final chunk in response.data!.stream) {
       length += chunk.length;
@@ -403,8 +413,9 @@ class _WireDigestParts extends DigestParts {
   set uri(String value) {}
 }
 
-/// Keep SDK listing/XML and authentication, but prevent its explicit 301/302
-/// retry as well as automatic transport redirects from changing the endpoint.
+/// 目录读取保留 SDK 的 XML 解析及认证，但不能随下载 GET 一起放开重定向。
+/// SDK 会自行重试 301/302，仅设置 followRedirects=false 不够；还须拒绝目录 3xx，
+/// 防止 PROPFIND 改变原端点或把认证发送到下载/CDN 域名。
 class _ListingRedirectGuard extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {

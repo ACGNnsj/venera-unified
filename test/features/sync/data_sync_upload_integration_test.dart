@@ -15,7 +15,30 @@ import 'package:venera_next/features/sync/data_sync_upload_journal.dart';
 import 'package:venera_next/foundation/sync_preference_store.dart';
 import 'package:venera_next/network/request_scope.dart';
 
+import '../../support/directory_alias.dart';
+
 void main() {
+  test(
+    'an aliased data root permits recovery initialization and a real WebDAV upload',
+    () async {
+      final fixture = await _Fixture.create();
+      addTearDown(fixture.close);
+      await fixture.useDataPathAlias();
+
+      final result = await fixture.controller.uploadData();
+      expect(result.success, isTrue);
+      expect(fixture.prepareCalls, 1);
+      expect(fixture.exports, 1);
+      expect(fixture.timeWrites, 1);
+      expect(fixture.server.byMethod('PUT'), hasLength(1));
+      expect(fixture.markerClearedWithTerminalReceipt, isTrue);
+      expect(fixture.durableImplicit['webdavSyncOperation'], isNull);
+      expect(fixture.records, isEmpty);
+      expect(File(fixture.destinations.single).existsSync(), isFalse);
+      expect(fixture.server.errors, isEmpty);
+    },
+  );
+
   test(
     'real upload clears its durable marker before acknowledging the terminal receipt',
     () async {
@@ -194,12 +217,20 @@ class _Fixture {
   bool markerClearedWithTerminalReceipt = false;
   DataSyncUploadRecord? lastTerminal;
   bool expectUnresolvedRecoveryOnClose = false;
+  Link? _dataAlias;
 
-  String get dataPath => p.join(root.path, 'data');
+  String get dataPath => p.join(_dataAlias?.path ?? root.path, 'data');
   File get settingsFile => File(p.join(root.path, 'settings.json'));
   File get implicitFile => File(p.join(root.path, 'implicit.json'));
   Map<String, dynamic> get durableImplicit =>
       jsonDecode(implicitFile.readAsStringSync()) as Map<String, dynamic>;
+
+  Future<void> useDataPathAlias() async {
+    _dataAlias = await createDirectoryAlias(
+      p.join(root.path, 'data-alias'),
+      root.path,
+    );
+  }
 
   static Future<_Fixture> create() async {
     final server = await _WebDavServer.start();
@@ -299,6 +330,7 @@ class _Fixture {
       }
     } finally {
       await server.close();
+      await _dataAlias?.delete();
       root.deleteSync(recursive: true);
     }
   }
@@ -329,7 +361,13 @@ class _Participant implements DataSyncParticipant {
     fixture.exports++;
     fixture.destinations.add(destination.path);
     expect(p.basename(destination.path), 'snapshot.venera');
-    expect(p.isWithin(fixture.dataPath, destination.path), isTrue);
+    expect(
+      p.isWithin(
+        Directory(fixture.dataPath).resolveSymbolicLinksSync(),
+        destination.path,
+      ),
+      isTrue,
+    );
     expect(
       p.basename(destination.parent.path),
       startsWith('.data-sync-upload-'),
