@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:venera_next/network/request_scope.dart';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
+import 'package:webdav_client/webdav_client.dart' as webdav;
 
 import 'package:venera_next/network/webdav.dart';
 
@@ -74,6 +75,147 @@ class DataSyncTransferFailure extends DataSyncFailure {
   });
 
   final Future<DataSyncCommitState> Function(RequestScope)? resume;
+}
+
+/// v1.17.0 的 WebDAV 传输流程，仅适配现有应用数据及任务生命周期接口。
+/// 不使用条件 PUT、强 ETag 清理、UUID 远端文件名或内容基线协议；
+/// 123 云盘等服务的下载会跳转到 CDN，不能擅自将这些要求加回稳定流程。
+class V117WebDavDataSyncTransfer implements DataSyncTransfer {
+  V117WebDavDataSyncTransfer({
+    required DataSyncParticipant participant,
+    webdav.Client Function(WebDavEndpoint)? createClient,
+    DateTime Function()? now,
+  }) : _participant = participant,
+       _createClient =
+           createClient ??
+           ((endpoint) => endpoint.createClient(logRequests: true)),
+       _now = now ?? DateTime.now;
+
+  final DataSyncParticipant _participant;
+  final webdav.Client Function(WebDavEndpoint) _createClient;
+  final DateTime Function() _now;
+
+  Future<T> _withClient<T>(
+    WebDavEndpoint connection,
+    RequestScope scope,
+    Future<T> Function(webdav.Client client) action,
+  ) async {
+    scope.check();
+    final client = _createClient(connection);
+    Future<void>? closing;
+    Future<void> close() => closing ??= closeWebDavClient(client);
+    unawaited(
+      scope.whenCancelled.then((_) {
+        unawaited(close().catchError((Object _, StackTrace _) {}));
+      }),
+    );
+    try {
+      return await action(client);
+    } finally {
+      await close();
+    }
+  }
+
+  @override
+  Future<void> upload(
+    WebDavEndpoint connection, {
+    required bool excludeFields,
+    required RequestScope scope,
+    String? syncOperationId,
+  }) => _withClient(connection, scope, (client) async {
+    final version = await _participant.prepareUploadVersion();
+    final directory = await Directory(
+      _participant.cachePath,
+    ).createTemp('data-sync-');
+    try {
+      final archive = File('${directory.path}/snapshot.venera');
+      await _participant.exportData(excludeFields, archive);
+      scope.check();
+      final day = (_now().millisecondsSinceEpoch ~/ Duration.millisecondsPerDay)
+          .toString();
+      final name = '$day-$version.venera';
+      var files = await client.readDir('/', scope.cancelToken);
+      files = files.where((entry) => entry.name!.endsWith('.venera')).toList();
+      final today = files
+          .where((entry) => entry.name!.startsWith('$day-'))
+          .firstOrNull;
+      if (today != null) await client.remove(today.name!, scope.cancelToken);
+      if (files.length >= 10) {
+        files.sort((a, b) => a.name!.compareTo(b.name!));
+        await client.remove(files.first.name!, scope.cancelToken);
+      }
+      scope.check();
+      await client.write(
+        name,
+        await archive.readAsBytes(),
+        cancelToken: scope.cancelToken,
+      );
+      await _participant.recordSyncTime(_now().millisecondsSinceEpoch);
+    } finally {
+      await _deleteV117Temporary(directory);
+    }
+  });
+
+  @override
+  Future<bool> download(
+    WebDavEndpoint connection, {
+    required RequestScope scope,
+    bool force = false,
+    void Function(void Function())? publishImported,
+    String? syncOperationId,
+  }) => _withClient(connection, scope, (client) async {
+    final files = await client.readDir('/', scope.cancelToken);
+    files.sort((a, b) => b.name!.compareTo(a.name!));
+    final entry = files
+        .where((entry) => entry.name!.endsWith('.venera'))
+        .firstOrNull;
+    if (entry == null) throw const DataSyncArchiveNotFound();
+    final name = entry.name!;
+    final version = int.tryParse(
+      name.split('-').elementAtOrNull(1)?.split('.').first ?? '',
+    );
+    final current = _participant.version;
+    if (!force && version != null && current != null && version <= current) {
+      return false;
+    }
+    final directory = await Directory(
+      _participant.cachePath,
+    ).createTemp('data-sync-');
+    try {
+      final archive = File('${directory.path}/snapshot.venera');
+      await client.read2File(
+        name,
+        archive.path,
+        cancelToken: scope.cancelToken,
+      );
+      scope.check();
+      final state = await _participant.importData(
+        archive,
+        scope: scope,
+        force: force,
+        publishImported: publishImported,
+      );
+      if (state != DataSyncCommitState.applied) return false;
+      final publish = publishImported;
+      if (publish == null) {
+        _participant.notifyImported();
+      } else {
+        publish(_participant.notifyImported);
+      }
+      await _participant.recordSyncTime(_now().millisecondsSinceEpoch);
+      return true;
+    } finally {
+      await _deleteV117Temporary(directory);
+    }
+  });
+}
+
+Future<void> _deleteV117Temporary(Directory directory) async {
+  try {
+    if (await directory.exists()) await directory.delete(recursive: true);
+  } catch (_) {
+    // v1.17.0 treats cache cleanup as best effort, not a failed synchronization.
+  }
 }
 
 class WebDavDataSyncTransfer

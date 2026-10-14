@@ -87,6 +87,7 @@ class DataSyncController with ChangeNotifier {
     DataSyncOwnership? ownership,
     DateTime Function()? now,
     Timer Function(Duration, void Function())? createTimer,
+    bool useV117WebDav = false,
   }) : _syncPreferences = preferences,
        _transferFactory = transfer,
        _saveSettings = saveSettings,
@@ -96,6 +97,7 @@ class DataSyncController with ChangeNotifier {
        _uploadRecovery = uploadRecovery,
        _content = content,
        _ownership = ownership,
+       _useV117WebDav = useV117WebDav,
        _clock = now ?? DateTime.now,
        _createTimer = createTimer ?? Timer.new;
 
@@ -110,6 +112,7 @@ class DataSyncController with ChangeNotifier {
   final DataSyncUploadRecovery? _uploadRecovery;
   final DataSyncContent? _content;
   final DataSyncOwnership? _ownership;
+  final bool _useV117WebDav;
   bool _ownershipReady = false;
   bool _ownershipReleased = false;
   bool _disposalDrained = false;
@@ -919,6 +922,7 @@ class DataSyncController with ChangeNotifier {
       _trackRecoveryIo('read import receipt', _importRecovery!.readReceipts);
 
   Future<bool> _loadImportRecovery() async {
+    if (_useV117WebDav) return true;
     final raw = _syncPreferences.pendingOperation;
     DataSyncOperation? operation;
     if (raw != null) {
@@ -1125,6 +1129,7 @@ class DataSyncController with ChangeNotifier {
   }
 
   DataSyncFailure? _recoveryGuard() {
+    if (_useV117WebDav) return null;
     if (_recoveryFailure case final failure?) {
       if (_completion?.resume == null) return failure;
       _recoveryFailure = null;
@@ -1213,6 +1218,9 @@ class DataSyncController with ChangeNotifier {
     SyncPreferenceCheckpoint? previousConfiguration,
     required bool automatic,
   }) async {
+    if (_useV117WebDav) {
+      return _runV117Task(task, run, saveConfiguration: saveConfiguration);
+    }
     final pending = _completion;
     final effectiveTask = pending == null
         ? task
@@ -1312,6 +1320,53 @@ class DataSyncController with ChangeNotifier {
       _activeTaskType = null;
       _isUploading = false;
       _isDownloading = false;
+      if (!_disposed) notifyListeners();
+    }
+  }
+
+  /// v1.17.0 按本机 pending 标记及 dataVersion 同步，不建立内容基线，
+  /// 也不读写 RC 的操作标记；旧恢复证据保留，不应擅自删文件或回放上传。
+  Future<Res<bool>> _runV117Task(
+    _DataSyncTask task,
+    Future<Res<bool>> Function() run, {
+    required bool saveConfiguration,
+  }) async {
+    _activeTaskType = task;
+    _isUploading = task == _DataSyncTask.upload;
+    _isDownloading = task == _DataSyncTask.download;
+    _lastError = null;
+    _lastCommitState = DataSyncCommitState.notApplied;
+    final generation = _changeGeneration;
+    try {
+      if (hasConfiguration && !_configuring) {
+        _syncPreferences.lastAttempt = _now.millisecondsSinceEpoch;
+        await Future<void>.sync(_persistState);
+      }
+      notifyListeners();
+      final result = await run();
+      if (result.error) {
+        _lastError = result.errorMessage;
+      } else if (hasConfiguration &&
+          generation == _changeGeneration &&
+          (task == _DataSyncTask.upload ||
+              _lastCommitState == DataSyncCommitState.applied)) {
+        _syncPreferences.pending = false;
+      }
+      if (saveConfiguration && result.success) await _persistConfiguration();
+      return result;
+    } catch (error, stack) {
+      Log.error(_taskLogTag(task), error, stack);
+      final result = Res<bool>.fromException(error, stack);
+      _lastError = result.errorMessage;
+      return result;
+    } finally {
+      _activeTaskType = null;
+      _isUploading = false;
+      _isDownloading = false;
+      if (hasConfiguration && !_configuring && !_disposed) {
+        _syncPreferences.lastAttempt = _now.millisecondsSinceEpoch;
+        await Future<void>.sync(_persistState);
+      }
       if (!_disposed) notifyListeners();
     }
   }

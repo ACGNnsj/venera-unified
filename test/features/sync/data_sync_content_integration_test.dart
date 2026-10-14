@@ -491,6 +491,7 @@ class _Fixture {
   void _createController() {
     final transfer = createDataSyncTransfer(openRemote: (_) => remote);
     controller = createApplicationDataSync(
+      useV117WebDav: false,
       transfer: () => transfer,
       uploadRecovery: transfer,
     );

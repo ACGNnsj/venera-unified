@@ -275,6 +275,7 @@ void main() {
             );
             final transfer = createDataSyncTransfer(openRemote: (_) => remote);
             final sync = createApplicationDataSync(
+              useV117WebDav: false,
               transfer: () => transfer,
               uploadRecovery: transfer,
             );
@@ -447,6 +448,7 @@ class CacheAliasSource extends ComicSource {
         final remote = _LocalArchiveRemote(archive(8, includeDatabases: true));
         final transfer = createDataSyncTransfer(openRemote: (_) => remote);
         final sync = createApplicationDataSync(
+          useV117WebDav: false,
           transfer: () => transfer,
           uploadRecovery: transfer,
         );
@@ -1167,6 +1169,7 @@ class CacheAliasSource extends ComicSource {
       appdata.implicitData['webdavSyncMode'] = 'manual';
       var transferCreations = 0;
       DataSyncController create() => createApplicationDataSync(
+        useV117WebDav: false,
         transfer: () {
           transferCreations++;
           return createDataSyncTransfer(openRemote: (_) => remote);
@@ -1285,6 +1288,7 @@ class CacheAliasSource extends ComicSource {
           appdata.implicitData['webdavSyncPending'] = false;
           appdata.implicitData['webdavSyncMode'] = 'manual';
           final sync = createApplicationDataSync(
+            useV117WebDav: false,
             transfer: () => createDataSyncTransfer(openRemote: (_) => remote),
           );
           sync.start();

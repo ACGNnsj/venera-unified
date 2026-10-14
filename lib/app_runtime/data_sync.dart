@@ -15,17 +15,25 @@ DataSyncController createApplicationDataSync({
   DataSyncTransfer Function()? transfer,
   DataSyncImportRecovery? importRecovery,
   DataSyncUploadRecovery? uploadRecovery,
+  bool useV117WebDav = true,
 }) {
-  final recovery = importRecovery ?? createDataSyncImportRecovery();
-  final defaultTransfer = transfer == null
+  // 默认恢复 v1.17.0 的 WebDAV 方案，不要求新协议的 ETag 或内容基线。
+  // RC 的上传／内容基线恢复记录和操作标记留在原处，不阻断稳定同步流程。
+  final recovery = useV117WebDav
+      ? null
+      : importRecovery ?? createDataSyncImportRecovery();
+  final defaultTransfer = !useV117WebDav && transfer == null
       ? createDataSyncTransfer(importRecovery: recovery)
       : null;
   return DataSyncController(
+    useV117WebDav: useV117WebDav,
     preferences: createAppSyncPreferences(appdata),
-    transfer: transfer ?? () => defaultTransfer!,
+    transfer:
+        transfer ??
+        () => useV117WebDav ? createV117DataSyncTransfer() : defaultTransfer!,
     importRecovery: recovery,
-    uploadRecovery: uploadRecovery ?? defaultTransfer,
-    content: ApplicationDataSyncContent(),
+    uploadRecovery: useV117WebDav ? null : uploadRecovery ?? defaultTransfer,
+    content: useV117WebDav ? null : ApplicationDataSyncContent(),
     ownership: SqliteDataSyncOwnership(() => App.dataPath),
     saveSettings: () => appdata.saveData(false),
     persistImplicit: appdata.writeImplicitData,

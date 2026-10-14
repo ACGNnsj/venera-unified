@@ -6,18 +6,174 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/io.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:rhttp/rhttp.dart' as rhttp;
 import 'package:venera_next/features/sync/data_sync_commit.dart';
 import 'package:venera_next/features/sync/data_sync_controller.dart';
 import 'package:venera_next/features/sync/data_sync_operation.dart';
+import 'package:venera_next/features/sync/data_sync_recovery.dart';
 import 'package:venera_next/features/sync/data_sync_remote.dart';
 import 'package:venera_next/features/sync/data_sync_transfer.dart';
 import 'package:venera_next/features/sync/data_sync_upload_journal.dart';
 import 'package:venera_next/foundation/sync_preference_store.dart';
+import 'package:venera_next/foundation/app.dart';
+import 'package:venera_next/foundation/appdata.dart';
 import 'package:venera_next/network/request_scope.dart';
 
 import '../../support/directory_alias.dart';
 
 void main() {
+  test(
+    'v1.17 SDK upload and redirected download use the real native rhttp adapter',
+    () async {
+      await rhttp.Rhttp.init();
+      App.version = 'v117-sync-test';
+      final previousProxy = appdata.settings['proxy'];
+      appdata.settings['proxy'] = 'direct';
+      addTearDown(() => appdata.settings['proxy'] = previousProxy);
+      final fixture = await _Fixture.create(useV117WebDav: true);
+      addTearDown(fixture.close);
+      fixture.useNativeRhttp = true;
+      fixture.server.requireConditions = false;
+      fixture.server.emitEtags = false;
+      fixture.server.redirectDownloads = true;
+      fixture.server.requireAuthentication = true;
+      fixture.settings['webdav'] = [fixture.server.url, 'user', 'password'];
+      final day =
+          fixture.now.millisecondsSinceEpoch ~/ Duration.millisecondsPerDay;
+      fixture.server.store('$day-7.venera', [9]);
+      final uploaded = await fixture.controller.uploadData();
+      expect(uploaded.success, isTrue, reason: uploaded.errorMessage);
+      expect(fixture.server.byMethod('GET'), isEmpty);
+      expect(fixture.server.byMethod('PUT').single.name, '$day-8.venera');
+      expect(fixture.server.files, hasLength(1));
+      fixture.server.store('99999-100.venera', [4, 5, 6]);
+      final downloaded = await fixture.controller.downloadData();
+      expect(downloaded.success, isTrue, reason: downloaded.errorMessage);
+      expect(fixture.importedBytes, [4, 5, 6]);
+      expect(fixture.server.byMethod('GET'), hasLength(2));
+      expect(fixture.server.downloadQueries, ['sign=Mixed%20Token']);
+      expect(fixture.controller.lastError, isNull);
+      expect(fixture.implicit['webdavSyncOperation'], isNull);
+      expect(fixture.server.errors, isEmpty);
+    },
+    skip: !Platform.isWindows,
+  );
+
+  test(
+    'v1.17 upload uses SDK deletion and PUT without GET probes or ETags',
+    () async {
+      final fixture = await _Fixture.create(useV117WebDav: true);
+      addTearDown(fixture.close);
+      fixture.server.requireConditions = false;
+      fixture.server.emitEtags = false;
+      final day =
+          fixture.now.millisecondsSinceEpoch ~/ Duration.millisecondsPerDay;
+      for (var offset = 1; offset <= 9; offset++) {
+        fixture.server.store('${day - offset}-7.venera', [offset]);
+      }
+      final today = '$day-6.venera';
+      final oldest = '${day - 9}-7.venera';
+      fixture.server.store(today, [42]);
+
+      final result = await fixture.controller.uploadData();
+      expect(result.success, isTrue, reason: result.errorMessage);
+      expect(fixture.server.byMethod('GET'), isEmpty);
+      expect(fixture.server.byMethod('DELETE').map((r) => r.name), [
+        today,
+        oldest,
+      ]);
+      expect(
+        fixture.server.byMethod('DELETE').every((r) => r.ifMatch == null),
+        isTrue,
+      );
+      final put = fixture.server.byMethod('PUT').single;
+      expect(put.name, '$day-8.venera');
+      expect(put.ifNoneMatch, isNull);
+      expect(fixture.server.files[put.name]!.bytes, fixture.exportedBytes);
+      expect(fixture.server.files, hasLength(9));
+      expect(fixture.controller.hasPendingChanges, isFalse);
+      expect(fixture.timeWrites, 1);
+      expect(fixture.implicit['webdavSyncOperation'], isNull);
+      expect(
+        File(p.join(fixture.dataPath, '.data-sync-upload.sqlite')).existsSync(),
+        isFalse,
+      );
+      expect(File(fixture.destinations.single).existsSync(), isFalse);
+      expect(fixture.server.errors, isEmpty);
+    },
+  );
+
+  test(
+    'v1.17 sync preserves stale RC markers and evidence across restart',
+    () async {
+      final fixture = await _Fixture.create(useV117WebDav: true);
+      addTearDown(fixture.close);
+      fixture.server.requireConditions = false;
+      final stale = {'id': 'retained-rc4-operation', 'version': 4};
+      fixture.implicit['webdavSyncOperation'] = stale;
+      final evidence = File(
+        p.join(fixture.dataPath, '.data-sync-upload.sqlite'),
+      )..writeAsStringSync('preserved RC recovery evidence');
+      final content = File(
+        p.join(fixture.dataPath, '.data-sync-content.sqlite'),
+      )..writeAsStringSync('preserved RC content evidence');
+
+      expect((await fixture.controller.uploadData()).success, isTrue);
+      expect(fixture.durableImplicit['webdavSyncOperation'], stale);
+      await fixture.rebuild();
+      expect((await fixture.controller.uploadData()).success, isTrue);
+      expect(fixture.prepareCalls, 2);
+      expect(fixture.server.byMethod('PUT'), hasLength(2));
+      expect(fixture.durableImplicit['webdavSyncOperation'], stale);
+      expect(evidence.readAsStringSync(), 'preserved RC recovery evidence');
+      expect(content.readAsStringSync(), 'preserved RC content evidence');
+      expect(fixture.controller.lastError, isNull);
+      expect(fixture.server.errors, isEmpty);
+    },
+  );
+
+  for (final force in [false, true]) {
+    test(
+      'v1.17 SDK download follows 302 and imports without a content baseline force=$force',
+      () async {
+        final fixture = await _Fixture.create(useV117WebDav: true);
+        addTearDown(fixture.close);
+        fixture.server.requireConditions = false;
+        fixture.server.emitEtags = false;
+        fixture.server.redirectDownloads = true;
+        fixture.server.store('99999-${force ? 7 : 8}.venera', [4, 5, 6]);
+        fixture.implicit['webdavSyncPending'] = false;
+
+        final result = await fixture.controller.downloadData(force: force);
+        expect(result.success, isTrue, reason: result.errorMessage);
+        expect(fixture.importedBytes, [4, 5, 6]);
+        expect(fixture.imports, 1);
+        expect(fixture.notifications, 1);
+        expect(fixture.timeWrites, 1);
+        expect(fixture.server.byMethod('GET'), hasLength(2));
+        expect(fixture.server.downloadQueries, ['sign=Mixed%20Token']);
+        expect(fixture.server.byMethod('PUT'), isEmpty);
+        expect(fixture.implicit['webdavSyncOperation'], isNull);
+        expect(fixture.server.errors, isEmpty);
+      },
+    );
+  }
+
+  test(
+    'v1.17 SDK download skips a non-newer version without GET or import',
+    () async {
+      final fixture = await _Fixture.create(useV117WebDav: true);
+      addTearDown(fixture.close);
+      fixture.server.store('99999-7.venera', [4, 5, 6]);
+      final result = await fixture.controller.downloadData();
+      expect(result.success, isTrue, reason: result.errorMessage);
+      expect(fixture.server.byMethod('GET'), isEmpty);
+      expect(fixture.imports, 0);
+      expect(fixture.timeWrites, 0);
+      expect(fixture.controller.hasPendingChanges, isTrue);
+    },
+  );
+
   test(
     'an aliased data root permits recovery initialization and a real WebDAV upload',
     () async {
@@ -217,6 +373,11 @@ class _Fixture {
   bool markerClearedWithTerminalReceipt = false;
   DataSyncUploadRecord? lastTerminal;
   bool expectUnresolvedRecoveryOnClose = false;
+  bool useV117WebDav = false;
+  bool useNativeRhttp = false;
+  int imports = 0;
+  int notifications = 0;
+  Uint8List? importedBytes;
   Link? _dataAlias;
 
   String get dataPath => p.join(_dataAlias?.path ?? root.path, 'data');
@@ -232,10 +393,10 @@ class _Fixture {
     );
   }
 
-  static Future<_Fixture> create() async {
+  static Future<_Fixture> create({bool useV117WebDav = false}) async {
     final server = await _WebDavServer.start();
     final root = Directory.systemTemp.createTempSync('upload-integration-');
-    final fixture = _Fixture(root, server);
+    final fixture = _Fixture(root, server)..useV117WebDav = useV117WebDav;
     Directory(fixture.dataPath).createSync();
     fixture.settings = {
       'webdav': [server.url, '', ''],
@@ -263,7 +424,7 @@ class _Fixture {
 
   Future<void> persistImplicit() async {
     await implicitFile.writeAsString(jsonEncode(implicit), flush: true);
-    if (implicit['webdavSyncOperation'] == null) {
+    if (!useV117WebDav && implicit['webdavSyncOperation'] == null) {
       final terminals = records.where((record) => record.isTerminal).toList();
       if (terminals.isNotEmpty) {
         markerClearedWithTerminalReceipt = true;
@@ -275,26 +436,37 @@ class _Fixture {
   DataSyncController get controller {
     if (_controller case final existing?) return existing;
     final participant = _Participant(this);
-    final transfer = WebDavDataSyncTransfer(
-      participant: participant,
-      openRemote: (connection) => WebDavDataSyncRemote(
-        connection,
-        createClient: (endpoint) =>
-            endpoint.createClient(adapter: IOHttpClientAdapter()),
-      ),
-      uploadJournalPath: () => dataPath,
-      now: () => now,
-    );
+    final DataSyncTransfer transfer = useV117WebDav
+        ? V117WebDavDataSyncTransfer(
+            participant: participant,
+            createClient: (endpoint) => useNativeRhttp
+                ? endpoint.createClient()
+                : endpoint.createClient(adapter: IOHttpClientAdapter()),
+            now: () => now,
+          )
+        : WebDavDataSyncTransfer(
+            participant: participant,
+            openRemote: (connection) => WebDavDataSyncRemote(
+              connection,
+              createClient: (endpoint) =>
+                  endpoint.createClient(adapter: IOHttpClientAdapter()),
+            ),
+            uploadJournalPath: () => dataPath,
+            now: () => now,
+          );
     transfersCreated++;
     controllersCreated++;
     return _controller = DataSyncController(
+      useV117WebDav: useV117WebDav,
       preferences: SyncPreferenceStore(
         readSetting: (key) => settings[key],
         writeSetting: (key, value) => settings[key] = value,
         implicitData: () => implicit,
       ),
       transfer: () => transfer,
-      uploadRecovery: transfer,
+      uploadRecovery: transfer is DataSyncUploadRecovery
+          ? transfer as DataSyncUploadRecovery
+          : null,
       saveSettings: saveSettings,
       persistImplicit: persistImplicit,
       observeChanges: (_) => () {},
@@ -363,14 +535,16 @@ class _Participant implements DataSyncParticipant {
     expect(p.basename(destination.path), 'snapshot.venera');
     expect(
       p.isWithin(
-        Directory(fixture.dataPath).resolveSymbolicLinksSync(),
+        Directory(
+          fixture.useV117WebDav ? fixture.root.path : fixture.dataPath,
+        ).resolveSymbolicLinksSync(),
         destination.path,
       ),
       isTrue,
     );
     expect(
       p.basename(destination.parent.path),
-      startsWith('.data-sync-upload-'),
+      startsWith(fixture.useV117WebDav ? 'data-sync-' : '.data-sync-upload-'),
     );
     final bytes = Uint8List.fromList(
       utf8.encode(
@@ -398,9 +572,23 @@ class _Participant implements DataSyncParticipant {
     bool force = false,
     void Function(void Function())? publishImported,
     String? syncOperationId,
-  }) => throw StateError('Recovery must not begin a download/import');
+  }) async {
+    if (!fixture.useV117WebDav) {
+      throw StateError('Recovery must not begin a download/import');
+    }
+    expect(syncOperationId, isNull);
+    fixture.imports++;
+    fixture.importedBytes = await file.readAsBytes();
+    return DataSyncCommitState.applied;
+  }
+
   @override
-  void notifyImported() => throw StateError('Upload cannot publish an import');
+  void notifyImported() {
+    if (!fixture.useV117WebDav) {
+      throw StateError('Upload cannot publish an import');
+    }
+    fixture.notifications++;
+  }
 }
 
 typedef _Request = ({
@@ -418,6 +606,11 @@ class _WebDavServer {
   final requests = <_Request>[];
   final errors = <Object>[];
   bool loseNextPutResponse = false;
+  bool requireConditions = true;
+  bool emitEtags = true;
+  bool redirectDownloads = false;
+  bool requireAuthentication = false;
+  final downloadQueries = <String>[];
   var _revision = 0;
   static const path = '/dav/MixedRoot/';
 
@@ -442,7 +635,10 @@ class _WebDavServer {
   Future<void> _handle(HttpRequest request) async {
     var detached = false;
     try {
-      final name = request.uri.path.startsWith(path)
+      final downloading = request.uri.path.startsWith('/download/');
+      final name = downloading
+          ? request.uri.path.substring('/download/'.length)
+          : request.uri.path.startsWith(path)
           ? request.uri.path.substring(path.length)
           : 'invalid-root';
       requests.add((
@@ -455,7 +651,19 @@ class _WebDavServer {
         BytesBuilder(),
         (all, chunk) => all..add(chunk),
       );
+      if (requireAuthentication &&
+          request.headers.value(HttpHeaders.authorizationHeader) !=
+              'Basic dXNlcjpwYXNzd29yZA==') {
+        request.response.statusCode = HttpStatus.unauthorized;
+        request.response.headers.set(
+          HttpHeaders.wwwAuthenticateHeader,
+          'Basic realm="VeneraNext"',
+        );
+        return;
+      }
       switch (request.method) {
+        case 'OPTIONS':
+          request.response.statusCode = HttpStatus.ok;
         case 'PROPFIND':
           if (name.isNotEmpty) throw StateError('Wrong listing root');
           request.response.statusCode = HttpStatus.multiStatus;
@@ -468,16 +676,26 @@ class _WebDavServer {
           final entry = files[name];
           if (entry == null) {
             request.response.statusCode = HttpStatus.notFound;
+          } else if (redirectDownloads && !downloading) {
+            request.response.statusCode = HttpStatus.found;
+            request.response.headers.set(
+              HttpHeaders.locationHeader,
+              '/download/$name?sign=Mixed%20Token',
+            );
           } else {
-            request.response.headers.set(HttpHeaders.etagHeader, entry.etag);
+            if (downloading) downloadQueries.add(request.uri.query);
+            if (emitEtags) {
+              request.response.headers.set(HttpHeaders.etagHeader, entry.etag);
+            }
             request.response.contentLength = entry.bytes.length;
             request.response.add(entry.bytes);
           }
         case 'PUT':
-          if (request.headers.value(HttpHeaders.ifNoneMatchHeader) != '*') {
+          if (requireConditions &&
+              request.headers.value(HttpHeaders.ifNoneMatchHeader) != '*') {
             throw StateError('Unconditional PUT is forbidden');
           }
-          if (files.containsKey(name)) {
+          if (files.containsKey(name) && requireConditions) {
             request.response.statusCode = HttpStatus.preconditionFailed;
           } else {
             store(name, body.takeBytes());
@@ -494,13 +712,13 @@ class _WebDavServer {
           }
         case 'DELETE':
           final condition = request.headers.value(HttpHeaders.ifMatchHeader);
-          if (condition == null || condition == '*') {
+          if (requireConditions && (condition == null || condition == '*')) {
             throw StateError('Unconditional DELETE is forbidden');
           }
           final entry = files[name];
           if (entry == null) {
             request.response.statusCode = HttpStatus.notFound;
-          } else if (condition != entry.etag) {
+          } else if (requireConditions && condition != entry.etag) {
             request.response.statusCode = HttpStatus.preconditionFailed;
           } else {
             files.remove(name);

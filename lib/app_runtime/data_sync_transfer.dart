@@ -14,6 +14,14 @@ import 'package:venera_next/foundation/app.dart';
 import 'package:venera_next/foundation/appdata.dart';
 import 'package:venera_next/foundation/sync_configuration.dart';
 import 'package:venera_next/network/webdav.dart';
+import 'package:webdav_client/webdav_client.dart' as webdav;
+
+V117WebDavDataSyncTransfer createV117DataSyncTransfer({
+  webdav.Client Function(WebDavEndpoint)? createClient,
+}) => V117WebDavDataSyncTransfer(
+  participant: _ApplicationSyncParticipant(),
+  createClient: createClient,
+);
 
 WebDavDataSyncTransfer createDataSyncTransfer({
   DataSyncRemote Function(WebDavEndpoint)? openRemote,
