@@ -103,13 +103,16 @@ void main() {
     double scale = 1,
     bool dark = false,
     AccountConfig? account,
+    Map<String, Map<String, dynamic>> settings = _settings,
+    Map<String, dynamic> initialData = const {},
   }) async {
     storage = _Storage();
     source = ComicSourceFixture(
       key: 'data_ui',
-      settings: _settings,
+      settings: settings,
       account: account,
       dataStorage: storage,
+      initialData: initialData,
     );
     manager = ComicSourceManager()..add(source);
     final queue = SourceInstallations(
@@ -329,8 +332,103 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  void expectSelectedTextFits(WidgetTester tester, String label) {
+    final dropdown = find.byType(DropdownButtonFormField<dynamic>);
+    final selected = find.descendant(of: dropdown, matching: find.text(label));
+    final paragraph = tester.renderObject<RenderParagraph>(selected);
+    final text = TextPainter(
+      text: paragraph.text,
+      textDirection: paragraph.textDirection,
+      textScaler: paragraph.textScaler,
+      locale: paragraph.locale,
+      strutStyle: paragraph.strutStyle,
+      textHeightBehavior: paragraph.textHeightBehavior,
+      textWidthBasis: paragraph.textWidthBasis,
+    )..layout(maxWidth: paragraph.size.width);
+    final expectedHeight = text.height;
+    text.dispose();
+    expect(
+      paragraph.size.height,
+      greaterThanOrEqualTo(expectedHeight - 0.01),
+      reason: 'The selected label must retain its full height, not be clipped.',
+    );
+    final textBounds = tester.getRect(selected);
+    final fieldBounds = tester.getRect(dropdown);
+    expect(textBounds.left, greaterThanOrEqualTo(fieldBounds.left));
+    expect(textBounds.right, lessThanOrEqualTo(fieldBounds.right));
+    expect(textBounds.top, greaterThanOrEqualTo(fieldBounds.top));
+    expect(textBounds.bottom, lessThanOrEqualTo(fieldBounds.bottom));
+    final arrow = find.descendant(
+      of: dropdown,
+      matching: find.byIcon(Icons.arrow_drop_down),
+    );
+    expect(textBounds.center.dy, closeTo(tester.getCenter(arrow).dy, 1));
+  }
+
+  for (final scale in [1.0, 3.2]) {
+    testWidgets('source dropdown wraps Chinese text at scale $scale', (
+      tester,
+    ) async {
+      const currentLabel = '按最近更新的漫画章节时间排序，优先显示尚未阅读的章节';
+      await tester.binding.setSurfaceSize(const Size(375, 812));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await show(
+        tester,
+        scale: scale,
+        settings: {
+          'mode': {
+            'type': 'select',
+            'title': '收藏夹排序',
+            'default': 'one',
+            'options': [
+              {'value': 'one', 'text': '更新时间'},
+              {'value': 'two', 'text': currentLabel},
+            ],
+          },
+        },
+        initialData: {
+          'settings': {'mode': 'two'},
+        },
+      );
+      await reveal(tester, find.byType(DropdownButtonFormField<dynamic>));
+      expectSelectedTextFits(tester, currentLabel);
+      expect(storage.writes, 0);
+      await capture(tester, 'dropdown-chinese-$scale');
+      await tester.tap(
+        find.byType(DropdownButtonFormField<dynamic>).hitTestable(),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('更新时间').last);
+      await tester.pumpAndSettle();
+      expect(storage.saved['settings']['mode'], 'one');
+      expectSelectedTextFits(tester, '更新时间');
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   for (final size in [const Size(375, 812), const Size(812, 375)]) {
     for (final dark in [false, true]) {
+      testWidgets('source dropdown text fits $size dark=$dark', (tester) async {
+        await tester.binding.setSurfaceSize(size);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await show(tester, dark: dark);
+        await reveal(tester, find.byType(DropdownButtonFormField<dynamic>));
+        expectSelectedTextFits(tester, 'First option');
+        await capture(
+          tester,
+          'dropdown-${size.width.toInt()}-${dark ? 'dark' : 'light'}',
+        );
+        await tester.tap(
+          find.byType(DropdownButtonFormField<dynamic>).hitTestable(),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Second option').last);
+        await tester.pumpAndSettle();
+        expect(storage.saved['settings']['mode'], 'two');
+        expectSelectedTextFits(tester, 'Second option');
+        expect(tester.takeException(), isNull);
+      });
+
       testWidgets('source settings large text $size dark=$dark', (
         tester,
       ) async {
@@ -350,6 +448,7 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+        expectSelectedTextFits(tester, 'First option');
         await capture(
           tester,
           'settings-${size.width.toInt()}-${dark ? 'dark' : 'light'}',
@@ -365,6 +464,7 @@ void main() {
         await tester.tap(find.text('Second option').last);
         await tester.pumpAndSettle();
         expect(storage.saved['settings']['mode'], 'two');
+        expectSelectedTextFits(tester, 'Second option');
         await reveal(tester, find.byTooltip('Edit'));
         await tester.tap(find.byTooltip('Edit').hitTestable());
         await tester.pumpAndSettle();

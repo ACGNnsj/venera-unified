@@ -807,6 +807,9 @@ class _SliverComicSourceState extends SettingsSaveState<_SliverComicSource> {
                         options.any((option) => option['value'] == current)
                         ? current
                         : null,
+                    // 参照 v1.17.0 的 Select，让高度随文字撑开，避免上下内边距挤压并裁剪文字。
+                    // 仅设置 itemHeight: null 不能解除按钮的紧凑高度限制，必须同时关闭 isDense。
+                    isDense: false,
                     isExpanded: true,
                     itemHeight: null,
                     decoration: InputDecoration(
