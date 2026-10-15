@@ -143,14 +143,3 @@ class WaterfallChapterFlow implements WaterfallFlowView {
       ..add(segment);
   }
 }
-
-int resolveFlowCurrentImageIndex({
-  required int visibleIndex,
-  required int imageCount,
-  required bool isTopToBottom,
-  required bool isAtScrollEnd,
-}) {
-  if (imageCount <= 0) return 1;
-  if (isTopToBottom && isAtScrollEnd) return imageCount;
-  return visibleIndex.clamp(1, imageCount);
-}

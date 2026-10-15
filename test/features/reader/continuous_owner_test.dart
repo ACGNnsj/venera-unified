@@ -30,6 +30,11 @@ void main() {
         }
         await fixture.waitForImages(tester);
         final state = fixture.state;
+        expect(fixture.navigation.toChapter(1), isTrue);
+        await fixture.waitForImages(tester);
+        // Keep chapter 1 selected while the next chapter is also visible.
+        state.itemScrollController.jumpTo(index: 3, alignment: 0.4);
+        await fixture.waitForImages(tester);
         expect(state.currentChapter, 1);
         final visible = state.imageStates
             .whereType<ComicImageState>()
@@ -173,6 +178,9 @@ void main() {
       fixture.replaceOwner();
       fixture.load = (_, _) => newBefore.future;
       await tester.pumpWidget(fixture.build());
+      // Prepending is driven by the visible image, not offscreen list entries.
+      fixture.state.itemScrollController.jumpTo(index: 1);
+      await tester.pump();
       await tester.idle();
       fixture.state.onPositionChanged();
       await tester.idle();
@@ -297,6 +305,8 @@ class _FrameGateBinding extends AutomatedTestWidgetsFlutterBinding {
     for (final callback in callbacks) {
       super.addPostFrameCallback(callback);
     }
+    // Registering a post-frame callback does not request a frame by itself.
+    scheduleFrame();
     await tester.pump();
   }
 }
@@ -401,14 +411,21 @@ class _Fixture {
       final images = state.imageStates.whereType<ComicImageState>().where(
         (image) => image.visibleInReader,
       );
-      if (images.isNotEmpty &&
+      if (i >= 4 &&
+          images.isNotEmpty &&
           images.every((image) => image.readyForAutoReading) &&
           (!expectReady || state.autoReadingReady)) {
         await tester.pump();
         return;
       }
     }
-    fail('Visible native images did not become ready');
+    fail(
+      'Visible native images did not become ready: '
+      'chapter=${state.currentChapter}, page=${state.currentPage}, '
+      'auto=${state.autoReadingImages.state}, '
+      'zoom=${state.isZoomedIn}, fingers=${state.fingers}, scrolling=${state.scrollController.position.isScrollingNotifier.value}, '
+      'images=${state.imageStates.whereType<ComicImageState>().map((image) => '${image.visibleInReader}:${image.autoReadingImageState}').join(',')}',
+    );
   }
 
   Future<void> dispose(WidgetTester tester) async {

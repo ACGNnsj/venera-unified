@@ -13,6 +13,7 @@ import 'package:venera_next/network/proxy.dart';
 import '../foundation/app.dart';
 import 'cloudflare.dart';
 import 'cookie_jar.dart';
+import 'image_http3_fallback.dart';
 import 'rhttp_stream_request.dart';
 
 export 'rhttp_stream_request.dart' show RHttpCleanupFailure, RHttpCleanupError;
@@ -45,18 +46,29 @@ class MyLogInterceptor extends Interceptor {
               "This indicates that the server is too busy to respond",
         );
       case DioExceptionType.unknown:
-        if (err.toString().contains("Connection terminated during handshake")) {
+        if (err.error is ImageHttp3FallbackFailure) {
+          err = err.copyWith(
+            message: 'The image connection failed over TCP/TLS and HTTP/3.',
+          );
+        } else if (isImageTlsConnectionInterruption(err.error ?? err)) {
+          err = err.copyWith(
+            message:
+                'The TLS connection was interrupted before a response. '
+                'Check the server, proxy and network connection.',
+          );
+        } else if (err.toString().contains(
+          "Connection terminated during handshake",
+        )) {
           err = err.copyWith(
             message:
                 "Connection terminated during handshake: "
-                "This may be caused by the firewall blocking the connection "
-                "or your requests are too frequent.",
+                "Check the server, proxy and network connection.",
           );
         } else if (err.toString().contains("Connection reset by peer")) {
           err = err.copyWith(
             message:
                 "Connection reset by peer: "
-                "The error is unrelated to app, please check your network.",
+                "Check the server, proxy and network connection.",
           );
         }
       default:
@@ -133,9 +145,15 @@ class MyLogInterceptor extends Interceptor {
 }
 
 class AppDio with DioMixin {
-  AppDio([BaseOptions? options]) {
+  AppDio([BaseOptions? options]) : this._(options, false);
+
+  AppDio.forImages([BaseOptions? options]) : this._(options, true);
+
+  AppDio._(BaseOptions? options, bool allowImageHttp3Fallback) {
     this.options = options ?? BaseOptions();
-    httpClientAdapter = RHttpAdapter();
+    httpClientAdapter = RHttpAdapter(
+      allowImageHttp3Fallback: allowImageHttp3Fallback,
+    );
     if (App.isInitialized) {
       final cache = NetworkCacheInterceptor(this);
       interceptors.add(cache.captureRequests);
@@ -192,10 +210,13 @@ class AppDio with DioMixin {
 }
 
 class RHttpAdapter implements HttpClientAdapter {
-  RHttpAdapter({RHttpStreamCallFactory? startStreamCall})
-    : _startStreamCall = startStreamCall;
+  RHttpAdapter({
+    RHttpStreamCallFactory? startStreamCall,
+    this.allowImageHttp3Fallback = false,
+  }) : _startStreamCall = startStreamCall;
 
   final RHttpStreamCallFactory? _startStreamCall;
+  final bool allowImageHttp3Fallback;
   final _streamRequests = <RHttpStreamRequest>{};
   final _streamPending = <Future<void>>{};
   final _streamCleanupFailures = <RHttpCleanupError>[];
@@ -272,6 +293,7 @@ class RHttpAdapter implements HttpClientAdapter {
       upload: requestStream,
       statusMessage: _getStatusMessage,
       start: _startStreamCall,
+      allowImageHttp3Fallback: allowImageHttp3Fallback,
     );
     _streamRequests.add(request);
     late final Future<void> pending;

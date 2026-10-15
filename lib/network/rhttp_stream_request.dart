@@ -11,11 +11,14 @@ import 'package:rhttp/rhttp.dart' as rhttp;
 // ignore: invalid_use_of_internal_member
 import 'package:rhttp/src/model/exception.dart' show parseError;
 // ignore: invalid_use_of_internal_member
-import 'package:rhttp/src/model/settings.dart' show ClientSettingsExt;
+import 'package:rhttp/src/model/settings.dart' show ClientSettingsExt, NoProxy;
 import 'package:rhttp/src/rust/api/http.dart' as rust;
 import 'package:rhttp/src/rust/api/stream.dart' as rust_stream;
 import 'package:rhttp/src/rust/frb_generated.dart';
 import 'package:rhttp/src/rust/lib.dart' show CancellationToken;
+import 'package:venera_next/foundation/log.dart';
+
+import 'image_http3_fallback.dart';
 
 typedef RHttpCleanupError = ({String stage, Object error, StackTrace stack});
 
@@ -58,6 +61,154 @@ typedef RHttpStreamCallFactory =
 /// Owns a streaming request independently of Dio's early cancellation result.
 class RHttpStreamRequest {
   RHttpStreamRequest({
+    required this.options,
+    required Future<rhttp.ClientSettings> settings,
+    required Stream<Uint8List>? upload,
+    required String Function(int) statusMessage,
+    RHttpStreamCallFactory? start,
+    bool allowImageHttp3Fallback = false,
+  }) {
+    done = _run(
+      settings,
+      upload,
+      statusMessage,
+      start,
+      allowImageHttp3Fallback,
+    );
+  }
+
+  final RequestOptions options;
+  final _response = Completer<ResponseBody>();
+  _RHttpStreamAttempt? _attempt;
+  bool _cancelled = false;
+  late final Future<void> done;
+
+  Future<ResponseBody> get response => _response.future;
+
+  void cancel() {
+    _cancelled = true;
+    _attempt?.cancel();
+  }
+
+  DioException _cancelError() => DioException.requestCancelled(
+    requestOptions: options,
+    reason: 'HTTP request cancelled',
+  );
+
+  Future<void> _run(
+    Future<rhttp.ClientSettings> settings,
+    Stream<Uint8List>? upload,
+    String Function(int) statusMessage,
+    RHttpStreamCallFactory? start,
+    bool allowImageHttp3Fallback,
+  ) async {
+    try {
+      var configured = await settings;
+      Object? originalError;
+      while (true) {
+        if (_cancelled) throw _cancelError();
+        final isFallback = originalError != null;
+        final attempt = _attempt = _RHttpStreamAttempt(
+          options: options,
+          settings: Future.value(configured),
+          upload: upload,
+          statusMessage: statusMessage,
+          start: start,
+        );
+        // Observe cleanup immediately, even while headers are still pending.
+        final finished = attempt.done.then<({Object error, StackTrace stack})?>(
+          (_) => null,
+          onError: (Object error, StackTrace stack) =>
+              (error: error, stack: stack),
+        );
+        var retry = false;
+        ({Object error, StackTrace stack})? failure;
+        try {
+          final response = await (isFallback
+              ? attempt.response.timeout(
+                  imageHttp3HeaderTimeout(options, configured),
+                  onTimeout: () => throw DioException.connectionTimeout(
+                    timeout: imageHttp3HeaderTimeout(options, configured),
+                    requestOptions: options,
+                    error: 'HTTP/3 image response headers timed out',
+                  ),
+                )
+              : attempt.response);
+          if (_cancelled) throw _cancelError();
+          _response.complete(response);
+          if (isFallback) {
+            Log.info(
+              'Image HTTP',
+              'HTTP/3 fallback for ${options.uri.origin}: status ${response.statusCode}',
+            );
+          }
+        } catch (error, stack) {
+          attempt.cancel();
+          failure = (error: error, stack: stack);
+          retry =
+              !isFallback &&
+              !_cancelled &&
+              allowImageHttp3Fallback &&
+              options.method.toUpperCase() == 'GET' &&
+              options.uri.scheme == 'https' &&
+              options.data == null &&
+              upload == null &&
+              configured.httpVersionPref == rhttp.HttpVersionPref.all &&
+              // reqwest's H3 transport cannot honor HTTP/SOCKS proxies.
+              configured.proxySettings is NoProxy &&
+              isImageTlsConnectionInterruption(error);
+          if (!retry) {
+            final reported = _cancelled
+                ? _cancelError()
+                : isFallback
+                ? ImageHttp3FallbackFailure(
+                    originalError: originalError,
+                    fallbackError: error,
+                  )
+                : error;
+            _response.completeError(reported, stack);
+            if (isFallback && !_cancelled) {
+              Log.warning(
+                'Image HTTP',
+                'HTTP/3 fallback for ${options.uri.origin}: failed '
+                    '(${error is DioException ? error.type.name : error.runtimeType})',
+              );
+            }
+          }
+        }
+        final cleanupFailure = await finished;
+        _attempt = null;
+        // A failed release or cancellation must never admit a second native call.
+        if (retry && (cleanupFailure != null || _cancelled)) {
+          _response.completeError(
+            _cancelled ? _cancelError() : failure!.error,
+            failure!.stack,
+          );
+        }
+        if (cleanupFailure != null) {
+          Error.throwWithStackTrace(cleanupFailure.error, cleanupFailure.stack);
+        }
+        if (!retry || _cancelled) return;
+        originalError = failure!.error;
+        configured = configured.copyWith(
+          httpVersionPref: rhttp.HttpVersionPref.http3,
+        );
+        Log.info(
+          'Image HTTP',
+          'TLS EOF/reset for ${options.uri.origin}; trying HTTP/3 once '
+              '(direct connection, ${imageHttp3HeaderTimeout(options, configured).inMilliseconds} ms header timeout)',
+        );
+      }
+    } catch (error, stack) {
+      if (!_response.isCompleted) _response.completeError(error, stack);
+      if (error is RHttpCleanupFailure) rethrow;
+    }
+  }
+}
+
+/// One native attempt retains its own stream, cancellation and cleanup owner.
+class _RHttpStreamAttempt {
+  _RHttpStreamAttempt({
     required this.options,
     required Future<rhttp.ClientSettings> settings,
     required Stream<Uint8List>? upload,

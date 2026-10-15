@@ -244,7 +244,7 @@ abstract class ImageDownloader {
       }
 
       final http = ImageHttpClient(
-        AppDio(
+        AppDio.forImages(
           BaseOptions(
             headers: Map<String, dynamic>.from(configs['headers']),
             method: configs['method'] ?? 'GET',
@@ -393,7 +393,7 @@ abstract class ImageDownloader {
           configs['headers'] ??= {'user-agent': webUA};
 
           final http = ImageHttpClient(
-            AppDio(
+            AppDio.forImages(
               BaseOptions(
                 headers: configs['headers'],
                 method: configs['method'] ?? 'GET',

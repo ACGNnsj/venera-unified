@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
@@ -21,6 +22,7 @@ import 'package:venera_next/foundation/widget_utils.dart';
 import 'package:venera_next/features/reader/waterfall_controller.dart';
 
 import 'continuous_data.dart';
+import 'current_image.dart';
 import 'display_image_provider.dart';
 import 'reader_controller.dart';
 import 'reader_viewport.dart';
@@ -97,6 +99,8 @@ class ContinuousModeState extends State<ReaderContinuousView>
   var itemScrollController = ItemScrollController();
   var itemPositionsListener = ItemPositionsListener.create();
   var photoViewController = PhotoViewController();
+  StreamSubscription<PhotoViewControllerValue>? _photoPositionSubscription;
+  bool _positionUpdateScheduled = false;
   ScrollController? _scrollController;
   bool _disposed = false;
   Timer? _initialCacheTimer;
@@ -357,6 +361,9 @@ class ContinuousModeState extends State<ReaderContinuousView>
     widget.onViewportChanged(this, true);
     _initSegments();
     itemPositionsListener.itemPositions.addListener(onPositionChanged);
+    _photoPositionSubscription = photoViewController.outputStateStream.listen(
+      (_) => _schedulePositionUpdate(),
+    );
     cached = List.filled(maxPage + 2, false);
     _initialCacheTimer = Timer(
       const Duration(milliseconds: 100),
@@ -405,22 +412,102 @@ class ContinuousModeState extends State<ReaderContinuousView>
     unawaited(_waterfall.dispose());
     unawaited(_imageDownloads.dispose());
     itemPositionsListener.itemPositions.removeListener(onPositionChanged);
+    unawaited(_photoPositionSubscription?.cancel());
     photoViewController.dispose();
     super.dispose();
   }
 
+  void _schedulePositionUpdate() {
+    if (_disposed || !mounted || _positionUpdateScheduled) return;
+    _positionUpdateScheduled = true;
+    final owner = widget.imageWork;
+    final controller = navigation;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _positionUpdateScheduled = false;
+      if (mounted &&
+          identical(widget.imageWork, owner) &&
+          identical(navigation, controller)) {
+        onPositionChanged();
+      }
+    }, debugLabel: 'reader current image position');
+    SchedulerBinding.instance.ensureVisualUpdate();
+  }
+
+  Iterable<ReaderVisibleImage> _visibleImageBounds(RenderBox viewport) sync* {
+    // A distant scroll can mount a second, hidden list for its crossfade.
+    // Match the active scroll owner, not cached indices that can predate a resize.
+    final controller = _scrollController;
+    if (controller == null || !controller.hasClients) return;
+    final segments = crossChapter
+        ? _waterfallFlow.segments
+        : const <WaterfallChapterSegment>[];
+    for (final state in imageStates) {
+      if (!state.mounted) continue;
+      final scrollable = state.context
+          .findAncestorStateOfType<ScrollableState>();
+      if (scrollable == null ||
+          !controller.positions.contains(scrollable.position)) {
+        continue;
+      }
+      final box = state.context.findRenderObject();
+      if (box is! RenderBox || !box.attached || !box.hasSize) continue;
+      final RenderObject? listViewport = RenderAbstractViewport.maybeOf(box);
+      if (listViewport is! RenderBox || !listViewport.hasSize) continue;
+      final image = (state.widget.image as ReaderDisplayImageProvider).image;
+      if (image.cid != data.comicId || image.sourceKey != data.sourceKey) {
+        continue;
+      }
+      final chapter = crossChapter
+          ? segments
+                .where((segment) => segment.eid == image.eid)
+                .firstOrNull
+                ?.chapter
+          : image.eid == widget.chapterId(currentChapter)
+          ? currentChapter
+          : null;
+      if (chapter == null) continue;
+      final index = _waterfallIndexOfChapterPage(chapter, image.page);
+      if (index == null || _imageRefAt(index)?.imageKey != image.imageKey) {
+        continue;
+      }
+      final clipped = MatrixUtils.transformRect(
+        box.getTransformTo(listViewport),
+        Offset.zero & box.size,
+      ).intersect(Offset.zero & listViewport.size);
+      if (clipped.isEmpty) continue;
+      yield (
+        index: index,
+        bounds: MatrixUtils.transformRect(
+          listViewport.getTransformTo(viewport),
+          clipped,
+        ),
+      );
+    }
+  }
+
   void onPositionChanged() {
-    if (_disposed ||
-        !mounted ||
-        itemPositionsListener.itemPositions.value.isEmpty) {
+    if (_disposed || !mounted) return;
+    final viewport = context.findRenderObject();
+    if (viewport is! RenderBox || !viewport.attached || !viewport.hasSize) {
       return;
     }
-    var page = resolveFlowCurrentImageIndex(
-      visibleIndex: itemPositionsListener.itemPositions.value.first.index,
-      imageCount: _flowImageCount,
-      isTopToBottom: data.vertical,
-      isAtScrollEnd: _isAtScrollEnd,
+    final viewportBounds = Offset.zero & viewport.size;
+    final visible = _visibleImageBounds(viewport)
+        .where(
+          (image) =>
+              image.bounds.isFinite &&
+              !image.bounds.intersect(viewportBounds).isEmpty,
+        )
+        .toList();
+    final page = resolveCurrentReaderImage(
+      images: visible,
+      viewport: viewportBounds,
+      currentIndex: _waterfallIndexOfChapterPage(
+        currentChapter,
+        navigation.state.pendingPage ?? currentPage,
+      ),
     );
+    if (page == null) return;
     var imageRef = _imageRefAt(page);
     if (imageRef == null) return;
     if (crossChapter) {
@@ -434,20 +521,19 @@ class ContinuousModeState extends State<ReaderContinuousView>
       navigation.reportPage(page);
       widget.onUpdate();
     }
-    cacheImages(page);
+    // Equal-sized short pages can keep the current page away from either edge.
+    // Prefetch from the visible range instead of relying on page selection.
+    var firstVisible = page;
+    var lastVisible = page;
+    for (final image in visible) {
+      firstVisible = math.min(firstVisible, image.index);
+      lastVisible = math.max(lastVisible, image.index);
+    }
+    cacheImages(lastVisible);
     if (crossChapter) {
-      _ensureWaterfallImagesBefore(page);
-      _ensureWaterfallImagesAfter(page);
+      _ensureWaterfallImagesBefore(firstVisible);
+      _ensureWaterfallImagesAfter(lastVisible);
     }
-  }
-
-  bool get _isAtScrollEnd {
-    final controller = _scrollController;
-    if (controller == null || !controller.hasClients) {
-      return false;
-    }
-    final position = controller.position;
-    return position.pixels >= position.maxScrollExtent - 1;
   }
 
   @override
@@ -824,17 +910,19 @@ class ContinuousModeState extends State<ReaderContinuousView>
           enableResize: true,
         );
 
-        var comicImage = ComicImage(
-          filterQuality: FilterQuality.medium,
-          image: ReaderDisplayImageProvider(image, this.widget.imageWork),
-          width: width,
-          height: height,
-          fit: BoxFit.contain,
-          splitWideImage: _splitWideImages,
-          splitWideImageInvert: _splitWideImagesInvert,
-          showImageDimensions: data.showImageDimensions,
-          onInit: (state) => imageStates.add(state),
-          onDispose: (state) => imageStates.remove(state),
+        var comicImage = SizeChangedLayoutNotifier(
+          child: ComicImage(
+            filterQuality: FilterQuality.medium,
+            image: ReaderDisplayImageProvider(image, this.widget.imageWork),
+            width: width,
+            height: height,
+            fit: BoxFit.contain,
+            splitWideImage: _splitWideImages,
+            splitWideImageInvert: _splitWideImagesInvert,
+            showImageDimensions: data.showImageDimensions,
+            onInit: (state) => imageStates.add(state),
+            onDispose: (state) => imageStates.remove(state),
+          ),
         );
 
         return ColoredBox(
@@ -854,6 +942,14 @@ class ContinuousModeState extends State<ReaderContinuousView>
         scrollbars: false,
         dragDevices: _kTouchLikeDeviceTypes,
       ),
+    );
+
+    widget = NotificationListener<SizeChangedLayoutNotification>(
+      onNotification: (_) {
+        _schedulePositionUpdate();
+        return false;
+      },
+      child: widget,
     );
 
     widget = Stack(
@@ -1030,14 +1126,19 @@ class ContinuousModeState extends State<ReaderContinuousView>
   }
 
   @override
-  Future<void> animateToPage(int page) {
-    if (_disposed || !mounted) return Future.value();
+  Future<void> animateToPage(int page) async {
+    if (_disposed || !mounted) return;
+    final controller = navigation;
     var index = _waterfallIndexOfChapterPage(currentChapter, page) ?? page;
-    return itemScrollController.scrollTo(
+    await itemScrollController.scrollTo(
       index: index,
       duration: const Duration(milliseconds: 200),
       curve: Curves.ease,
     );
+    if (_disposed || !mounted || !identical(navigation, controller)) return;
+    // Keep the requested page pending until the final geometry is reported.
+    await SchedulerBinding.instance.endOfFrame;
+    if (identical(navigation, controller)) onPositionChanged();
   }
 
   @override

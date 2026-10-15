@@ -825,15 +825,9 @@ void main() {
         (reversed ? progress.onPrevious : progress.onNext)();
         expect(reader.page, 3);
         await tester.pump();
-        // Horizontal continuous layouts can show multiple images at the end;
-        // their subsequent report uses the first visible source image.
-        expect(
-          reader.page,
-          mode == ReaderMode.continuousLeftToRight ||
-                  mode == ReaderMode.continuousRightToLeft
-              ? 2
-              : 3,
-        );
+        // Equal-area images at the horizontal scroll end retain the requested
+        // page instead of reverting to the first visible source image.
+        expect(reader.page, 3);
         progress = tester.widget<ReaderBottomBar>(find.byType(ReaderBottomBar));
         (reversed ? progress.onNext : progress.onPrevious)();
         await tester.pump();
