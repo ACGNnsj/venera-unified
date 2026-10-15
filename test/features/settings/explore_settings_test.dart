@@ -10,6 +10,7 @@ import 'package:venera_next/features/settings/setting_components.dart';
 import 'package:venera_next/foundation/app.dart';
 import 'package:venera_next/foundation/app_data_operations.dart';
 import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_next/routing/app_navigation.dart';
 
 Directory _prepare() {
   final root = Directory.systemTemp.createTempSync('explore-settings-');
@@ -97,6 +98,7 @@ void main() {
         'comicTileScale': 'bad',
         'showFavoriteStatusOnTile': null,
         'showHistoryStatusOnTile': 1,
+        'showDetailedReadingProgress': 'true',
         'showUpdateStatusOnTile': 'false',
         'reverseChapterOrder': 'bad',
         'autoAddLanguageFilter': {},
@@ -116,6 +118,7 @@ void main() {
       for (final (title, value) in [
         ('Show favorite status on comic tile', true),
         ('Show history on comic tile', false),
+        ('Show detailed reading progress', false),
         ('Show update status on comic tile', true),
         ('Reverse default chapter order', false),
       ]) {
@@ -214,6 +217,48 @@ void main() {
       },
     );
   }
+
+  testWidgets(
+    'detailed progress saves independently and refreshes existing views',
+    (tester) async {
+      final root = _prepare();
+      appdata.settings['showDetailedReadingProgress'] = false;
+      appdata.settings['showHistoryStatusOnTile'] = false;
+      var rebuilds = 0;
+      appNavigation.registerForceRebuild(() => rebuilds++);
+      addTearDown(() => appNavigation.registerForceRebuild(null));
+      await tester.pumpWidget(_host());
+      final field = await _show(tester, 'Show detailed reading progress');
+      await tester.tap(
+        find.descendant(of: field, matching: find.byType(Switch)),
+      );
+      await tester.pump();
+      await _flush(tester, appdata.saveData(false));
+      expect(_saved(root)['showDetailedReadingProgress'], isTrue);
+      expect(_saved(root)['showHistoryStatusOnTile'], isFalse);
+      expect(rebuilds, 1);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(_host());
+      final restored = await _show(tester, 'Show detailed reading progress');
+      expect(
+        tester
+            .widget<Switch>(
+              find.descendant(of: restored, matching: find.byType(Switch)),
+            )
+            .value,
+        isTrue,
+      );
+      await tester.tap(
+        find.descendant(of: restored, matching: find.byType(Switch)),
+      );
+      await tester.pump();
+      await _flush(tester, appdata.saveData(false));
+      expect(_saved(root)['showDetailedReadingProgress'], isFalse);
+      expect(rebuilds, 2);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   testWidgets(
     'real discovery slider and switch wait for admission before saving',

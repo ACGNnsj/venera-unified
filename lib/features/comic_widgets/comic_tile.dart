@@ -46,6 +46,9 @@ class ComicTileState {
     this.historyPage,
     this.historyMaxPage,
     this.historyDescription,
+    this.historyTooltipDescription,
+    this.historyCompactDescription,
+    this.descriptionOverride,
     this.hasNewUpdate = false,
   });
 
@@ -53,6 +56,9 @@ class ComicTileState {
   final int? historyPage;
   final int? historyMaxPage;
   final String? historyDescription;
+  final String? historyTooltipDescription;
+  final String? historyCompactDescription;
+  final String? descriptionOverride;
   final bool hasNewUpdate;
 }
 
@@ -284,6 +290,7 @@ class ComicTile extends StatelessWidget {
   );
 
   Widget _build(BuildContext context) {
+    final state = _tileState(comic);
     final type = switch (displayMode) {
       ComicTileDisplayMode.detailed => 'detailed',
       ComicTileDisplayMode.gallery => 'gallery',
@@ -293,14 +300,22 @@ class ComicTile extends StatelessWidget {
     };
 
     Widget child = switch (type) {
-      'detailed' => _buildDetailedMode(context),
+      'detailed' => _buildDetailedMode(context, state),
       'gallery' => _buildGalleryMode(context),
-      _ => _buildBriefMode(context),
+      _ => _buildBriefMode(context, state),
     };
 
-    final state = _tileState(comic);
     final isFavorite = state.isFavorite;
-    final historyPage = state.historyPage == 0 ? 1 : state.historyPage;
+    final progressInDescription =
+        type != 'gallery' && state.descriptionOverride != null;
+    final historyPage = progressInDescription
+        ? null
+        : state.historyPage == 0
+        ? 1
+        : state.historyPage;
+    final historyDescription = progressInDescription
+        ? null
+        : state.historyDescription;
     final hasUpdate = state.hasNewUpdate;
 
     if (!isFavorite && historyPage == null && !hasUpdate) {
@@ -311,6 +326,10 @@ class ComicTile extends StatelessWidget {
       builder: (context, constraints) {
         final compact = type == 'gallery' && constraints.maxWidth < 88;
         final badgeSize = compact ? 18.0 : 24.0;
+        final separateProgress =
+            historyDescription != null &&
+            state.historyCompactDescription != null;
+        // Keep multi-line progress over the cover, not over the comic title.
         return Stack(
           children: [
             Positioned.fill(child: child),
@@ -322,7 +341,14 @@ class ComicTile extends StatelessWidget {
                   : 6,
               top: compact ? 6 : 8,
               right: type == 'detailed'
-                  ? 16
+                  ? separateProgress
+                        ? math.max(
+                            16.0,
+                            constraints.maxWidth -
+                                16 -
+                                (constraints.maxHeight - 16) * 0.68,
+                          )
+                        : 16
                   : compact
                   ? 4
                   : 6,
@@ -331,38 +357,57 @@ class ComicTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: Row(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (isFavorite)
-                      Container(
-                        height: badgeSize,
-                        width: badgeSize,
-                        color: Colors.green,
-                        child: Icon(
-                          Icons.bookmark_rounded,
-                          size: badgeSize * 2 / 3,
-                          color: Colors.white,
-                        ),
+                    if (isFavorite || hasUpdate || !separateProgress)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isFavorite)
+                            Container(
+                              height: badgeSize,
+                              width: badgeSize,
+                              color: Colors.green,
+                              child: Icon(
+                                Icons.bookmark_rounded,
+                                size: badgeSize * 2 / 3,
+                                color: Colors.white,
+                              ),
+                            ),
+                          if (!separateProgress && historyDescription != null)
+                            Flexible(
+                              child: _ReadingProgressBadge(
+                                historyDescription,
+                                tooltip: state.historyTooltipDescription,
+                              ),
+                            ),
+                          if (historyPage != null && historyDescription == null)
+                            Container(
+                              height: badgeSize,
+                              color: Colors.blue.toOpacity(0.9),
+                              constraints: BoxConstraints(minWidth: badgeSize),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: compact ? 2 : 4,
+                              ),
+                              child: CustomPaint(
+                                painter: _ReadingHistoryPainter(
+                                  historyPage,
+                                  state.historyMaxPage,
+                                ),
+                              ),
+                            ),
+                          if (hasUpdate)
+                            _buildUpdateBadge(context, size: badgeSize),
+                        ],
                       ),
-                    if (state.historyDescription case final description?)
-                      Flexible(child: _ReadingProgressBadge(description)),
-                    if (historyPage != null && state.historyDescription == null)
-                      Container(
-                        height: badgeSize,
-                        color: Colors.blue.toOpacity(0.9),
-                        constraints: BoxConstraints(minWidth: badgeSize),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: compact ? 2 : 4,
-                        ),
-                        child: CustomPaint(
-                          painter: _ReadingHistoryPainter(
-                            historyPage,
-                            state.historyMaxPage,
-                          ),
-                        ),
+                    if (separateProgress)
+                      _ReadingProgressBadge(
+                        historyDescription,
+                        tooltip: state.historyTooltipDescription,
+                        compactDescription: state.historyCompactDescription,
                       ),
-                    if (hasUpdate) _buildUpdateBadge(context, size: badgeSize),
                   ],
                 ),
               ),
@@ -386,7 +431,7 @@ class ComicTile extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailedMode(BuildContext context) {
+  Widget _buildDetailedMode(BuildContext context, ComicTileState state) {
     return LayoutBuilder(
       builder: (context, constrains) {
         final height = constrains.maxHeight - 16;
@@ -430,7 +475,10 @@ class ComicTile extends StatelessWidget {
                         ? comic.title.replaceAll("\n", "")
                         : "[${comic.maxPage}P]${comic.title.replaceAll("\n", "")}",
                     subtitle: comic.subtitle ?? '',
-                    description: comic.description,
+                    description: state.descriptionOverride ?? comic.description,
+                    descriptionTooltip:
+                        state.historyTooltipDescription ??
+                        state.descriptionOverride,
                     badge: badge ?? comic.language,
                     tags: comic.tags,
                     maxLines: 2,
@@ -450,7 +498,7 @@ class ComicTile extends StatelessWidget {
     );
   }
 
-  Widget _buildBriefMode(BuildContext context) {
+  Widget _buildBriefMode(BuildContext context, ComicTileState state) {
     return LayoutBuilder(
       builder: (context, constraints) {
         Widget image = Container(
@@ -490,8 +538,12 @@ class ComicTile extends StatelessWidget {
                         final subtitle = comic.subtitle
                             ?.replaceAll('\n', '')
                             .trim();
-                        final text = comic.description.isNotEmpty
-                            ? comic.description.split('|').join('\n')
+                        final description = state.descriptionOverride == null
+                            ? comic.description
+                            : state.historyCompactDescription ??
+                                  state.descriptionOverride!;
+                        final text = description.isNotEmpty
+                            ? description.split('|').join('\n')
                             : (subtitle?.isNotEmpty == true ? subtitle : null);
                         final fortSize = constraints.maxWidth < 80
                             ? 8.0
@@ -539,10 +591,22 @@ class ComicTile extends StatelessWidget {
                             ),
                           );
                         }
-                        return Column(
+                        final labels = Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: children,
+                        );
+                        if (state.descriptionOverride == null) return labels;
+                        final tooltip =
+                            state.historyTooltipDescription ??
+                            state.descriptionOverride!;
+                        return Tooltip(
+                          message: tooltip,
+                          child: Semantics(
+                            label: tooltip,
+                            excludeSemantics: true,
+                            child: labels,
+                          ),
                         );
                       })(),
                     ),
@@ -810,6 +874,7 @@ class _ComicDescription extends StatelessWidget {
     required this.subtitle,
     required this.description,
     required this.enableTranslate,
+    this.descriptionTooltip,
     this.badge,
     this.maxLines = 2,
     this.tags,
@@ -819,6 +884,7 @@ class _ComicDescription extends StatelessWidget {
   final String title;
   final String subtitle;
   final String description;
+  final String? descriptionTooltip;
   final String? badge;
   final List<String>? tags;
   final int maxLines;
@@ -831,6 +897,23 @@ class _ComicDescription extends StatelessWidget {
       for (final tag in tags ?? const <String>[])
         if (tag.removeAllBlank.isNotEmpty) tag.replaceAll('\n', ' '),
     ];
+    Widget descriptionText = Text(
+      description,
+      style: const TextStyle(fontSize: 12.0),
+      maxLines: displayTags.isEmpty ? 3 : 2,
+      overflow: TextOverflow.ellipsis,
+    );
+    if (descriptionTooltip != null) {
+      descriptionText = Tooltip(
+        message: descriptionTooltip!,
+        excludeFromSemantics: true,
+        child: Semantics(
+          label: descriptionTooltip,
+          excludeSemantics: true,
+          child: descriptionText,
+        ),
+      );
+    }
     var enableTranslate =
         appLocale.languageCode == 'zh' && this.enableTranslate;
     return Column(
@@ -917,12 +1000,7 @@ class _ComicDescription extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (rating != null) StarRating(value: rating!, size: 18),
-                  Text(
-                    description,
-                    style: const TextStyle(fontSize: 12.0),
-                    maxLines: displayTags.isEmpty ? 3 : 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  descriptionText,
                 ],
               ),
             ),
@@ -1026,26 +1104,41 @@ class _ReadingHistoryPainter extends CustomPainter {
 }
 
 class _ReadingProgressBadge extends StatelessWidget {
-  const _ReadingProgressBadge(this.description);
+  const _ReadingProgressBadge(
+    this.description, {
+    this.compactDescription,
+    this.tooltip,
+  });
   final String description;
+  final String? compactDescription;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) => Tooltip(
-    message: description,
+    message: tooltip ?? description,
     child: Semantics(
-      label: description,
+      label: tooltip ?? description,
       excludeSemantics: true,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
         color: context.colorScheme.primaryContainer,
-        child: Text(
-          description.replaceAll('\n', ' '),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 12,
-            color: context.colorScheme.onPrimaryContainer,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final line
+                in compactDescription?.split('\n') ??
+                    [description.replaceAll('\n', ' ')])
+              Text(
+                line,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: context.colorScheme.onPrimaryContainer,
+                ),
+              ),
+          ],
         ),
       ),
     ),
@@ -1122,7 +1215,11 @@ class SimpleComicTile extends StatelessWidget {
               left: 0,
               right: 0,
               bottom: 0,
-              child: _ReadingProgressBadge(description),
+              child: _ReadingProgressBadge(
+                description,
+                compactDescription: state.historyCompactDescription,
+                tooltip: state.historyTooltipDescription,
+              ),
             ),
         ],
       );

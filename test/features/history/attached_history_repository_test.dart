@@ -13,6 +13,7 @@ History historyItem(String id) => History(
   type: ComicType(1),
   id: id,
   maxPage: 20,
+  maxChapter: 5,
   ep: 2,
   page: 3,
   time: DateTime.fromMillisecondsSinceEpoch(1234),
@@ -75,13 +76,17 @@ void main() {
       final attached = HistoryRepository(db, schema: alias)..initialize();
       attached.initialize();
       attached.importHistory(historyItem('same'));
-      final changed = historyItem('same')..page = 9;
+      final changed = historyItem('same')
+        ..page = 9
+        ..maxChapter = 7;
       attached.writeProgress(changed);
       attached.updateMetadata('same', 1, title: 'Imported');
       attached.addReadDuration(changed, 50);
       attached.addReadDuration(historyItem('duration-new'), 20);
       expect(attached.find('same', 1)!.title, 'Imported');
       expect(attached.find('same', 1)!.page, 9);
+      expect(attached.find('same', 1)!.maxChapter, 7);
+      expect(attached.find('duration-new', 1)!.maxChapter, 5);
       expect(attached.getTotalReadDurationMs(), 70);
       expect(attached.countWithReadDuration(), 2);
       expect(attached.getAllByReadDuration().map((item) => item.id), [
@@ -114,7 +119,7 @@ void main() {
         db
             .select('PRAGMA $quoted.table_info(history);')
             .map((row) => row['name']),
-        containsAll(['chapter_group', 'read_duration_ms']),
+        containsAll(['chapter_group', 'max_chapter', 'read_duration_ms']),
       );
     },
   );

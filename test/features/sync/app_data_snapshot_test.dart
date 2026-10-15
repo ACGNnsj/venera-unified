@@ -57,6 +57,7 @@ void main() {
             id: 'queued',
             readEpisode: {'1'},
             maxPage: 10,
+            maxChapter: 3,
             readDurationMs: 0,
           ),
         );
@@ -107,6 +108,12 @@ void main() {
               'queued',
             ]).single['page'],
             7,
+          );
+          expect(
+            exported.select('SELECT max_chapter FROM history WHERE id = ?;', [
+              'queued',
+            ]).single['max_chapter'],
+            3,
           );
           expect(
             exported.select('PRAGMA integrity_check;').single.values.single,

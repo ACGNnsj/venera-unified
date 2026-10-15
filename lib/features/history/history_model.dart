@@ -43,6 +43,9 @@ class History implements Comic {
   @override
   int? maxPage;
 
+  /// Last known chapter count, relative to [group] just like [ep].
+  int? maxChapter;
+
   /// Cumulative foreground reading time for this comic.
   int readDurationMs;
 
@@ -61,6 +64,7 @@ class History implements Comic {
     this.group,
     this.chapterTitle,
     this.groupTitle,
+    this.maxChapter,
   });
 
   /// Detached values for a submitted storage operation, including read keys.
@@ -75,6 +79,7 @@ class History implements Comic {
     id: id,
     readEpisode: Set.of(readEpisode),
     maxPage: maxPage,
+    maxChapter: maxChapter,
     readDurationMs: readDurationMs,
     group: group,
     chapterTitle: chapterTitle,
@@ -110,6 +115,7 @@ class History implements Comic {
         (map["readEpisode"] as List<dynamic>?)?.toSet() ?? const <String>{},
       ),
       maxPage = map["max_page"],
+      maxChapter = map['max_chapter'] as int?,
       group = map['chapter_group'] as int?,
       chapterTitle = map['chapter_title'] as String?,
       groupTitle = map['group_title'] as String?,
@@ -129,24 +135,41 @@ class History implements Comic {
   int get hashCode => Object.hash(id, type);
 
   @override
-  String get description {
-    var res = "";
-    if (groupTitle?.trim().isNotEmpty == true || group != null) {
-      res +=
-          '${groupTitle?.trim().isNotEmpty == true ? groupTitle!.trim() : "Group @group".tlParams({"group": group!})} - ';
+  String get description => progressDescription();
+
+  /// Format saved coordinates only, omitting missing or inconsistent totals.
+  String progressDescription({bool showTotals = false, bool compact = false}) {
+    String number(int current, int? total) =>
+        showTotals && total != null && total > 0 && total >= current
+        ? '$current${compact ? '/' : ' / '}$total'
+        : '$current';
+
+    final parts = <String>[];
+    if (!compact && (groupTitle?.trim().isNotEmpty == true || group != null)) {
+      parts.add(
+        groupTitle?.trim().isNotEmpty == true
+            ? groupTitle!.trim()
+            : "Group @group".tlParams({"group": group!}),
+      );
     }
-    if (chapterTitle?.trim().isNotEmpty == true) {
-      res += chapterTitle!.trim();
-    } else if (ep >= 1) {
-      res += "Chapter @ep".tlParams({"ep": ep});
+    final chapter = ep >= 1
+        ? (compact ? 'Ch. @ep' : 'Chapter @ep').tlParams({
+            'ep': number(ep, maxChapter),
+          })
+        : null;
+    if (!showTotals && !compact && chapterTitle?.trim().isNotEmpty == true) {
+      parts.add(chapterTitle!.trim());
+    } else if (chapter != null) {
+      parts.add(chapter);
     }
     if (page >= 1) {
-      if (res.isNotEmpty) {
-        res += " - ";
-      }
-      res += "Page @page".tlParams({"page": page});
+      parts.add(
+        (compact ? 'P. @page' : 'Page @page').tlParams({
+          'page': number(page, maxPage),
+        }),
+      );
     }
-    return res;
+    return parts.join(compact ? '\n' : ' - ');
   }
 
   @override

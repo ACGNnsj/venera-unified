@@ -40,6 +40,7 @@ void main() {
       final value = item()
         ..chapterTitle = '第100话'
         ..groupTitle = '第二部'
+        ..maxChapter = 55
         ..group = 2;
       repository.writeProgress(value);
       repository.addReadDuration(value, 100);
@@ -48,10 +49,17 @@ void main() {
       expect(restored.chapterTitle, '第100话');
       expect(restored.groupTitle, '第二部');
       expect(restored.copy().chapterTitle, '第100话');
+      expect(restored.maxChapter, 55);
+      expect(restored.copy().maxChapter, 55);
       expect(restored.description, contains('第二部 - 第100话'));
       expect(restored.readDurationMs, 100);
-      repository.writeProgress(value..chapterTitle = '番外');
+      repository.writeProgress(
+        value
+          ..chapterTitle = '番外'
+          ..maxChapter = 56,
+      );
       expect(repository.find(value.id, 0)!.chapterTitle, '番外');
+      expect(repository.find(value.id, 0)!.maxChapter, 56);
     },
   );
 
@@ -275,6 +283,7 @@ void main() {
       expect(legacy.page, 8);
       expect(legacy.readEpisode, {'1', '2'});
       expect(legacy.group, isNull);
+      expect(legacy.maxChapter, isNull);
       expect(legacy.readDurationMs, 0);
       repository.writeProgress(legacy..page = 9);
       expect(repository.count(), 1);
@@ -308,6 +317,25 @@ void main() {
       expect(restored.readDurationMs, 8);
     },
   );
+
+  test('imports and first duration writes retain nullable chapter totals', () {
+    final imported = item()..maxChapter = 12;
+    repository.importHistory(imported);
+    expect(repository.getAll().single.maxChapter, 12);
+    repository.importHistory(imported..maxChapter = 14);
+    expect(repository.getRecent().single.maxChapter, 14);
+    repository.importHistory(item());
+    expect(repository.find('shared', 0)!.maxChapter, isNull);
+
+    final durationOnly = item()
+      ..id = 'duration-only'
+      ..maxChapter = 7;
+    repository.addReadDuration(durationOnly, 30);
+    expect(repository.find('duration-only', 0)!.maxChapter, 7);
+    repository.addReadDuration(durationOnly..maxChapter = 99, 20);
+    expect(repository.find('duration-only', 0)!.maxChapter, 7);
+    expect(repository.find('duration-only', 0)!.readDurationMs, 50);
+  });
 
   test(
     'progress writes preserve duration and isolate same IDs by source type',

@@ -116,6 +116,10 @@ abstract final class DiscoveryPreferences {
     'showHistoryStatusOnTile',
     false,
   );
+  static const showDetailedReadingProgress = BoolPreference(
+    'showDetailedReadingProgress',
+    false,
+  );
   static const showUpdateStatusOnTile = BoolPreference(
     'showUpdateStatusOnTile',
     true,
@@ -149,6 +153,7 @@ abstract final class DiscoveryPreferences {
     comicTileScale,
     showFavoriteStatusOnTile,
     showHistoryStatusOnTile,
+    showDetailedReadingProgress,
     showUpdateStatusOnTile,
     autoAddLanguageFilter,
     initialPage,

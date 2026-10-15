@@ -14,6 +14,7 @@ void main() {
         'comicTileScale': 1.0,
         'showFavoriteStatusOnTile': true,
         'showHistoryStatusOnTile': false,
+        'showDetailedReadingProgress': false,
         'showUpdateStatusOnTile': true,
         'autoAddLanguageFilter': 'none',
         'initialPage': '0',
@@ -158,6 +159,7 @@ void main() {
       for (final (preference, fallback) in [
         (DiscoveryPreferences.showFavoriteStatusOnTile, true),
         (DiscoveryPreferences.showHistoryStatusOnTile, false),
+        (DiscoveryPreferences.showDetailedReadingProgress, false),
         (DiscoveryPreferences.showUpdateStatusOnTile, true),
       ]) {
         expect(preference.normalize(true), isTrue);

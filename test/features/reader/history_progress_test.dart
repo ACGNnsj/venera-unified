@@ -42,6 +42,7 @@ void main() {
       );
       expect(item.page, 2);
       expect(item.maxPage, 10);
+      expect(item.maxChapter, 1);
       expect(item.ep, 1);
       expect(item.group, 2);
       expect(item.chapterTitle, 'Different chapter');
@@ -77,6 +78,7 @@ void main() {
         expect(item.chapterTitle, 'B');
         expect(item.groupTitle, isNull);
         expect(item.maxPage, 9);
+        expect(item.maxChapter, 2);
         expect(item.readEpisode, {'1', '2'});
         // The original ungrouped update leaves an existing group untouched.
         expect(item.group, 4);
@@ -87,7 +89,7 @@ void main() {
   test(
     'chapterless and empty content retain the existing history coordinates',
     () {
-      final item = history();
+      final item = history()..maxChapter = 55;
       applyReaderHistoryProgress(
         history: item,
         page: 1,
@@ -102,8 +104,63 @@ void main() {
       );
       expect(item.page, 0);
       expect(item.maxPage, 0);
+      expect(item.maxChapter, isNull);
       expect(item.group, isNull);
       expect(item.readEpisode, {'1'});
     },
   );
+
+  test('chapter totals follow the current group, including repeated IDs', () {
+    final item = history();
+    const chapters = ComicChapters.grouped({
+      'empty': <String, String>{},
+      'first': {'a': 'A', 'b': 'B'},
+      'second': {'a': 'Other A', 'b': 'Other B', 'c': 'C'},
+    });
+    for (final (chapter, group, ep, total) in [
+      (2, 2, 2, 2),
+      (3, 3, 1, 3),
+      (5, 3, 3, 3),
+      (1, 2, 1, 2),
+    ]) {
+      applyReaderHistoryProgress(
+        history: item,
+        page: 1,
+        imageCount: 10,
+        chapter: chapter,
+        chapters: chapters,
+        layout: const ReaderPageLayout(
+          imagesPerPage: 1,
+          singleImageOnFirstPage: false,
+        ),
+        time: DateTime(2026),
+      );
+      expect(item.group, group);
+      expect(item.ep, ep);
+      expect(item.maxChapter, total);
+    }
+  });
+
+  test('normal reading refreshes chapter totals without separate lookups', () {
+    final item = history();
+    for (final chapters in [
+      const ComicChapters({'a': 'A', 'b': 'B'}),
+      const ComicChapters({'a': 'A', 'b': 'B', 'c': 'C'}),
+      const ComicChapters({}),
+    ]) {
+      applyReaderHistoryProgress(
+        history: item,
+        page: 1,
+        imageCount: 20,
+        chapter: 1,
+        chapters: chapters,
+        layout: const ReaderPageLayout(
+          imagesPerPage: 1,
+          singleImageOnFirstPage: false,
+        ),
+        time: DateTime(2026),
+      );
+      expect(item.maxChapter, chapters.length == 0 ? null : chapters.length);
+    }
+  });
 }

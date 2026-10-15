@@ -25,6 +25,7 @@ class HistoryRepository {
           page int,
           readEpisode text,
           max_page int,
+          max_chapter int,
           chapter_group int,
           chapter_title text,
           group_title text,
@@ -33,6 +34,9 @@ class HistoryRepository {
       """);
 
     var columns = db.select('PRAGMA $_schema.table_info("history");');
+    if (!columns.any((element) => element['name'] == 'max_chapter')) {
+      db.execute('alter table $_table add column max_chapter int;');
+    }
     if (!columns.any((element) => element["name"] == "chapter_group")) {
       db.execute("alter table $_table add column chapter_group int;");
     }
@@ -172,8 +176,8 @@ class HistoryRepository {
 
   String get _insertHistorySql =>
       """
-        insert or replace into $_table (id, title, subtitle, cover, time, type, ep, page, readEpisode, max_page, chapter_group, chapter_title, group_title)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        insert or replace into $_table (id, title, subtitle, cover, time, type, ep, page, readEpisode, max_page, max_chapter, chapter_group, chapter_title, group_title)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       """;
 
   /// Metadata refreshes never replace progress or recreate deleted records.
@@ -206,6 +210,7 @@ class HistoryRepository {
           page = ?,
           readEpisode = ?,
           max_page = ?,
+          max_chapter = ?,
           chapter_group = ?,
           chapter_title = ?,
           group_title = ?
@@ -214,8 +219,8 @@ class HistoryRepository {
 
   String get _insertReadDurationSql =>
       """
-        insert or replace into $_table (id, title, subtitle, cover, time, type, ep, page, readEpisode, max_page, chapter_group, chapter_title, group_title, read_duration_ms)
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        insert or replace into $_table (id, title, subtitle, cover, time, type, ep, page, readEpisode, max_page, max_chapter, chapter_group, chapter_title, group_title, read_duration_ms)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       """;
 
   String get _incrementReadDurationSql =>
@@ -237,6 +242,7 @@ class HistoryRepository {
       item.page,
       item.readEpisode.join(','),
       item.maxPage,
+      item.maxChapter,
       item.group,
       item.chapterTitle,
       item.groupTitle,
@@ -260,6 +266,7 @@ class HistoryRepository {
         item.page,
         item.readEpisode.join(','),
         item.maxPage,
+        item.maxChapter,
         item.group,
         item.chapterTitle,
         item.groupTitle,

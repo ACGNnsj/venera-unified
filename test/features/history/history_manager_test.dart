@@ -186,6 +186,7 @@ void main() {
             ..ep = 4
             ..group = 2
             ..maxPage = 80
+            ..maxChapter = 55
             ..time = DateTime(2026, 10, 2)
             ..readEpisode.add('2-4');
           await manager.addHistory(progress);
@@ -216,6 +217,7 @@ void main() {
           expect(stored.ep, 4);
           expect(stored.group, 2);
           expect(stored.maxPage, 80);
+          expect(stored.maxChapter, 55);
           expect(stored.time, progress.time);
           expect(stored.readEpisode, {'1', '2-4'});
           expect(stored.readDurationMs, 80);
@@ -429,10 +431,12 @@ void main() {
     () {
       final original = _history('copy')
         ..group = 3
+        ..maxChapter = 55
         ..readDurationMs = 75;
       final copy = original.copy();
       original.readEpisode.add('3-2');
       original.page = 9;
+      original.maxChapter = 56;
       expect(copy.readEpisode, {'1'});
       expect(copy.page, 2);
       expect(copy.group, 3);
@@ -442,6 +446,7 @@ void main() {
       expect(copy.subtitle, original.subtitle);
       expect(copy.cover, original.cover);
       expect(copy.maxPage, original.maxPage);
+      expect(copy.maxChapter, 55);
       expect(copy.type, original.type);
       copy.readEpisode.add('other');
       expect(original.readEpisode, {'1', '3-2'});

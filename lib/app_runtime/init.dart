@@ -74,16 +74,33 @@ Future<void> init(CoreBootstrap core) async {
 ComicTileState _resolveComicTileState(Comic comic) {
   final type = _comicTypeOf(comic);
   final preferences = GlobalPreferenceStore(appdata.settings);
-  final history = preferences.read(DiscoveryPreferences.showHistoryStatusOnTile)
+  final showHistory = preferences.read(
+    DiscoveryPreferences.showHistoryStatusOnTile,
+  );
+  final showTotals = preferences.read(
+    DiscoveryPreferences.showDetailedReadingProgress,
+  );
+  final history = comic is History
+      ? comic
+      : showHistory
       ? HistoryManager().find(comic.id, type)
       : null;
+  final description = history?.progressDescription(showTotals: showTotals);
   return ComicTileState(
     isFavorite:
         preferences.read(DiscoveryPreferences.showFavoriteStatusOnTile) &&
         LocalFavoritesManager().isExist(comic.id, type),
-    historyPage: history?.page,
-    historyMaxPage: history?.maxPage,
-    historyDescription: history?.description,
+    historyPage: showHistory ? history?.page : null,
+    historyMaxPage: showHistory ? history?.maxPage : null,
+    historyDescription: showHistory ? description : null,
+    historyTooltipDescription:
+        showTotals && history?.chapterTitle?.trim().isNotEmpty == true
+        ? '${history!.description}\n$description'
+        : null,
+    historyCompactDescription: showTotals
+        ? history?.progressDescription(showTotals: true, compact: true)
+        : null,
+    descriptionOverride: comic is History && showTotals ? description : null,
     hasNewUpdate:
         preferences.read(DiscoveryPreferences.showUpdateStatusOnTile) &&
         type != ComicType.local &&

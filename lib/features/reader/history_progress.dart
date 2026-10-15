@@ -15,10 +15,12 @@ void applyReaderHistoryProgress({
 }) {
   history.page = layout.historyImage(page, imageCount);
   history.maxPage = imageCount;
+  history.maxChapter = null;
   history.chapterTitle = null;
   history.groupTitle = null;
   if (chapters != null && chapter >= 1 && chapter <= chapters.length) {
     final position = chapters.positionAt(chapter);
+    history.maxChapter = position.groupLength;
     if (position.group case final group?) {
       history.groupTitle = chapters.groups.elementAt(group - 1);
       history.chapterTitle = chapters

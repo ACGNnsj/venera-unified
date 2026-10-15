@@ -7,6 +7,7 @@ import 'package:venera_next/features/settings/setting_components.dart';
 import 'package:venera_next/features/settings/keyword_blocking.dart';
 import 'package:venera_next/foundation/translations.dart';
 import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_next/routing/app_navigation.dart';
 
 class ExploreSettings extends StatefulWidget {
   const ExploreSettings({super.key});
@@ -53,6 +54,14 @@ class _ExploreSettingsState extends State<ExploreSettings> {
         SwitchSetting.preference(
           title: "Show history on comic tile".tl,
           preference: DiscoveryPreferences.showHistoryStatusOnTile,
+        ).toSliver(),
+        SwitchSetting.preference(
+          title: 'Show detailed reading progress'.tl,
+          subtitle:
+              'Show saved chapter totals and pages in the current chapter. No extra network requests.'
+                  .tl,
+          preference: DiscoveryPreferences.showDetailedReadingProgress,
+          onChanged: appNavigation.forceRebuild,
         ).toSliver(),
         SwitchSetting.preference(
           title: "Show update status on comic tile".tl,

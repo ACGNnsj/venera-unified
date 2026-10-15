@@ -16,6 +16,7 @@ History historyFromRow(Row row) => History(
     (row['readEpisode'] as String).split(',').where((entry) => entry != ''),
   ),
   maxPage: row['max_page'],
+  maxChapter: row['max_chapter'],
   group: row['chapter_group'],
   chapterTitle: row['chapter_title'],
   groupTitle: row['group_title'],
