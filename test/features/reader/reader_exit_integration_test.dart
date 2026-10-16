@@ -106,6 +106,122 @@ void main() {
         .setMockMethodCallHandler(const MethodChannel('window_manager'), null);
   });
 
+  for (final mode in [
+    ReaderMode.galleryLeftToRight,
+    ReaderMode.continuousTopToBottom,
+    ReaderMode.waterfallTopToBottom,
+  ]) {
+    for (final savedPage in [2, 1001]) {
+      for (final group in [null, 1]) {
+        testWidgets(
+          'chapterless history resumes page $savedPage with group $group in ${mode.key}',
+          (tester) async {
+            await tester.binding.setSurfaceSize(const Size(375, 667));
+            addTearDown(() => tester.binding.setSurfaceSize(null));
+            final imageCount = savedPage == 1001 ? 1200 : 3;
+            final fixture = await _ReaderFixture.create(
+              tester,
+              imageCount: imageCount,
+            );
+            final saved = _resumeHistory(page: savedPage, maxPage: imageCount);
+            try {
+              appdata.settings['readerMode'] = mode.key;
+              await fixture.mount(
+                tester,
+                pushed: false,
+                chapters: null,
+                savedHistory: saved,
+                initialChapter: saved.ep,
+                initialPage: saved.page,
+                initialChapterGroup: group,
+              );
+              final reader = fixture.readerKey.currentState!;
+              expect(reader.chapter, 1);
+              expect(reader.page, savedPage);
+              expect(reader.history, same(saved));
+              expect(saved.page, savedPage);
+              expect(saved.maxPage, imageCount);
+              expect(saved.group, isNull);
+              expect(tester.takeException(), isNull);
+            } finally {
+              await fixture.dispose(tester);
+            }
+            expect(fixture.history.progress, isNotEmpty);
+            expect(fixture.history.progress.last.page, savedPage);
+          },
+        );
+      }
+    }
+  }
+
+  testWidgets('flat chapter history ignores obsolete group coordinates', (
+    tester,
+  ) async {
+    final fixture = await _ReaderFixture.create(tester);
+    final saved = _resumeHistory(chapter: 2, page: 2, group: 2);
+    try {
+      await fixture.mount(
+        tester,
+        pushed: false,
+        chapters: const ComicChapters({
+          'previous': 'Previous',
+          'one': 'Current',
+        }),
+        savedHistory: saved,
+        initialChapter: saved.ep,
+        initialPage: saved.page,
+        initialChapterGroup: saved.group,
+      );
+      final reader = fixture.readerKey.currentState!;
+      expect(reader.chapter, 2);
+      expect(reader.eid, 'one');
+      expect(reader.page, 2);
+      expect(saved.ep, 2);
+      expect(saved.page, 2);
+      expect(tester.takeException(), isNull);
+    } finally {
+      await fixture.dispose(tester);
+    }
+  });
+
+  for (final group in [null, 1, 2]) {
+    testWidgets(
+      'grouped chapter history resumes coordinates with group $group',
+      (tester) async {
+        final fixture = await _ReaderFixture.create(tester);
+        final saved = _resumeHistory(
+          chapter: group == null ? 2 : 1,
+          page: 2,
+          group: group,
+        );
+        try {
+          await fixture.mount(
+            tester,
+            pushed: false,
+            chapters: const ComicChapters.grouped({
+              'First volume': {'one': 'First chapter'},
+              'Second volume': {'one': 'Second chapter'},
+            }),
+            savedHistory: saved,
+            initialChapter: saved.ep,
+            initialPage: saved.page,
+            initialChapterGroup: saved.group,
+          );
+          final reader = fixture.readerKey.currentState!;
+          expect(reader.chapter, group == 1 ? 1 : 2);
+          expect(reader.eid, 'one');
+          expect(reader.page, 2);
+          expect(saved.ep, 1);
+          expect(saved.group, group == 1 ? 1 : 2);
+          expect(saved.page, 2);
+          expect(tester.takeException(), isNull);
+        } finally {
+          await fixture.dispose(tester);
+        }
+      },
+    );
+  }
+
   for (final layout in [ComicLayout.paged, ComicLayout.longStrip]) {
     for (final mode in ReaderMode.values) {
       testWidgets(
@@ -174,6 +290,92 @@ void main() {
             expect(detection['version'], ComicLayoutDetection.version);
             expect(tester.takeException(), isNull);
           } finally {
+            await fixture.dispose(tester);
+          }
+        },
+      );
+    }
+  }
+
+  for (final mode in [
+    ReaderMode.continuousLeftToRight,
+    ReaderMode.continuousRightToLeft,
+  ]) {
+    for (final largerNeighbor in [false, true]) {
+      testWidgets(
+        'a loading neighbor cannot displace a fully visible page in ${mode.key} (larger: $largerNeighbor)',
+        (tester) async {
+          await tester.binding.setSurfaceSize(const Size(800, 600));
+          addTearDown(() => tester.binding.setSurfaceSize(null));
+          final fixture = await _ReaderFixture.create(
+            tester,
+            imageCount: 10,
+            layout: ComicLayout.longStrip,
+          );
+          final neighbor = File('${LocalManager().path}/book/one/8.png');
+          if (largerNeighbor) {
+            neighbor.writeAsBytesSync(
+              img.encodePng(img.Image(width: 100, height: 100)),
+            );
+          }
+          final read = _LocalReadGate(neighbor);
+          final previousIO = IOOverrides.current;
+          try {
+            appdata.settings['readerMode'] = mode.key;
+            appdata.settings['preloadImageCount'] = 0;
+            IOOverrides.global = read;
+            await fixture.mount(
+              tester,
+              pushed: false,
+              initialPage: 4,
+              waitForImage: false,
+            );
+            final reader = fixture.readerKey.currentState!;
+            final viewport = reader.imageViewController! as ContinuousModeState;
+            bool decodedNeighbors() {
+              final visible = viewport.imageStates
+                  .whereType<ComicImageState>()
+                  .where((image) => image.visibleInReader);
+              return read.reads > 0 &&
+                  visible.any(
+                    (image) =>
+                        (image.widget.image as ReaderDisplayImageProvider)
+                                .image
+                                .page ==
+                            4 &&
+                        image.readyForAutoReading,
+                  ) &&
+                  visible
+                      .where(
+                        (image) =>
+                            (image.widget.image as ReaderDisplayImageProvider)
+                                .image
+                                .page !=
+                            8,
+                      )
+                      .every((image) => image.readyForAutoReading);
+            }
+
+            await _pumpUntil(tester, decodedNeighbors);
+            await tester.pump();
+            expect(reader.page, 4);
+            expect(reader.history!.page, 4);
+            expect(read.completedReads, 0);
+            read.release();
+            await _pumpUntil(
+              tester,
+              () => viewport.imageStates
+                  .whereType<ComicImageState>()
+                  .where((image) => image.visibleInReader)
+                  .every((image) => image.readyForAutoReading),
+            );
+            await tester.pump();
+            expect(reader.page, largerNeighbor ? 8 : 4);
+            expect(reader.history!.page, largerNeighbor ? 8 : 4);
+            expect(tester.takeException(), isNull);
+          } finally {
+            read.release();
+            IOOverrides.global = previousIO;
             await fixture.dispose(tester);
           }
         },
@@ -4388,6 +4590,24 @@ void main() {
 
 const _chapters = ComicChapters({'one': 'One'});
 
+History _resumeHistory({
+  int chapter = 1,
+  int page = 1,
+  int? group,
+  int maxPage = 3,
+}) => History.fromMap({
+  'id': 'book',
+  'type': 0,
+  'time': 1000,
+  'title': 'Book',
+  'subtitle': '',
+  'cover': '',
+  'ep': chapter,
+  'page': page,
+  'max_page': maxPage,
+  'chapter_group': group,
+});
+
 Finder _paintedImages(Finder consumer) => find.descendant(
   of: consumer,
   matching: find.byWidgetPredicate(
@@ -4674,10 +4894,13 @@ class _ReaderFixture {
     bool reducedMotion = false,
     Brightness brightness = Brightness.light,
     void Function(WindowFrameController)? beforeReaderMount,
-    ComicChapters chapters = _chapters,
+    ComicChapters? chapters = _chapters,
     String comicId = 'book',
     ComicType comicType = ComicType.local,
+    History? savedHistory,
+    int? initialChapter,
     int? initialPage,
+    int? initialChapterGroup,
   }) async {
     var registered = false;
     Widget reader() => Scaffold(
@@ -4689,7 +4912,10 @@ class _ReaderFixture {
         chapters: chapters,
         comicId: comicId,
         comicType: comicType,
+        savedHistory: savedHistory,
+        initialChapter: initialChapter,
         initialPage: initialPage,
+        initialChapterGroup: initialChapterGroup,
       ),
     );
     if (volumeConnect != null) {
@@ -4870,28 +5096,20 @@ class _TestReader extends Reader {
     required super.onClosed,
     this.volumeConnect,
     this.windowCoordinator,
-    ComicChapters chapters = _chapters,
+    super.chapters = _chapters,
     String comicId = 'book',
     ComicType comicType = ComicType.local,
+    History? savedHistory,
+    super.initialChapter,
     super.initialPage,
+    super.initialChapterGroup,
   }) : super(
          type: comicType,
          cid: comicId,
          name: 'Book',
          author: '',
          tags: const [],
-         chapters: chapters,
-         history: History.fromMap({
-           'id': 'book',
-           'type': 0,
-           'time': 1000,
-           'title': 'Book',
-           'subtitle': '',
-           'cover': '',
-           'ep': 1,
-           'page': 1,
-           'max_page': 3,
-         }),
+         history: savedHistory ?? _resumeHistory(),
        );
 
   final ReaderVolumeConnection Function(void Function(Object?))? volumeConnect;

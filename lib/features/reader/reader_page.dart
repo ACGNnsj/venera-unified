@@ -1311,12 +1311,13 @@ class ReaderState extends State<Reader>
     }
     final initialChapter = widget.initialChapter ?? 1;
     controller.restoreChapter(initialChapter < 1 ? 1 : initialChapter);
-    if (widget.initialChapterGroup != null) {
+    // Legacy callers may supply a default group even without grouped chapters.
+    final chapters = widget.chapters;
+    if (chapters != null &&
+        chapters.isGrouped &&
+        widget.initialChapterGroup != null) {
       controller.restoreChapter(
-        widget.chapters!.chapterIndex(
-          chapter,
-          group: widget.initialChapterGroup,
-        ),
+        chapters.chapterIndex(chapter, group: widget.initialChapterGroup),
       );
     }
     if (widget.initialPage != null) {

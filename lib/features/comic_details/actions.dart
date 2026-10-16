@@ -263,7 +263,7 @@ abstract mixin class ComicPageActions {
   void continueRead() {
     var ep = history?.ep ?? 1;
     var page = history?.page ?? 1;
-    var group = history?.group ?? 1;
+    var group = history?.group;
     read(ep, page, group);
   }
 

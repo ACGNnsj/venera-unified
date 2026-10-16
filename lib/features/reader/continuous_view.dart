@@ -433,7 +433,8 @@ class ContinuousModeState extends State<ReaderContinuousView>
     SchedulerBinding.instance.ensureVisualUpdate();
   }
 
-  Iterable<ReaderVisibleImage> _visibleImageBounds(RenderBox viewport) sync* {
+  Iterable<({int index, Rect bounds, bool loading, bool fullyVisible})>
+  _visibleImageBounds(RenderBox viewport) sync* {
     // A distant scroll can mount a second, hidden list for its crossfade.
     // Match the active scroll owner, not cached indices that can predate a resize.
     final controller = _scrollController;
@@ -470,17 +471,27 @@ class ContinuousModeState extends State<ReaderContinuousView>
       if (index == null || _imageRefAt(index)?.imageKey != image.imageKey) {
         continue;
       }
-      final clipped = MatrixUtils.transformRect(
+      final imageBounds = MatrixUtils.transformRect(
         box.getTransformTo(listViewport),
         Offset.zero & box.size,
-      ).intersect(Offset.zero & listViewport.size);
+      );
+      final clipped = imageBounds.intersect(Offset.zero & listViewport.size);
       if (clipped.isEmpty) continue;
+      final transform = listViewport.getTransformTo(viewport);
+      final fullBounds = MatrixUtils.transformRect(transform, imageBounds);
+      final bounds = MatrixUtils.transformRect(transform, clipped);
+      final visible = bounds.intersect(Offset.zero & viewport.size);
       yield (
         index: index,
-        bounds: MatrixUtils.transformRect(
-          listViewport.getTransformTo(viewport),
-          clipped,
-        ),
+        bounds: bounds,
+        loading:
+            state is ComicImageState &&
+            state.autoReadingImageState == AutoReadingImageState.loading,
+        fullyVisible:
+            fullBounds.isFinite &&
+            !fullBounds.isEmpty &&
+            visible.width >= fullBounds.width - 0.001 &&
+            visible.height >= fullBounds.height - 0.001,
       );
     }
   }
@@ -499,13 +510,23 @@ class ContinuousModeState extends State<ReaderContinuousView>
               !image.bounds.intersect(viewportBounds).isEmpty,
         )
         .toList();
+    final currentIndex = _waterfallIndexOfChapterPage(
+      currentChapter,
+      navigation.state.pendingPage ?? currentPage,
+    );
+    final current = visible
+        .where((image) => image.index == currentIndex)
+        .firstOrNull;
+    // Loading placeholders have arbitrary dimensions. Do not let one replace
+    // a fully visible decoded page before its real image geometry is known.
+    final keepDecodedPage =
+        current != null && current.fullyVisible && !current.loading;
     final page = resolveCurrentReaderImage(
-      images: visible,
+      images: visible
+          .where((image) => !keepDecodedPage || !image.loading)
+          .map((image) => (index: image.index, bounds: image.bounds)),
       viewport: viewportBounds,
-      currentIndex: _waterfallIndexOfChapterPage(
-        currentChapter,
-        navigation.state.pendingPage ?? currentPage,
-      ),
+      currentIndex: currentIndex,
     );
     if (page == null) return;
     var imageRef = _imageRefAt(page);
