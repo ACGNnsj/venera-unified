@@ -21,6 +21,7 @@ import 'package:venera_next/foundation/file_interaction.dart';
 
 import 'download_task.dart';
 import 'download_directory_allocator.dart';
+import 'download_retry.dart';
 
 class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
   final ComicSource source;
@@ -140,7 +141,19 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
   String? get cover => _cover ?? comic?.cover;
 
   @override
-  String get message => _message;
+  String get message => isWaitingToRetry
+      ? 'Connection interrupted. Waiting to retry...'.tl
+      : _message;
+
+  DownloadRetry? _retry;
+
+  @override
+  bool get isWaitingToRetry => _isRunning && (_retry?.isWaiting ?? false);
+
+  @override
+  void retryNow() {
+    if (_isRunning) _retry?.wake();
+  }
 
   @override
   void pause() {
@@ -154,7 +167,7 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
     _runGeneration++;
     _isRunning = false;
     _currentSpeed = 0;
-    _wakeRetryDelay();
+    _retry?.cancel();
     final pending = tasks.entries
         .where((entry) => !entry.value.isComplete)
         .toList();
@@ -221,37 +234,18 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
   @visibleForTesting
   Future<void>? get debugResumeFuture => _resumeFuture;
 
-  Completer<void>? _retryDelayWakeup;
-
-  void _wakeRetryDelay() {
-    final wakeup = _retryDelayWakeup;
-    if (wakeup != null && !wakeup.isCompleted) {
-      wakeup.complete();
-    }
-  }
-
-  Future<void> _waitRetryDelay(Duration duration) {
-    final wakeup = Completer<void>();
-    _retryDelayWakeup = wakeup;
-    return Future.any<void>([
-      Future<void>.delayed(duration),
-      wakeup.future,
-    ]).whenComplete(() {
-      if (identical(_retryDelayWakeup, wakeup)) {
-        _retryDelayWakeup = null;
-      }
-    });
-  }
-
   Future<Res<T>> _runDownloadStepWithRetry<T>(
     int generation,
     Future<T> Function() task,
-  ) {
-    return _runWithRetry(
-      task,
-      delay: _waitRetryDelay,
-      shouldContinue: () => _isCurrentRun(generation),
-    );
+  ) async {
+    try {
+      if (!_isCurrentRun(generation)) {
+        throw OperationFailure.message('Canceled', kind: FailureKind.cancelled);
+      }
+      return Res(await _retry!.run(task, retryUnknown: true));
+    } catch (error, stack) {
+      return Res.fromException(error, stack);
+    }
   }
 
   void _scheduleTasks() {
@@ -267,9 +261,9 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
         if (!tasks[i]!.isComplete) {
           downloading++;
         }
-        if (tasks[i]!.error == null) {
-          continue;
-        }
+        // The main loop owns exhausted failures. Prefetch completion must not
+        // recreate a failed wrapper and silently reset its retry budget.
+        continue;
       }
       Directory saveTo;
       if (comic!.chapters != null) {
@@ -306,6 +300,12 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
   void resume() {
     if (_isRunning) return;
     final generation = ++_runGeneration;
+    _retry = DownloadRetry(
+      isActive: () => _isCurrentRun(generation),
+      onWaitingChanged: () {
+        if (_isCurrentRun(generation)) notifyListeners();
+      },
+    );
     _resumeFuture = _resume(generation).catchError((
       Object error,
       StackTrace stack,
@@ -589,6 +589,12 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
   bool get isPaused => !_isRunning;
 
   @override
+  void dispose() {
+    _stopRun();
+    super.dispose();
+  }
+
+  @override
   LocalComic toLocalComic() {
     return LocalComic(
       id: comic!.id,
@@ -616,34 +622,6 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
 
   @override
   int get hashCode => Object.hash(comicId, source.key);
-}
-
-Future<Res<T>> _runWithRetry<T>(
-  Future<T> Function() task, {
-  int retry = 3,
-  Future<void> Function(Duration duration)? delay,
-  bool Function()? shouldContinue,
-}) async {
-  final wait = delay ?? Future<void>.delayed;
-  for (var i = 0; i < retry; i++) {
-    if (shouldContinue?.call() == false) {
-      return Res.failure(
-        OperationFailure.message("Canceled", kind: FailureKind.cancelled),
-      );
-    }
-    try {
-      return Res(await task());
-    } catch (e, stack) {
-      final failure = Res<T>.fromException(e, stack);
-      if (i == retry - 1 ||
-          shouldContinue?.call() == false ||
-          failure.failure!.kind != FailureKind.failed) {
-        return failure;
-      }
-      await wait(Duration(seconds: i + 1));
-    }
-  }
-  throw UnimplementedError();
 }
 
 class _ImageDownloadWrapper {
@@ -702,9 +680,18 @@ class _ImageDownloadWrapper {
 
   var completers = <Completer<_ImageDownloadWrapper>>[];
 
-  var retry = 3;
-
   void start() async {
+    try {
+      await task._retry!.run(_download, retryUnknown: true);
+    } catch (e, s) {
+      if (isCancelled) return;
+      Log.error('Download', e, s);
+      error = e.toString();
+      _completeWaiters();
+    }
+  }
+
+  Future<void> _download() async {
     int lastBytes = 0;
     String? unsupportedMime;
     final imageIterator = StreamIterator(
@@ -749,9 +736,10 @@ class _ImageDownloadWrapper {
           if (isCancelled) {
             return;
           }
+          await imageIterator.cancel();
+          if (isCancelled) return;
           isComplete = true;
           _completeWaiters();
-          await imageIterator.cancel();
           return;
         }
       }
@@ -764,19 +752,9 @@ class _ImageDownloadWrapper {
         }
         throw OperationFailure.message("Failed to download image");
       }
-    } catch (e, s) {
-      if (isCancelled) {
-        return;
-      }
-      Log.error("Download", e.toString(), s);
-      retry--;
-      if (retry > 0) {
-        start();
-        return;
-      }
-      error = e.toString();
-      _completeWaiters();
     } finally {
+      // Release the failed request before a retry opens another connection.
+      await imageIterator.cancel();
       if (identical(_imageIterator, imageIterator)) {
         _imageIterator = null;
       }

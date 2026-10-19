@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:venera_next/features/local_comics/download_task.dart';
 import 'package:venera_next/features/local_comics/downloading_page.dart';
@@ -91,6 +92,70 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     expect(task.listenerCount, 0);
   });
+
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'full download error can be opened, scrolled and copied: $brightness',
+      (tester) async {
+        tester.view.physicalSize = const Size(375, 667);
+        tester.view.devicePixelRatio = 1;
+        tester.platformDispatcher.textScaleFactorTestValue = 2;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        final text = List.generate(
+          40,
+          (i) => 'Connection diagnostic line $i',
+        ).join('\n');
+        final task = _Task('error')
+          ..error = true
+          ..status = text;
+        LocalManager().restorePausedDownloads([task]);
+        String? copied;
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              copied = (call.arguments as Map)['text'] as String;
+            }
+            return null;
+          },
+        );
+        addTearDown(
+          () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            null,
+          ),
+        );
+        await tester.pumpWidget(page(brightness: brightness));
+        expect(tester.takeException(), isNull, reason: 'download list layout');
+        expect(find.text('Error'), findsOneWidget);
+        expect(
+          find.widgetWithIcon(OutlinedButton, Icons.play_arrow),
+          findsOneWidget,
+        );
+        await tester.tap(find.byIcon(Icons.more_horiz));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'download menu layout');
+        await tester.tap(find.text('Error details'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'error dialog layout');
+        expect(find.text('Download error'), findsOneWidget);
+        expect(
+          tester.widget<SelectableText>(find.byType(SelectableText)).data,
+          text,
+        );
+        await tester.tap(find.text('Copy'));
+        await tester.pump();
+        expect(copied, text);
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+  }
 }
 
 class _Task extends DownloadTask {
@@ -101,6 +166,8 @@ class _Task extends DownloadTask {
   int get listenerCount => _listeners.length;
   String label = 'Task';
   bool paused = true;
+  bool error = false;
+  String status = 'Downloading';
   int resumes = 0;
   Future<void>? cleanup;
 
@@ -124,11 +191,11 @@ class _Task extends DownloadTask {
   @override
   String? get cover => null;
   @override
-  String get message => 'Downloading';
+  String get message => status;
   @override
   bool get isPaused => paused;
   @override
-  bool get isError => false;
+  bool get isError => error;
   @override
   int get speed => 0;
   @override

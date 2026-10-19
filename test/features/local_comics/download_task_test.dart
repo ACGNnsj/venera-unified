@@ -4,6 +4,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dio/dio.dart';
+import 'package:rhttp/rhttp.dart' as rhttp;
 import 'package:sqlite3/sqlite3.dart';
 import 'package:venera_next/foundation/res.dart';
 import 'package:venera_next/foundation/operation_failure.dart';
@@ -30,6 +32,223 @@ void main() {
     ComicSourceManager().remove(sourceKey);
     LocalManager.current?.dispose();
   });
+
+  for (final recovery in ['network', 'resume', 'exhausted']) {
+    test(
+      'transient image disconnect preserves completed pages: $recovery',
+      () async {
+        final root = Directory.systemTemp.createTempSync('download-recovery-');
+        final storage = _TaskStorage(root.path);
+        final bytes = base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6uwAAAABJRU5ErkJggg==',
+        );
+        var connected = false;
+        final attempts = <String, int>{};
+        final task = ImagesDownloadTask(
+          storage: storage,
+          source: _testSource(
+            sourceKey,
+            loadComicPages: (_, _) async => Res(['first.png', 'second.png']),
+          ),
+          comicId: 'recovery',
+          comic: _archiveComic(sourceKey, id: 'recovery'),
+          loadThumbnail: (_, _) => Stream.value(
+            ImageDownloadProgress(
+              currentBytes: bytes.length,
+              totalBytes: bytes.length,
+              imageBytes: bytes,
+            ),
+          ),
+          loadImage: (key, _, _, _) async* {
+            attempts[key] = (attempts[key] ?? 0) + 1;
+            if (key == 'second.png' && !connected) {
+              throw DioException(
+                requestOptions: RequestOptions(
+                  path: 'https://example.invalid/second.png',
+                ),
+                error: rhttp.RhttpConnectionException(
+                  rhttp.HttpRequest(url: 'https://example.invalid/second.png'),
+                  'offline',
+                ),
+              );
+            }
+            yield ImageDownloadProgress(
+              currentBytes: bytes.length,
+              totalBytes: bytes.length,
+              imageBytes: bytes,
+            );
+          },
+        );
+        addTearDown(() async {
+          task.pause();
+          await task.pendingCleanup;
+          await task.debugResumeFuture;
+          task.dispose();
+          root.deleteSync(recursive: true);
+        });
+        task.resume();
+        await _waitFor(() => task.isWaitingToRetry);
+        expect(task.isPaused, isFalse);
+        expect(task.isError, isFalse);
+        expect(task.message, contains('Waiting to retry'));
+        expect(task.progress, 0.5);
+        expect(task.toJson()['index'], 1);
+        expect(File('${task.path}/0.png').readAsBytesSync(), bytes);
+        if (recovery == 'resume') {
+          task.pause();
+          await task.pendingCleanup;
+          await task.debugResumeFuture;
+          task.retryNow();
+          await pumpEventQueue();
+          expect(attempts['second.png'], 1);
+          expect(task.isWaitingToRetry, isFalse);
+          connected = true;
+          task.resume();
+        } else if (recovery == 'exhausted') {
+          for (var attempt = 2; attempt <= 7; attempt++) {
+            task.retryNow();
+            await _waitFor(() => attempts['second.png'] == attempt);
+            await pumpEventQueue();
+          }
+          await task.debugResumeFuture;
+          expect(task.isPaused, isTrue);
+          expect(task.isError, isTrue);
+          expect(task.isWaitingToRetry, isFalse);
+          connected = true;
+          task.retryNow();
+          await pumpEventQueue();
+          expect(attempts['second.png'], 7);
+          expect(storage.completed, isEmpty);
+          task.resume();
+        } else {
+          connected = true;
+          task.retryNow();
+        }
+        await task.debugResumeFuture;
+        expect(task.progress, 1);
+        expect(task.isError, isFalse);
+        expect(attempts['first.png'], 1);
+        expect(attempts['second.png'], recovery == 'exhausted' ? 8 : 2);
+        expect(storage.completed, [same(task)]);
+        expect(File('${task.path}/0.png').readAsBytesSync(), bytes);
+      },
+    );
+  }
+
+  test(
+    'image retry releases the old stream before waiting or opening a new one',
+    () async {
+      final root = Directory.systemTemp.createTempSync(
+        'download-retry-cleanup-',
+      );
+      final storage = _TaskStorage(root.path);
+      final cancelling = Completer<void>();
+      final release = Completer<void>();
+      var calls = 0;
+      final task = ImagesDownloadTask(
+        storage: storage,
+        source: _testSource(
+          sourceKey,
+          loadComicPages: (_, _) async => Res(['page.png']),
+        ),
+        comicId: 'cleanup',
+        comic: _archiveComic(sourceKey, id: 'cleanup'),
+        loadThumbnail: (_, _) => Stream.value(
+          ImageDownloadProgress(
+            currentBytes: 3,
+            totalBytes: 3,
+            imageBytes: Uint8List.fromList([1, 2, 3]),
+          ),
+        ),
+        loadImage: (_, _, _, _) {
+          calls++;
+          final controller = StreamController<ImageDownloadProgress>();
+          controller.onListen = () =>
+              controller.addError(const SocketException('offline'));
+          controller.onCancel = () async {
+            if (!cancelling.isCompleted) cancelling.complete();
+            await release.future;
+          };
+          return controller.stream;
+        },
+      );
+      addTearDown(() async {
+        if (!release.isCompleted) release.complete();
+        task.pause();
+        await task.pendingCleanup;
+        await task.debugResumeFuture;
+        task.dispose();
+        root.deleteSync(recursive: true);
+      });
+      task.resume();
+      await cancelling.future;
+      task.retryNow();
+      await pumpEventQueue();
+      expect(calls, 1);
+      expect(task.isWaitingToRetry, isFalse);
+      release.complete();
+      await _waitFor(() => task.isWaitingToRetry);
+      task.cancel();
+      await task.pendingCleanup;
+      await task.debugResumeFuture;
+      task.retryNow();
+      await pumpEventQueue();
+      expect(calls, 1);
+      expect(storage.removed, [same(task)]);
+    },
+  );
+
+  test(
+    'archive retry keeps its workspace and drains the failed downloader',
+    () async {
+      final root = Directory.systemTemp.createTempSync('archive-recovery-');
+      App.cachePath = root.path;
+      final storage = _TaskStorage(root.path);
+      final downloads = <_ArchiveDownloader>[];
+      String? firstPath;
+      final task = ArchiveDownloadTask(
+        'https://example.invalid/book.zip',
+        _archiveComic(sourceKey),
+        storage: storage,
+        createDownloader: (url, path) {
+          if (firstPath == null) {
+            firstPath = path;
+            File('$path.download').writeAsStringSync('partial');
+          } else {
+            expect(path, firstPath);
+            expect(File('$path.download').readAsStringSync(), 'partial');
+            expect(downloads.first.stopped, isTrue);
+          }
+          final downloader = _ArchiveDownloader(
+            url,
+            path,
+            downloads.isEmpty
+                ? Stream.error(const SocketException('offline'))
+                : Stream.value(DownloadingStatus(10, 10, 0, true)),
+          );
+          downloads.add(downloader);
+          return downloader;
+        },
+        extractArchive: (_, output) async =>
+            File('$output/0.jpg').writeAsBytesSync([1, 2, 3]),
+      );
+      addTearDown(() async {
+        task.pause();
+        await task.pendingCleanup;
+        task.dispose();
+        root.deleteSync(recursive: true);
+      });
+      task.resume();
+      await _waitFor(() => task.isWaitingToRetry);
+      expect(task.isPaused, isFalse);
+      task.retryNow();
+      await task.pendingRun;
+      expect(downloads, hasLength(2));
+      expect(task.isError, isFalse);
+      expect(storage.completed, [same(task)]);
+      expect(File('$firstPath.download').existsSync(), isFalse);
+    },
+  );
 
   test(
     'image download retains its injected library across allocation',
@@ -1644,6 +1863,16 @@ void main() {
   });
 }
 
+Future<void> _waitFor(bool Function() ready) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 5));
+  while (!ready()) {
+    if (DateTime.now().isAfter(deadline)) {
+      fail('Download did not reach the expected state');
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 2));
+  }
+}
+
 ComicSource _testSource(
   String key, {
   LoadComicFunc? loadComicInfo,
@@ -1778,8 +2007,15 @@ ComicDetails _archiveComic(String source, {String id = 'archive'}) =>
 class _ArchiveDownloader extends FileDownloader {
   _ArchiveDownloader(super.url, super.savePath, this.statuses);
   final Stream<DownloadingStatus> statuses;
+  bool stopped = false;
   @override
   Stream<DownloadingStatus> start() => statuses;
+
+  @override
+  Future<void> stop() async {
+    await super.stop();
+    stopped = true;
+  }
 }
 
 class _TaskStorage implements DownloadTaskStorage {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:venera_next/components/button.dart';
 import 'package:venera_next/components/menu.dart';
 import 'package:venera_next/components/pop_up_widget.dart';
@@ -82,7 +83,8 @@ class _DownloadingPageState extends State<DownloadingPage> {
     var first = manager.downloadingTasks.firstOrNull;
     final resumePending = manager.isDownloadResumePending;
     return Container(
-      height: 48,
+      constraints: const BoxConstraints(minHeight: 48),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -91,19 +93,23 @@ class _DownloadingPageState extends State<DownloadingPage> {
           ),
         ),
       ),
-      child: Row(
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 12,
+        runSpacing: 8,
         children: [
-          if (first?.isPaused == true && !resumePending)
-            Text("Paused".tl, style: ts.s18.bold)
-          else if (first?.isError == true)
+          if (first?.isError == true)
             Text("Error".tl, style: ts.s18.bold)
+          else if (first?.isPaused == true && !resumePending)
+            Text("Paused".tl, style: ts.s18.bold)
           else
             Text("${bytesToReadableString(speed)}/s", style: ts.s18.bold),
-          const Spacer(),
           if (!resumePending &&
               (first?.isPaused == true || first?.isError == true))
             OutlinedButton(
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.play_arrow, size: 18),
                   const SizedBox(width: 4),
@@ -117,6 +123,7 @@ class _DownloadingPageState extends State<DownloadingPage> {
           else if (first != null)
             OutlinedButton(
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.pause, size: 18),
                   const SizedBox(width: 4),
@@ -128,7 +135,7 @@ class _DownloadingPageState extends State<DownloadingPage> {
               },
             ),
         ],
-      ).paddingHorizontal(16),
+      ),
     );
   }
 }
@@ -177,10 +184,37 @@ class _DownloadTaskTileState extends State<_DownloadTaskTile> {
     setState(() {});
   }
 
+  void _showErrorDetails() {
+    final message = widget.task.message;
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Download error'.tl),
+        scrollable: true,
+        content: SelectableText(message),
+        actions: [
+          TextButton(
+            onPressed: () => Clipboard.setData(ClipboardData(text: message)),
+            child: Text('Copy'.tl),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Close'.tl),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 136,
+      height:
+          136 *
+          (MediaQuery.textScalerOf(context).scale(14) / 14).clamp(
+            1.0,
+            double.infinity,
+          ),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: Row(
         children: [
@@ -216,6 +250,12 @@ class _DownloadTaskTileState extends State<_DownloadTaskTile> {
                     ),
                     MenuButton(
                       entries: [
+                        if (widget.task.isError)
+                          MenuEntry(
+                            icon: Icons.error_outline,
+                            text: 'Error details'.tl,
+                            onClick: _showErrorDetails,
+                          ),
                         MenuEntry(
                           icon: Icons.close,
                           text: "Cancel".tl,

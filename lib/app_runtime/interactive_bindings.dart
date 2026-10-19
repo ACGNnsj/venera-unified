@@ -12,6 +12,8 @@ class InteractiveBindings {
     required this.shares,
     required this.heartbeat,
     this.closeHeartbeat,
+    this.startDownloads,
+    this.closeDownloads,
     this.placement,
     this.onError = _logError,
   });
@@ -22,6 +24,8 @@ class InteractiveBindings {
   final EventSubscription<Object?> Function() shares;
   final Future<void> Function() heartbeat;
   final Future<void> Function()? closeHeartbeat;
+  final void Function()? startDownloads;
+  final Future<void> Function()? closeDownloads;
   final WindowPlacementTracker? placement;
   final void Function(Object error, StackTrace stack) onError;
   EventSubscription<Uri>? _links;
@@ -57,6 +61,7 @@ class InteractiveBindings {
     try {
       placement?.start();
       if (android) {
+        startDownloads?.call();
         _links = links();
         _links!.start();
         _shares = shares();
@@ -195,6 +200,7 @@ class InteractiveBindings {
       if (_links != null) close('links', _links!.dispose),
       if (_shares != null) close('shares', _shares!.dispose),
       if (placement != null) close('window placement', placement!.dispose),
+      if (closeDownloads != null) close('downloads', closeDownloads!),
       // Its timer has stopped. Release the native watchdog after its own calls
       // drain, so a slow file write cannot leave an un-fed watchdog timing out.
       closeWatchdog(),

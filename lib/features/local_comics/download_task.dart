@@ -10,6 +10,11 @@ abstract class DownloadTask with ChangeNotifier {
 
   bool get isPaused;
 
+  bool get isWaitingToRetry => false;
+
+  /// A network/foreground hint may wake an existing wait, never resume a task.
+  void retryNow() {}
+
   /// bytes per second
   int get speed;
 

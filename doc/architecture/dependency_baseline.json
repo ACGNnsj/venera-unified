@@ -482,6 +482,7 @@
     "network/shared_request_stream.dart"
   ],
   "ui_files": [
+    "app_runtime/android_downloads.dart",
     "app_runtime/app_runtime.dart",
     "app_runtime/init.dart",
     "app_runtime/interactive_platform_bindings.dart",
@@ -810,6 +811,7 @@
     "features/local_comics/download.dart",
     "features/local_comics/download_directory_allocator.dart",
     "features/local_comics/download_queue.dart",
+    "features/local_comics/download_retry.dart",
     "features/local_comics/download_task.dart",
     "features/local_comics/download_task_codec.dart",
     "features/local_comics/download_task_storage.dart",

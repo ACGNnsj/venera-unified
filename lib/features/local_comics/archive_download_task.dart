@@ -15,6 +15,7 @@ import 'package:venera_next/foundation/file_interaction.dart';
 import 'package:zip_flutter/zip_flutter.dart';
 
 import 'download_task.dart';
+import 'download_retry.dart';
 
 class ArchiveDownloadTask extends DownloadTask {
   final String archiveUrl;
@@ -49,6 +50,15 @@ class ArchiveDownloadTask extends DownloadTask {
   Directory? _workspace;
   String? _ownedOutputPath;
   final DownloadTaskStorage _storage;
+  DownloadRetry? _retry;
+
+  @override
+  bool get isWaitingToRetry => _isRunning && (_retry?.isWaiting ?? false);
+
+  @override
+  void retryNow() {
+    if (_isRunning) _retry?.wake();
+  }
 
   Future<void> _clearOwnedOutput() async {
     final outputPath = _ownedOutputPath;
@@ -88,6 +98,7 @@ class ArchiveDownloadTask extends DownloadTask {
   void _stop() {
     _generation++;
     _isRunning = false;
+    _retry?.cancel();
     _speed = 0;
     final downloader = _downloader;
     _downloader = null;
@@ -147,7 +158,15 @@ class ArchiveDownloadTask extends DownloadTask {
   bool get isPaused => !_isRunning;
 
   @override
-  String get message => _message;
+  void dispose() {
+    _stop();
+    super.dispose();
+  }
+
+  @override
+  String get message => isWaitingToRetry
+      ? 'Connection interrupted. Waiting to retry...'.tl
+      : _message;
 
   int _currentBytes = 0;
 
@@ -172,6 +191,12 @@ class ArchiveDownloadTask extends DownloadTask {
     final prior = pendingCleanup;
     final generation = ++_generation;
     _isRunning = true;
+    _retry = DownloadRetry(
+      isActive: () => _isCurrent(generation),
+      onWaitingChanged: () {
+        if (_isCurrent(generation)) notifyListeners();
+      },
+    );
     _isError = false;
     _message = "Downloading...".tl;
     _runFuture = _resume(generation, prior).catchError((
@@ -216,21 +241,30 @@ class ArchiveDownloadTask extends DownloadTask {
     if (!_isCurrent(generation)) return;
     final archiveFile = File(FilePath.join(workspace.path, 'download.zip'));
     Log.info("Download", "Downloading $archiveUrl");
-    final downloader = _downloader = _createDownloader(
-      archiveUrl,
-      archiveFile.path,
-    );
-    var isDownloaded = false;
-    await for (final status in downloader.start()) {
-      if (!_isCurrent(generation)) return;
-      _currentBytes = status.downloadedBytes;
-      _expectedBytes = status.totalBytes;
-      _message =
-          "${bytesToReadableString(_currentBytes)}/${bytesToReadableString(_expectedBytes)}";
-      _speed = status.bytesPerSecond;
-      isDownloaded = status.isFinished;
-      notifyListeners();
-    }
+    final isDownloaded = await _retry!.run(() async {
+      final downloader = _downloader = _createDownloader(
+        archiveUrl,
+        archiveFile.path,
+      );
+      var completed = false;
+      try {
+        await for (final status in downloader.start()) {
+          if (!_isCurrent(generation)) return false;
+          _currentBytes = status.downloadedBytes;
+          _expectedBytes = status.totalBytes;
+          _message =
+              "${bytesToReadableString(_currentBytes)}/${bytesToReadableString(_expectedBytes)}";
+          _speed = status.bytesPerSecond;
+          completed = status.isFinished;
+          notifyListeners();
+        }
+        return completed;
+      } finally {
+        await downloader.stop();
+        if (identical(_downloader, downloader)) _downloader = null;
+        if (_isCurrent(generation)) _speed = 0;
+      }
+    });
     if (!_isCurrent(generation)) return;
     if (!isDownloaded) {
       _setError("Error: Download failed");
