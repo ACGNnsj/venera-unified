@@ -9,6 +9,22 @@ import 'package:venera_next/foundation/window_placement.dart';
 import 'package:venera_next/foundation/window_placement_tracker.dart';
 import 'package:window_manager/window_manager.dart';
 
+/// Failed core startup never reaches normal placement initialization. Reveal a
+/// closable diagnostic window without opening the failed data directory again.
+Future<void> showStartupFailureWindow() async {
+  await windowManager.ensureInitialized();
+  await windowManager.setPreventClose(false);
+  await windowManager.waitUntilReadyToShow(
+    const WindowOptions(
+      title: 'VeneraNext',
+      titleBarStyle: TitleBarStyle.normal,
+      minimumSize: Size(500, 600),
+    ),
+  );
+  await windowManager.setBounds(WindowPlacement.defaultPlacement.rect);
+  await windowManager.show();
+}
+
 /// One native window owns initialization and the handoff between widget mounts.
 class WindowPlacementHost {
   WindowPlacementHost({

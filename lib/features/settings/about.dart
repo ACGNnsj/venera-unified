@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:venera_next/foundation/application_preferences.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:venera_next/components/appbar.dart';
 import 'package:venera_next/components/scroll.dart';
@@ -13,6 +13,8 @@ import 'package:venera_next/foundation/context.dart';
 import 'package:venera_next/foundation/translations.dart';
 import 'package:venera_next/foundation/widget_utils.dart';
 import 'package:venera_next/components/application_update_prompt.dart';
+
+import 'changelog_document.dart';
 
 class AboutSettings extends StatefulWidget {
   const AboutSettings({super.key});
@@ -145,33 +147,60 @@ class ChangelogPage extends StatefulWidget {
 }
 
 class _ChangelogPageState extends State<ChangelogPage> {
-  late final Future<String> _changelog = rootBundle.loadString("CHANGELOG.md");
+  AssetBundle? _bundle;
+  late Future<List<ChangelogSection>> _changelog;
+
+  Future<List<ChangelogSection>> _load({bool cache = true}) =>
+      _bundle!.loadString('CHANGELOG.md', cache: cache).then(parseChangelog);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final bundle = DefaultAssetBundle.of(context);
+    if (identical(bundle, _bundle)) return;
+    _bundle = bundle;
+    _changelog = _load();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      child: SmoothCustomScrollView(
-        slivers: [
-          SliverAppbar(title: Text("Changelog".tl)),
-          FutureBuilder(
-            future: _changelog,
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(child: Text("Error".tl)),
+      child: Column(
+        children: [
+          Appbar(title: Text("Changelog".tl)),
+          Expanded(
+            child: FutureBuilder(
+              future: _changelog,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Error'.tl),
+                        TextButton(
+                          onPressed: () => setState(() {
+                            _changelog = _load(cache: false);
+                          }),
+                          child: Text('Retry'.tl),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final sections = snapshot.data!;
+                if (sections.isEmpty) {
+                  return Center(child: Text('No changelog available'.tl));
+                }
+                return _ChangelogVersions(
+                  key: ObjectKey(sections),
+                  sections: sections,
                 );
-              }
-              if (!snapshot.hasData) {
-                return const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              return SelectionArea(
-                child: _ChangelogMarkdown(snapshot.data!),
-              ).paddingAll(16).toSliver();
-            },
+              },
+            ),
           ),
         ],
       ),
@@ -179,17 +208,107 @@ class _ChangelogPageState extends State<ChangelogPage> {
   }
 }
 
-class _ChangelogMarkdown extends StatelessWidget {
-  const _ChangelogMarkdown(this.data);
+class _ChangelogVersions extends StatefulWidget {
+  const _ChangelogVersions({required this.sections, super.key});
 
-  final String data;
+  final List<ChangelogSection> sections;
+
+  @override
+  State<_ChangelogVersions> createState() => _ChangelogVersionsState();
+}
+
+class _ChangelogVersionsState extends State<_ChangelogVersions> {
+  var _selected = 0;
+
+  String _title(ChangelogSection section) => section.isUnreleased
+      ? 'Unreleased'.tl
+      : section.title == 'Changelog'
+      ? 'Changelog'.tl
+      : section.title;
 
   @override
   Widget build(BuildContext context) {
-    final lines = data.split(RegExp(r'\r?\n'));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [for (final line in lines) _ChangelogMarkdownBlock(line)],
+    final section = widget.sections[_selected];
+    final tabHeight = math.max(
+      64.0,
+      MediaQuery.textScalerOf(context).scale(16) * 1.5 + 32,
+    );
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: Column(
+        children: [
+          SizedBox(
+            height: tabHeight,
+            child: ListView.separated(
+              key: const ValueKey('changelog-versions'),
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: widget.sections.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final title = _title(widget.sections[index]);
+                return Center(
+                  child: Tooltip(
+                    message: title,
+                    child: ChoiceChip(
+                      key: ValueKey('changelog-version-$index'),
+                      label: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 280),
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      materialTapTargetSize: MaterialTapTargetSize.padded,
+                      selected: index == _selected,
+                      onSelected: (_) {
+                        if (index != _selected) {
+                          setState(() => _selected = index);
+                        }
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) => SelectionArea(
+                // A new scroll owner resets position without keeping old pages
+                // alive. Both the version strip and body are lazily constructed.
+                key: ValueKey(_selected),
+                child: SmoothCustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: math.max(
+                          16,
+                          (constraints.maxWidth - 960) / 2,
+                        ),
+                        vertical: 16,
+                      ),
+                      sliver: SliverList.builder(
+                        itemCount: section.lines.length + 1,
+                        addAutomaticKeepAlives: false,
+                        itemBuilder: (context, index) =>
+                            _ChangelogMarkdownBlock(
+                              index == 0
+                                  ? '## ${_title(section)}'
+                                  : section.lines[index - 1],
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

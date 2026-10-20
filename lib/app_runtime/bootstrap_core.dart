@@ -51,6 +51,8 @@ CoreBootstrap createCoreBootstrap({
 
   return CoreBootstrap(
     failureCleanup: cleanup,
+    onStartupFailure: (phase, error, stack) =>
+        Log.error('Startup', '$phase failed: $error', stack),
     releaseOwnership: () => applicationOwnership?.release(),
     shutdownPreparation: () async {
       // A failed producer can still retain native resources. Keep its stores

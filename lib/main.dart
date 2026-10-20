@@ -30,6 +30,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:venera_next/app_runtime/app_runtime.dart';
 import 'package:venera_next/app_shell/app_shell.dart';
+import 'package:venera_next/app_shell/startup_failure.dart';
 import 'package:venera_next/foundation/log.dart';
 import 'package:venera_next/foundation/file_interaction.dart';
 import 'components/gesture.dart';
@@ -56,48 +57,65 @@ void main(List<String> args) {
     return;
   }
   if (runWebViewTitleBarWidget(args)) return;
+  var applicationShown = false;
   overrideIO(() {
     runZonedGuarded(
       () async {
-        WidgetsFlutterBinding.ensureInitialized();
-        registerShowMessageHandler((context, message) {
-          showToast(message: message, context: context);
-        });
-        JsEngine().bindUiMessageHandler(JsUiApi());
-        final sync = createApplicationDataSync();
-        final core = createCoreBootstrap(onDataChanged: sync.onDataChanged);
         try {
-          await init(core);
-        } catch (error, stack) {
-          await rollbackCoreStartup(
-            [
-              (name: 'sync', close: sync.closeAndWait),
-              (name: 'core', close: core.close),
-            ],
-            error,
-            stack,
+          WidgetsFlutterBinding.ensureInitialized();
+          registerShowMessageHandler((context, message) {
+            showToast(message: message, context: context);
+          });
+          JsEngine().bindUiMessageHandler(JsUiApi());
+          final sync = createApplicationDataSync();
+          final core = createCoreBootstrap(onDataChanged: sync.onDataChanged);
+          try {
+            await init(core);
+          } catch (error, stack) {
+            await rollbackCoreStartup(
+              [
+                (name: 'sync', close: sync.closeAndWait),
+                (name: 'core', close: core.close),
+              ],
+              error,
+              stack,
+            );
+            Error.throwWithStackTrace(error, stack);
+          }
+          final placement = App.isDesktop
+              ? WindowPlacementHost.platform(
+                  dataPath: App.dataPath,
+                  linux: App.isLinux,
+                  macos: App.isMacOS,
+                )
+              : null;
+          final host = ApplicationHost(
+            core: core,
+            sync: sync,
+            placement: placement,
+            sourceInstallations: SourceInstallations(
+              manager: ComicSourceManager(),
+              repositories: SourceRepositories.instance,
+              createClient: AppDio.new,
+            ),
           );
-          Error.throwWithStackTrace(error, stack);
+          runApp(MyApp(host: host));
+          applicationShown = true;
+          await placement?.initialize();
+        } catch (error, stack) {
+          Log.error('Startup', error, stack);
+          if (!applicationShown) {
+            applicationShown = true;
+            runApp(StartupFailureApp(error: error, stack: stack));
+            if (App.isDesktop) {
+              try {
+                await showStartupFailureWindow();
+              } catch (windowError, windowStack) {
+                Log.error('Startup window', windowError, windowStack);
+              }
+            }
+          }
         }
-        final placement = App.isDesktop
-            ? WindowPlacementHost.platform(
-                dataPath: App.dataPath,
-                linux: App.isLinux,
-                macos: App.isMacOS,
-              )
-            : null;
-        final host = ApplicationHost(
-          core: core,
-          sync: sync,
-          placement: placement,
-          sourceInstallations: SourceInstallations(
-            manager: ComicSourceManager(),
-            repositories: SourceRepositories.instance,
-            createClient: AppDio.new,
-          ),
-        );
-        runApp(MyApp(host: host));
-        await placement?.initialize();
       },
       (error, stack) {
         Log.error("Unhandled Exception", error, stack);

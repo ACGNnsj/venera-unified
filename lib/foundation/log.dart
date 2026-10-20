@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:venera_next/foundation/file_system.dart';
 import 'package:venera_next/foundation/extensions.dart';
 import 'log_file_writer.dart';
+import 'log_redaction.dart';
 
 class LogItem {
   final LogLevel level;
@@ -68,6 +69,9 @@ class Log {
 
   static void addLog(LogLevel level, String title, String content) {
     if (isMuted) return;
+
+    title = redactLogText(title);
+    content = redactLogText(content);
 
     if (!ignoreLimitation && content.length > maxLogLength) {
       content = "${content.substring(0, maxLogLength)}...";

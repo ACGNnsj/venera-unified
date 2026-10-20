@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:rhttp/rhttp.dart' as rhttp;
 import 'package:venera_next/foundation/appdata.dart';
 import 'package:venera_next/foundation/log.dart';
+import 'package:venera_next/foundation/log_redaction.dart';
 import 'package:venera_next/network/cache.dart';
 import 'package:venera_next/network/proxy.dart';
 
@@ -105,7 +106,6 @@ class MyLogInterceptor extends Interceptor {
         value.length == 1 ? value.first : value.toString(),
       ),
     );
-    headers.remove("cookie");
     String content;
     if (response.data is List<int>) {
       try {
@@ -114,7 +114,7 @@ class MyLogInterceptor extends Interceptor {
         content = "<Bytes>\nlength:${response.data.length}";
       }
     } else {
-      content = response.data.toString();
+      content = formatLogBody(response.data);
     }
     Log.addLog(
       (response.statusCode != null && response.statusCode! < 400)
@@ -122,20 +122,28 @@ class MyLogInterceptor extends Interceptor {
           : LogLevel.error,
       "Network",
       "Response ${response.realUri.toString()} ${response.statusCode}\n"
-          "headers:\n$headers\n$content",
+          "headers:\n${redactLogHeaders(headers)}\n$content",
     );
     handler.next(response);
   }
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    const String headerMask = "********";
     const String dataMask = "****** DATA_PROTECTED ******";
+    final extraMask = options.extra['maskHeadersInLog'];
+    final headers = redactLogHeaders(
+      options.headers,
+      additionallyMasked: extraMask is Iterable
+          ? extraMask.whereType<String>()
+          : extraMask is String
+          ? extraMask.split(RegExp(r'[,\s]+'))
+          : const [],
+    );
     Log.info(
       "Network",
       "${options.method} ${options.uri}\n"
-          "headers:\n${options.extra.containsKey("maskHeadersInLog") ? options.headers.map((key, value) => MapEntry(key, options.extra["maskHeadersInLog"].contains(key) ? headerMask : value)) : options.headers}\n"
-          "data:\n${options.extra["maskDataInLog"] == true ? dataMask : options.data}",
+          "headers:\n$headers\n"
+          "data:\n${options.extra["maskDataInLog"] == true ? dataMask : formatLogBody(options.data)}",
     );
     options.connectTimeout = const Duration(seconds: 15);
     options.receiveTimeout = const Duration(seconds: 15);

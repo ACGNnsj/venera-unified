@@ -14,6 +14,104 @@ const _latest = WindowPlacement(Rect.fromLTWH(40, 50, 1100, 750), true);
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('startup diagnostics reveal a titled, natively closable window', () {
+    return _withTimers((timers) async {
+      final calls = <MethodCall>[];
+      _mockWindow((call) async {
+        calls.add(call);
+        return switch (call.method) {
+          'isFullScreen' || 'isMaximized' || 'isMinimized' => false,
+          _ => null,
+        };
+      });
+      await showStartupFailureWindow();
+      expect(
+        calls.map((call) => call.method),
+        containsAllInOrder([
+          'ensureInitialized',
+          'setPreventClose',
+          'waitUntilReadyToShow',
+          'setTitleBarStyle',
+          'setTitle',
+          'setBounds',
+          'show',
+        ]),
+      );
+      expect(
+        calls.singleWhere((call) => call.method == 'setPreventClose').arguments,
+        containsPair('isPreventClose', false),
+      );
+      expect(
+        calls
+            .singleWhere((call) => call.method == 'setTitleBarStyle')
+            .arguments,
+        allOf(
+          containsPair('titleBarStyle', 'normal'),
+          containsPair('windowButtonVisibility', true),
+        ),
+      );
+      expect(
+        calls.singleWhere((call) => call.method == 'setTitle').arguments,
+        containsPair('title', 'VeneraNext'),
+      );
+      expect(
+        calls.singleWhere((call) => call.method == 'setBounds').arguments,
+        allOf(
+          containsPair('x', 10.0),
+          containsPair('y', 10.0),
+          containsPair('width', 900.0),
+          containsPair('height', 600.0),
+        ),
+      );
+      expect(calls.map((call) => call.method), isNot(contains('getBounds')));
+      expect(timers, isEmpty);
+    });
+  });
+
+  test(
+    'startup diagnostic readiness awaits the native show completion',
+    () async {
+      final showing = Completer<void>();
+      final shown = Completer<void>();
+      _mockWindow((call) async {
+        if (call.method == 'show') {
+          showing.complete();
+          await shown.future;
+        }
+        return switch (call.method) {
+          'isFullScreen' || 'isMaximized' || 'isMinimized' => false,
+          _ => null,
+        };
+      });
+      var completed = false;
+      final ready = showStartupFailureWindow().then((_) => completed = true);
+      await showing.future;
+      expect(completed, isFalse);
+      shown.complete();
+      await ready;
+      expect(completed, isTrue);
+    },
+  );
+
+  test('native diagnostic initialization failures remain observable', () async {
+    final calls = <String>[];
+    _mockWindow((call) async {
+      calls.add(call.method);
+      throw PlatformException(code: 'native-unavailable');
+    });
+    await expectLater(
+      showStartupFailureWindow(),
+      throwsA(
+        isA<PlatformException>().having(
+          (error) => error.code,
+          'native failure',
+          'native-unavailable',
+        ),
+      ),
+    );
+    expect(calls, ['ensureInitialized']);
+  });
+
   test(
     'host shares successful initialization and never samples before ready',
     () {

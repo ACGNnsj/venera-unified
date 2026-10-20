@@ -126,20 +126,27 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
   var searchResults = <FavoriteItem>[];
 
   void updateSearchResult() {
-    setState(() {
-      if (keyword.trim().isEmpty) {
-        searchResults = comics;
-      } else {
-        searchResults = [];
-        for (var comic in comics) {
-          if (matchKeyword(keyword, comic) ||
-              matchKeywordT(keyword, comic) ||
-              matchKeywordS(keyword, comic)) {
-            searchResults.add(comic);
-          }
+    setState(_refreshSearchResults);
+  }
+
+  void _refreshSearchResults() {
+    if (keyword.trim().isEmpty) {
+      searchResults = comics;
+    } else {
+      searchResults = [];
+      for (var comic in comics) {
+        if (matchKeyword(keyword, comic) ||
+            matchKeywordT(keyword, comic) ||
+            matchKeywordS(keyword, comic)) {
+          searchResults.add(comic);
         }
       }
-    });
+    }
+  }
+
+  void _replaceComics(List<FavoriteItem> value) {
+    comics = value;
+    if (searchMode) _refreshSearchResults();
   }
 
   void updateComics() {
@@ -154,11 +161,13 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
           ? manager.totalComics
           : manager.folderComics(folder);
       if (!isAllFolder && !manager.existsFolder(folder)) {
-        comics = [];
+        _replaceComics([]);
       } else if (count < _asyncDataFetchLimit) {
-        comics = isAllFolder
-            ? manager.getAllComics()
-            : manager.getFolderComics(folder);
+        _replaceComics(
+          isAllFolder
+              ? manager.getAllComics()
+              : manager.getFolderComics(folder),
+        );
       } else {
         isLoading = true;
         final reading = isAllFolder
@@ -174,7 +183,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
               }
               setState(() {
                 isLoading = false;
-                comics = value;
+                _replaceComics(value);
               });
             },
             onError: (Object error, StackTrace stack) {
