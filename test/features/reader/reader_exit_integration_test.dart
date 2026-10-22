@@ -108,6 +108,64 @@ void main() {
 
   for (final mode in [
     ReaderMode.galleryLeftToRight,
+    ReaderMode.galleryRightToLeft,
+    ReaderMode.galleryTopToBottom,
+  ]) {
+    for (final landscapeImages in [1, 2]) {
+      for (final duringAnimation in [false, true]) {
+        testWidgets(
+          'actual automatic gallery resumes after rotation: ${mode.key} spread=$landscapeImages animated=$duringAnimation',
+          (tester) async {
+            tester.view.devicePixelRatio = 1;
+            tester.view.physicalSize = const Size(375, 667);
+            addTearDown(tester.view.resetDevicePixelRatio);
+            addTearDown(tester.view.resetPhysicalSize);
+            final fixture = await _ReaderFixture.create(tester, imageCount: 12);
+            try {
+              appdata.settings['readerMode'] = mode.key;
+              appdata.settings['readerScreenPicNumberForLandscape'] =
+                  landscapeImages;
+              appdata.settings['autoPageTurningInterval'] = 1;
+              appdata.settings['enablePageAnimation'] = true;
+              await fixture.mount(tester, pushed: false, withWindow: false);
+              final reader = fixture.readerKey.currentState!;
+              Future<void> expectAutomaticAdvance() async {
+                await _pumpUntil(tester, () {
+                  final viewport = reader.imageViewController;
+                  return !reader.isPageAnimating &&
+                      viewport is AutoReadingViewport &&
+                      (viewport as AutoReadingViewport).autoReadingReady;
+                });
+                final before = reader.page;
+                await _pumpUntil(
+                  tester,
+                  () => reader.page > before && !reader.isPageAnimating,
+                );
+                expect(reader.autoReading.isActive, isTrue);
+              }
+
+              reader.autoReading.start();
+              if (duringAnimation) {
+                await _pumpUntil(tester, () => reader.isPageAnimating);
+              }
+              tester.view.physicalSize = const Size(667, 375);
+              await tester.pump();
+              await expectAutomaticAdvance();
+              tester.view.physicalSize = const Size(375, 667);
+              await tester.pump();
+              await expectAutomaticAdvance();
+              expect(tester.takeException(), isNull);
+            } finally {
+              await fixture.dispose(tester);
+            }
+          },
+        );
+      }
+    }
+  }
+
+  for (final mode in [
+    ReaderMode.galleryLeftToRight,
     ReaderMode.continuousTopToBottom,
     ReaderMode.waterfallTopToBottom,
   ]) {

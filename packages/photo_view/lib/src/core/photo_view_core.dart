@@ -317,8 +317,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     }
   }
 
-  double? initialScale;
-
   @override
   void initState() {
     super.initState();
@@ -332,11 +330,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       ..addStatusListener(onAnimationStatus);
     _positionAnimationController = AnimationController(vsync: this)
       ..addListener(handlePositionAnimate);
-    Future.microtask(() {
-      if (mounted && !_disposed) {
-        initialScale = controller.scale;
-      }
-    });
   }
 
   @override
@@ -353,7 +346,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       _scaleAnimationController.stop();
       _positionAnimationController.stop();
       _rotationAnimationController.stop();
-      initialScale = controller.scale;
       _removeControllerCallbacks?.call();
       _callbackGeneration++;
     }
@@ -435,7 +427,10 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       animateScale(scale, value);
     }
 
-    double? initial() => isCurrent() ? initialScale : null;
+    // Rotation changes the fitted scale, not the user's zoom baseline.
+    double? initial() => isCurrent()
+        ? getScaleForScaleState(PhotoViewScaleState.initial, scaleBoundaries)
+        : null;
     double? fit(BoxFit value) => isCurrent() ? getScaleWithFit(value) : null;
     original.onDoubleClick = doubleClick;
     original.animatePosition = move;

@@ -20,8 +20,12 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-      - name: 校验发布元数据
+      - name: 校验发布标签元数据
+        if: github.ref_type == 'tag'
         run: python3 .github/scripts/validate_release.py
+      - name: 校验分支构建元数据
+        if: github.ref_type != 'tag'
+        run: python3 .github/scripts/validate_release.py --build-only
 
   Quality:
     needs: Release_Metadata

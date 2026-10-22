@@ -122,6 +122,17 @@ A dedicated macOS-hosted CI job checks the locked Rhttp library against
 the aarch64-apple-ios target before future dependency updates are merged.
 The pin can advance when an upstream fixed release passes this gate.
 
+## Certificate trust security updates (2026-10-23)
+
+The complete-lockfile audit reported RUSTSEC-2026-0382 in rustls-webpki
+0.103.15 and RUSTSEC-2026-0381 in webpki-roots 1.0.4. Cargo.lock now selects
+rustls-webpki 0.103.16 and webpki-roots 1.0.10 to reject distrusted
+intermediates and remove the affected bundled trust anchors. Only these two
+crate versions and checksums change; Rust 1.92.0, rustls 0.23.46, Flutter Rust
+Bridge 2.11.1 and the libc 0.2.189 iOS compatibility pin remain unchanged.
+Certificate verification and the full RustSec audit remain enabled, without
+advisory exclusions.
+
 ## Building the patched source
 
 Windows/Linux CMake, Android Gradle and iOS/macOS pod scripts all invoke the

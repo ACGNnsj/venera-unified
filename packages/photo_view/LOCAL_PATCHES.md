@@ -83,6 +83,20 @@ also cover the seven reading modes, mid-scroll removal, image rendering and
 image-favorite previews. Generated image fixtures verify layout and bounded
 live controllers; they do not replace physical-device acceptance.
 
+## Current-layout zoom baseline
+
+The 2026-10-22 patch makes `getInitialScale()` derive the unzoomed baseline
+from the current scale boundaries instead of caching the controller value at
+mount. Rotation changes the contained scale even when the controller and page
+stay mounted; the stale baseline incorrectly blocked gallery automatic reading
+and reset/long-press recovery. The callback keeps its existing controller and
+generation ownership guards and does not adopt an active user zoom as its
+baseline. Manifest, SDK constraints, package version and license are unchanged.
+
+Application regressions cover both rotations, single and paired pages, all three
+gallery directions, interrupted page animation and an actual scale gesture.
+Existing frame and controller ownership tests still run unchanged.
+
 ## Validation and dependency resolution
 
 `test/foundation/photo_view_image_ownership_test.dart` uses the real PhotoView,

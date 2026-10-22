@@ -114,3 +114,82 @@ verification.
 5. Only after acceptance, update version/build metadata and versioned release
    notes, then validate with .github/scripts/validate_release.py for the intended
    tag. Keep unresolved OEM-specific limitations explicit in the release notes.
+
+## Reader issue fixes (2026-10-22)
+
+- #98 is reproduced with the real gallery and production PhotoView. The
+  contained scale changes on rotation while the old cached initial scale does
+  not. Deriving the baseline from current layout boundaries restores automatic
+  page turns without treating a user's zoom as the unzoomed baseline. Tests use
+  physical view metrics, not only a changed test render surface, and cover all
+  gallery directions, paired pages and rotation during animation.
+- #112 has a reproduced cancellation path: Network.get throws the HTTP bridge's
+  stringified Dio cancellation, which previously entered the session's failure
+  drain as an ordinary source error. Only exact aliases recorded by a cancelled
+  request and its ancestry are restored to the original cancellation reason.
+  Accepted Promises still drain before exit; unrelated source rejections and
+  persistence/native cleanup errors are not suppressed. Chapter loads and
+  retained image callbacks both have native QuickJS regressions.
+- #111 is not reproduced by the synthetic legacy-settings startup test. That
+  test preserves reader mode, search history and an existing database while a
+  source's initialization Promise remains pending. It does not establish that
+  the reporter's import, settings, filesystem permissions or Android device are
+  compatible. Keep the primary diagnostic/device acceptance gate open.
+
+These changes are unreleased. Original Android rotation/loading-exit steps and
+upgrade/import still require device acceptance; do not close the issues solely
+because the host regressions pass. The additional title-layout feedback in #112
+is not claimed as resolved by the cancellation patch.
+
+Verification completed on 2026-10-23:
+
+- Full Windows-host Flutter suite: 5,333 passed, two conditional skips, zero
+  failures using Flutter 3.41.6 / Dart 3.11.4 with serial execution. The log
+  wrapper's initial parse error is not counted as a test result; its fresh,
+  complete rerun passed. No assertions or timeouts were weakened.
+- An isolated checkout of the repository's Flutter 3.41.4 / Dart 3.11.1 passed
+  enforced offline lockfile resolution, strict analysis, changed-file formatting,
+  53 targeted regressions and all 12 actual-reader rotation cases. The original
+  PhotoView baseline fails the actual-reader rotation regression.
+- Structure imports, architecture dependencies, release metadata, pinned Git
+  dependencies and git diff --check passed. Python tests ran 127 cases with four
+  skips and no failures; the isolated code-audit self-check and analysis passed.
+- Windows x64 Release built with Flutter 3.41.4. Android ARM64 Release compiled,
+  packaged and passed APK signature verification. Maven TLS download failures
+  were resolved with a build-only init script and local proxy; repository Gradle
+  files and dependency versions remain unchanged. The universal-named local APK
+  has ARM64 AOT only; it is a test artifact, not a multi-ABI release candidate.
+
+Evidence is in ignored build/issue-fixes-20261022 logs and artifact hashes. No
+Android device was connected; iOS, macOS and Linux builds were not run locally.
+Verification leaves version/build metadata at 1.18.0+234 and does not publish a
+release tag or close an issue. Use the complete Windows Release directory, not
+only its EXE.
+
+## CI follow-up (2026-10-23)
+
+The first CI runs for reader-fix commit 3b53f5e exposed two independent issues:
+
+- Dependency audit run 39874391057 reported RUSTSEC-2026-0382 in
+  rustls-webpki 0.103.15 and RUSTSEC-2026-0381 in webpki-roots 1.0.4.
+  The lockfile now selects the fixed 0.103.16 and 1.0.10 releases. Other
+  dependencies, including rustls, Flutter Rust Bridge and the iOS libc pin,
+  remain unchanged; no advisory exclusions or audit relaxations are added.
+- Complete-build run 39874394216 was manually dispatched on main, but the
+  metadata job treated main as a release tag and failed before quality/build
+  jobs could run. Branch dispatch now explicitly validates the configured
+  release version with --build-only, retaining version/changelog, bridge-lock
+  and installer checks. Tag builds still validate the actual ref, and the
+  release job remains limited to version-tag pushes. Build-only mode cannot
+  write release notes or bypass tag validation for a tag build.
+
+Local follow-up verification: 139 Python tests ran with four conditional skips
+and no failures, including 12 new release-validation regressions. All four
+locked Rust library/callback-drain tests passed. Both branch-build and explicit
+v1.18.0 metadata validation, structure/dependency checks, actionlint and
+git diff --check passed. Cargo-audit 0.22.2 scanned all 243 locked crates against
+1,349 current advisories with --deny unsound and no findings. Fresh cloud audit,
+quality and six-platform complete
+build results must be checked against the amended commit, not the superseded
+run or the separate successful build-only run 39874710216. No release tag or
+version/build increment is introduced by this CI repair.
