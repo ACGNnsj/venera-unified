@@ -133,6 +133,15 @@ Bridge 2.11.1 and the libc 0.2.189 iOS compatibility pin remain unchanged.
 Certificate verification and the full RustSec audit remain enabled, without
 advisory exclusions.
 
+## Tokio patch update (2026-10-23)
+
+PR #114 updates the selected Tokio release from 1.53.2 to 1.53.3. Only its
+Cargo.lock version and checksum change. The existing Rust 1.92.0 toolchain,
+Flutter Rust Bridge 2.11.1 pin, libc 0.2.189 iOS compatibility pin and
+certificate-trust security updates remain unchanged. The locked native
+callback-drain tests and complete RustSec scan pass with this update; HTTP
+settings, streaming cancellation and generated bridge APIs are unchanged.
+
 ## Building the patched source
 
 Windows/Linux CMake, Android Gradle and iOS/macOS pod scripts all invoke the
