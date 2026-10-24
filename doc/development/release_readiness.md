@@ -1,7 +1,45 @@
 # Patch release readiness
 
-This checklist tracks the release preparation following v1.18.0. It does not
-authorize publishing a tag or mark unresolved issue reports as fixed.
+This checklist tracks release preparation following v1.18.0. A prerelease
+collects device feedback; it does not mark unresolved reports as fixed or
+replace the stable-release acceptance gates below.
+
+## First patch candidate (2026-10-24)
+
+The requested candidate is v1.18.1-rc.1, build 235. Its release notes retain all
+changes since v1.18.0 and explicitly distinguish confirmed code fixes from
+unresolved device symptoms. Stable distribution stays at v1.18.0: neither the
+AltStore source nor Winget metadata changes for this candidate.
+
+- #111: the Windows legacy-favorites SQLite internal-table failure is fixed.
+  A separate reproduced failure now shows diagnostics before pending source
+  initialization and rollback finish, without releasing data ownership early.
+  The original Android splash hang remains unconfirmed; upgrade and full-data
+  restore acceptance is still required.
+- #119: migration now accepts the SAF picker's android:// document paths while
+  preserving journal, overlap and recovery checks. Native/SAF and SAF/SAF
+  regressions pass; real Android provider permissions and recovery need testing.
+- #115: all-failed archive batches no longer report success, and named errors
+  are visible. The reporter's actual archive imports and reads on this Windows
+  host under both reported names. The original missing-list symptom has not
+  been reproduced; do not declare filenames invalid or bypass block filters.
+- #118: selecting an already loaded gallery page no longer remounts its image.
+  Reset retires old animations and gestures in place while actual unmount still
+  owns disposal. Local PNG, frame identity, rendered pixels, interrupted turns
+  and lifecycle regressions pass. iPad and Android visual acceptance is open.
+
+The four follow-ups passed 131, 86, 235 and 932 related tests respectively with
+the pinned Flutter 3.41.4 SDK; these counts overlap and are not a new full-suite
+result. Strict Flutter analysis passed. The version-tag workflow must still run
+metadata checks, full quality gates and all six platform builds on the exact
+release commit before it publishes a prerelease with installation assets. Do
+not publish an empty release or reuse earlier build artifacts as this candidate.
+
+Back up before upgrading. Preserve original comics and the pre-upgrade export;
+downgrading is not a schema compatibility promise. Restore the pre-upgrade
+backup when rolling back instead of deleting user data to mask a failure.
+
+The following sections retain the dated diagnostic and validation history.
 
 ## Startup report 111
 
@@ -98,9 +136,11 @@ Issues 110 and 111 have no additional reporter feedback as of this check. No
 version/build increment, release tag, or issue closure was made during local
 verification.
 
-## Release gates
+## Stable release gates
 
-1. Establish the root cause or an actionable environmental diagnosis for #111.
+1. Establish the root cause or an actionable environmental diagnosis for the
+   original Android failure in #111, and finish the candidate's device checks
+   for #115, #119 and #118. Keep unresolved reports explicit.
 2. Run formatter, structure/dependency checks, Python release tests, strict Flutter
    analysis, and the full Flutter suite on the final source state.
 3. Build Android and Windows release artifacts locally where supported. Run the
