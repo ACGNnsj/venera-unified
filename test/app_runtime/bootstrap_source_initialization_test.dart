@@ -7,11 +7,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:venera_next/app_runtime/bootstrap_core.dart';
 import 'package:venera_next/app_runtime/headless_bindings.dart';
+import 'package:venera_next/features/favorites/favorites.dart';
 import 'package:venera_next/features/history/history.dart';
 import 'package:venera_next/foundation/app.dart';
 import 'package:venera_next/foundation/appdata.dart';
 import 'package:venera_next/foundation/init.dart';
 import 'package:venera_next/foundation/js_engine.dart';
+
+import '../support/legacy_favorites_fixture.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +38,7 @@ void main() {
   }
 
   test(
-    'legacy startup opens stores while source initialization waits for network',
+    'legacy startup opens analyzed favorites while source initialization waits for network',
     () async {
       final root = Directory.systemTemp.createTempSync('legacy-startup-init-');
       final sources = Directory('${root.path}/comic_source')..createSync();
@@ -47,6 +50,8 @@ void main() {
             'comicSourceListUrl': 'https://example.invalid/sources.json',
             'webdav': ['https://example.invalid/dav/', 'fixture', 'fixture'],
             'disableSyncFields': '',
+            'followUpdatesFolder': 'sqliteXnotes',
+            'quickFavorite': 'legacy',
           },
           'searchHistory': ['preserved search'],
         }),
@@ -67,6 +72,14 @@ void main() {
       history.execute('CREATE TABLE legacy_marker (value TEXT)');
       history.execute("INSERT INTO legacy_marker VALUES ('preserved history')");
       history.dispose();
+      final favorites = sqlite3.open('${root.path}/local_favorite.db');
+      late Map<String, Object?> internalBefore;
+      try {
+        seedAnalyzedLegacyFavorites(favorites);
+        internalBefore = sqliteInternalTableSnapshot(favorites);
+      } finally {
+        favorites.dispose();
+      }
       configureHeadlessBindings();
       final core = createCoreBootstrap(
         onDataChanged: () {},
@@ -79,7 +92,15 @@ void main() {
       );
       final starting = core.start();
       var started = false;
-      unawaited(starting.then<void>((_) => started = true));
+      Object? startupError;
+      unawaited(
+        starting.then<void>(
+          (_) => started = true,
+          onError: (Object error, StackTrace stack) {
+            startupError = error;
+          },
+        ),
+      );
       final engine = JsEngine();
       try {
         for (var i = 0; i < 200; i++) {
@@ -94,11 +115,29 @@ void main() {
           engine.runCode('typeof finishStartupInit === "function"'),
           isTrue,
         );
-        for (var i = 0; i < 200 && !started; i++) {
+        for (var i = 0; i < 200 && !started && startupError == null; i++) {
           await Future<void>.delayed(const Duration(milliseconds: 10));
         }
+        if (startupError != null) await starting;
         expect(started, isTrue);
         expect(HistoryManager().isInitialized, isTrue);
+        final manager = LocalFavoritesManager();
+        expect(manager.folderNames, ['sqliteXnotes', 'legacy']);
+        expect(manager.counts, {'sqliteXnotes': 1, 'legacy': 1});
+        expect(manager.totalComics, 2);
+        expect(
+          manager.getFolderComics('legacy').single.time,
+          '2001-02-03 04:05:06',
+        );
+        final favorites = sqlite3.open(
+          manager.databasePath,
+          mode: OpenMode.readOnly,
+        );
+        try {
+          expect(sqliteInternalTableSnapshot(favorites), internalBefore);
+        } finally {
+          favorites.dispose();
+        }
         expect(appdata.searchHistory, ['preserved search']);
         expect(appdata.settings['readerMode'], 'galleryRightToLeft');
         expect(appdata.implicitData['webdavAutoSync'], isTrue);
@@ -119,9 +158,12 @@ void main() {
             engine.runCode('typeof finishStartupInit === "function"') == true) {
           engine.runCode('void finishStartupInit()');
         }
-        await starting;
-        await core.close();
-        await root.delete(recursive: true);
+        try {
+          await starting;
+        } finally {
+          await core.close();
+          await root.delete(recursive: true);
+        }
       }
     },
     skip: !nativeAvailable ? 'QuickJS native library unavailable' : false,

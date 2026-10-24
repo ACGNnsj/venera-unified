@@ -330,9 +330,13 @@ class FavoritesRepository {
       schema == null ? _table(folder) : '${_table(schema)}.${_table(folder)}';
 
   List<String> folderNames() {
+    // SQLite-owned statistics and sequence tables are not favorite folders.
     final folders =
         db
-            .select("SELECT name FROM sqlite_master WHERE type='table';")
+            .select(
+              "SELECT name FROM sqlite_master WHERE type='table' "
+              "AND name NOT GLOB 'sqlite_*';",
+            )
             .map((row) => row['name'] as String)
             .toList()
           ..remove('folder_sync')

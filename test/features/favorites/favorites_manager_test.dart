@@ -15,6 +15,8 @@ import 'package:venera_next/foundation/comic_type.dart';
 import 'package:venera_next/features/favorites/favorites.dart';
 import 'package:venera_next/features/follow_updates/follow_updates.dart';
 
+import '../../support/legacy_favorites_fixture.dart';
+
 FavoriteItem _favorite(String id) {
   return FavoriteItem(
     id: id,
@@ -1724,6 +1726,83 @@ void main() {
       expect(tracked.single.hasNewUpdate, isFalse);
     },
     skip: _sqliteAvailable() ? false : 'sqlite3 native library is unavailable',
+  );
+
+  test(
+    'analyzed legacy favorites initialize indexes and survive restart',
+    () async {
+      final root = Directory.systemTemp.createTempSync('analyzed-favorites-');
+      final checkpoint = appdata.captureImportCheckpoint();
+      final manager = LocalFavoritesManager.independent();
+      try {
+        App.dataPath = root.path;
+        App.cachePath = (Directory('${root.path}/cache')..createSync()).path;
+        appdata.settings['followUpdatesFolder'] = 'sqliteXnotes';
+        appdata.settings['quickFavorite'] = 'legacy';
+        final seed = sqlite3.open('${root.path}/local_favorite.db');
+        late Map<String, Object?> internalBefore;
+        try {
+          seedAnalyzedLegacyFavorites(seed);
+          internalBefore = sqliteInternalTableSnapshot(seed);
+        } finally {
+          seed.dispose();
+        }
+
+        for (var attempt = 0; attempt < 2; attempt++) {
+          await manager.init();
+          expect(manager.folderNames, ['sqliteXnotes', 'legacy']);
+          expect(manager.counts, {'sqliteXnotes': 1, 'legacy': 1});
+          expect(manager.totalComics, 2);
+          expect(manager.isExist('legacy-id', ComicType.local), isTrue);
+          expect(manager.isExist('modern-id', ComicType.local), isTrue);
+          expect(manager.hasNewUpdate('modern-id', ComicType.local), isTrue);
+          expect(manager.findLinked('legacy'), (
+            'fixture-source',
+            'remote-folder',
+          ));
+          expect(appdata.settings['followUpdatesFolder'], 'sqliteXnotes');
+          expect(appdata.settings['quickFavorite'], 'legacy');
+          final legacy = manager.getFolderComics('legacy').single;
+          expect(legacy.name, 'Legacy favorite');
+          expect(legacy.tags, ['tag', 'second']);
+          expect(legacy.time, '2001-02-03 04:05:06');
+          final asyncLegacy = (await manager.getFolderComicsAsync(
+            'legacy',
+          )).single;
+          expect(asyncLegacy.toJson(), legacy.toJson());
+          expect(asyncLegacy.time, legacy.time);
+          expect(
+            (await manager.getAllComicsAsync()).map((item) => item.id),
+            unorderedEquals(['legacy-id', 'modern-id']),
+          );
+          expect(manager.search('Legacy').single.id, 'legacy-id');
+          expect(
+            manager.searchInFolder('sqliteXnotes', 'preserved').single.id,
+            'modern-id',
+          );
+          final persisted = sqlite3.open(
+            manager.databasePath,
+            mode: OpenMode.readOnly,
+          );
+          try {
+            expect(sqliteInternalTableSnapshot(persisted), internalBefore);
+            expect(
+              persisted.select('PRAGMA quick_check;').single['quick_check'],
+              'ok',
+            );
+          } finally {
+            persisted.dispose();
+          }
+          await manager.closeAndWait();
+        }
+      } finally {
+        await manager.closeAndWait();
+        manager.dispose();
+        await appdata.restoreImportCheckpoint(checkpoint, persist: false);
+        root.deleteSync(recursive: true);
+      }
+    },
+    skip: !_sqliteAvailable(),
   );
 
   test(

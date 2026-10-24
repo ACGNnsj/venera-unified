@@ -1,6 +1,7 @@
 import 'package:archive/archive.dart' as archive;
 import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
 import 'package:venera_next/foundation/app_data_operations.dart';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +14,8 @@ import 'package:venera_next/features/sync/data_sync_commit.dart';
 import 'package:venera_next/foundation/app.dart';
 import 'package:venera_next/foundation/appdata.dart';
 import 'package:venera_next/foundation/comic_type.dart';
+
+import '../../support/legacy_favorites_fixture.dart';
 
 FavoriteItem _item(String id) => FavoriteItem(
   id: id,
@@ -143,6 +146,95 @@ void main() {
         await appdata.saveData(false);
         appdata.settings['followUpdatesFolder'] = previousTracking;
         appdata.settings['quickFavorite'] = previousQuick;
+        root.deleteSync(recursive: true);
+      }
+    },
+  );
+
+  test(
+    'analyzed legacy favorites import from a backup and reopen intact',
+    () async {
+      final root = Directory.systemTemp.createTempSync(
+        'analyzed-favorites-import-',
+      );
+      final checkpoint = appdata.captureImportCheckpoint();
+      final manager = LocalFavoritesManager();
+      try {
+        App.dataPath = (Directory('${root.path}/data')..createSync()).path;
+        App.cachePath = (Directory('${root.path}/cache')..createSync()).path;
+        await manager.init();
+        await manager.createFolder('original');
+        await manager.addComic('original', _item('old'));
+        final incomingPath = '${root.path}/incoming.db';
+        final incoming = sqlite3.open(incomingPath);
+        late Map<String, Object?> internalBefore;
+        try {
+          seedAnalyzedLegacyFavorites(incoming);
+          internalBefore = sqliteInternalTableSnapshot(incoming);
+        } finally {
+          incoming.dispose();
+        }
+        final settings =
+            jsonDecode(jsonEncode(appdata.toJson())) as Map<String, dynamic>;
+        (settings['settings'] as Map<String, dynamic>)
+          ..['followUpdatesFolder'] = 'sqliteXnotes'
+          ..['quickFavorite'] = 'legacy';
+        final settingsFile = File('${root.path}/incoming.json')
+          ..writeAsStringSync(jsonEncode(settings));
+        final source = File('${root.path}/data.venera');
+        final zip = ZipFile.open(source.path);
+        zip.addFile('local_favorite.db', incomingPath);
+        zip.addFile('appdata.json', settingsFile.path);
+        zip.close();
+
+        expect(await importAppData(source), DataSyncCommitState.applied);
+        for (var attempt = 0; attempt < 2; attempt++) {
+          expect(manager.folderNames, ['sqliteXnotes', 'legacy']);
+          expect(manager.counts, {'sqliteXnotes': 1, 'legacy': 1});
+          expect(manager.totalComics, 2);
+          expect(manager.isExist('legacy-id', ComicType.local), isTrue);
+          expect(manager.isExist('old', ComicType.local), isFalse);
+          final tracked = manager
+              .getComicsWithUpdatesInfo('sqliteXnotes')
+              .single;
+          expect(tracked.hasNewUpdate, isTrue);
+          expect(tracked.updateTime, 'chapter 2');
+          expect(tracked.lastCheckTime!.millisecondsSinceEpoch, 123);
+          // Import applies folder settings after reopening the store; check
+          // persisted fields above and the selected-folder cache after restart.
+          if (attempt > 0) {
+            expect(manager.hasNewUpdate('modern-id', ComicType.local), isTrue);
+          }
+          expect(manager.findLinked('legacy'), (
+            'fixture-source',
+            'remote-folder',
+          ));
+          expect(appdata.settings['followUpdatesFolder'], 'sqliteXnotes');
+          expect(appdata.settings['quickFavorite'], 'legacy');
+          final legacy = (await manager.getFolderComicsAsync('legacy')).single;
+          expect(legacy.name, 'Legacy favorite');
+          expect(legacy.tags, ['tag', 'second']);
+          expect(legacy.time, '2001-02-03 04:05:06');
+          expect(manager.search('preserved').single.id, 'modern-id');
+          final persisted = sqlite3.open(
+            manager.databasePath,
+            mode: OpenMode.readOnly,
+          );
+          try {
+            expect(sqliteInternalTableSnapshot(persisted), internalBefore);
+            expect(
+              persisted.select('PRAGMA quick_check;').single['quick_check'],
+              'ok',
+            );
+          } finally {
+            persisted.dispose();
+          }
+          await manager.closeAndWait();
+          if (attempt == 0) await manager.init();
+        }
+      } finally {
+        await manager.closeAndWait();
+        await appdata.restoreImportCheckpoint(checkpoint, persist: false);
         root.deleteSync(recursive: true);
       }
     },
