@@ -309,8 +309,7 @@ class GalleryModeState extends State<ReaderGalleryView>
             if (shouldRefreshEInk && (i == 0 || i == totalPages + 1)) {
               widget.onChapterChanged();
             }
-            // Kept-alive neighbours reset when entered again, after their old
-            // PhotoView subtree has actually unmounted.
+            // Neighbours reset their zoom in place without discarding images.
             _longPressController = null;
             isLongPressing = false;
             if (mounted && !_disposed) setState(() {});
@@ -676,9 +675,8 @@ class GalleryModeState extends State<ReaderGalleryView>
   }
 }
 
-/// One page can remain mounted while a neighbouring page is selected. On
-/// re-entry a new zoom session replaces the old subtree and releases it in
-/// actual unmount order, without a time-based disposal heuristic.
+/// Keep a loaded neighbour's image mounted when it becomes active. Its zoom
+/// resets in place, and its controller is released only on actual unmount.
 class _GalleryPhotoPage extends StatefulWidget {
   const _GalleryPhotoPage({
     super.key,
@@ -694,39 +692,17 @@ class _GalleryPhotoPage extends StatefulWidget {
 }
 
 class _GalleryPhotoPageState extends State<_GalleryPhotoPage> {
-  int _visit = 0;
-  @override
-  void didUpdateWidget(covariant _GalleryPhotoPage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!oldWidget.active && widget.active) _visit++;
-  }
-
-  @override
-  Widget build(BuildContext context) => _GalleryPhotoOwner(
-    key: ValueKey(_visit),
-    onController: widget.onController,
-    builder: widget.builder,
-  );
-}
-
-class _GalleryPhotoOwner extends StatefulWidget {
-  const _GalleryPhotoOwner({
-    super.key,
-    required this.onController,
-    required this.builder,
-  });
-  final void Function(PhotoViewController, bool) onController;
-  final Widget Function(BuildContext, PhotoViewController) builder;
-  @override
-  State<_GalleryPhotoOwner> createState() => _GalleryPhotoOwnerState();
-}
-
-class _GalleryPhotoOwnerState extends State<_GalleryPhotoOwner> {
   final controller = PhotoViewController();
   @override
   void initState() {
     super.initState();
     widget.onController(controller, true);
+  }
+
+  @override
+  void didUpdateWidget(covariant _GalleryPhotoPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.active && widget.active) controller.reset();
   }
 
   @override

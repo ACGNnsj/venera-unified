@@ -166,6 +166,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   }
 
   void onScaleUpdate(ScaleUpdateDetails details) {
+    if (_scaleBefore == null || _normalizedPosition == null) {
+      return;
+    }
     if (stateChanged) {
       _scaleBefore = scale;
       stateChanged = false;
@@ -209,6 +212,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   }
 
   void onScaleEnd(ScaleEndDetails details) async {
+    if (_scaleBefore == null) {
+      return;
+    }
     final generation = _gestureGeneration;
     final original = controller;
     final originalScale = scaleStateController;
@@ -427,6 +433,21 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       animateScale(scale, value);
     }
 
+    void reset() {
+      if (!isCurrent()) {
+        return;
+      }
+      _gestureGeneration++;
+      _scaleAnimationController.stop();
+      _positionAnimationController.stop();
+      _rotationAnimationController.stop();
+      _scaleBefore = null;
+      _rotationBefore = null;
+      _normalizedPosition = null;
+      stateChanged = false;
+      scaleStateController.setInvisibly(PhotoViewScaleState.initial);
+    }
+
     // Rotation changes the fitted scale, not the user's zoom baseline.
     double? initial() => isCurrent()
         ? getScaleForScaleState(PhotoViewScaleState.initial, scaleBoundaries)
@@ -439,6 +460,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     original.getInitialScale = initial;
     if (original is PhotoViewController) {
       original.getScaleWithFit = fit;
+      original.onReset = reset;
     }
     _removeControllerCallbacks = () {
       if (original.onDoubleClick == doubleClick) {
@@ -458,6 +480,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       }
       if (original is PhotoViewController && original.getScaleWithFit == fit) {
         original.getScaleWithFit = null;
+      }
+      if (original is PhotoViewController && original.onReset == reset) {
+        original.onReset = null;
       }
     };
   }

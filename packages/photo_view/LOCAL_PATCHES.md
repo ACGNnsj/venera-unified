@@ -70,9 +70,9 @@ The 2026-10-07 patch changes four retained files:
 
 The existing public PhotoViewGestureDetectorScope export is unchanged. There
 is no dependency, SDK constraint or package version change. The application
-gallery now owns each page controller in the State of that page's PhotoView
-subtree; retained neighbours stay valid until unmount and re-entry creates a
-fresh zoom session.
+gallery owns each page controller in the State of that page's PhotoView
+subtree; retained neighbours stay valid until unmount. The original re-entry
+subtree replacement is superseded by the in-place reset described below.
 
 `test/controller_lifecycle_test.dart` adds ten package-local widget regressions
 for subscriptions, borrowed/owned replacement, offstage disposal, callback
@@ -96,6 +96,30 @@ baseline. Manifest, SDK constraints, package version and license are unchanged.
 Application regressions cover both rotations, single and paired pages, all three
 gallery directions, interrupted page animation and an actual scale gesture.
 Existing frame and controller ownership tests still run unchanged.
+
+## In-place reset and gallery page continuity
+
+The 2026-10-24 patch for #118 keeps an already loaded gallery page mounted when
+it becomes active, rather than replacing its image subtree to reset zoom.
+`PhotoViewController.reset()` now calls a view-owned reset hook before updating
+its value and records the previous value. The hook stops scale, position and
+rotation animations, invalidates delayed gesture completion, and ignores the
+rest of a gesture that started before the reset. A new gesture works normally.
+The scale delegate recognizes the exact initial scale as `initial`, not
+`zoomedOut`, so the next double tap still follows the normal zoom cycle.
+
+The reset hook uses the same controller/generation and callback-identity guards
+as the other mounted callbacks. Replaced or unmounted views cannot reset a new
+view or clear its hook. No controller-base interface, dependency, version, cache
+limit or page keep-alive policy changes.
+
+Package lifecycle regressions cover animation cancellation, gesture retirement,
+double-tap recovery and stale reset hooks. Application regressions use real
+local PNGs to check image element/frame identity and rendered selection-frame
+pixels in all three directions, forward and backward, with and without the
+global image cache. Interrupted turns also verify retained-page zoom reset;
+existing tests continue to bound live controllers and verify unmount cleanup.
+These widget tests do not replace iPad or Android physical-device acceptance.
 
 ## Validation and dependency resolution
 
