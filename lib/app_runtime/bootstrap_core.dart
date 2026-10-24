@@ -34,11 +34,20 @@ import 'webdav_library.dart';
 CoreBootstrap createCoreBootstrap({
   Future<void> Function()? environment,
   required void Function() onDataChanged,
+  void Function(String phase, Object error, StackTrace stack)? onStartupFailure,
 }) {
   final cleanup = <CoreStartupCleanup>[];
   final producers = <CoreStartupCleanup>[];
   SqliteDataSyncOwnership? applicationOwnership;
   var storeCleanupIndex = 0;
+  var failureReported = false;
+  void reportFailure(String phase, Object error, StackTrace stack) {
+    if (failureReported) return;
+    failureReported = true;
+    Log.error('Startup', '$phase failed: $error', stack);
+    onStartupFailure?.call(phase, error, stack);
+  }
+
   void registerProducer(String name, FutureOr<void> Function() close) {
     Future<void>? closing;
     final resource = (
@@ -51,8 +60,7 @@ CoreBootstrap createCoreBootstrap({
 
   return CoreBootstrap(
     failureCleanup: cleanup,
-    onStartupFailure: (phase, error, stack) =>
-        Log.error('Startup', '$phase failed: $error', stack),
+    onStartupFailure: reportFailure,
     releaseOwnership: () => applicationOwnership?.release(),
     shutdownPreparation: () async {
       // A failed producer can still retain native resources. Keep its stores
@@ -197,7 +205,10 @@ CoreBootstrap createCoreBootstrap({
         ),
         (name: 'local', initialize: local.init, close: local.dispose),
       ];
-      await initializeCoreStores(stores);
+      await initializeCoreStores(
+        stores,
+        onFailure: (error, stack) => reportFailure('stores', error, stack),
+      );
       // The group handles its own failed attempt; retain only successful stores
       // for a failure in a later startup phase.
       cleanup.insertAll(

@@ -156,11 +156,30 @@ class CoreShutdownFailure implements Exception {
 
 /// Join every attempt before rollback so a late success cannot reopen a store
 /// after it has been closed. Successful startup leaves ownership with the host.
-Future<void> initializeCoreStores(Iterable<CoreStoreStartup> stores) async {
+Future<void> initializeCoreStores(
+  Iterable<CoreStoreStartup> stores, {
+  void Function(Object error, StackTrace stack)? onFailure,
+}) async {
   final attempts = List<CoreStoreStartup>.of(stores);
+  var reported = false;
   try {
     await Future.wait(
-      attempts.map((store) => Future<void>.sync(store.initialize)),
+      attempts.map(
+        (store) => Future<void>.sync(store.initialize).catchError((
+          Object error,
+          StackTrace stack,
+        ) {
+          if (!reported) {
+            reported = true;
+            try {
+              onFailure?.call(error, stack);
+            } catch (_) {
+              // Diagnostics cannot release live resources or replace the cause.
+            }
+          }
+          Error.throwWithStackTrace(error, stack);
+        }),
+      ),
     );
   } catch (error, stack) {
     await rollbackCoreStartup(

@@ -58,6 +58,19 @@ void main(List<String> args) {
   }
   if (runWebViewTitleBarWidget(args)) return;
   var applicationShown = false;
+  Future<void> showFailure(Object error, StackTrace stack) async {
+    if (applicationShown) return;
+    applicationShown = true;
+    runApp(StartupFailureApp(error: error, stack: stack));
+    if (App.isDesktop) {
+      try {
+        await showStartupFailureWindow();
+      } catch (windowError, windowStack) {
+        Log.error('Startup window', windowError, windowStack);
+      }
+    }
+  }
+
   overrideIO(() {
     runZonedGuarded(
       () async {
@@ -68,7 +81,13 @@ void main(List<String> args) {
           });
           JsEngine().bindUiMessageHandler(JsUiApi());
           final sync = createApplicationDataSync();
-          final core = createCoreBootstrap(onDataChanged: sync.onDataChanged);
+          final core = createCoreBootstrap(
+            onDataChanged: sync.onDataChanged,
+            // Rollback still joins live JS callbacks and retains storage
+            // ownership. Its completion must not gate the first error frame.
+            onStartupFailure: (_, error, stack) =>
+                unawaited(showFailure(error, stack)),
+          );
           try {
             await init(core);
           } catch (error, stack) {
@@ -104,17 +123,7 @@ void main(List<String> args) {
           await placement?.initialize();
         } catch (error, stack) {
           Log.error('Startup', error, stack);
-          if (!applicationShown) {
-            applicationShown = true;
-            runApp(StartupFailureApp(error: error, stack: stack));
-            if (App.isDesktop) {
-              try {
-                await showStartupFailureWindow();
-              } catch (windowError, windowStack) {
-                Log.error('Startup window', windowError, windowStack);
-              }
-            }
-          }
+          await showFailure(error, stack);
         }
       },
       (error, stack) {
