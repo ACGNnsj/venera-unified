@@ -1,5 +1,6 @@
 {
   "zh_CN": {
+    "Failed to import @name: @error": "导入失败：@name\n@error",
     "Connection interrupted. Waiting to retry...": "连接中断，等待自动重试…",
     "Download error": "下载错误",
     "Error details": "错误详情",
@@ -899,6 +900,7 @@
     "Failed to load source": "无法加载来源"
   },
   "zh_TW": {
+    "Failed to import @name: @error": "匯入失敗：@name\n@error",
     "Connection interrupted. Waiting to retry...": "連線中斷，等待自動重試…",
     "Download error": "下載錯誤",
     "Error details": "錯誤詳情",

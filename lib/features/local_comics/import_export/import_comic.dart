@@ -280,15 +280,33 @@ class ImportComic {
           ComicImportIssueKind.copyFailed => 'Failed to copy comics'.tl,
           ComicImportIssueKind.registrationFailed =>
             'Failed to register comics'.tl,
-          ComicImportIssueKind.archiveFailed => null,
+          ComicImportIssueKind.archiveFailed =>
+            'Failed to import @name: @error'.tlParams({
+              'name': issue.sourceName ?? 'Archive'.tl,
+              'error': issue.error.toString(),
+            }),
         };
-        if (message != null) presentation.showMessage(message: message);
+        presentation.showMessage(message: message);
         final error = issue.error;
         if (error != null) {
-          Log.error('Import Comic', error, issue.stackTrace);
+          Log.error(
+            'Import Comic',
+            issue.sourceName == null ? error : '${issue.sourceName}: $error',
+            issue.stackTrace,
+          );
         }
       }
-      if (result.succeeded) {
+      final failedArchives = result.issues
+          .where((issue) => issue.kind == ComicImportIssueKind.archiveFailed)
+          .length;
+      if (failedArchives > 0) {
+        presentation.showMessage(
+          message: 'Success: @a, Failed: @b'.tlParams({
+            'a': result.importedCount,
+            'b': failedArchives,
+          }),
+        );
+      } else if (result.succeeded && result.importedCount > 0) {
         presentation.showMessage(
           message: 'Imported @a comics'.tlParams({'a': result.importedCount}),
         );

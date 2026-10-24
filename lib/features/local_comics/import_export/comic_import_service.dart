@@ -101,10 +101,15 @@ enum ComicImportIssueKind {
 }
 
 class ComicImportIssue {
-  const ComicImportIssue(this.kind, [this.error, this.stackTrace]);
+  const ComicImportIssue(this.kind, [this.error, this.stackTrace])
+    : sourceName = null;
+  const ComicImportIssue.archive(String name, this.error, this.stackTrace)
+    : kind = ComicImportIssueKind.archiveFailed,
+      sourceName = name;
   final ComicImportIssueKind kind;
   final Object? error;
   final StackTrace? stackTrace;
+  final String? sourceName;
 }
 
 class PendingComicCopy {
@@ -179,16 +184,14 @@ class ComicImportService {
         );
         count++;
       } catch (error, stack) {
-        issues.add(
-          ComicImportIssue(ComicImportIssueKind.archiveFailed, error, stack),
-        );
+        issues.add(ComicImportIssue.archive(file.name, error, stack));
       }
     }
     if (count == 0) {
       issues.add(const ComicImportIssue(ComicImportIssueKind.noValidComics));
     }
     return ComicImportResult(
-      succeeded: true,
+      succeeded: count > 0,
       importedCount: count,
       issues: issues,
     );
