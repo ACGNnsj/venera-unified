@@ -10,6 +10,13 @@ features continue to work.
 Supported comic image extensions are `jpg`, `jpeg`, `jpe`, `png`, `webp`,
 `gif`, and `avif`.
 
+If an imported entry is not visible, check the local search and keyword filters
+first. The list reports how many entries are hidden by keyword filters; favorites
+also explain reading-status exclusions without changing those rules. Unicode,
+brackets and double extensions do not by themselves make a filename invalid.
+Check the actual success/failure counts and named errors for batch imports;
+do not rename all archives or delete data as a first step.
+
 ## Restore Local Downloads
 
 If you migrated the app and kept the local download folder but lost `local.db`,

@@ -1,5 +1,7 @@
 {
   "zh_CN": {
+    "Hidden by keyword filters: @a comics": "关键词屏蔽隐藏了 @a 本漫画",
+    "Hidden by reading-status filter: @a comics": "阅读状态筛选隐藏了 @a 本漫画",
     "Continue past unavailable images": "继续下载其余可用图片",
     "Downloaded @a/@b; missing @c images": "已下载 @a/@b；缺少 @c 页",
     "Download incomplete. Start again to retry missing images; completed pages are retained.": "下载不完整。再次开始可补齐缺页，已下载页面会保留。",
@@ -903,6 +905,8 @@
     "Failed to load source": "无法加载来源"
   },
   "zh_TW": {
+    "Hidden by keyword filters: @a comics": "關鍵詞封鎖隱藏了 @a 本漫畫",
+    "Hidden by reading-status filter: @a comics": "閱讀狀態篩選隱藏了 @a 本漫畫",
     "Continue past unavailable images": "繼續下載其餘可用圖片",
     "Downloaded @a/@b; missing @c images": "已下載 @a/@b；缺少 @c 頁",
     "Download incomplete. Start again to retry missing images; completed pages are retained.": "下載不完整。再次開始可補齊缺頁，已下載頁面會保留。",
