@@ -1,8 +1,41 @@
 # Patch release readiness
 
-This checklist tracks release preparation following v1.18.0. A prerelease
-collects device feedback; it does not mark unresolved reports as fixed or
-replace the stable-release acceptance gates below.
+This checklist tracks release preparation following v1.18.0. A release does
+not mark unresolved reports as fixed. Dated verification records and the
+original device acceptance checklist remain below.
+
+## Stable patch release decision (2026-10-25)
+
+The maintainer approved releasing v1.18.1, build 236, with the documented
+limitations rather than waiting indefinitely for original-reporter feedback.
+There has been no new RC feedback at this decision point. Silence is not
+device acceptance, and the original device checklist is not claimed complete.
+
+This promotion changes release metadata and documentation only; runtime code,
+dependencies and fixes are unchanged from v1.18.1-rc.1. The stable tag must
+pass metadata validation, strict analysis, the full test suite, dependency
+audit and fresh builds for all six platforms on its exact commit. Earlier
+RC artifacts are not renamed or reused as stable installation packages.
+
+The release notes retain the unresolved Android startup report in #111, the
+original missing-import symptom in #115, Android SAF permission/recovery
+acceptance in #119, and iPad/Android visual acceptance in #118. Favorites
+visibility in #110, OEM background downloads in #107, the original HTTP/3
+network in #100 and mobile energy consumption in #91 also remain unconfirmed.
+The additional zoom interaction in #98 and title layout in #112 are not
+claimed implemented. No destructive data reset is part of acceptance.
+
+After the stable assets are published, notify the relevant reporters with
+issue-specific reproduction steps and request feedback within 14 days. Send
+one reminder after seven days. Reassess each issue at the deadline rather
+than closing all inactive reports automatically: confirmed code fixes can be
+closed as released, unresolved startup/data reports remain open or explicitly
+awaiting information, and unfinished extra requests must retain their own
+tracking. Preserve the existing closed state of #106 and #121.
+
+Stable distribution metadata is updated only after the GitHub Release is
+published: verify the generated Winget manifest and review the AltStore source
+update against the actual IPA asset, size and release date.
 
 ## First patch candidate (2026-10-24)
 
@@ -136,7 +169,11 @@ Issues 110 and 111 have no additional reporter feedback as of this check. No
 version/build increment, release tag, or issue closure was made during local
 verification.
 
-## Stable release gates
+## Original stable release acceptance checklist
+
+This checklist records the original full-device acceptance target. The scoped
+release decision above permits publishing with explicit remaining limitations;
+it does not turn missing device evidence into a passing result.
 
 1. Establish the root cause or an actionable environmental diagnosis for the
    original Android failure in #111, and finish the candidate's device checks

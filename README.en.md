@@ -131,7 +131,7 @@ Download the package matching your distribution and architecture from the [lates
 | Arch Linux (x86_64) | `sudo pacman -U ./venera-next-xxx-x86_64.pkg.tar.zst` |
 | AppImage (x86_64 / ARM64) | Run `chmod +x VeneraNext-xxx-x86_64.AppImage`, then `./VeneraNext-xxx-x86_64.AppImage` (use the `aarch64` file on ARM64) |
 
-Replace `xxx` with the actual version in the downloaded filename. The v1.18.0 stable release includes RPM and AppImage packages for both x86_64 and ARM64. Use `uname -m` to check your architecture.
+Replace `xxx` with the actual version in the downloaded filename. The v1.18.1 stable release includes RPM and AppImage packages for both x86_64 and ARM64. Use `uname -m` to check your architecture.
 
 Linux packages are built on Ubuntu 22.04 with a glibc 2.35 baseline. The current stable AppImage includes GTK 3 and WebKitGTK 4.1, so no separate GTK/WebKit installation is needed. It still requires host glibc 2.35 or newer and compatible OpenGL/EGL graphics drivers. See [Linux Installation and Distribution](doc/distribution/linux.en.md) for dependencies, FUSE troubleshooting, and distribution compatibility.
 
