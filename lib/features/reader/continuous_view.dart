@@ -568,7 +568,6 @@ class ContinuousModeState extends State<ReaderContinuousView>
         !mounted ||
         controller == null ||
         !controller.hasClients ||
-        isZoomedIn ||
         isLongPressing ||
         fingers > 0 ||
         _isRestoringPrependedSegmentPosition ||
@@ -604,6 +603,11 @@ class ContinuousModeState extends State<ReaderContinuousView>
       return AutoReadingStep.waiting;
     }
     final position = scrollController.position;
+    final scale = (photoViewController.scale ?? 1.0).clamp(1.0, 2.5);
+    final pan = photoViewController.position;
+    final direction = data.reverse ? -1.0 : 1.0;
+    final panAlongAxis = data.vertical ? pan.dy : pan.dx;
+    final zoomOverflow = position.viewportDimension * (scale - 1) / 2;
     final lastIndex = crossChapter && !acrossChapters
         ? _waterfallIndexOfChapterPage(currentChapter, maxPage)!
         : _flowImageCount;
@@ -611,12 +615,16 @@ class ContinuousModeState extends State<ReaderContinuousView>
         .where((item) => item.index == lastIndex)
         .firstOrNull;
     var available = position.maxScrollExtent - position.pixels;
+    double? remaining;
     if (last != null) {
-      available = math.min(
-        available,
-        math.max(0.0, (last.itemTrailingEdge - 1) * position.viewportDimension),
-      );
-      if (last.itemTrailingEdge <= 1.001) {
+      // Item positions are unscaled. Include the clipped zoomed tail and pan
+      // before deciding that the chapter has reached the physical viewport end.
+      remaining =
+          (last.itemTrailingEdge - 1) * position.viewportDimension * scale +
+          zoomOverflow +
+          direction * panAlongAxis;
+      available = math.min(available, math.max(0.0, remaining / scale));
+      if (remaining <= 0.5) {
         if (crossChapter &&
             acrossChapters &&
             _waterfallFlow.lastChapter! < data.maxChapter) {
@@ -644,9 +652,24 @@ class ContinuousModeState extends State<ReaderContinuousView>
         return AutoReadingStep.finished;
       }
     }
-    if (available <= 0) return AutoReadingStep.waiting;
+    if (available <= 0) {
+      final tail = math.min(
+        remaining ?? 0.0,
+        zoomOverflow + direction * panAlongAxis,
+      );
+      if (tail <= 0.5) return AutoReadingStep.waiting;
+      final shift = math.min(distance, tail) * direction;
+      photoViewController.updateMultiple(
+        position: data.vertical
+            ? pan.translate(0, -shift)
+            : pan.translate(-shift, 0),
+      );
+      return AutoReadingStep.advanced;
+    }
     _futurePosition = null;
-    scrollController.jumpTo(position.pixels + math.min(distance, available));
+    scrollController.jumpTo(
+      position.pixels + math.min(distance / scale, available),
+    );
     return AutoReadingStep.advanced;
   }
 

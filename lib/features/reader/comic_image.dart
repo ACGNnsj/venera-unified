@@ -139,7 +139,10 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
     if (!mounted) return false;
     final box = context.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return false;
-    final bounds = box.localToGlobal(Offset.zero) & box.size;
+    final bounds = MatrixUtils.transformRect(
+      box.getTransformTo(null),
+      Offset.zero & box.size,
+    );
     final screen = Offset.zero & MediaQuery.sizeOf(context);
     final visible = bounds.intersect(screen);
     return visible.width > 1 && visible.height > 1;
