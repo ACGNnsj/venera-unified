@@ -4,6 +4,52 @@ This checklist tracks release preparation following v1.18.0. A release does
 not mark unresolved reports as fixed. Dated verification records and the
 original device acceptance checklist remain below.
 
+## Next patch candidate preparation (2026-10-25)
+
+The next candidate is v1.18.2-rc.1, build 237, based on the released
+v1.18.1. It delivers the follow-ups previously marked unreleased in #98,
+#107, #110, #112 and #115, plus PR #113. The dated v1.18.1 sections below
+describe that older release's scope, not this candidate's new functionality.
+Stable distribution remains v1.18.1; do not update AltStore or Winget for RC1.
+
+- #98: continuous and waterfall modes resume automatic scrolling after zoom
+  gestures end, retain screen-space speed and read the zoomed chapter tail
+  before stopping or crossing chapters. Touch holds, menus and background
+  pauses remain; zoomed paginated galleries still pause automatic page turns.
+- #107: an opt-in task option continues past unavailable network images after
+  bounded retries. Missing pages remain visible in the queue, never count as
+  a complete download, persist across restarts and are retried on next start.
+  Authentication, certificate, cancellation and local-write errors still stop.
+  The Honor/MagicOS background-disconnection report needs separate device tests.
+- #110/#115: mounted lists refresh when keyword blocks change and preserve card
+  identities; hidden counts distinguish filtering from missing data. Original
+  favorites/import symptoms still need reporter confirmation. Do not bypass
+  filters, rename archives automatically, clear data or request private backups.
+- #112: waterfall chapter titles are present on first layout, preventing an
+  earlier chapter's prefetch from inserting a title and shifting current images.
+  Retest entry at a later chapter, slow loading and exit while loading.
+- #113: wheel and trackpad handlers cover the whole viewport, including blank
+  side margins, without duplicate handling. Preserve the contributor's original
+  commit; the changelog uses the PR number without an extra attribution section.
+
+The actual merged source passed 30 targeted reader regressions and strict
+analysis with pinned Flutter 3.41.4. Release preparation also passed 18
+changelog/update-channel tests and 139 Python script tests (four skips).
+Merged-main commit b73fadf passed [full cloud quality checks](https://github.com/CyrilPeng/Venera-Next/actions/runs/40203793185)
+and the [Rust dependency audit](https://github.com/CyrilPeng/Venera-Next/actions/runs/40203793067).
+These results do not replace device acceptance or fresh checks on the release
+commit. Publish only after the exact release commit passes metadata checks,
+full quality gates, dependency audit and fresh six-platform builds. Do not publish an empty
+release, relabel older assets or treat an in-progress job as a passing result.
+
+After all assets are public and verified, post one version-specific test notice
+to the five related open issues and the merged PR, with their own reproduction
+steps. Keep issues open pending verification; do not repeat unrelated stable
+release notices. No destructive reset is required. Preserve original comic
+files and a pre-upgrade application-data export; use that backup for rollback.
+The Android startup, real SAF recovery and mobile energy-use limitations from
+v1.18.1 are not claimed newly resolved by this candidate.
+
 ## Stable patch release decision (2026-10-25)
 
 The maintainer approved releasing v1.18.1, build 236, with the documented
