@@ -14,6 +14,15 @@ connection. `FLAG_KEEP_SCREEN_ON` is not used for downloading.
 
 ## Lifetime and recovery
 
+Image tasks offer an opt-in `Continue past unavailable images` menu action.
+After bounded retries, missing HTTP 404/410 responses, unsupported image data
+and exhausted connection failures can be skipped while the remaining pages
+download. Authentication, TLS, cancellation and filesystem failures still stop
+the task. A task with missing pages stays incomplete in the queue, shows their
+chapter/page numbers, and is not registered as a completed local comic. Start
+it again to retry missing pages without redownloading successful pages. The
+option and missing-page positions survive a paused queue snapshot/restore.
+
 - Start a service while the activity is visible, as a consequence of starting a
   download. Advancing the queue in the background reuses the same service.
 - Display generic progress without comic titles or URLs. Android 13+ notification

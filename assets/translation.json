@@ -1,5 +1,8 @@
 {
   "zh_CN": {
+    "Continue past unavailable images": "继续下载其余可用图片",
+    "Downloaded @a/@b; missing @c images": "已下载 @a/@b；缺少 @c 页",
+    "Download incomplete. Start again to retry missing images; completed pages are retained.": "下载不完整。再次开始可补齐缺页，已下载页面会保留。",
     "Failed to import @name: @error": "导入失败：@name\n@error",
     "Connection interrupted. Waiting to retry...": "连接中断，等待自动重试…",
     "Download error": "下载错误",
@@ -900,6 +903,9 @@
     "Failed to load source": "无法加载来源"
   },
   "zh_TW": {
+    "Continue past unavailable images": "繼續下載其餘可用圖片",
+    "Downloaded @a/@b; missing @c images": "已下載 @a/@b；缺少 @c 頁",
+    "Download incomplete. Start again to retry missing images; completed pages are retained.": "下載不完整。再次開始可補齊缺頁，已下載頁面會保留。",
     "Failed to import @name: @error": "匯入失敗：@name\n@error",
     "Connection interrupted. Waiting to retry...": "連線中斷，等待自動重試…",
     "Download error": "下載錯誤",

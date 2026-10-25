@@ -6,6 +6,7 @@ import 'package:venera_next/components/pop_up_widget.dart';
 import 'package:venera_next/foundation/context.dart';
 import 'package:venera_next/foundation/image_provider/cached_image.dart';
 import 'package:venera_next/features/local_comics/download_task.dart';
+import 'package:venera_next/features/local_comics/images_download_task.dart';
 import 'package:venera_next/features/local_comics/local.dart';
 import 'package:venera_next/foundation/file_system.dart';
 import 'package:venera_next/foundation/translations.dart';
@@ -250,6 +251,29 @@ class _DownloadTaskTileState extends State<_DownloadTaskTile> {
                     ),
                     MenuButton(
                       entries: [
+                        if (widget.task case ImagesDownloadTask imageTask)
+                          MenuEntry(
+                            icon: imageTask.skipUnavailableImages
+                                ? Icons.check_box
+                                : Icons.check_box_outline_blank,
+                            text: 'Continue past unavailable images'.tl,
+                            onClick: () async {
+                              try {
+                                await imageTask.updateSkipUnavailableImages(
+                                  !imageTask.skipUnavailableImages,
+                                );
+                              } catch (error) {
+                                if (context.mounted) {
+                                  showDialog<void>(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      content: Text(error.toString()),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                          ),
                         if (widget.task.isError)
                           MenuEntry(
                             icon: Icons.error_outline,

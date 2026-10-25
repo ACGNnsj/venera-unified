@@ -33,6 +33,105 @@ void main() {
     LocalManager.current?.dispose();
   });
 
+  for (final skip in [false, true]) {
+    for (final restore in [false, true]) {
+      test(
+        'unavailable images retain an incomplete queue: skip=$skip restore=$restore',
+        () async {
+          final root = Directory.systemTemp.createTempSync('download-missing-');
+          final storage = _TaskStorage(root.path);
+          final bytes = base64Decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6uwAAAABJRU5ErkJggg==',
+          );
+          var recovered = false;
+          final attempts = <String, int>{};
+          Stream<ImageDownloadProgress> load(
+            String key,
+            String? _,
+            String _,
+            String _,
+          ) async* {
+            attempts[key] = (attempts[key] ?? 0) + 1;
+            if (key == 'missing.png' && !recovered) {
+              final request = RequestOptions(path: key);
+              throw DioException.badResponse(
+                statusCode: 404,
+                requestOptions: request,
+                response: Response(requestOptions: request, statusCode: 404),
+              );
+            }
+            yield ImageDownloadProgress(
+              currentBytes: bytes.length,
+              totalBytes: bytes.length,
+              imageBytes: bytes,
+            );
+          }
+
+          var task = ImagesDownloadTask(
+            storage: storage,
+            source: _testSource(
+              sourceKey,
+              loadComicPages: (_, _) async =>
+                  Res(['first.png', 'missing.png', 'last.png']),
+            ),
+            comicId: 'missing',
+            comic: _archiveComic(sourceKey, id: 'missing'),
+            skipUnavailableImages: skip,
+            loadThumbnail: (_, _) => Stream.value(
+              ImageDownloadProgress(
+                currentBytes: bytes.length,
+                totalBytes: bytes.length,
+                imageBytes: bytes,
+              ),
+            ),
+            loadImage: load,
+          );
+          try {
+            task.resume();
+            await task.debugResumeFuture;
+            expect(task.isError, isTrue);
+            expect(storage.completed, isEmpty);
+            expect(attempts['last.png'], skip ? 1 : null);
+            expect(task.missingImageCount, skip ? 1 : 0);
+            expect(
+              task.progress,
+              skip ? closeTo(2 / 3, 0.001) : closeTo(1 / 3, 0.001),
+            );
+            if (skip) expect(task.message, contains('Download incomplete'));
+            if (restore) {
+              await task.pendingCleanup;
+              final snapshot =
+                  jsonDecode(jsonEncode(task.toJson())) as Map<String, dynamic>;
+              task.dispose();
+              task = ImagesDownloadTask.fromJson(
+                storage,
+                snapshot,
+                loadImage: load,
+              )!;
+              expect(task.skipUnavailableImages, skip);
+              expect(task.missingImageCount, skip ? 1 : 0);
+            }
+            recovered = true;
+            task.resume();
+            await task.debugResumeFuture;
+            expect(storage.completed, [same(task)]);
+            expect(task.progress, 1);
+            expect(task.missingImageCount, 0);
+            expect(attempts, {'first.png': 1, 'missing.png': 2, 'last.png': 1});
+            for (final index in [0, 1, 2]) {
+              expect(File('${task.path}/$index.png').readAsBytesSync(), bytes);
+            }
+          } finally {
+            task.pause();
+            await task.pendingCleanup;
+            task.dispose();
+            root.deleteSync(recursive: true);
+          }
+        },
+      );
+    }
+  }
+
   for (final recovery in ['network', 'resume', 'exhausted']) {
     test(
       'transient image disconnect preserves completed pages: $recovery',
