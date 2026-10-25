@@ -813,9 +813,8 @@ class ContinuousModeState extends State<ReaderContinuousView>
     if (!crossChapter || !imageRef.isFirstInSegment) {
       return const SizedBox();
     }
-    var isInitialChapter =
-        imageRef.position.chapter == _waterfallFlow.firstChapter;
-    if (isInitialChapter) return const SizedBox();
+    // The first loaded segment is not stable: prefetch can prepend an earlier
+    // chapter. Always reserve its title before any image finishes decoding.
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       child: Center(
