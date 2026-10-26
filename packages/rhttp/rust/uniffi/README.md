@@ -10,15 +10,21 @@ pure-Rust `rhttp-core` crates.
 
 | Item | Kind | Notes |
 |---|---|---|
-| `RhttpClient` | object | `new(ClientOptions)`, `fetchText(url)`, `fetchBytes(url)`, `stream(request)`, `streamGet(url)`, `cancelAll()` |
+| `RhttpClient` | object | `new(ClientOptions)`, `sendText(request)`, `sendBytes(request)`, `sendStream(request)`, `fetchText(url)`, `fetchBytes(url)`, `streamGet(url)`, `cancelAll()` |
 | `ResponseStream` | object | `head()`, `nextChunk()`, `cancel()` |
-| `RhttpError` | error enum | `Network{message}`, `Status{statusCode,message}`, `Cancelled`, `InvalidSettings{message}` |
+| `RhttpError` | error enum | `Network{detail}`, `Status{statusCode, detail}`, `Cancelled`, `InvalidSettings{detail}` |
 | `ClientOptions` | record | full mirror of `ClientSettings` |
 | `defaultClientOptions()` | function | the core defaults (`HttpVersionPref.All`, `throwOnStatusCode = true`) |
-| `StreamRequest` | record | `url`, `method` (null ⇒ `GET`), `headers` |
+| `HttpRequest` | record | `url`, `method` (null ⇒ `GET`), `headers`, `query`, `body` |
+| `RequestBody` | enum | `Text{text}`, `Bytes{bytes}`, `Form{fields}`, `Multipart{payload}` |
+| `MultipartPayload` / `MultipartPart` / `MultipartValue` | record / record / enum | parts are `Text{text}`, `Bytes{bytes}`, or `File{path}` |
+| `RhttpHeader` / `RhttpField` | record | `name`, `value` — headers use the first, query and form pairs the second |
 | `ResponseHead` | record | `statusCode`, `headers`, `remoteIp` |
-| `RhttpHeader` | record | `name`, `value` |
 | `DnsResolverCallback` | foreign trait | host-implemented dynamic DNS |
+
+The error field is `detail` rather than `message` on purpose: uniffi generates an
+exception class per variant, and a field named `message` collides with
+`Throwable.message` in Kotlin — the generated file then does not compile.
 
 ### `ClientOptions`
 
@@ -38,24 +44,49 @@ Durations arrive as `std::time::Duration` and are converted to
 `chrono::Duration` for the core; values outside `chrono`'s range surface as
 `RhttpError::InvalidSettings`.
 
+## Requests and uploads
+
+`HttpRequest` is the single request shape, shared by the buffered entry points
+(`sendText`, `sendBytes`) and the streaming one (`sendStream`). Bodies:
+
+```text
+RequestBody::Text{text}          → builder.body(text)
+RequestBody::Bytes{bytes}        → builder.body(bytes)
+RequestBody::Form{fields}        → application/x-www-form-urlencoded
+RequestBody::Multipart{payload}  → multipart/form-data
+```
+
+Multipart parts may be text, bytes, or a **path on the host filesystem**; a file
+part is streamed from disk as the request is sent, so a large upload is never
+staged in this binding. `fileName` and `contentType` map to the part's
+`Content-Disposition` and `Content-Type`.
+
+Form fields land in a `HashMap` in the core, so their order on the wire is not
+part of the contract — only that they are form-encoded.
+
+Streaming *uploads* (`CoreBody::BytesStream`) are not exported: pushing host bytes
+into Rust needs a foreign trait with its own backpressure contract, and nothing
+needs it yet.
+
 ## Streaming downloads
 
 uniffi has no async iterator, so the body is modelled as a puller instead of a
 push callback:
 
 ```text
-stream(request) ──► ResponseStream ──► [chunk, chunk, ..., null]
-                     head()            nextChunk()           cancel()
+sendStream(request) ──► ResponseStream ──► [chunk, chunk, ..., null]
+                        head()            nextChunk()           cancel()
 ```
 
-- `stream(request)` resolves once the **response head** has arrived, so a status
-  error surfaces there (`RhttpError::Status`) rather than at the first chunk.
+- `sendStream(request)` resolves once the **response head** has arrived, so a
+  status error surfaces there (`RhttpError::Status`) rather than at the first
+  chunk.
 - `nextChunk()` returns the next chunk, or `null` at the end of the body.
 - Chunk delivery is bounded (four chunks between the transport and the host), so
   a host that stops calling `nextChunk` applies backpressure instead of
   buffering the whole file.
 - Kotlin wraps the loop in `flow { … }` on `Dispatchers.IO`; Swift in an
-  `AsyncSequence`. Both `nextChunk` and `stream` are `suspend`/`async` because
+  `AsyncSequence`. Both `nextChunk` and `sendStream` are `suspend`/`async` because
   the crate exports with `async_runtime = "tokio"`.
 
 No Rust thread ever calls back into host code, so a slow or buggy host cannot
@@ -89,18 +120,24 @@ adapter bridges the two with `tokio::task::spawn_blocking`:
 HTTP/3 support, and reqwest refuses to compile without that cfg.
 
 Cargo called straight from the DSH shell fails at TLS on this machine
-(`schannel: AcquireCredentialsHandle failed: SEC_E_NO_CREDENTIALS`). Launching
-Windows Cargo through WSL interop fixes TLS — but that process still runs under
-the workspace-only write policy: it reads `C:\Users\<user>\.cargo` and downloads
-fine, yet cannot write a new `.crate` into the cache (`拒绝访问, os error 5`).
-So an all-cached graph builds normally, while adding an uncached dependency
-needs a run outside the sandbox or a `CARGO_HOME` inside the workspace.
+(`schannel: AcquireCredentialsHandle failed: SEC_E_NO_CREDENTIALS`), so builds go
+through WSL interop. Two environment details matter:
+
+- `TMP`, `TEMP` and `TMPDIR` must point at a writable directory inside the
+  workspace. WSL hands the Windows process `TMP=/tmp`, and the multipart test
+  writes a fixture through `std::env::temp_dir()`; without the override it fails
+  with `拒绝访问 (os error 5)`.
+- the `.bat` helpers must be CRLF; with LF-only endings `cmd.exe` eats the first
+  characters of each line.
 
 ```bat
 :: D:\venera\.scratch\test-uniffi.bat
 @echo off
 cd /d D:\venera\unified\packages\rhttp\rust
-set RUSTFLAGS=--cfg reqwest_unstable
+set "RUSTFLAGS=--cfg reqwest_unstable"
+set "TMP=D:\venera\.scratch\tmp"
+set "TEMP=D:\venera\.scratch\tmp"
+set "TMPDIR=D:\venera\.scratch\tmp"
 cargo test -p rhttp-uniffi
 ```
 
@@ -111,13 +148,15 @@ wsl: cmd.exe /c "D:\venera\.scratch\test-uniffi.bat"   (translatePaths: false)
 `RUSTFLAGS` must be set inside the batch file; exporting it from WSL does not
 reach the Windows `cargo.exe`.
 
-Current suite: 10 tests — settings round-trip, core defaults, dynamic DNS bridge,
-an end-to-end request, a status-error mapping, a timeout check, and four
-streaming checks (incremental delivery, single-stream cancel, client-wide cancel
-of a started body, status error at stream open). All of them run against a
-loopback `TcpListener`, so the suite needs no network. `tests/throughput.rs` adds
-an eleventh that is `#[ignore]`d: it moves ~1 GiB to measure, and asserts nothing
-about speed.
+Current suite: 20 tests. Settings round-trip, core defaults, the dynamic DNS
+bridge; the request mapping (method default, headers, query, every body variant,
+multipart metadata); an upload seen by a capture server (text body, form
+encoding, a multipart part with a real file), a streamed request that carries a
+body; a status error, a timeout; and four streaming checks (incremental delivery,
+single-stream cancel, client-wide cancel of a started body, status error at
+stream open). Everything runs against loopback listeners, so the suite needs no
+network. `tests/throughput.rs` adds a twenty-first test that is `#[ignore]`d: it
+moves ~1 GiB to measure, and asserts nothing about speed.
 
 ## Generating bindings
 
@@ -139,27 +178,13 @@ target\debug\uniffi-bindgen.exe generate --metadata-no-deps -n ^
 Two flags are not optional here:
 
 - `--metadata-no-deps` — without it the generator's internal `cargo metadata`
-  resolves every target triple and tries to fetch wasm-only crates, which this
-  sandboxed shell cannot write into the cargo cache (`拒绝访问, os error 5`).
+  resolves every target triple and tries to fetch wasm-only crates, which the
+  sandboxed shell could not write into the cargo cache.
 - `-n` — ktlint and swiftformat are not installed.
 
 Generated output is not checked in; regenerate it from the source you are
-actually shipping. On this machine the last run produced, for the two objects:
-
-```text
-Kotlin  suspend fun nextChunk(): kotlin.ByteArray?
-        fun head(): ResponseHead            fun cancel()
-        suspend fun stream(request: StreamRequest): ResponseStream
-        suspend fun streamGet(url: String): ResponseStream
-Swift   func nextChunk() async throws -> Data?
-        func head() -> ResponseHead         func cancel()
-        func stream(request: StreamRequest) async throws -> ResponseStream
-```
-
-Both objects generate as `Disposable`/`Sendable` handles, so Kotlin gets
-`use { }` and Swift gets `deinit`-driven release. The generated Kotlin and Swift
-have not been compiled against a real host app yet — there is no Kotlin/Gradle
-project in this repository to compile against.
+actually shipping. `host/kotlin` does exactly that as part of its run (see
+*Kotlin host*).
 
 ## Cross targets
 
@@ -171,6 +196,11 @@ Artifacts produced so far:
 | `aarch64-linux-android` | `librhttp_uniffi.so`, 4.5 MiB, 82 exported functions |
 | `armv7-linux-androideabi` | `librhttp_uniffi.so`, 3.1 MiB |
 | `x86_64-linux-android` | `librhttp_uniffi.so`, 5.1 MiB |
+
+CI builds the three Android targets — the `rhttp-android` job in
+`.github/workflows/analyze.yml` reads `ndkVersion` from `android/app/build.gradle`
+so the checker cannot drift from the app, then cross-compiles one target per
+matrix leg and asserts the `.so` exists and is ELF.
 
 `cargo ndk` is not installed here and is not needed: the NDK's own clang
 wrappers do the job once `CC_*`, `AR_*` and `CARGO_TARGET_*_LINKER` point at
@@ -198,7 +228,36 @@ other two ABIs. Two things bite on Windows:
   first bytes of each line, so `cd /d …` runs as `/d …` and `set X=…` runs as
   `=…`. The symptom looks like a missing directory rather than a broken script.
 
-## Throughput
+## Kotlin host
+
+`host/kotlin` is a Gradle project that compiles the generated bindings and runs
+them against a local server — the first real host for this binding, and the
+smallest thing that can produce an end-to-end number.
+
+```text
+target\release\rhttp_uniffi.dll         native library (JNA loads it)
+uniffi-bindgen generate -l kotlin …     writes build/generated/uniffi
+gradle run -PnativeDir=<dir of the dll>
+```
+
+It measures two paths over the same 64 MiB, 1024-chunk loopback payload: the
+generated `RhttpClient.streamGet` pull loop through JNA, and `java.net.http`
+reading the same body with no FFI. Both are warmed for two rounds, then measured
+in nine interleaved rounds so a slow moment hits both.
+
+```text
+uniffi (Kotlin host)   median  588 / 700 / 792 MiB/s   (three runs)
+JDK HttpClient         median  366 / 368 / 499 MiB/s   (same three runs)
+```
+
+The uniffi path was never the slower one, and the spread between runs of a single
+path is larger than the gap between paths. Read that as: **the binding is not the
+bottleneck**; the number is this laptop's loopback, not a property of uniffi.
+
+Neither figure is comparable to the Flutter/Frb path. That comparison needs a
+Dart host, which this repository still does not have a minimal one of.
+
+## Throughput inside Rust
 
 Measured with
 `cargo test -p rhttp-uniffi --release --test throughput -- --ignored --nocapture`:
@@ -216,26 +275,18 @@ control drift     :  -11.3%        (same code, nothing changed)
 uniffi vs core    :   -0.5%
 ```
 
-**What this shows, and what it does not.** The uniffi figure lands inside the
-control's drift, so the binding layer costs less than this probe can resolve. An
-earlier run of the same probe, before the control existed, reported 99.4% and a
-`+1.25 µs/chunk` delta; that was run-to-run noise being read as a number, which
-is exactly what the control is there to prevent.
-
-This is also *not* the "≥ 80% of the FRB adapter" that step 5.4 asked for:
-measuring FRB means measuring from a Dart host (the Flutter app), and measuring
-uniffi means measuring from a Kotlin or Swift host, neither of which this
-repository has. The defensible statement is that the uniffi layer adds nothing
-measurable on top of the transport, at this body size and chunk size. Whether the
-two hosts compare favourably end to end remains unmeasured.
+The uniffi figure lands inside the control's drift, so the binding layer costs
+less than this probe can resolve. An earlier run of the same probe, before the
+control existed, reported 99.4% and a `+1.25 µs/chunk` delta; that was run-to-run
+noise being read as a number, which is exactly what the control is there to
+prevent.
 
 ## Not implemented yet
 
-- **Request bodies and multipart uploads** — the streaming surface is
-  download-only. `CoreRequest` already carries `body`/`body_stream`/
-  multipart values, so this is a mapping job, not a core change.
-- **Cross-target CI** — the Android artifacts build locally (see *Cross
-  targets*) but nothing in CI produces them, so they can rot unnoticed.
+- **Streaming request bodies** (`CoreBody::BytesStream`) — uploads are limited to
+  text, bytes, form fields, and multipart parts.
+- **A Dart host for the FRB side** — until one exists, "uniffi vs FRB" stays
+  unmeasured; the two numbers above are each self-contained.
 
 Do not add this crate to the Flutter app's Dart dependencies; it exists only for
 non-Flutter hosts.
