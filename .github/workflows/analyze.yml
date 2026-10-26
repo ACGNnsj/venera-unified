@@ -91,10 +91,14 @@ jobs:
         run: |
           set -euo pipefail
           toolchain="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          triple="$(printf '%s' "${TARGET}" | tr 'a-z-' 'A-Z_')"
-          export "CC_${triple}=${toolchain}/${CLANG}"
-          export "AR_${triple}=${toolchain}/llvm-ar"
-          export "CARGO_TARGET_${triple}_LINKER=${toolchain}/${CLANG}"
+          # 这两个后缀大小写不一样，别合并：cc-rs 只认小写的 CC_<target 下划线化>
+          # （CC_aarch64_linux_android），cargo 的链接器变量要全大写
+          # （CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER）。
+          cc_suffix="$(printf '%s' "${TARGET}" | tr '-' '_')"
+          cargo_suffix="$(printf '%s' "${TARGET}" | tr 'a-z-' 'A-Z_')"
+          export "CC_${cc_suffix}=${toolchain}/${CLANG}"
+          export "AR_${cc_suffix}=${toolchain}/llvm-ar"
+          export "CARGO_TARGET_${cargo_suffix}_LINKER=${toolchain}/${CLANG}"
           cargo build --locked --manifest-path packages/rhttp/rust/Cargo.toml \
             -p rhttp-uniffi --lib --release --target "${TARGET}"
       - name: 检查产物
