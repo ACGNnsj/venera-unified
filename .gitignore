@@ -49,3 +49,6 @@ app.*.map.json
 .opencode/
 .codex/
 .agents/
+
+# FVM 本地版本目录（.fvmrc 需要提交）
+.fvm/
