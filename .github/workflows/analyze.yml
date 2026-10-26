@@ -73,7 +73,15 @@ jobs:
           ndk_root="${ANDROID_HOME}/ndk/${ndk_version}"
           if [[ ! -d "${ndk_root}" ]]; then
             echo "安装 NDK ${ndk_version}"
+            # sdkmanager 退出后 yes 会被 SIGPIPE 打断（141），pipefail 下这会把整条管道判成失败，
+            # 所以只在这一行关掉 pipefail；sdkmanager 自己的退出码仍然生效。
+            set +o pipefail
             yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --install "ndk;${ndk_version}" > /dev/null
+            set -o pipefail
+          fi
+          if [[ ! -d "${ndk_root}" ]]; then
+            echo "::error::NDK ${ndk_version} 没有装到 ${ndk_root}"
+            exit 1
           fi
           echo "ANDROID_NDK_HOME=${ndk_root}" >> "$GITHUB_ENV"
       - name: 交叉编译 rhttp-uniffi
