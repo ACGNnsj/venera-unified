@@ -49,13 +49,9 @@ async fn execute_inner(
             CoreExpectBody::Text => {
                 CoreErrorBody::Text(response.text().await.map_err(map_reqwest_error)?)
             }
-            CoreExpectBody::Bytes => CoreErrorBody::Bytes(
-                response
-                    .bytes()
-                    .await
-                    .map_err(map_reqwest_error)?
-                    .to_vec(),
-            ),
+            CoreExpectBody::Bytes => {
+                CoreErrorBody::Bytes(response.bytes().await.map_err(map_reqwest_error)?.to_vec())
+            }
             CoreExpectBody::Stream => CoreErrorBody::Stream,
         };
         return Err(CoreError::StatusCode(status_code, headers.clone(), body));
@@ -65,18 +61,16 @@ async fn execute_inner(
         CoreExpectBody::Text => {
             CoreResponseBody::Text(response.text().await.map_err(map_reqwest_error)?)
         }
-        CoreExpectBody::Bytes => CoreResponseBody::Bytes(
-            response
-                .bytes()
-                .await
-                .map_err(map_reqwest_error)?
-                .to_vec(),
-        ),
-        CoreExpectBody::Stream => CoreResponseBody::Stream(Box::pin(
-            response
-                .bytes_stream()
-                .map(|chunk| chunk.map(|bytes| bytes.to_vec()).map_err(|e| CoreError::Unknown(e.to_string()))),
-        )),
+        CoreExpectBody::Bytes => {
+            CoreResponseBody::Bytes(response.bytes().await.map_err(map_reqwest_error)?.to_vec())
+        }
+        CoreExpectBody::Stream => {
+            CoreResponseBody::Stream(Box::pin(response.bytes_stream().map(|chunk| {
+                chunk
+                    .map(|bytes| bytes.to_vec())
+                    .map_err(|e| CoreError::Unknown(e.to_string()))
+            })))
+        }
     };
 
     Ok(CoreResponse {
@@ -160,9 +154,9 @@ async fn send_request(
                     CoreMultipartValue::Text(text) => reqwest::multipart::Part::text(text),
                     CoreMultipartValue::Bytes(bytes) => reqwest::multipart::Part::bytes(bytes),
                     CoreMultipartValue::File(path) => {
-                        let file = tokio::fs::File::open(path).await.map_err(|e| {
-                            CoreError::Unknown(format!("Failed to open file: {e}"))
-                        })?;
+                        let file = tokio::fs::File::open(path)
+                            .await
+                            .map_err(|e| CoreError::Unknown(format!("Failed to open file: {e}")))?;
                         reqwest::multipart::Part::stream(reqwest::Body::wrap_stream(
                             tokio_util::io::ReaderStream::new(file),
                         ))
@@ -286,7 +280,10 @@ mod tests {
         }
     }
 
-    async fn execute_get(port: u16, expect_body: CoreExpectBody) -> Result<CoreResponse, CoreError> {
+    async fn execute_get(
+        port: u16,
+        expect_body: CoreExpectBody,
+    ) -> Result<CoreResponse, CoreError> {
         execute(
             None,
             Some(ClientSettings::default()),
@@ -299,10 +296,9 @@ mod tests {
 
     #[tokio::test]
     async fn text_response_keeps_status_and_body() {
-        let port = serve_once(
-            b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: close\r\n\r\nhello",
-        )
-        .await;
+        let port =
+            serve_once(b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: close\r\n\r\nhello")
+                .await;
 
         let response = execute_get(port, CoreExpectBody::Text).await.unwrap();
         assert_eq!(response.status_code, 200);
@@ -337,10 +333,9 @@ mod tests {
 
     #[tokio::test]
     async fn stream_response_yields_bytes() {
-        let port = serve_once(
-            b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: close\r\n\r\nhello",
-        )
-        .await;
+        let port =
+            serve_once(b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: close\r\n\r\nhello")
+                .await;
 
         let response = execute_get(port, CoreExpectBody::Stream).await.unwrap();
         let mut stream = match response.body {

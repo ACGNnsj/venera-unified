@@ -457,7 +457,11 @@ impl HttpExpectBody {
 }
 
 fn into_core_stream(receiver: stream::Dart2RustStreamReceiver) -> ByteStream {
-    Box::pin(receiver.receiver.map(|chunk| Ok::<Vec<u8>, CoreError>(chunk)))
+    Box::pin(
+        receiver
+            .receiver
+            .map(|chunk| Ok::<Vec<u8>, CoreError>(chunk)),
+    )
 }
 
 pub fn cancel_request(token: &CancellationToken) {

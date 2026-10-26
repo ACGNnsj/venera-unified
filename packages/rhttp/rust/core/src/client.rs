@@ -34,9 +34,7 @@ pub fn build_client(settings: ClientSettings) -> Result<CoreRequestClient, CoreE
                             ProxyCondition::Https => reqwest::Proxy::https(&proxy.url),
                             ProxyCondition::All => reqwest::Proxy::all(&proxy.url),
                         }
-                        .map_err(|e| {
-                            CoreError::Unknown(format!("Error creating proxy: {e:?}"))
-                        })?;
+                        .map_err(|e| CoreError::Unknown(format!("Error creating proxy: {e:?}")))?;
                         client = client.proxy(proxy);
                     }
                 }
@@ -49,9 +47,7 @@ pub fn build_client(settings: ClientSettings) -> Result<CoreRequestClient, CoreE
 
         if let Some(redirect_settings) = settings.redirect_settings {
             client = match redirect_settings {
-                RedirectSettings::NoRedirect => {
-                    client.redirect(reqwest::redirect::Policy::none())
-                }
+                RedirectSettings::NoRedirect => client.redirect(reqwest::redirect::Policy::none()),
                 RedirectSettings::LimitedRedirects(max_redirects) => {
                     client.redirect(reqwest::redirect::Policy::limited(max_redirects as usize))
                 }
@@ -100,12 +96,10 @@ pub fn build_client(settings: ClientSettings) -> Result<CoreRequestClient, CoreE
             }
 
             for cert in tls_settings.trusted_root_certificates {
-                client = client.add_root_certificate(
-                    Certificate::from_pem(&cert)
-                        .map_err(|e| {
-                            CoreError::Unknown(format!("Error adding trusted certificate: {e:?}"))
-                        })?,
-                );
+                client =
+                    client.add_root_certificate(Certificate::from_pem(&cert).map_err(|e| {
+                        CoreError::Unknown(format!("Error adding trusted certificate: {e:?}"))
+                    })?);
             }
 
             if !tls_settings.verify_certificates {
@@ -169,9 +163,7 @@ pub fn build_client(settings: ClientSettings) -> Result<CoreRequestClient, CoreE
                             .map(|ip| {
                                 let ip_digested = ip.digest_ip();
                                 SocketAddr::from_str(ip_digested.as_str()).map_err(|e| {
-                                    err = Some(format!(
-                                        "Invalid IP address: {ip_digested}. {e:?}"
-                                    ));
+                                    err = Some(format!("Invalid IP address: {ip_digested}. {e:?}"));
                                     CoreError::Unknown(e.to_string())
                                 })
                             })
@@ -235,9 +227,7 @@ impl Resolve for DynamicResolver {
                 .map(|ip| {
                     let ip_digested = ip.digest_ip();
                     SocketAddr::from_str(ip_digested.as_str()).map_err(|e| {
-                        CoreError::Unknown(format!(
-                            "Invalid IP address: {ip_digested}. {e:?}"
-                        ))
+                        CoreError::Unknown(format!("Invalid IP address: {ip_digested}. {e:?}"))
                     })
                 })
                 .filter_map(Result::ok)

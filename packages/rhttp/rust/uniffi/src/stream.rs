@@ -152,10 +152,7 @@ impl RhttpClient {
 }
 
 impl RhttpClient {
-    async fn stream_inner(
-        &self,
-        request: CoreRequest,
-    ) -> Result<Arc<ResponseStream>, RhttpError> {
+    async fn stream_inner(&self, request: CoreRequest) -> Result<Arc<ResponseStream>, RhttpError> {
         let response = self.execute(request).await?;
 
         let head = ResponseHead {
@@ -180,12 +177,7 @@ impl RhttpClient {
         let (tx, rx) = mpsc::channel(CHUNK_BUFFER);
         let cancel = CancellationToken::new();
         let client_cancel = self.inner.cancel_token.clone();
-        tokio::spawn(pump(
-            body,
-            tx,
-            cancel.clone(),
-            client_cancel.clone(),
-        ));
+        tokio::spawn(pump(body, tx, cancel.clone(), client_cancel.clone()));
 
         Ok(Arc::new(ResponseStream {
             head,
@@ -238,7 +230,10 @@ mod tests {
         let listener = TcpListener::bind("127.0.0.1:0")
             .await
             .expect("bind a loopback listener");
-        let port = listener.local_addr().expect("read the listener address").port();
+        let port = listener
+            .local_addr()
+            .expect("read the listener address")
+            .port();
         tokio::spawn(async move {
             let (mut socket, _) = listener.accept().await.expect("accept one connection");
             let mut buf = [0u8; 4096];
@@ -276,7 +271,10 @@ mod tests {
         let listener = TcpListener::bind("127.0.0.1:0")
             .await
             .expect("bind a loopback listener");
-        let port = listener.local_addr().expect("read the listener address").port();
+        let port = listener
+            .local_addr()
+            .expect("read the listener address")
+            .port();
         tokio::spawn(async move {
             let (mut socket, _) = listener.accept().await.expect("accept one connection");
             let mut buf = [0u8; 4096];
@@ -312,10 +310,10 @@ mod tests {
         let head = handle.head();
         assert_eq!(head.status_code, 200);
         assert!(
-            head.headers.iter().any(|header| header
-                .name
-                .eq_ignore_ascii_case("content-type")
-                && header.value == "text/plain"),
+            head.headers
+                .iter()
+                .any(|header| header.name.eq_ignore_ascii_case("content-type")
+                    && header.value == "text/plain"),
             "missing content-type in {:?}",
             head.headers
         );
@@ -391,7 +389,10 @@ mod tests {
         let listener = TcpListener::bind("127.0.0.1:0")
             .await
             .expect("bind a loopback listener");
-        let port = listener.local_addr().expect("read the listener address").port();
+        let port = listener
+            .local_addr()
+            .expect("read the listener address")
+            .port();
         tokio::spawn(async move {
             let (mut socket, _) = listener.accept().await.expect("accept one connection");
             let mut buf = [0u8; 4096];

@@ -115,11 +115,9 @@ impl rhttp_core::DnsResolver for DartDnsResolver {
 impl ClientSettings {
     pub(crate) fn into_core(self) -> rhttp_core::ClientSettings {
         rhttp_core::ClientSettings {
-            cookie_settings: self
-                .cookie_settings
-                .map(|s| rhttp_core::CookieSettings {
-                    store_cookies: s.store_cookies,
-                }),
+            cookie_settings: self.cookie_settings.map(|s| rhttp_core::CookieSettings {
+                store_cookies: s.store_cookies,
+            }),
             http_version_pref: match self.http_version_pref {
                 HttpVersionPref::Http10 => rhttp_core::HttpVersionPref::Http10,
                 HttpVersionPref::Http11 => rhttp_core::HttpVersionPref::Http11,
@@ -127,31 +125,27 @@ impl ClientSettings {
                 HttpVersionPref::Http3 => rhttp_core::HttpVersionPref::Http3,
                 HttpVersionPref::All => rhttp_core::HttpVersionPref::All,
             },
-            timeout_settings: self
-                .timeout_settings
-                .map(|s| rhttp_core::TimeoutSettings {
-                    timeout: s.timeout,
-                    connect_timeout: s.connect_timeout,
-                    keep_alive_timeout: s.keep_alive_timeout,
-                    keep_alive_ping: s.keep_alive_ping,
-                }),
+            timeout_settings: self.timeout_settings.map(|s| rhttp_core::TimeoutSettings {
+                timeout: s.timeout,
+                connect_timeout: s.connect_timeout,
+                keep_alive_timeout: s.keep_alive_timeout,
+                keep_alive_ping: s.keep_alive_ping,
+            }),
             throw_on_status_code: self.throw_on_status_code,
             proxy_settings: self.proxy_settings.map(|p| match p {
                 ProxySettings::NoProxy => rhttp_core::ProxySettings::NoProxy,
-                ProxySettings::CustomProxyList(list) => {
-                    rhttp_core::ProxySettings::CustomProxyList(
-                        list.into_iter()
-                            .map(|p| rhttp_core::CustomProxy {
-                                url: p.url,
-                                condition: match p.condition {
-                                    ProxyCondition::Http => rhttp_core::ProxyCondition::Http,
-                                    ProxyCondition::Https => rhttp_core::ProxyCondition::Https,
-                                    ProxyCondition::All => rhttp_core::ProxyCondition::All,
-                                },
-                            })
-                            .collect(),
-                    )
-                }
+                ProxySettings::CustomProxyList(list) => rhttp_core::ProxySettings::CustomProxyList(
+                    list.into_iter()
+                        .map(|p| rhttp_core::CustomProxy {
+                            url: p.url,
+                            condition: match p.condition {
+                                ProxyCondition::Http => rhttp_core::ProxyCondition::Http,
+                                ProxyCondition::Https => rhttp_core::ProxyCondition::Https,
+                                ProxyCondition::All => rhttp_core::ProxyCondition::All,
+                            },
+                        })
+                        .collect(),
+                ),
             }),
             redirect_settings: self.redirect_settings.map(|r| match r {
                 RedirectSettings::NoRedirect => rhttp_core::RedirectSettings::NoRedirect,
@@ -163,12 +157,10 @@ impl ClientSettings {
                 trust_root_certificates: t.trust_root_certificates,
                 trusted_root_certificates: t.trusted_root_certificates,
                 verify_certificates: t.verify_certificates,
-                client_certificate: t
-                    .client_certificate
-                    .map(|c| rhttp_core::ClientCertificate {
-                        certificate: c.certificate,
-                        private_key: c.private_key,
-                    }),
+                client_certificate: t.client_certificate.map(|c| rhttp_core::ClientCertificate {
+                    certificate: c.certificate,
+                    private_key: c.private_key,
+                }),
                 min_tls_version: t.min_tls_version.map(|v| match v {
                     TlsVersion::Tls1_2 => rhttp_core::TlsVersion::Tls1_2,
                     TlsVersion::Tls1_3 => rhttp_core::TlsVersion::Tls1_3,

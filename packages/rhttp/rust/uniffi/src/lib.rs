@@ -119,10 +119,7 @@ impl RhttpClient {
         }
     }
 
-    async fn execute(
-        &self,
-        request: CoreRequest,
-    ) -> Result<rhttp_core::CoreResponse, RhttpError> {
+    async fn execute(&self, request: CoreRequest) -> Result<rhttp_core::CoreResponse, RhttpError> {
         rhttp_core::execute(
             Some(self.inner.clone()),
             None,
@@ -144,22 +141,27 @@ mod tests {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
             .await
             .expect("bind a loopback listener");
-        let port = listener.local_addr().expect("read the listener address").port();
+        let port = listener
+            .local_addr()
+            .expect("read the listener address")
+            .port();
         tokio::spawn(async move {
             let (mut socket, _) = listener.accept().await.expect("accept one connection");
             let mut buf = [0u8; 4096];
             let _ = socket.read(&mut buf).await;
-            socket.write_all(response).await.expect("write the response");
+            socket
+                .write_all(response)
+                .await
+                .expect("write the response");
         });
         port
     }
 
     #[tokio::test]
     async fn client_built_from_uniffi_options_fetches_text() {
-        let port = serve_once(
-            b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: close\r\n\r\nhello",
-        )
-        .await;
+        let port =
+            serve_once(b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: close\r\n\r\nhello")
+                .await;
 
         let mut options = default_client_options();
         options.user_agent = Some("rhttp-uniffi/0.1".to_string());
@@ -204,7 +206,10 @@ mod tests {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
             .await
             .expect("bind a loopback listener");
-        let port = listener.local_addr().expect("read the listener address").port();
+        let port = listener
+            .local_addr()
+            .expect("read the listener address")
+            .port();
         tokio::spawn(async move {
             let (_socket, _) = listener.accept().await.expect("accept one connection");
             tokio::time::sleep(std::time::Duration::from_secs(30)).await;

@@ -152,7 +152,9 @@ impl TimeoutSettings {
 pub enum ProxySettings {
     /// Ignore every proxy, including `HTTP_PROXY` style environment settings.
     NoProxy,
-    CustomProxyList { proxies: Vec<CustomProxy> },
+    CustomProxyList {
+        proxies: Vec<CustomProxy>,
+    },
 }
 
 impl From<ProxySettings> for CoreProxySettings {
@@ -284,7 +286,9 @@ pub enum DnsSettings {
         fallback: Option<String>,
     },
     /// Ask the host application for addresses on every lookup.
-    DynamicDns { resolver: Arc<dyn DnsResolverCallback> },
+    DynamicDns {
+        resolver: Arc<dyn DnsResolverCallback>,
+    },
 }
 
 impl std::fmt::Debug for DnsSettings {
@@ -361,7 +365,9 @@ fn duration_to_core(value: Duration) -> Result<chrono::Duration, RhttpError> {
     })
 }
 
-fn optional_duration_to_core(value: Option<Duration>) -> Result<Option<chrono::Duration>, RhttpError> {
+fn optional_duration_to_core(
+    value: Option<Duration>,
+) -> Result<Option<chrono::Duration>, RhttpError> {
     match value {
         Some(value) => duration_to_core(value).map(Some),
         None => Ok(None),
@@ -406,7 +412,10 @@ mod tests {
                 sni: false,
             }),
             dns_settings: Some(DnsSettings::StaticDns {
-                overrides: HashMap::from([("example.com".to_string(), vec!["1.1.1.1".to_string()])]),
+                overrides: HashMap::from([(
+                    "example.com".to_string(),
+                    vec!["1.1.1.1".to_string()],
+                )]),
                 fallback: Some("9.9.9.9".to_string()),
             }),
         }
@@ -414,7 +423,9 @@ mod tests {
 
     #[test]
     fn every_setting_reaches_the_core_type() {
-        let core = options_with_every_field().into_core().expect("settings convert");
+        let core = options_with_every_field()
+            .into_core()
+            .expect("settings convert");
 
         assert_eq!(core.user_agent.as_deref(), Some("rhttp-uniffi-test/1.0"));
         assert_eq!(core.http_version_pref, CoreHttpVersionPref::Http2);
@@ -500,17 +511,17 @@ mod tests {
 
         // The foreign callback is synchronous while the core contract is async;
         // the bridge must still deliver the answer from a blocking worker.
-        let addresses = rhttp_core::DnsResolver::resolve(
-            core.resolver.as_ref(),
-            "example.com".to_string(),
-        )
-        .await;
+        let addresses =
+            rhttp_core::DnsResolver::resolve(core.resolver.as_ref(), "example.com".to_string())
+                .await;
         assert_eq!(addresses, vec!["1.2.3.4".to_string()]);
     }
 
     #[test]
     fn default_options_match_the_core_defaults() {
-        let core = default_client_options().into_core().expect("settings convert");
+        let core = default_client_options()
+            .into_core()
+            .expect("settings convert");
         let expected = CoreClientSettings::default();
 
         assert_eq!(core.user_agent, expected.user_agent);
