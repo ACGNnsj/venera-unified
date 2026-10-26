@@ -88,9 +88,13 @@ adapter bridges the two with `tokio::task::spawn_blocking`:
 `RUSTFLAGS=--cfg reqwest_unstable` is mandatory: the core enables reqwest's
 HTTP/3 support, and reqwest refuses to compile without that cfg.
 
-On this machine the DSH shell runs under a low-integrity token, so Cargo cannot
-complete TLS against any registry (`schannel: AcquireCredentialsHandle failed:
-SEC_E_NO_CREDENTIALS`). Launch Windows Cargo through WSL interop instead:
+Cargo called straight from the DSH shell fails at TLS on this machine
+(`schannel: AcquireCredentialsHandle failed: SEC_E_NO_CREDENTIALS`). Launching
+Windows Cargo through WSL interop fixes TLS — but that process still runs under
+the workspace-only write policy: it reads `C:\Users\<user>\.cargo` and downloads
+fine, yet cannot write a new `.crate` into the cache (`拒绝访问, os error 5`).
+So an all-cached graph builds normally, while adding an uncached dependency
+needs a run outside the sandbox or a `CARGO_HOME` inside the workspace.
 
 ```bat
 :: D:\venera\.scratch\test-uniffi.bat
@@ -113,13 +117,53 @@ streaming checks (incremental delivery, single-stream cancel, client-wide cancel
 of a started body, status error at stream open). All of them run against a
 loopback `TcpListener`, so the suite needs no network.
 
+## Generating bindings
+
+`bindgen/` is a workspace member that exists only to host the generator; the
+`cli` feature never reaches the library crate.
+
+```bat
+cd packages\rhttp\rust
+set RUSTFLAGS=--cfg reqwest_unstable
+cargo build -p rhttp-uniffi-bindgen --bin uniffi-bindgen
+cargo build -p rhttp-uniffi --lib
+
+target\debug\uniffi-bindgen.exe generate --metadata-no-deps -n ^
+  -l kotlin -o <out>\kotlin target\debug\rhttp_uniffi.dll
+target\debug\uniffi-bindgen.exe generate --metadata-no-deps -n ^
+  -l swift -o <out>\swift target\debug\rhttp_uniffi.dll
+```
+
+Two flags are not optional here:
+
+- `--metadata-no-deps` — without it the generator's internal `cargo metadata`
+  resolves every target triple and tries to fetch wasm-only crates, which this
+  sandboxed shell cannot write into the cargo cache (`拒绝访问, os error 5`).
+- `-n` — ktlint and swiftformat are not installed.
+
+Generated output is not checked in; regenerate it from the source you are
+actually shipping. On this machine the last run produced, for the two objects:
+
+```text
+Kotlin  suspend fun nextChunk(): kotlin.ByteArray?
+        fun head(): ResponseHead            fun cancel()
+        suspend fun stream(request: StreamRequest): ResponseStream
+        suspend fun streamGet(url: String): ResponseStream
+Swift   func nextChunk() async throws -> Data?
+        func head() -> ResponseHead         func cancel()
+        func stream(request: StreamRequest) async throws -> ResponseStream
+```
+
+Both objects generate as `Disposable`/`Sendable` handles, so Kotlin gets
+`use { }` and Swift gets `deinit`-driven release. The generated Kotlin and Swift
+have not been compiled against a real host app yet — there is no Kotlin/Gradle
+project in this repository to compile against.
+
 ## Not implemented yet
 
 - **Request bodies and multipart uploads** — the streaming surface is
   download-only. `CoreRequest` already carries `body`/`body_stream`/
   multipart values, so this is a mapping job, not a core change.
-- **Generated bindings** — `uniffi-bindgen` is not installed; no Kotlin/Swift
-  output is checked in (step 5.3).
 - **Cross targets** — Android (`aarch64-linux-android`) and Windows
   (`x86_64-pc-windows-msvc`) artifacts are not built or benchmarked yet
   (step 5.4). Throughput acceptance is ≥ 80% of the current FRB adapter.

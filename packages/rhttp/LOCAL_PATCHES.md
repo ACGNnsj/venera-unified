@@ -156,8 +156,10 @@ the application needs no change.
 Kotlin/Swift hosts. It maps every `ClientSettings` leaf, including the dynamic
 DNS host callback, and exposes streaming downloads as a puller
 (`ResponseStream::nextChunk`) since uniffi has no async iterator. Cargokit builds
-with `-p rhttp`, so Flutter native builds neither compile nor download this
-crate; only the workspace member list and Cargo.lock mention it.
+with `-p rhttp`, so Flutter native builds neither compile nor download these
+crates; only the workspace member list and Cargo.lock mention them. The third
+member, `rust/uniffi/bindgen`, exists only to host `uniffi-bindgen` — its `cli`
+feature dependencies never reach the library.
 
 Sync note: upstream `rhttp` has none of this split. When refreshing the vendored
 copy, re-apply the adapter rewrite instead of dropping `core/`, and keep the

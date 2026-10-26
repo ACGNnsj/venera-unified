@@ -29,9 +29,9 @@ use rhttp_core::{
 
 use crate::RhttpError;
 
-/// Every setting accepted by [`crate::RhttpClient::new`].
+/// Every setting accepted by `RhttpClient.new()`.
 ///
-/// Start from [`default_client_options`] and override what you need; every
+/// Start from `defaultClientOptions()` and override what you need; every
 /// field is optional except the HTTP version preference and the status-code
 /// policy, which the core type always carries.
 #[derive(Clone, Debug, uniffi::Record)]
@@ -39,7 +39,7 @@ pub struct ClientOptions {
     pub user_agent: Option<String>,
     pub http_version_pref: HttpVersionPref,
     /// When true (the default) a non-success status is returned as
-    /// [`RhttpError::Status`] instead of an error-free response.
+    /// `RhttpError.Status` instead of an error-free response.
     pub throw_on_status_code: bool,
     pub cookie_settings: Option<CookieSettings>,
     pub timeout_settings: Option<TimeoutSettings>,

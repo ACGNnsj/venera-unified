@@ -103,7 +103,7 @@ impl ResponseStream {
     /// Next chunk, or null once the body is complete.
     ///
     /// Errors terminate the stream: the host should stop calling `nextChunk`
-    /// after any error, including [`RhttpError::Cancelled`]. Cancellation is
+    /// after any error, including `RhttpError.Cancelled`. Cancellation is
     /// reported as an error rather than as a normal end, so a download that was
     /// interrupted is never mistaken for a complete one.
     pub async fn next_chunk(&self) -> Result<Option<Vec<u8>>, RhttpError> {
@@ -123,7 +123,7 @@ impl ResponseStream {
     }
 
     /// Stop this transfer. Idempotent, and safe to call while `nextChunk` is
-    /// pending: the pending call resolves with [`RhttpError::Cancelled`].
+    /// pending: the pending call resolves with `RhttpError.Cancelled`.
     pub fn cancel(&self) {
         self.cancel.cancel();
     }

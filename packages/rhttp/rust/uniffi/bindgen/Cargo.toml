@@ -1,0 +1,16 @@
+[package]
+name = "rhttp-uniffi-bindgen"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Kept out of the library crate on purpose: the `cli` feature pulls in the whole
+# bindgen toolchain (clap, askama, goblin, ...), which a host application has no
+# business compiling. Only this binary needs it.
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/main.rs"
+
+[dependencies]
+uniffi = { version = "0.32.2", features = ["cli"] }
