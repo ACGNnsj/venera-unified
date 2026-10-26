@@ -1,0 +1,5 @@
+# This probe is nested inside packages/rhttp/, so without a file of its own the
+# analyzer inherits that package's options, which include
+# `package:lints/core.yaml` — a dependency this standalone package does not have.
+analyzer:
+  exclude: []

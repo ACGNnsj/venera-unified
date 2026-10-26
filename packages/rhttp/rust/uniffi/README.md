@@ -261,8 +261,55 @@ The uniffi path was never the slower one, and the spread between runs of a singl
 path is larger than the gap between paths. Read that as: **the binding is not the
 bottleneck**; the number is this laptop's loopback, not a property of uniffi.
 
-Neither figure is comparable to the Flutter/Frb path. That comparison needs a
-Dart host, which this repository still does not have a minimal one of.
+The Flutter/Frb side of the same question is measured in the next section, with
+its own host.
+
+## Dart host (FRB path)
+
+`host/dart` is the mirror image of `host/kotlin`: a standalone Dart package that
+imports the Flutter Rust Bridge bindings from the vendored package by relative
+path — the generated files never import `package:rhttp/...`, so they can be
+reached from outside that package — and reads the same loopback body twice, once
+through `makeHttpRequestReceiveStream` (the layer the app uses today) and once
+through `dart:io` with no FFI at all.
+
+```text
+dart pub get --offline
+dart run bin/bench.dart        # RHTTP_DLL points at the built rhttp.dll
+```
+
+It runs as a plain `dart run`, not `flutter test` inside `unified/`: the app's
+native-assets hook fetches pdfium at build time and fails outright when the
+network is blocked.
+
+Loopback throughput on this machine moves by more than 5× between runs depending
+on what else is loaded, so the useful figure is each path against its own
+baseline in the same run:
+
+| run | frb | dart:io baseline | frb / baseline |
+|---|---|---|---|
+| 1 | 111.8 | 488.3 | 0.23 |
+| 2 | 120.7 | 516.2 | 0.23 |
+| 3 | 48.0 | 111.4 | 0.43 |
+| 4 | 49.3 | 89.4 | 0.55 |
+| 5 | 147.3 | 396.5 | 0.37 |
+
+MiB/s, median of nine interleaved rounds after two warmups, 64 MiB in 1024
+chunks. The Kotlin host on the same metric: uniffi 588 / 700 / 792 against a JDK
+baseline of 366 / 368 / 499, i.e. **1.6× / 1.9× / 1.6×** of its own baseline.
+
+Read together: pulling a chunk on demand costs little (the uniffi path keeps up
+with, and here beats, the host's own HTTP client), while the FRB push path pays
+roughly one port hop per chunk and lands at a fraction of the Dart baseline. For
+a network-bound reader that is invisible; it is simply what the app pays today.
+
+### Against the original acceptance line
+
+The ticket's line was "uniffi ≥ 80% of the FRB figure". In a quiet window the two
+absolute medians are ≈700 MiB/s (uniffi, Kotlin host) and ≈112 MiB/s (FRB, Dart
+host), so uniffi lands around six times the FRB figure — the bar is met with room
+to spare. These are different hosts, so the normalized comparison above is the
+more defensible one, and it points the same way.
 
 ## Throughput inside Rust
 
@@ -288,10 +335,13 @@ control existed, reported 99.4% and a `+1.25 µs/chunk` delta; that was run-to-r
 noise being read as a number, which is exactly what the control is there to
 prevent.
 
-## Not implemented yet
+## Hosts
 
-- **A Dart host for the FRB side** — until one exists, "uniffi vs FRB" stays
-  unmeasured; the two numbers above are each self-contained.
+- `host/kotlin` — Gradle project that compiles the Kotlin bindings and measures
+  the uniffi path against `java.net.http`.
+- `host/dart` — standalone Dart package that drives the Flutter Rust Bridge
+  bindings and measures that path against `dart:io`.
 
 Do not add this crate to the Flutter app's Dart dependencies; it exists only for
-non-Flutter hosts.
+non-Flutter hosts. `host/dart` imports the app's generated bindings read-only and
+is not part of the Flutter package's dependency graph.

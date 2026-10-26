@@ -1,0 +1,13 @@
+name: rhttp_uniffi_host_dart
+description: Dart-side throughput probe for the Flutter Rust Bridge path, mirroring the Kotlin host used for the uniffi binding.
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  # The generated bindings under packages/rhttp/lib/src/rust are imported by
+  # relative path; these two are what they need at runtime.
+  flutter_rust_bridge: ^2.11.1
+  freezed_annotation: ^3.0.0
