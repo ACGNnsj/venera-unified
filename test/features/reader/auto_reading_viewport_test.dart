@@ -300,6 +300,30 @@ void main() {
             reader.autoReading.start();
             await tester.pump();
             expect(screenAwake, isTrue);
+            final hiddenChapter = reader.chapter;
+            final hiddenPage = reader.page;
+            final hiddenOffset = mode.isGallery
+                ? null
+                : (reader.imageViewController as ContinuousModeState)
+                      .scrollController
+                      .offset;
+            reader.didChangeAppLifecycleState(AppLifecycleState.hidden);
+            await pumpFrames(25);
+            expect(screenAwake, isFalse);
+            expect(reader.chapter, hiddenChapter);
+            expect(reader.page, hiddenPage);
+            if (hiddenOffset != null) {
+              expect(
+                (reader.imageViewController as ContinuousModeState)
+                    .scrollController
+                    .offset,
+                hiddenOffset,
+              );
+            }
+            expect(reader.autoReading.isActive, isTrue);
+            reader.didChangeAppLifecycleState(AppLifecycleState.resumed);
+            await tester.pump();
+            expect(screenAwake, isTrue);
             reader.didChangeAppLifecycleState(AppLifecycleState.paused);
             await tester.pump();
             expect(screenAwake, isFalse);

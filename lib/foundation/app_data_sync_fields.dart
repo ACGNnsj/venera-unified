@@ -13,7 +13,11 @@ const appDataLocalFields = {
   'disableSyncFields',
   'deviceId',
   'lastSyncTime',
+  ...appDataDeviceOnlyFields,
 };
+
+/// Native registrations must not travel in portable backups or WebDAV uploads.
+const appDataDeviceOnlyFields = {'windowsWindowHotkey'};
 
 const appDataOptionalArchiveFields = {'backupWebdav', 'backupWebdavPath'};
 

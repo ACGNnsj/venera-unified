@@ -902,7 +902,20 @@
     "Automatic reading is paused": "自动阅读已暂停",
     "Deselect all": "取消全选",
     "Select all": "全选",
-    "Failed to load source": "无法加载来源"
+    "Failed to load source": "无法加载来源",
+    "Global hide/restore shortcut": "全局隐藏／恢复快捷键",
+    "Windows only. Stored on this device. Hidden is not exited.": "仅 Windows，本机保存；隐藏不等于退出。",
+    "Only the main window is hidden, not other windows. This is not privacy protection. If hidden, launch VeneraNext again to restore its window.": "仅隐藏主窗口，不隐藏其他窗口，也不是隐私保护。隐藏后再次启动 VeneraNext 可恢复窗口。",
+    "Not set": "未设置",
+    "Window": "窗口",
+    "Set global shortcut": "设置全局快捷键",
+    "Press a shortcut here": "在此按下快捷键",
+    "Use Ctrl + Alt + H": "使用 Ctrl + Alt + H",
+    "Enable after saving": "保存后启用",
+    "This shortcut is already in use. Choose another one.": "此快捷键已被占用，请更换组合。",
+    "Use Ctrl or Alt with a letter, number or F1-F11.": "请用 Ctrl 或 Alt 搭配字母、数字或 F1–F11，可加 Shift。",
+    "Could not save the shortcut. Retry before leaving.": "快捷键保存失败，请重试后再离开。",
+    "The global shortcut is unavailable. Re-enable it or choose another shortcut in settings.": "全局快捷键不可用，请在设置中重新启用或更换组合。"
   },
   "zh_TW": {
     "Hidden by keyword filters: @a comics": "關鍵詞封鎖隱藏了 @a 本漫畫",
@@ -1806,6 +1819,19 @@
     "Automatic reading is paused": "自動閱讀已暫停",
     "Deselect all": "取消全選",
     "Select all": "全選",
-    "Failed to load source": "無法載入來源"
+    "Failed to load source": "無法載入來源",
+    "Global hide/restore shortcut": "全域隱藏／還原快捷鍵",
+    "Windows only. Stored on this device. Hidden is not exited.": "僅 Windows，儲存於本機；隱藏不等於退出。",
+    "Only the main window is hidden, not other windows. This is not privacy protection. If hidden, launch VeneraNext again to restore its window.": "僅隱藏主視窗，不隱藏其他視窗，也不是隱私保護。隱藏後再次啟動 VeneraNext 可還原視窗。",
+    "Not set": "未設定",
+    "Window": "視窗",
+    "Set global shortcut": "設定全域快捷鍵",
+    "Press a shortcut here": "在此按下快捷鍵",
+    "Use Ctrl + Alt + H": "使用 Ctrl + Alt + H",
+    "Enable after saving": "儲存後啟用",
+    "This shortcut is already in use. Choose another one.": "此快捷鍵已被佔用，請更換組合。",
+    "Use Ctrl or Alt with a letter, number or F1-F11.": "請用 Ctrl 或 Alt 搭配字母、數字或 F1–F11，可加 Shift。",
+    "Could not save the shortcut. Retry before leaving.": "快捷鍵儲存失敗，請重試後再離開。",
+    "The global shortcut is unavailable. Re-enable it or choose another shortcut in settings.": "全域快捷鍵無法使用，請在設定中重新啟用或更換組合。"
   }
 }

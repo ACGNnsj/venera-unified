@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'dart:isolate';
 import 'package:uuid/uuid.dart';
 import 'package:venera_next/foundation/app_data_operations.dart';
+import 'package:venera_next/foundation/app_data_sync_fields.dart';
 
 import 'package:venera_next/foundation/app.dart';
 import 'package:venera_next/foundation/appdata.dart';
@@ -60,8 +61,11 @@ Future<File> _exportAppData(
   await appdata.saveData(false);
   final archiveData =
       jsonDecode(jsonEncode(appdata.toJson())) as Map<String, dynamic>;
+  final settings = archiveData['settings'] as Map<String, dynamic>;
+  for (final field in appDataDeviceOnlyFields) {
+    settings.remove(field);
+  }
   if (sync) {
-    final settings = archiveData['settings'] as Map<String, dynamic>;
     for (final field in appdata.splitField(
       content?.scope.excludedFields ??
           SyncConfiguration.readExcludedFields(settings['disableSyncFields']),

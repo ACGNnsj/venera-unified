@@ -8,6 +8,8 @@ import 'package:venera_next/components/appbar.dart';
 import 'package:venera_next/components/button.dart';
 import 'package:venera_next/components/pop_up_widget.dart';
 import 'package:venera_next/components/scroll.dart';
+import 'package:venera_next/components/window_hotkey_scope.dart';
+import 'package:venera_next/features/settings/window_hotkey_setting.dart';
 import 'package:venera_next/features/settings/setting_components.dart';
 import 'package:venera_next/features/settings/app_controls.dart';
 import 'package:venera_next/features/settings/local_storage_settings.dart';
@@ -36,6 +38,7 @@ class _AppSettingsState extends State<AppSettings> {
   final _tasks = SettingsTaskPresenter();
   @override
   Widget build(BuildContext context) {
+    final hotkey = WindowHotkeyScope.maybeOf(context);
     return SmoothCustomScrollView(
       slivers: [
         SliverAppbar(title: Text("App".tl)),
@@ -167,6 +170,10 @@ class _AppSettingsState extends State<AppSettings> {
           },
         ).toSliver(),
         if (!App.isLinux) const AuthorizationRequiredSetting().toSliver(),
+        if (App.isWindows && hotkey != null) ...[
+          SettingPartTitle(title: 'Window'.tl, icon: Icons.desktop_windows),
+          WindowHotkeySetting(controller: hotkey).toSliver(),
+        ],
       ],
     );
   }
