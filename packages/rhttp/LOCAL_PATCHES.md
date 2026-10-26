@@ -142,6 +142,27 @@ certificate-trust security updates remain unchanged. The locked native
 callback-drain tests and complete RustSec scan pass with this update; HTTP
 settings, streaming cancellation and generated bridge APIs are unchanged.
 
+## UI-agnostic core and a second host binding
+
+`rust/src/` no longer owns the HTTP transport. `rust/core/` (`rhttp-core`, no
+Flutter Rust Bridge dependency) holds client construction, request/response
+types, settings, errors and the streaming byte channel. `rust/src/api/` is now a
+thin FRB adapter that converts to and from those types; the `CallbackDrain`
+behaviour described above is unchanged. `rust/src/utils/` moved into the core
+crate. The Dart-facing surface and `rust/src/frb_generated.rs` are unchanged, so
+the application needs no change.
+
+`rust/uniffi/` (`rhttp-uniffi`) is a second binding over the same core for
+Kotlin/Swift hosts. It maps every `ClientSettings` leaf, including the dynamic
+DNS host callback. Cargokit builds with `-p rhttp`, so Flutter native builds
+neither compile nor download this crate; only the workspace member list and
+Cargo.lock mention it.
+
+Sync note: upstream `rhttp` has none of this split. When refreshing the vendored
+copy, re-apply the adapter rewrite instead of dropping `core/`, and keep the
+documented crate pins below — regenerating Cargo.lock from scratch re-floats
+those pinned versions to whatever is newest and compatible.
+
 ## Building the patched source
 
 Windows/Linux CMake, Android Gradle and iOS/macOS pod scripts all invoke the

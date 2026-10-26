@@ -1,13 +1,7 @@
 use crate::api::error::RhttpError;
 use crate::api::http::HttpVersionPref;
-use crate::utils::socket_addr::SocketAddrDigester;
-use chrono::Duration;
 use flutter_rust_bridge::{frb, DartFnFuture};
-use reqwest::dns::{Addrs, Name, Resolve, Resolving};
-use reqwest::{tls, Certificate};
 use std::collections::HashMap;
-use std::net::SocketAddr;
-use std::str::FromStr;
 use std::sync::Arc;
 pub use tokio_util::sync::CancellationToken;
 
@@ -49,10 +43,10 @@ pub enum RedirectSettings {
 }
 
 pub struct TimeoutSettings {
-    pub timeout: Option<Duration>,
-    pub connect_timeout: Option<Duration>,
-    pub keep_alive_timeout: Option<Duration>,
-    pub keep_alive_ping: Option<Duration>,
+    pub timeout: Option<chrono::Duration>,
+    pub connect_timeout: Option<chrono::Duration>,
+    pub keep_alive_timeout: Option<chrono::Duration>,
+    pub keep_alive_ping: Option<chrono::Duration>,
 }
 
 pub struct TlsSettings {
@@ -106,249 +100,119 @@ impl Default for ClientSettings {
     }
 }
 
+/// Wraps the Dart-provided resolver into the UI-neutral contract owned by
+/// `rhttp-core`. A future uniffi adapter implements the same trait with a
+/// callback interface instead.
+struct DartDnsResolver(Arc<dyn Fn(String) -> DartFnFuture<Vec<String>> + 'static + Send + Sync>);
+
+impl rhttp_core::DnsResolver for DartDnsResolver {
+    fn resolve(&self, host: String) -> rhttp_core::DnsFuture {
+        let fut = (self.0)(host);
+        Box::pin(async move { fut.await })
+    }
+}
+
+impl ClientSettings {
+    pub(crate) fn into_core(self) -> rhttp_core::ClientSettings {
+        rhttp_core::ClientSettings {
+            cookie_settings: self
+                .cookie_settings
+                .map(|s| rhttp_core::CookieSettings {
+                    store_cookies: s.store_cookies,
+                }),
+            http_version_pref: match self.http_version_pref {
+                HttpVersionPref::Http10 => rhttp_core::HttpVersionPref::Http10,
+                HttpVersionPref::Http11 => rhttp_core::HttpVersionPref::Http11,
+                HttpVersionPref::Http2 => rhttp_core::HttpVersionPref::Http2,
+                HttpVersionPref::Http3 => rhttp_core::HttpVersionPref::Http3,
+                HttpVersionPref::All => rhttp_core::HttpVersionPref::All,
+            },
+            timeout_settings: self
+                .timeout_settings
+                .map(|s| rhttp_core::TimeoutSettings {
+                    timeout: s.timeout,
+                    connect_timeout: s.connect_timeout,
+                    keep_alive_timeout: s.keep_alive_timeout,
+                    keep_alive_ping: s.keep_alive_ping,
+                }),
+            throw_on_status_code: self.throw_on_status_code,
+            proxy_settings: self.proxy_settings.map(|p| match p {
+                ProxySettings::NoProxy => rhttp_core::ProxySettings::NoProxy,
+                ProxySettings::CustomProxyList(list) => {
+                    rhttp_core::ProxySettings::CustomProxyList(
+                        list.into_iter()
+                            .map(|p| rhttp_core::CustomProxy {
+                                url: p.url,
+                                condition: match p.condition {
+                                    ProxyCondition::Http => rhttp_core::ProxyCondition::Http,
+                                    ProxyCondition::Https => rhttp_core::ProxyCondition::Https,
+                                    ProxyCondition::All => rhttp_core::ProxyCondition::All,
+                                },
+                            })
+                            .collect(),
+                    )
+                }
+            }),
+            redirect_settings: self.redirect_settings.map(|r| match r {
+                RedirectSettings::NoRedirect => rhttp_core::RedirectSettings::NoRedirect,
+                RedirectSettings::LimitedRedirects(n) => {
+                    rhttp_core::RedirectSettings::LimitedRedirects(n)
+                }
+            }),
+            tls_settings: self.tls_settings.map(|t| rhttp_core::TlsSettings {
+                trust_root_certificates: t.trust_root_certificates,
+                trusted_root_certificates: t.trusted_root_certificates,
+                verify_certificates: t.verify_certificates,
+                client_certificate: t
+                    .client_certificate
+                    .map(|c| rhttp_core::ClientCertificate {
+                        certificate: c.certificate,
+                        private_key: c.private_key,
+                    }),
+                min_tls_version: t.min_tls_version.map(|v| match v {
+                    TlsVersion::Tls1_2 => rhttp_core::TlsVersion::Tls1_2,
+                    TlsVersion::Tls1_3 => rhttp_core::TlsVersion::Tls1_3,
+                }),
+                max_tls_version: t.max_tls_version.map(|v| match v {
+                    TlsVersion::Tls1_2 => rhttp_core::TlsVersion::Tls1_2,
+                    TlsVersion::Tls1_3 => rhttp_core::TlsVersion::Tls1_3,
+                }),
+                sni: t.sni,
+            }),
+            dns_settings: self.dns_settings.map(|d| match d {
+                DnsSettings::StaticDns(s) => {
+                    rhttp_core::DnsSettings::StaticDns(rhttp_core::StaticDnsSettings {
+                        overrides: s.overrides,
+                        fallback: s.fallback,
+                    })
+                }
+                DnsSettings::DynamicDns(s) => {
+                    rhttp_core::DnsSettings::DynamicDns(rhttp_core::DynamicDnsSettings {
+                        resolver: Arc::new(DartDnsResolver(s.resolver)),
+                    })
+                }
+            }),
+            user_agent: self.user_agent,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct RequestClient {
-    pub(crate) client: reqwest::Client,
-    pub(crate) http_version_pref: HttpVersionPref,
-    pub(crate) throw_on_status_code: bool,
-
-    /// A token that can be used to cancel all requests made by this client.
-    pub(crate) cancel_token: CancellationToken,
+    /// The UI-neutral core client. The FRB surface stays opaque; uniffi can
+    /// expose the same core type without going through this wrapper.
+    pub(crate) core: rhttp_core::CoreRequestClient,
 }
 
 impl RequestClient {
-    pub(crate) fn new_default() -> Self {
-        create_client(ClientSettings::default()).unwrap()
-    }
-
     pub(crate) fn new(settings: ClientSettings) -> Result<RequestClient, RhttpError> {
         create_client(settings)
     }
 }
 
 fn create_client(settings: ClientSettings) -> Result<RequestClient, RhttpError> {
-    let client: reqwest::Client = {
-        let mut client = reqwest::Client::builder();
-        if let Some(proxy_settings) = settings.proxy_settings {
-            match proxy_settings {
-                ProxySettings::NoProxy => client = client.no_proxy(),
-                ProxySettings::CustomProxyList(proxies) => {
-                    for proxy in proxies {
-                        let proxy = match proxy.condition {
-                            ProxyCondition::Http => reqwest::Proxy::http(&proxy.url),
-                            ProxyCondition::Https => reqwest::Proxy::https(&proxy.url),
-                            ProxyCondition::All => reqwest::Proxy::all(&proxy.url),
-                        }
-                        .map_err(|e| {
-                            RhttpError::RhttpUnknownError(format!("Error creating proxy: {e:?}"))
-                        })?;
-                        client = client.proxy(proxy);
-                    }
-                }
-            }
-        }
-
-        if let Some(cookie_settings) = settings.cookie_settings {
-            client = client.cookie_store(cookie_settings.store_cookies);
-        }
-
-        if let Some(redirect_settings) = settings.redirect_settings {
-            client = match redirect_settings {
-                RedirectSettings::NoRedirect => client.redirect(reqwest::redirect::Policy::none()),
-                RedirectSettings::LimitedRedirects(max_redirects) => {
-                    client.redirect(reqwest::redirect::Policy::limited(max_redirects as usize))
-                }
-            };
-        }
-
-        if let Some(timeout_settings) = settings.timeout_settings {
-            if let Some(timeout) = timeout_settings.timeout {
-                client = client.timeout(
-                    timeout
-                        .to_std()
-                        .map_err(|e| RhttpError::RhttpUnknownError(e.to_string()))?,
-                );
-            }
-            if let Some(timeout) = timeout_settings.connect_timeout {
-                client = client.connect_timeout(
-                    timeout
-                        .to_std()
-                        .map_err(|e| RhttpError::RhttpUnknownError(e.to_string()))?,
-                );
-            }
-
-            if let Some(keep_alive_timeout) = timeout_settings.keep_alive_timeout {
-                let timeout = keep_alive_timeout
-                    .to_std()
-                    .map_err(|e| RhttpError::RhttpUnknownError(e.to_string()))?;
-                if timeout.as_millis() > 0 {
-                    client = client.tcp_keepalive(timeout);
-                    client = client.http2_keep_alive_while_idle(true);
-                    client = client.http2_keep_alive_timeout(timeout);
-                }
-            }
-
-            if let Some(keep_alive_ping) = timeout_settings.keep_alive_ping {
-                client = client.http2_keep_alive_interval(
-                    keep_alive_ping
-                        .to_std()
-                        .map_err(|e| RhttpError::RhttpUnknownError(e.to_string()))?,
-                );
-            }
-        }
-
-        if let Some(tls_settings) = settings.tls_settings {
-            if !tls_settings.trust_root_certificates {
-                client = client.tls_built_in_root_certs(false);
-            }
-
-            for cert in tls_settings.trusted_root_certificates {
-                client =
-                    client.add_root_certificate(Certificate::from_pem(&cert).map_err(|e| {
-                        RhttpError::RhttpUnknownError(format!(
-                            "Error adding trusted certificate: {e:?}"
-                        ))
-                    })?);
-            }
-
-            if !tls_settings.verify_certificates {
-                client = client.danger_accept_invalid_certs(true);
-            }
-
-            if let Some(client_certificate) = tls_settings.client_certificate {
-                let identity = &[
-                    client_certificate.certificate.as_slice(),
-                    "\n".as_bytes(),
-                    client_certificate.private_key.as_slice(),
-                ]
-                .concat();
-
-                client = client.identity(
-                    reqwest::Identity::from_pem(identity)
-                        .map_err(|e| RhttpError::RhttpUnknownError(format!("{e:?}")))?,
-                );
-            }
-
-            if let Some(min_tls_version) = tls_settings.min_tls_version {
-                client = client.min_tls_version(match min_tls_version {
-                    TlsVersion::Tls1_2 => tls::Version::TLS_1_2,
-                    TlsVersion::Tls1_3 => tls::Version::TLS_1_3,
-                });
-            }
-
-            if let Some(max_tls_version) = tls_settings.max_tls_version {
-                client = client.max_tls_version(match max_tls_version {
-                    TlsVersion::Tls1_2 => tls::Version::TLS_1_2,
-                    TlsVersion::Tls1_3 => tls::Version::TLS_1_3,
-                });
-            }
-
-            client = client.tls_sni(tls_settings.sni);
-        }
-
-        client = match settings.http_version_pref {
-            HttpVersionPref::Http10 | HttpVersionPref::Http11 => client.http1_only(),
-            HttpVersionPref::Http2 => client.http2_prior_knowledge(),
-            HttpVersionPref::Http3 => client.http3_prior_knowledge(),
-            HttpVersionPref::All => client,
-        };
-
-        if let Some(dns_settings) = settings.dns_settings {
-            match dns_settings {
-                DnsSettings::StaticDns(settings) => {
-                    if let Some(fallback) = settings.fallback {
-                        client = client.dns_resolver(Arc::new(StaticResolver {
-                            address: SocketAddr::from_str(fallback.digest_ip().as_str())
-                                .map_err(|e| RhttpError::RhttpUnknownError(format!("{e:?}")))?,
-                        }));
-                    }
-
-                    for dns_override in settings.overrides {
-                        let (hostname, ip) = dns_override;
-                        let hostname = hostname.as_str();
-                        let mut err: Option<String> = None;
-                        let ip = ip
-                            .into_iter()
-                            .map(|ip| {
-                                let ip_digested = ip.digest_ip();
-                                SocketAddr::from_str(ip_digested.as_str()).map_err(|e| {
-                                    err = Some(format!("Invalid IP address: {ip_digested}. {e:?}"));
-                                    RhttpError::RhttpUnknownError(e.to_string())
-                                })
-                            })
-                            .filter_map(Result::ok)
-                            .collect::<Vec<SocketAddr>>();
-
-                        if let Some(error) = err {
-                            return Err(RhttpError::RhttpUnknownError(error));
-                        }
-
-                        client = client.resolve_to_addrs(hostname, ip.as_slice());
-                    }
-                }
-                DnsSettings::DynamicDns(settings) => {
-                    client = client.dns_resolver(Arc::new(DynamicResolver {
-                        resolver: settings.resolver,
-                    }));
-                }
-            }
-        }
-
-        if let Some(user_agent) = settings.user_agent {
-            client = client.user_agent(user_agent);
-        }
-
-        client
-            .build()
-            .map_err(|e| RhttpError::RhttpUnknownError(format!("{e:?}")))?
-    };
-
-    Ok(RequestClient {
-        client,
-        http_version_pref: settings.http_version_pref,
-        throw_on_status_code: settings.throw_on_status_code,
-        cancel_token: CancellationToken::new(),
-    })
-}
-
-struct StaticResolver {
-    address: SocketAddr,
-}
-
-impl Resolve for StaticResolver {
-    fn resolve(&self, _: Name) -> Resolving {
-        let addrs: Addrs = Box::new(vec![self.address].clone().into_iter());
-        Box::pin(futures_util::future::ready(Ok(addrs)))
-    }
-}
-
-struct DynamicResolver {
-    resolver: Arc<dyn Fn(String) -> DartFnFuture<Vec<String>> + 'static + Send + Sync>,
-}
-
-impl Resolve for DynamicResolver {
-    fn resolve(&self, name: Name) -> Resolving {
-        let resolver = self.resolver.clone();
-        Box::pin(async move {
-            let ip = resolver(name.as_str().to_owned()).await;
-            let ip = ip
-                .into_iter()
-                .map(|ip| {
-                    let ip_digested = ip.digest_ip();
-                    SocketAddr::from_str(ip_digested.as_str()).map_err(|e| {
-                        RhttpError::RhttpUnknownError(format!(
-                            "Invalid IP address: {ip_digested}. {e:?}"
-                        ))
-                    })
-                })
-                .filter_map(Result::ok)
-                .collect::<Vec<SocketAddr>>();
-
-            let addrs: Addrs = Box::new(ip.into_iter());
-
-            Ok(addrs)
-        })
-    }
+    let core = rhttp_core::build_client(settings.into_core()).map_err(RhttpError::from)?;
+    Ok(RequestClient { core })
 }
 
 #[frb(sync)]

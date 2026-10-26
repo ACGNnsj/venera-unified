@@ -3,10 +3,14 @@ name = "rhttp"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = ["core", "uniffi"]
+
 [lib]
 crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
+rhttp-core = { path = "core" }
 chrono = "0.4.42"
 flutter_rust_bridge = { version = "=2.11.1", features = ["chrono"] }
 futures-util = "0.3.31"
