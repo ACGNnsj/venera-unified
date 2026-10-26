@@ -115,7 +115,9 @@ Current suite: 10 tests — settings round-trip, core defaults, dynamic DNS brid
 an end-to-end request, a status-error mapping, a timeout check, and four
 streaming checks (incremental delivery, single-stream cancel, client-wide cancel
 of a started body, status error at stream open). All of them run against a
-loopback `TcpListener`, so the suite needs no network.
+loopback `TcpListener`, so the suite needs no network. `tests/throughput.rs` adds
+an eleventh that is `#[ignore]`d: it moves ~1 GiB to measure, and asserts nothing
+about speed.
 
 ## Generating bindings
 
@@ -159,14 +161,81 @@ Both objects generate as `Disposable`/`Sendable` handles, so Kotlin gets
 have not been compiled against a real host app yet — there is no Kotlin/Gradle
 project in this repository to compile against.
 
+## Cross targets
+
+Artifacts produced so far:
+
+| Target | Artifact |
+|---|---|
+| `x86_64-pc-windows-msvc` | `rhttp_uniffi.dll` |
+| `aarch64-linux-android` | `librhttp_uniffi.so`, 4.5 MiB, 82 exported functions |
+| `armv7-linux-androideabi` | `librhttp_uniffi.so`, 3.1 MiB |
+| `x86_64-linux-android` | `librhttp_uniffi.so`, 5.1 MiB |
+
+`cargo ndk` is not installed here and is not needed: the NDK's own clang
+wrappers do the job once `CC_*`, `AR_*` and `CARGO_TARGET_*_LINKER` point at
+them. With NDK 28.0.13004108 and API level 24:
+
+```bat
+set BIN=%NDK%\toolchains\llvm\prebuilt\windows-x86_64\bin
+set CC_aarch64_linux_android=%BIN%\aarch64-linux-android24-clang.cmd
+set AR_aarch64_linux_android=%BIN%\llvm-ar.exe
+set CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=%BIN%\aarch64-linux-android24-clang.cmd
+cargo build -p rhttp-uniffi --lib --release --locked --target aarch64-linux-android
+```
+
+Swap the triple (`armv7a-linux-androideabi24`, `x86_64-linux-android24`) for the
+other two ABIs. Two things bite on Windows:
+
+- **`TMP` must be writable by the whole process tree.** `ring` compiles
+  pregenerated `.S` files, and clang preprocesses those through a temp file.
+  Under a sandboxed shell a child of cargo can be refused writes to `%TEMP%`
+  even though the shell itself can write there — the giveaway is
+  `clang: error: unable to make temporary file: Permission denied` only on the
+  assembly files. Pointing `TMP`, `TEMP` and `TMPDIR` at a directory inside the
+  workspace fixes it.
+- **`.bat` helpers need CRLF.** With LF-only line endings `cmd.exe` drops the
+  first bytes of each line, so `cd /d …` runs as `/d …` and `set X=…` runs as
+  `=…`. The symptom looks like a missing directory rather than a broken script.
+
+## Throughput
+
+Measured with
+`cargo test -p rhttp-uniffi --release --test throughput -- --ignored --nocapture`:
+a 64 MiB body in 1024 chunks over loopback, five rounds. Each round measures the
+bare core twice and the uniffi path once, because loopback throughput on this
+machine swings by more than 10% between runs — a plain core-vs-uniffi ratio
+cannot resolve a per-chunk cost hidden inside that wobble. The second core run is
+the control: same code, no binding involved.
+
+```text
+core (no binding) :  831.3 MiB/s
+uniffi pull       :  827.3 MiB/s
+core again        :  737.2 MiB/s   (control)
+control drift     :  -11.3%        (same code, nothing changed)
+uniffi vs core    :   -0.5%
+```
+
+**What this shows, and what it does not.** The uniffi figure lands inside the
+control's drift, so the binding layer costs less than this probe can resolve. An
+earlier run of the same probe, before the control existed, reported 99.4% and a
+`+1.25 µs/chunk` delta; that was run-to-run noise being read as a number, which
+is exactly what the control is there to prevent.
+
+This is also *not* the "≥ 80% of the FRB adapter" that step 5.4 asked for:
+measuring FRB means measuring from a Dart host (the Flutter app), and measuring
+uniffi means measuring from a Kotlin or Swift host, neither of which this
+repository has. The defensible statement is that the uniffi layer adds nothing
+measurable on top of the transport, at this body size and chunk size. Whether the
+two hosts compare favourably end to end remains unmeasured.
+
 ## Not implemented yet
 
 - **Request bodies and multipart uploads** — the streaming surface is
   download-only. `CoreRequest` already carries `body`/`body_stream`/
   multipart values, so this is a mapping job, not a core change.
-- **Cross targets** — Android (`aarch64-linux-android`) and Windows
-  (`x86_64-pc-windows-msvc`) artifacts are not built or benchmarked yet
-  (step 5.4). Throughput acceptance is ≥ 80% of the current FRB adapter.
+- **Cross-target CI** — the Android artifacts build locally (see *Cross
+  targets*) but nothing in CI produces them, so they can rot unnoticed.
 
 Do not add this crate to the Flutter app's Dart dependencies; it exists only for
 non-Flutter hosts.
