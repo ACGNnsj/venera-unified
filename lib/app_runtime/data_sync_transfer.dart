@@ -1,19 +1,19 @@
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 import 'dart:io';
-import 'package:venera_next/features/sync/data_sync_transfer.dart';
-import 'package:venera_next/features/sync/data_sync_commit.dart';
-import 'package:venera_next/features/sync/data_sync_recovery.dart';
-import 'package:venera_next/features/sync/app_data_import_journal.dart';
-import 'package:venera_next/features/sync/data_sync_remote.dart';
-import 'package:venera_next/features/sync/app_data_transfer.dart'
+import 'package:venera_unified/features/sync/data_sync_transfer.dart';
+import 'package:venera_unified/features/sync/data_sync_commit.dart';
+import 'package:venera_unified/features/sync/data_sync_recovery.dart';
+import 'package:venera_unified/features/sync/app_data_import_journal.dart';
+import 'package:venera_unified/features/sync/data_sync_remote.dart';
+import 'package:venera_unified/features/sync/app_data_transfer.dart'
     show exportSyncAppData, importSyncAppData;
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/features/history/image_favorites.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/sync_configuration.dart';
-import 'package:venera_next/network/webdav.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/features/history/image_favorites.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/sync_configuration.dart';
+import 'package:venera_unified/network/webdav.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 
 V117WebDavDataSyncTransfer createV117DataSyncTransfer({

@@ -5,12 +5,12 @@ import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as image;
-import 'package:venera_next/features/reader/layout_detection.dart';
-import 'package:venera_next/foundation/comic_layout.dart';
-import 'package:venera_next/network/image_http_client.dart';
-import 'package:venera_next/network/image_loading_config.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/shared_image_requests.dart';
+import 'package:venera_unified/features/reader/layout_detection.dart';
+import 'package:venera_unified/foundation/comic_layout.dart';
+import 'package:venera_unified/network/image_http_client.dart';
+import 'package:venera_unified/network/image_loading_config.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/shared_image_requests.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

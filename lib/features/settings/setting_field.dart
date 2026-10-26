@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:venera_next/foundation/preferences.dart';
-import 'package:venera_next/foundation/reader_preference_settings.dart';
-import 'package:venera_next/foundation/reader_preference_store.dart';
+import 'package:venera_unified/foundation/preferences.dart';
+import 'package:venera_unified/foundation/reader_preference_settings.dart';
+import 'package:venera_unified/foundation/reader_preference_store.dart';
 
 /// An immutable field target, independent of the form that presents it.
 /// A missing preference retains the legacy nullable, heterogeneous value.

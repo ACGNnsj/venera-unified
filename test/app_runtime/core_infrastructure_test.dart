@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/core_infrastructure.dart';
-import 'package:venera_next/network/cookie_jar.dart';
+import 'package:venera_unified/app_runtime/core_infrastructure.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
 
 void main() {
   late Directory root;

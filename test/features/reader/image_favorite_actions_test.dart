@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/history/image_favorites_models.dart';
-import 'package:venera_next/features/history/image_favorite_actions.dart';
+import 'package:venera_unified/features/history/image_favorites_models.dart';
+import 'package:venera_unified/features/history/image_favorite_actions.dart';
 
 ImageFavoriteInput selection({int page = 2, String eid = 'chapter'}) =>
     ImageFavoriteInput(

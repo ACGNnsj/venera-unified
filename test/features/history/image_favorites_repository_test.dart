@@ -1,9 +1,9 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/history/image_favorites_models.dart';
-import 'package:venera_next/features/history/image_favorites_repository.dart';
+import 'package:venera_unified/features/history/image_favorites_models.dart';
+import 'package:venera_unified/features/history/image_favorites_repository.dart';
 
 ImageFavoritesComic comic(
   String id, {

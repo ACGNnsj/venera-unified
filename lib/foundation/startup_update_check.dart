@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 /// A mounted application's startup chain. The source service independently
 /// owns shared source checks; cancellation only retires this consumer's wait.

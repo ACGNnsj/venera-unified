@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/local_comics/download_task.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/local_comics/download_task.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 void main() {
   late Directory root;

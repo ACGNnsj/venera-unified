@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:venera_next/foundation/directory_selection.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/foundation/directory_selection.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 void main() {
   late Directory root;

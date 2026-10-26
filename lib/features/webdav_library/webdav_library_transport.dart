@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:venera_next/network/app_dio.dart' show RHttpAdapter;
+import 'package:venera_unified/network/app_dio.dart' show RHttpAdapter;
 import 'package:webdav_client/webdav_client.dart' hide File;
 import 'webdav_library_config.dart';
 import 'webdav_library_entries.dart';

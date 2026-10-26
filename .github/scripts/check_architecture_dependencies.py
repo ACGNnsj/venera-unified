@@ -43,8 +43,8 @@ def graph_for(lib):
     for source in sorted(files):
         edges = set()
         for uri in directives(source.read_text(encoding="utf-8")):
-            if uri.startswith("package:venera_next/"):
-                target = lib / uri[len("package:venera_next/"):]
+            if uri.startswith("package:venera_unified/"):
+                target = lib / uri[len("package:venera_unified/"):]
             elif ":" not in uri:
                 target = source.parent / uri
             else:

@@ -1,15 +1,15 @@
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
 import 'dart:async' show Future;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 import 'reader_image_processing.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/image_stream.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/image_stream.dart';
 import 'base_image_provider.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
   /// Image provider for normal image.

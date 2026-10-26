@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:venera_next/components/appbar.dart';
-import 'package:venera_next/components/button.dart';
-import 'package:venera_next/components/scroll.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/appbar.dart';
+import 'package:venera_unified/components/button.dart';
+import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'sponsor_catalog.dart';
 import 'sponsors_loader.dart';

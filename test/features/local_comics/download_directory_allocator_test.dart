@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/local_comics/download_directory_allocator.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/local_comics/download_directory_allocator.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 void main() {
   late Directory root;

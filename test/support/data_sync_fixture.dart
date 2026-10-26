@@ -1,11 +1,11 @@
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 import 'dart:async';
-import 'package:venera_next/features/sync/data_sync_controller.dart';
-import 'package:venera_next/features/sync/data_sync_transfer.dart';
-import 'package:venera_next/features/sync/data_sync_recovery.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/sync_preference_store.dart';
-import 'package:venera_next/network/webdav.dart';
+import 'package:venera_unified/features/sync/data_sync_controller.dart';
+import 'package:venera_unified/features/sync/data_sync_transfer.dart';
+import 'package:venera_unified/features/sync/data_sync_recovery.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/sync_preference_store.dart';
+import 'package:venera_unified/network/webdav.dart';
 
 /// Instance-local ports for exercising the real controller transfer path.
 class SyncTestFixture {

@@ -1,15 +1,15 @@
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
 import 'network_favorite_import.dart';
 import 'favorite_folder_import.dart';
 import 'favorite_updates_service.dart';
 import 'read_later_service.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
-import 'package:venera_next/foundation/sqlite_transaction.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
+import 'package:venera_unified/foundation/sqlite_transaction.dart';
 import 'favorite_identity_index.dart';
-import 'package:venera_next/foundation/file_replacement.dart';
+import 'package:venera_unified/foundation/file_replacement.dart';
 import 'favorites_repository.dart';
 import 'favorite_models.dart';
 import 'dart:async';
@@ -18,15 +18,15 @@ import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 import 'favorite_cover_cache.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/sqlite_connection.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/sqlite_connection.dart';
 import 'dart:io';
 
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 typedef FollowUpdatesChangeListener = void Function();
 

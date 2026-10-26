@@ -1,7 +1,7 @@
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/file_interaction.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/file_interaction.dart';
 import 'comic_import_output.dart';
 
 typedef DocumentImportProgress = void Function(int current, int total);

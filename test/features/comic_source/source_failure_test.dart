@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/source_failure.dart';
-import 'package:venera_next/features/comic_source/source_failure_presentation.dart';
-import 'package:venera_next/features/comic_source/source_repositories.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/features/comic_source/source_failure.dart';
+import 'package:venera_unified/features/comic_source/source_failure_presentation.dart';
+import 'package:venera_unified/features/comic_source/source_repositories.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

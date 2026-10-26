@@ -4,8 +4,8 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter_saf/flutter_saf.dart';
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
-import 'package:venera_next/features/comic_storage/comic_storage.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/features/comic_storage/comic_storage.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 enum ComicCopyRecoveryKind { complete, resumable, unverified }
 

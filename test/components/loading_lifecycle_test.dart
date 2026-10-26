@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/loading.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/components/loading.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 class _Probe extends StatefulWidget {
   const _Probe({super.key, required this.load, this.loaded});

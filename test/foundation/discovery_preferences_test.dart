@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/search/search_filter.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/preferences.dart';
+import 'package:venera_unified/features/search/search_filter.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/preferences.dart';
 
 void main() {
   test(

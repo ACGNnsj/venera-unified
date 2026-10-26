@@ -1,15 +1,15 @@
-import 'package:venera_next/features/history/history_scope.dart';
+import 'package:venera_unified/features/history/history_scope.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/history/history_page.dart';
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/features/history/history_model.dart';
-import 'package:venera_next/features/comic_widgets/comic_widgets.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/features/history/history_page.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/features/history/history_model.dart';
+import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 class _Manager extends HistoryManager {
   _Manager() : super.create();

@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
 
 /// Interactive root navigation; business services must use explicit actions.
 final appNavigation = _AppNavigation();

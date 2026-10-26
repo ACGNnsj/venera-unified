@@ -1,12 +1,12 @@
-import 'package:venera_next/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/appbar.dart';
-import 'package:venera_next/components/scroll.dart';
-import 'package:venera_next/features/settings/setting_components.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/appbar.dart';
+import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/features/settings/setting_components.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 class AppearanceSettings extends StatefulWidget {
   const AppearanceSettings({super.key});

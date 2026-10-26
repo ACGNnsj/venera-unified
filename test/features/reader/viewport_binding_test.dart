@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/reader_viewport.dart';
+import 'package:venera_unified/features/reader/reader_viewport.dart';
 
 class _Viewport implements ReaderImageViewController {
   @override

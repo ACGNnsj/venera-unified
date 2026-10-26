@@ -1,5 +1,5 @@
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/owned_dio_client.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/owned_dio_client.dart';
 
 /// Source metadata/script reads share transport rules. A supplied client stays
 /// borrowed; its caller owns adapter completion and must drain it separately.

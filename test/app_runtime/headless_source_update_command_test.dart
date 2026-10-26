@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/headless_source_update_command.dart';
-import 'package:venera_next/features/comic_source/source_failure.dart';
+import 'package:venera_unified/app_runtime/headless_source_update_command.dart';
+import 'package:venera_unified/features/comic_source/source_failure.dart';
 
 void main() {
   test('cancelled updates never count as successful updates', () async {

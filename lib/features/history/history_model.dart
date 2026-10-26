@@ -1,7 +1,7 @@
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/history_contract.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/history_contract.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 class History implements Comic {
   HistoryType type;

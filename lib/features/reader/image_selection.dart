@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 /// Owns one selection overlay and completes its waiter on replacement/disposal.
 class ReaderImageSelectionOverlay {

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:venera_next/features/local_comics/local_deletion_paths.dart';
+import 'package:venera_unified/features/local_comics/local_deletion_paths.dart';
 
 void main() {
   test(

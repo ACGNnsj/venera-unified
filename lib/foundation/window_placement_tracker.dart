@@ -33,15 +33,12 @@ class WindowPlacementFailure implements FailureDetails {
 /// The host supplies readiness and serializes transfer to replacement mounts.
 class WindowPlacementTracker {
   WindowPlacementTracker({
-    required Future<WindowPlacement?> Function() read,
-    required Future<void> Function(WindowPlacement placement) save,
+    required this._read,
+    required this._save,
     required Future<void> ready,
-    void Function(Object error, StackTrace stackTrace)? onError,
-    Duration interval = const Duration(milliseconds: 100),
-  }) : _read = read,
-       _save = save,
-       _onError = onError,
-       _interval = interval {
+    this._onError,
+    this._interval = const Duration(milliseconds: 100),
+  }) {
     unawaited(_observeReady(ready));
   }
 

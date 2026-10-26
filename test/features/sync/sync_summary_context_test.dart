@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/sync/data_sync_controller.dart';
-import 'package:venera_next/features/sync/data_sync_scope.dart';
-import 'package:venera_next/features/sync/sync_status_summary.dart';
-import 'package:venera_next/foundation/sync_preference_store.dart';
+import 'package:venera_unified/features/sync/data_sync_controller.dart';
+import 'package:venera_unified/features/sync/data_sync_scope.dart';
+import 'package:venera_unified/features/sync/sync_status_summary.dart';
+import 'package:venera_unified/foundation/sync_preference_store.dart';
 
 class _Controller extends DataSyncController {
   _Controller()

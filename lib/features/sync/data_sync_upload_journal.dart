@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/sqlite_connection.dart';
+import 'package:venera_unified/foundation/sqlite_connection.dart';
 
 import 'data_sync_commit.dart';
 

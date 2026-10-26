@@ -1,8 +1,8 @@
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/models.dart';
-import 'package:venera_next/features/comic_source/normalization.dart';
-import 'package:venera_next/foundation/js_engine.dart';
+import 'package:venera_unified/features/comic_source/models.dart';
+import 'package:venera_unified/features/comic_source/normalization.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
 
 class _FakeJSInvokable extends JSInvokable {
   _FakeJSInvokable(this.callback);

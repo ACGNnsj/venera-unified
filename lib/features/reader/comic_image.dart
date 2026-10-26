@@ -3,10 +3,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:venera_next/features/reader/reader_tap_scope.dart';
-import 'package:venera_next/features/reader/image_position.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/features/reader/reader_tap_scope.dart';
+import 'package:venera_unified/features/reader/image_position.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/translations.dart';
 import 'image_dimensions.dart';
 import 'auto_reading.dart';
 

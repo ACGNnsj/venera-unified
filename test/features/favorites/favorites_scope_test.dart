@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
-import 'package:venera_next/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
 
 void main() {
   testWidgets('view replacement invalidates only its original store binding', (

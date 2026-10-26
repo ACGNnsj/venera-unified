@@ -3,13 +3,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/app_page_route.dart';
-import 'package:venera_next/foundation/consts.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/edge_back_gesture.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/app_page_route.dart';
+import 'package:venera_unified/foundation/consts.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/edge_back_gesture.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'consts.dart';
 import 'gesture.dart';

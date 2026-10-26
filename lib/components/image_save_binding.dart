@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/image_save_work.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/image_save_work.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'window_frame.dart';
 import 'window_selection_task.dart';

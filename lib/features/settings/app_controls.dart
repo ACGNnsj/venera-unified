@@ -1,15 +1,15 @@
-import 'package:venera_next/features/history/history_scope.dart';
+import 'package:venera_unified/features/history/history_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:venera_next/components/message.dart';
-import 'package:venera_next/components/settings_save_state.dart';
-import 'package:venera_next/features/settings/setting_components.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
+import 'package:venera_unified/features/settings/setting_components.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 /// Preview while dragging; only the released choice authorizes cleanup.
 class HistoryRetentionSetting extends StatefulWidget {

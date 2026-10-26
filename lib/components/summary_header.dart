@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 /// A compact overview title/count that keeps the trailing navigation cue visible.
 class SummaryHeader extends StatelessWidget {

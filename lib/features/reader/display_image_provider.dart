@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
-import 'package:venera_next/foundation/image_provider/base_image_provider.dart';
-import 'package:venera_next/foundation/image_provider/image_provider_lifecycle.dart';
-import 'package:venera_next/foundation/image_provider/reader_image.dart';
+import 'package:venera_unified/foundation/image_provider/base_image_provider.dart';
+import 'package:venera_unified/foundation/image_provider/image_provider_lifecycle.dart';
+import 'package:venera_unified/foundation/image_provider/reader_image.dart';
 
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 
 /// A reader's visible consumers share this forwarding stream. The underlying
 /// provider retains its original cache key and Flutter's animation scheduling.

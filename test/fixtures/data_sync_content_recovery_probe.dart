@@ -2,10 +2,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:venera_next/features/sync/app_data_import_journal.dart';
-import 'package:venera_next/features/sync/data_sync_content_journal.dart';
-import 'package:venera_next/features/sync/data_sync_content_recovery.dart';
-import 'package:venera_next/features/sync/data_sync_ownership.dart';
+import 'package:venera_unified/features/sync/app_data_import_journal.dart';
+import 'package:venera_unified/features/sync/data_sync_content_journal.dart';
+import 'package:venera_unified/features/sync/data_sync_content_recovery.dart';
+import 'package:venera_unified/features/sync/data_sync_ownership.dart';
 
 Future<void> main(List<String> args) async {
   final root = args[0];

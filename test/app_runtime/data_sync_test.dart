@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/data_sync.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/sync/data_sync_transfer.dart';
-import 'package:venera_next/network/request_scope.dart';
-import 'package:venera_next/network/webdav.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/app_runtime/data_sync.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/sync/data_sync_transfer.dart';
+import 'package:venera_unified/network/request_scope.dart';
+import 'package:venera_unified/network/webdav.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 void main() {
   test(

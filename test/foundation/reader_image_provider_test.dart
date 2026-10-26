@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
-import 'package:venera_next/foundation/image_provider/reader_image_processing.dart';
+import 'package:venera_unified/foundation/image_provider/reader_image_processing.dart';
 
 void main() {
   test(

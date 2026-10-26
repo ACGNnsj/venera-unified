@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/favorites/favorites_repository.dart';
-import 'package:venera_next/features/history/history_repository.dart';
-import 'package:venera_next/features/history/history_api.dart';
-import 'package:venera_next/features/history/image_favorites_repository.dart';
-import 'package:venera_next/foundation/extensions.dart';
-import 'package:venera_next/foundation/sqlite_transaction.dart';
+import 'package:venera_unified/features/favorites/favorites_repository.dart';
+import 'package:venera_unified/features/history/history_repository.dart';
+import 'package:venera_unified/features/history/history_api.dart';
+import 'package:venera_unified/features/history/image_favorites_repository.dart';
+import 'package:venera_unified/foundation/extensions.dart';
+import 'package:venera_unified/foundation/sqlite_transaction.dart';
 import 'legacy_pica_data.dart';
 
 /// Writes an already decoded import to existing databases without notifications.

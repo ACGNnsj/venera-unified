@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/local_comics/local_comic_model.dart';
-import 'package:venera_next/features/local_comics/local_repository.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/local_comics/local_comic_model.dart';
+import 'package:venera_unified/features/local_comics/local_repository.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 LocalComic comic(
   String id, {

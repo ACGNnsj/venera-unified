@@ -1,12 +1,12 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_qjs/flutter_qjs.dart';
-import 'package:venera_next/foundation/cache_manager.dart';
-import 'package:venera_next/foundation/consts.dart';
-import 'package:venera_next/foundation/image_processing.dart';
+import 'package:venera_unified/foundation/cache_manager.dart';
+import 'package:venera_unified/foundation/consts.dart';
+import 'package:venera_unified/foundation/image_processing.dart';
 
 import 'app_dio.dart';
 import 'image_http_client.dart';

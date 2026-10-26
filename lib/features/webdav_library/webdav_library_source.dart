@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/comic_storage/comic_storage.dart';
-import 'package:venera_next/features/webdav_library/webdav_library_cache.dart';
-import 'package:venera_next/features/webdav_library/webdav_library_config.dart';
-import 'package:venera_next/features/webdav_library/webdav_library_settings.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/comic_storage/comic_storage.dart';
+import 'package:venera_unified/features/webdav_library/webdav_library_cache.dart';
+import 'package:venera_unified/features/webdav_library/webdav_library_config.dart';
+import 'package:venera_unified/features/webdav_library/webdav_library_settings.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 import 'webdav_library_entries.dart';
 import 'webdav_library_session.dart';

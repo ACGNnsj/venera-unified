@@ -1,4 +1,4 @@
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 Map<String, String> get readerModeLabels => {
   'galleryRightToLeft': 'Page turn (Right to Left)'.tl,

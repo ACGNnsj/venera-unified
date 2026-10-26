@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/reader_controller.dart';
+import 'package:venera_unified/features/reader/reader_controller.dart';
 
 void main() {
   test('a completed replacement releases an unfinished animation', () async {

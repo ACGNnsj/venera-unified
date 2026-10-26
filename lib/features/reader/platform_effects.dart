@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/components/window_frame.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
+import 'package:venera_unified/components/window_frame.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
 
 import 'platform_effects_controller.dart';
 

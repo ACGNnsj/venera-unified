@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/message.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'comic_copy_record.dart';
 

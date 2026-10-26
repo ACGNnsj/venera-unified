@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/follow_updates/follow_updates_api.dart';
+import 'package:venera_unified/features/follow_updates/follow_updates_api.dart';
 
 class _Task implements FollowUpdateTask {
   _Task({void Function(_Task)? onListen}) {

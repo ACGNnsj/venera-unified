@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
 
 void main() {
   test('favorite defaults keep legacy keys and JSON value types', () {

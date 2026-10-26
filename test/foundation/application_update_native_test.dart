@@ -4,11 +4,11 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rhttp/rhttp.dart' as rhttp;
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/application_update_service.dart';
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/application_update_service.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/models.dart';
-import 'package:venera_next/features/reader/comments_controller.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/features/comic_source/models.dart';
+import 'package:venera_unified/features/reader/comments_controller.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 Comment comment(String text) =>
     Comment.fromJson({'id': text, 'userName': 'Reader', 'content': text});

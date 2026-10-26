@@ -1,15 +1,15 @@
-import 'package:venera_next/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:rhttp/rhttp.dart' as rhttp;
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/log_redaction.dart';
-import 'package:venera_next/network/cache.dart';
-import 'package:venera_next/network/proxy.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/log_redaction.dart';
+import 'package:venera_unified/network/cache.dart';
+import 'package:venera_unified/network/proxy.dart';
 
 import '../foundation/app.dart';
 import 'cloudflare.dart';
@@ -219,9 +219,9 @@ class AppDio with DioMixin {
 
 class RHttpAdapter implements HttpClientAdapter {
   RHttpAdapter({
-    RHttpStreamCallFactory? startStreamCall,
+    this._startStreamCall,
     this.allowImageHttp3Fallback = false,
-  }) : _startStreamCall = startStreamCall;
+  });
 
   final RHttpStreamCallFactory? _startStreamCall;
   final bool allowImageHttp3Fallback;

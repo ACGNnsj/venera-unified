@@ -1,11 +1,11 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'dart:async' show Completer, Future, FutureOr, StreamController;
 import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/image_stream.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/image_stream.dart';
 import 'base_image_provider.dart';
 import 'image_provider_lifecycle.dart';
 

@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/webdav_library/webdav_library.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/features/webdav_library/webdav_library.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 
 void main() {
   late _FakeWebDavLibraryOps ops;

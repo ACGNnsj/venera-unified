@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/gesture_port.dart';
-import 'package:venera_next/features/reader/image_favorite_swipe.dart';
+import 'package:venera_unified/features/reader/gesture_port.dart';
+import 'package:venera_unified/features/reader/image_favorite_swipe.dart';
 
 class _Port implements ReaderGesturePort {
   final listeners = <ReaderDragListener>[];

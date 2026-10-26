@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/features/comic_source/source_failure.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/features/comic_source/source_failure.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 void main() {
   test(

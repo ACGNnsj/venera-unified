@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'source_failure.dart';
-import 'package:venera_next/components/settings_save_state.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
 import 'source_failure_presentation.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/file_interaction.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/network/app_dio.dart';
+import 'package:venera_unified/foundation/file_interaction.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/network/app_dio.dart';
 
 import 'source_import.dart';
 import 'source_inspection_task.dart';
-import 'package:venera_next/network/request_scope.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/network/request_scope.dart';
+import 'package:venera_unified/foundation/log.dart';
 import 'source_installations_scope.dart';
 import 'source_repositories.dart';
 

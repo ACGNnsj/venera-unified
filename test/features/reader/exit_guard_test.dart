@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/exit_guard.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
+import 'package:venera_unified/features/reader/exit_guard.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
 
 // Rendering is opt-in and requires a real font to avoid Ahem-only QA images.
 final _qaDirectory = Platform.environment['READER_EXIT_QA_DIR'];

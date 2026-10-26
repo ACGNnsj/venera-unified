@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/history_writer.dart';
+import 'package:venera_unified/features/reader/history_writer.dart';
 
 void main() {
   testWidgets('continuous turns save the latest progress after inactivity', (

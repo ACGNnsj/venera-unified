@@ -1,4 +1,4 @@
-import 'package:venera_next/network/images.dart';
+import 'package:venera_unified/network/images.dart';
 
 void configureComicSourceImageDownloader({
   required ThumbnailLoadingConfigResolver thumbnailLoadingConfig,

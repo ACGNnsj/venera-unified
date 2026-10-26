@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
-import 'package:venera_next/foundation/sqlite_snapshot.dart';
+import 'package:venera_unified/foundation/sqlite_snapshot.dart';
 
 /// Stages stable files for compression. Each DB is internally consistent;
 /// this is not a transaction across independent databases and settings.

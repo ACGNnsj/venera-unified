@@ -3,11 +3,11 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rhttp/rhttp.dart' as rhttp;
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/image_http3_fallback.dart';
-import 'package:venera_next/network/rhttp_stream_request.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/image_http3_fallback.dart';
+import 'package:venera_unified/network/rhttp_stream_request.dart';
 
 const _url = 'https://images.example.test/page.webp?token=private';
 final _nativeRequest = rhttp.HttpRequest(

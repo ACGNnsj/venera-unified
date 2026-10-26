@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/main.dart' as application;
-import 'package:venera_next/app_runtime/application_host.dart';
-import 'package:venera_next/app_runtime/core_bootstrap.dart';
-import 'package:venera_next/features/comic_source/source_update_service.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
+import 'package:venera_unified/main.dart' as application;
+import 'package:venera_unified/app_runtime/application_host.dart';
+import 'package:venera_unified/app_runtime/core_bootstrap.dart';
+import 'package:venera_unified/features/comic_source/source_update_service.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
 
 import '../support/data_sync_fixture.dart';
 

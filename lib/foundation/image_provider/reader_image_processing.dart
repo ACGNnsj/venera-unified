@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_qjs/flutter_qjs.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/network/image_loading_config.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/network/image_loading_config.dart';
 
 import 'image_provider_lifecycle.dart';
 

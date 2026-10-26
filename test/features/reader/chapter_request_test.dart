@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart'
+import 'package:venera_unified/features/comic_source/comic_source_api.dart'
     show ComicChapters;
-import 'package:venera_next/features/reader/chapter_request.dart';
-import 'package:venera_next/features/reader/waterfall_controller.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/reader/chapter_request.dart';
+import 'package:venera_unified/features/reader/waterfall_controller.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 void main() {
   test(

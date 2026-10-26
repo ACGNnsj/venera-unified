@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_details/thumbnail_image.dart';
+import 'package:venera_unified/features/comic_details/thumbnail_image.dart';
 
 void main() {
   test(

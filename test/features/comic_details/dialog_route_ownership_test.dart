@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_details/rating_dialog.dart';
-import 'package:venera_next/features/comic_source/source_script_editor.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/features/comic_details/rating_dialog.dart';
+import 'package:venera_unified/features/comic_source/source_script_editor.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/res.dart';
 import '../comic_source/source_script_editor_test.dart' show waitForEditor;
 
 class _AfterConfirmation extends NavigatorObserver {

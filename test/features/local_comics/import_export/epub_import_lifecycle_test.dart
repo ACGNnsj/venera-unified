@@ -1,13 +1,13 @@
-import 'package:venera_next/foundation/persistence_failure.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:archive/archive_io.dart' as archive;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/local_comics/import_export/epub_import.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/features/local_comics/local_storage_guard.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/features/local_comics/import_export/epub_import.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/features/local_comics/local_storage_guard.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

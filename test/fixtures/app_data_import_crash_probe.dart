@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:venera_next/features/sync/app_data_import_journal.dart';
+import 'package:venera_unified/features/sync/app_data_import_journal.dart';
 
 const _resources = <String>{
   'history.db',

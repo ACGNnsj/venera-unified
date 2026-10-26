@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/reader_controller.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/reader/reader_controller.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 class _Viewport implements ReaderNavigationViewport {
   final animations = <Completer<void>>[];

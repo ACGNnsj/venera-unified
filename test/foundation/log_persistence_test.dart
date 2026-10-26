@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

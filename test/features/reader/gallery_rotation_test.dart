@@ -6,13 +6,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/src/core/photo_view_core.dart';
-import 'package:venera_next/features/reader/auto_reading.dart';
-import 'package:venera_next/features/reader/gallery_data.dart';
-import 'package:venera_next/features/reader/gallery_view.dart';
-import 'package:venera_next/features/reader/page_layout.dart';
-import 'package:venera_next/features/reader/reader_controller.dart';
-import 'package:venera_next/features/reader/reader_viewport.dart';
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/features/reader/auto_reading.dart';
+import 'package:venera_unified/features/reader/gallery_data.dart';
+import 'package:venera_unified/features/reader/gallery_view.dart';
+import 'package:venera_unified/features/reader/page_layout.dart';
+import 'package:venera_unified/features/reader/reader_controller.dart';
+import 'package:venera_unified/features/reader/reader_viewport.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 
 void main() {
   for (final vertical in [false, true]) {

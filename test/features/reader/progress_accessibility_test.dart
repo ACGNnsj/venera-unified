@@ -2,8 +2,8 @@ import 'dart:ui' show SemanticsAction, SemanticsActionEvent;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/progress_bar.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/features/reader/progress_bar.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 class _Fixture {
   _Fixture({this.reversed = false, this.textDirection = TextDirection.ltr});

@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/foundation/sqlite_transaction.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/sqlite_transaction.dart';
 
 import 'import_export/comic_copy_metadata.dart';
 import 'import_export/comic_copy_record.dart';

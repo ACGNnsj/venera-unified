@@ -1,24 +1,24 @@
-import 'package:venera_next/features/comic_source/source_installation.dart';
-import 'package:venera_next/features/comic_source/source_installations_scope.dart';
-import 'package:venera_next/features/comic_source/source_repositories.dart';
+import 'package:venera_unified/features/comic_source/source_installation.dart';
+import 'package:venera_unified/features/comic_source/source_installations_scope.dart';
+import 'package:venera_unified/features/comic_source/source_repositories.dart';
 import 'package:dio/dio.dart';
 import 'dart:async';
 import 'dart:io';
-import 'package:venera_next/foundation/app.dart';
+import 'package:venera_unified/foundation/app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/comic_source_manager.dart';
-import 'package:venera_next/features/comic_source/comic_source_page.dart';
-import 'package:venera_next/features/comic_source/source.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/context.dart';
+import 'package:venera_unified/features/comic_source/comic_source_manager.dart';
+import 'package:venera_unified/features/comic_source/comic_source_page.dart';
+import 'package:venera_unified/features/comic_source/source.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/context.dart';
 import '../../support/comic_source_fixture.dart';
-import 'package:venera_next/features/comic_source/source_data_storage.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/network/cookie_jar.dart';
+import 'package:venera_unified/features/comic_source/source_data_storage.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
 
 class _Storage extends SourceDataStorage {
   int calls = 0;

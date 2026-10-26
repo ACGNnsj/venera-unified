@@ -5,11 +5,11 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
-import 'package:venera_next/features/sync/data_sync_commit.dart';
-import 'package:venera_next/features/sync/data_sync_remote_port.dart';
-import 'package:venera_next/features/sync/data_sync_upload_executor.dart';
-import 'package:venera_next/features/sync/data_sync_upload_journal.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/sync/data_sync_commit.dart';
+import 'package:venera_unified/features/sync/data_sync_remote_port.dart';
+import 'package:venera_unified/features/sync/data_sync_upload_executor.dart';
+import 'package:venera_unified/features/sync/data_sync_upload_journal.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 const uploadOperationId = '4a112222-3333-4444-8555-666666666666';
 

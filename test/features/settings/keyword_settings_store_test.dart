@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/keyword_settings_store.dart';
-import 'package:venera_next/foundation/reader_preference_settings.dart';
+import 'package:venera_unified/foundation/keyword_settings_store.dart';
+import 'package:venera_unified/foundation/reader_preference_settings.dart';
 
 // Only global reads/writes are valid for this service. Unexpected scoped calls
 // reach Object.noSuchMethod and fail; no global application reset is needed.

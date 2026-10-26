@@ -1,6 +1,6 @@
 import 'dart:collection';
 
-import 'package:venera_next/foundation/extensions/string_extensions.dart';
+import 'package:venera_unified/foundation/extensions/string_extensions.dart';
 
 /// Parsed comment content. Styling, gesture recognizers and navigation belong
 /// to the renderer; this model contains only text, tag attributes and images.

@@ -1,13 +1,13 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/file_selection.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/owned_dio_client.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/file_selection.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/owned_dio_client.dart';
 
 import 'comic_source_manager.dart';
 import 'source_repositories.dart';
@@ -116,8 +116,8 @@ class SourceInstallations implements Listenable {
   SourceInstallations({
     required this.manager,
     required this.repositories,
-    required Dio Function() createClient,
-  }) : _createClient = createClient;
+    required this._createClient,
+  });
 
   final ComicSourceManager manager;
   final SourceRepositories repositories;

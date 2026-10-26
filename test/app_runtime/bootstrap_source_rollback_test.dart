@@ -2,12 +2,12 @@ import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/bootstrap_core.dart';
-import 'package:venera_next/app_runtime/headless_bindings.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/network/cookie_jar.dart';
+import 'package:venera_unified/app_runtime/bootstrap_core.dart';
+import 'package:venera_unified/app_runtime/headless_bindings.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

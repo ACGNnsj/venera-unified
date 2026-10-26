@@ -1,16 +1,16 @@
-import 'package:venera_next/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/input_dialog.dart';
-import 'package:venera_next/components/pop_up_widget.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/input_dialog.dart';
+import 'package:venera_unified/components/pop_up_widget.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'folder_name_validation.dart';
 import 'favorites_manager.dart';

@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/components/window_frame.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
+import 'package:venera_unified/components/window_frame.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
 
 import 'status_polling.dart';
 import 'information_text.dart';

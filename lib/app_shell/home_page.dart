@@ -1,18 +1,18 @@
-import 'package:venera_next/features/favorites/favorites_scope.dart';
-import 'package:venera_next/features/history/history_scope.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/features/history/history_scope.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/scroll.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/foundation/consts.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/features/history/history.dart';
-import 'package:venera_next/features/favorites/favorites.dart';
-import 'package:venera_next/features/local_comics/local_comics.dart';
-import 'package:venera_next/features/follow_updates/follow_updates.dart';
-import 'package:venera_next/features/image_favorites/image_favorites.dart';
-import 'package:venera_next/features/search/search.dart';
-import 'package:venera_next/features/sync/sync.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/foundation/consts.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/features/history/history.dart';
+import 'package:venera_unified/features/favorites/favorites.dart';
+import 'package:venera_unified/features/local_comics/local_comics.dart';
+import 'package:venera_unified/features/follow_updates/follow_updates.dart';
+import 'package:venera_unified/features/image_favorites/image_favorites.dart';
+import 'package:venera_unified/features/search/search.dart';
+import 'package:venera_unified/features/sync/sync.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

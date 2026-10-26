@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/favorites/favorites_repository.dart';
-import 'package:venera_next/features/history/history_api.dart';
-import 'package:venera_next/features/history/history_repository.dart';
-import 'package:venera_next/features/history/image_favorites_repository.dart';
-import 'package:venera_next/features/sync/legacy_pica_data.dart';
-import 'package:venera_next/features/sync/pica_import_storage.dart';
+import 'package:venera_unified/features/favorites/favorites_repository.dart';
+import 'package:venera_unified/features/history/history_api.dart';
+import 'package:venera_unified/features/history/history_repository.dart';
+import 'package:venera_unified/features/history/image_favorites_repository.dart';
+import 'package:venera_unified/features/sync/legacy_pica_data.dart';
+import 'package:venera_unified/features/sync/pica_import_storage.dart';
 
 void main() {
   late Directory root;

@@ -4,10 +4,10 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/sync/app_data_snapshot.dart';
-import 'package:venera_next/features/sync/data_sync_content.dart';
-import 'package:venera_next/features/sync/data_sync_content_fingerprint.dart';
-import 'package:venera_next/features/sync/data_sync_content_journal.dart';
+import 'package:venera_unified/features/sync/app_data_snapshot.dart';
+import 'package:venera_unified/features/sync/data_sync_content.dart';
+import 'package:venera_unified/features/sync/data_sync_content_fingerprint.dart';
+import 'package:venera_unified/features/sync/data_sync_content_journal.dart';
 
 void main() {
   late Directory root;

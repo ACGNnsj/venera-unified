@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/favorites/favorite_identity_index.dart';
+import 'package:venera_unified/features/favorites/favorite_identity_index.dart';
 
 void main() {
   test('local commits override stale snapshots in either direction', () {

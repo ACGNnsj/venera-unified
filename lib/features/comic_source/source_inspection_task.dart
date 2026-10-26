@@ -1,14 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/components/window_frame.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/file_selection.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/network/owned_dio_client.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/components/window_frame.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/file_selection.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/network/owned_dio_client.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 /// One read-only inspection and its actual completion belong to the original
 /// page/window, including after supersession or disposal. This is not a save

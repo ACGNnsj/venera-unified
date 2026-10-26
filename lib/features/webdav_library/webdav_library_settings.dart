@@ -51,10 +51,9 @@ class WebDavLibrarySettings {
 /// runtime effects with the actual published state, including partial failure.
 class WebDavLibrarySettingsStore {
   WebDavLibrarySettingsStore({
-    required Object? Function(String) readValue,
-    required Future<void> Function(WebDavLibrarySettings) persist,
-  }) : _readValue = readValue,
-       _persist = persist;
+    required this._readValue,
+    required this._persist,
+  });
 
   final Object? Function(String) _readValue;
   final Future<void> Function(WebDavLibrarySettings) _persist;

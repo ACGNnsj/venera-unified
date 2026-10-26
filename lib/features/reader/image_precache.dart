@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/painting.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:venera_next/foundation/image_provider/base_image_provider.dart';
-import 'package:venera_next/foundation/image_provider/image_provider_lifecycle.dart';
-import 'package:venera_next/foundation/image_provider/reader_image.dart';
+import 'package:venera_unified/foundation/image_provider/base_image_provider.dart';
+import 'package:venera_unified/foundation/image_provider/image_provider_lifecycle.dart';
+import 'package:venera_unified/foundation/image_provider/reader_image.dart';
 
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 
 /// Decoded prefetch listeners belonging to one view and its reading session.
 class ReaderImagePrecache {
-  ReaderImagePrecache({required ImageWork work}) : _work = work;
+  ReaderImagePrecache({required this._work});
 
   final ImageWork _work;
   final _pending = <ReaderImageProvider, _ReaderPrecacheEntry>{};

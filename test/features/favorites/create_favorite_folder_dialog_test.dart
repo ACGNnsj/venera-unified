@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/favorites/create_favorite_folder_dialog.dart';
+import 'package:venera_unified/features/favorites/create_favorite_folder_dialog.dart';
 
 void main() {
   for (final fail in [false, true]) {

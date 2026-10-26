@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/comic_image.dart';
-import 'package:venera_next/features/reader/reader_tap_scope.dart';
+import 'package:venera_unified/features/reader/comic_image.dart';
+import 'package:venera_unified/features/reader/reader_tap_scope.dart';
 
 class _FailedImage extends ImageProvider<_FailedImage> {
   int resolutions = 0;

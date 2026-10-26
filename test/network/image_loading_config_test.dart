@@ -1,6 +1,6 @@
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/network/image_loading_config.dart';
+import 'package:venera_unified/network/image_loading_config.dart';
 
 class _Reference extends JSRef {
   _Reference({this.failure});

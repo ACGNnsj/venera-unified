@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/throttled_task_runner.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/throttled_task_runner.dart';
 import 'webdav_library_cache.dart';
 import 'webdav_library_discovery.dart';
 import 'webdav_library_entries.dart';
@@ -62,18 +62,13 @@ class WebDavLibrarySyncLifecycleFailure implements Exception {
 /// Owns synchronization runs; transport/session/storage lifetimes stay with the caller.
 class WebDavLibrarySynchronizer {
   WebDavLibrarySynchronizer({
-    required WebDavLibraryCache cache,
-    required WebDavLibrarySnapshotStore snapshots,
-    required WebDavLibrarySettings Function() readSettings,
-    required WebDavLibrarySession Function() currentSession,
-    required void Function() onContentChanged,
+    required this._cache,
+    required this._snapshots,
+    required this._readSettings,
+    required this._currentSession,
+    required this._onContentChanged,
     int Function()? nowMilliseconds,
-  }) : _cache = cache,
-       _snapshots = snapshots,
-       _readSettings = readSettings,
-       _currentSession = currentSession,
-       _onContentChanged = onContentChanged,
-       _nowMilliseconds = nowMilliseconds ?? _systemTime;
+  }) : _nowMilliseconds = nowMilliseconds ?? _systemTime;
 
   static int _systemTime() => DateTime.now().millisecondsSinceEpoch;
   final WebDavLibraryCache _cache;

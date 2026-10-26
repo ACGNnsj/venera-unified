@@ -1,9 +1,9 @@
-import 'package:venera_next/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/favorites/favorites.dart';
-import 'package:venera_next/features/follow_updates/follow_updates.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/features/favorites/favorites.dart';
+import 'package:venera_unified/features/follow_updates/follow_updates.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 class _Favorites extends Fake implements LocalFavoritesManager {
   int updates = 1;

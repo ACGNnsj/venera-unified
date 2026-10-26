@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/sync/app_data_import_journal.dart';
-import 'package:venera_next/features/sync/data_sync_commit.dart';
+import 'package:venera_unified/features/sync/app_data_import_journal.dart';
+import 'package:venera_unified/features/sync/data_sync_commit.dart';
 
 import '../../support/directory_alias.dart';
 

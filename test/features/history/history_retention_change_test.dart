@@ -4,13 +4,13 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/features/history/history_model.dart';
-import 'package:venera_next/features/history/history_retention_change.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/features/history/history_model.dart';
+import 'package:venera_unified/features/history/history_retention_change.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 History _old(String id, int age) => History.fromMap({
   'id': id,

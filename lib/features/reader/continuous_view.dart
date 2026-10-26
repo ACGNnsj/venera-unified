@@ -8,25 +8,25 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:venera_next/components/gesture.dart';
-import 'package:venera_next/features/reader/image_downloads.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/features/reader/image_position.dart';
-import 'package:venera_next/features/reader/comic_image.dart';
-import 'package:venera_next/features/reader/auto_reading.dart';
-import 'package:venera_next/features/reader/waterfall_flow.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/image_provider/reader_image.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
-import 'package:venera_next/features/reader/waterfall_controller.dart';
+import 'package:venera_unified/components/gesture.dart';
+import 'package:venera_unified/features/reader/image_downloads.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/features/reader/image_position.dart';
+import 'package:venera_unified/features/reader/comic_image.dart';
+import 'package:venera_unified/features/reader/auto_reading.dart';
+import 'package:venera_unified/features/reader/waterfall_flow.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/image_provider/reader_image.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
+import 'package:venera_unified/features/reader/waterfall_controller.dart';
 
 import 'continuous_data.dart';
 import 'current_image.dart';
 import 'display_image_provider.dart';
 import 'reader_controller.dart';
 import 'reader_viewport.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 import 'chapter_swipe_indicator.dart';
 
 const Set<PointerDeviceKind> _kTouchLikeDeviceTypes = <PointerDeviceKind>{

@@ -5,10 +5,10 @@ import 'package:file_selector/file_selector.dart' as file_selector;
 import 'package:flutter/services.dart';
 import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:flutter_saf/flutter_saf.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 import 'package:share_plus/share_plus.dart' as s;
-import 'package:venera_next/foundation/file_type.dart';
+import 'package:venera_unified/foundation/file_type.dart';
 import 'file_save_operation.dart';
 import 'selection_operation.dart';
 import 'platform_dialog_queue.dart';
@@ -20,7 +20,7 @@ export 'file_selection.dart';
 
 export 'dart:io';
 export 'dart:typed_data';
-export 'package:venera_next/foundation/file_system.dart';
+export 'package:venera_unified/foundation/file_system.dart';
 
 class IO {
   /// A global flag used to indicate whether the app is selecting files.

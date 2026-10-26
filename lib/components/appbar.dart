@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/rendering.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/extensions.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/extensions.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'effects.dart';
 import 'gesture.dart';

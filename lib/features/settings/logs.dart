@@ -1,12 +1,12 @@
-import 'package:venera_next/components/file_save_task.dart';
+import 'package:venera_unified/components/file_save_task.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/components/appbar.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/appbar.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 class LogsPage extends StatefulWidget {
   const LogsPage({super.key});

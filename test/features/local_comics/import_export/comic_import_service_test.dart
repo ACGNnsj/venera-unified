@@ -1,23 +1,23 @@
 import 'legacy_copy_fixture.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:archive/archive_io.dart' as archive;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/local_comics/import_export/comic_copy_metadata.dart';
-import 'package:venera_next/features/local_comics/import_export/comic_copy_record.dart';
-import 'package:venera_next/features/local_comics/import_export/comic_directory_copy.dart';
-import 'package:venera_next/features/local_comics/import_export/comic_import_service.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_copy_metadata.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_copy_record.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_directory_copy.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_import_service.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/features/local_comics/local_storage_guard.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/features/local_comics/local_storage_guard.dart';
 
 void main() {
   const service = ComicImportService(

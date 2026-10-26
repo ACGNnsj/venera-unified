@@ -1,5 +1,5 @@
 import 'auto_reading.dart';
-import 'package:venera_next/foundation/reader_settings.dart';
+import 'package:venera_unified/foundation/reader_settings.dart';
 
 /// Immutable presentation input. No widget, viewport or live reader lookup.
 class ReaderShellData {

@@ -1,24 +1,24 @@
 import 'dart:async';
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/keyword_filter.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/keyword_filter.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/components/button.dart';
-import 'package:venera_next/components/gesture.dart';
-import 'package:venera_next/components/layout.dart';
-import 'package:venera_next/components/loading.dart';
-import 'package:venera_next/components/menu.dart';
-import 'package:venera_next/components/message.dart';
-import 'package:venera_next/components/scroll.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/button.dart';
+import 'package:venera_unified/components/gesture.dart';
+import 'package:venera_unified/components/layout.dart';
+import 'package:venera_unified/components/loading.dart';
+import 'package:venera_unified/components/menu.dart';
+import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'comic_tile.dart';
 

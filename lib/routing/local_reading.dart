@@ -1,8 +1,8 @@
-import 'package:venera_next/features/history/history.dart';
-import 'package:venera_next/features/local_comics/local_comics.dart';
-import 'package:venera_next/features/reader/reader.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/context.dart';
+import 'package:venera_unified/features/history/history.dart';
+import 'package:venera_unified/features/local_comics/local_comics.dart';
+import 'package:venera_unified/features/reader/reader.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/context.dart';
 
 void openLocalComic(LocalComic comic) {
   final history = HistoryManager().find(comic.id, comic.comicType);

@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/image_downloads.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/network/image_loading_config.dart';
-import 'package:venera_next/network/image_stream.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/shared_image_requests.dart';
+import 'package:venera_unified/features/reader/image_downloads.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/network/image_loading_config.dart';
+import 'package:venera_unified/network/image_stream.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/shared_image_requests.dart';
 
 void main() {
   ImageWork work() {

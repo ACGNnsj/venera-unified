@@ -5,11 +5,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 import 'category.dart';
 import 'favorites.dart';
@@ -791,14 +791,11 @@ class ComicSource {
     this.enableTagsTranslate,
     this.starRatingFunc,
     this.archiveDownloader, {
-    JsCallbackScope? runtimeCallbacks,
-    SourceParserContext? runtimeContext,
+    this._runtimeCallbacks,
+    this._runtimeContext,
     Map<String, dynamic> initialData = const {},
-    SourceDataStorage dataStorage = const SourceDataStorage(),
-  }) : _runtimeCallbacks = runtimeCallbacks,
-       _runtimeContext = runtimeContext,
-       _data = _snapshot(initialData),
-       _dataStorage = dataStorage;
+    this._dataStorage = const SourceDataStorage(),
+  }) : _data = _snapshot(initialData);
 }
 
 /// One draft application with retryable persistence in its original source.

@@ -1,5 +1,5 @@
 import 'data_sync_commit.dart';
-import 'package:venera_next/foundation/sync_preference_store.dart';
+import 'package:venera_unified/foundation/sync_preference_store.dart';
 
 enum DataSyncDirection { upload, download }
 

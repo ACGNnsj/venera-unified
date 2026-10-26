@@ -2,22 +2,22 @@ import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/application_host.dart';
-import 'package:venera_next/app_runtime/bootstrap_core.dart';
-import 'package:venera_next/app_runtime/data_sync.dart';
-import 'package:venera_next/app_runtime/headless_bindings.dart';
-import 'package:venera_next/app_runtime/webdav_library.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/favorites/favorites.dart';
-import 'package:venera_next/features/history/history.dart';
-import 'package:venera_next/features/local_comics/local_comics.dart';
-import 'package:venera_next/features/sync/data_sync_ownership.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/cache_manager.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/network/cookie_jar.dart';
+import 'package:venera_unified/app_runtime/application_host.dart';
+import 'package:venera_unified/app_runtime/bootstrap_core.dart';
+import 'package:venera_unified/app_runtime/data_sync.dart';
+import 'package:venera_unified/app_runtime/headless_bindings.dart';
+import 'package:venera_unified/app_runtime/webdav_library.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/favorites/favorites.dart';
+import 'package:venera_unified/features/history/history.dart';
+import 'package:venera_unified/features/local_comics/local_comics.dart';
+import 'package:venera_unified/features/sync/data_sync_ownership.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/cache_manager.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

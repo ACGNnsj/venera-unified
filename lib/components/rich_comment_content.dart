@@ -1,14 +1,14 @@
-import 'package:venera_next/foundation/comment_markup.dart';
+import 'package:venera_unified/foundation/comment_markup.dart';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/image_provider/cached_image.dart';
-import 'package:venera_next/routing/app_links.dart';
-import 'package:venera_next/foundation/extensions.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/image_provider/cached_image.dart';
+import 'package:venera_unified/routing/app_links.dart';
+import 'package:venera_unified/foundation/extensions.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'gesture.dart';
 

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
 import 'history_manager.dart';
 import 'image_favorite_actions.dart';
 import 'image_favorites_models.dart';

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 import '../local_comic_model.dart';
 

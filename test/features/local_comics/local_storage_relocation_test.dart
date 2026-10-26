@@ -5,14 +5,14 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/local_comics/import_export/comic_copy_metadata.dart';
-import 'package:venera_next/features/local_comics/import_export/comic_copy_record.dart';
-import 'package:venera_next/features/local_comics/local_comic_model.dart';
-import 'package:venera_next/features/local_comics/local_repository.dart';
-import 'package:venera_next/features/local_comics/local_storage_migration.dart';
-import 'package:venera_next/features/local_comics/local_storage_relocation.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_copy_metadata.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_copy_record.dart';
+import 'package:venera_unified/features/local_comics/local_comic_model.dart';
+import 'package:venera_unified/features/local_comics/local_repository.dart';
+import 'package:venera_unified/features/local_comics/local_storage_migration.dart';
+import 'package:venera_unified/features/local_comics/local_storage_relocation.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 void main() {
   late Directory root;

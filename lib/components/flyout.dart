@@ -1,9 +1,9 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'consts.dart';
 import 'effects.dart';

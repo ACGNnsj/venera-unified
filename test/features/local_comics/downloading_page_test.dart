@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/local_comics/download_task.dart';
-import 'package:venera_next/features/local_comics/downloading_page.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/local_comics/download_task.dart';
+import 'package:venera_unified/features/local_comics/downloading_page.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 void main() {
   setUp(() => LocalManager.current?.dispose());

@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/window_placement.dart';
-import 'package:venera_next/foundation/window_placement_tracker.dart';
+import 'package:venera_unified/foundation/window_placement.dart';
+import 'package:venera_unified/foundation/window_placement_tracker.dart';
 
 const _first = WindowPlacement(Rect.fromLTWH(30, 40, 1000, 700), false);
 const _second = WindowPlacement(Rect.fromLTWH(50, 60, 1100, 800), true);

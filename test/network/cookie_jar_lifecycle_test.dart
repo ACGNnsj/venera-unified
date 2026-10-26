@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/network/cookie_jar.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
 
 void main() {
   late Directory directory;

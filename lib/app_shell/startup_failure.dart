@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/log_redaction.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/log_redaction.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 /// Does not open stores or retry a bootstrap whose cleanup may have failed.
 class StartupFailureApp extends StatefulWidget {

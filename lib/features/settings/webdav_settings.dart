@@ -1,14 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/pop_up_widget.dart';
-import 'package:venera_next/components/settings_save_state.dart';
-import 'package:venera_next/features/sync/sync.dart';
-import 'package:venera_next/features/webdav_library/webdav_library.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/pop_up_widget.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
+import 'package:venera_unified/features/sync/sync.dart';
+import 'package:venera_unified/features/webdav_library/webdav_library.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'webdav_connection_fields.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 import 'reader_page.dart';
 import 'scaffold.dart';
 import 'shell_data.dart';

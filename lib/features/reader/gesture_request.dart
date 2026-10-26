@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart' show Listenable;
-import 'package:venera_next/foundation/reader_settings.dart';
+import 'package:venera_unified/foundation/reader_settings.dart';
 import 'reader_viewport.dart';
 
 /// Captured capabilities for one pointer sequence or context-menu request.

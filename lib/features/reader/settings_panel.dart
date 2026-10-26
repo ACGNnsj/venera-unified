@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/components/settings_save_state.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/routing/settings.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/routing/settings.dart';
 
 import 'brightness.dart';
 import 'settings_effects.dart';

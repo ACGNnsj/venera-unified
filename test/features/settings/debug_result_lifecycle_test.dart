@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/settings/debug.dart';
-import 'package:venera_next/features/settings/debug_evaluator.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/features/settings/debug.dart';
+import 'package:venera_unified/features/settings/debug_evaluator.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 class _Reference extends JSRef {
   _Reference({this.failure});

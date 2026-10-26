@@ -1,26 +1,26 @@
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/appbar.dart';
-import 'package:venera_next/components/loading.dart';
-import 'package:venera_next/components/navigation_bar.dart';
-import 'package:venera_next/components/pop_up_widget.dart';
-import 'package:venera_next/components/scroll.dart';
-import 'package:venera_next/features/comic_widgets/comic_widgets.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/foundation/global_state.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/routing/page_jump_target.dart';
-import 'package:venera_next/routing/settings.dart';
-import 'package:venera_next/foundation/extensions.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/appbar.dart';
+import 'package:venera_unified/components/loading.dart';
+import 'package:venera_unified/components/navigation_bar.dart';
+import 'package:venera_unified/components/pop_up_widget.dart';
+import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/foundation/global_state.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/routing/page_jump_target.dart';
+import 'package:venera_unified/routing/settings.dart';
+import 'package:venera_unified/foundation/extensions.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({super.key});

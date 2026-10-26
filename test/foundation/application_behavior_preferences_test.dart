@@ -1,14 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/application_updates.dart';
-import 'package:venera_next/features/comic_source/source_update_service.dart';
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/features/history/history_model.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/app_runtime/application_updates.dart';
+import 'package:venera_unified/features/comic_source/source_update_service.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/features/history/history_model.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

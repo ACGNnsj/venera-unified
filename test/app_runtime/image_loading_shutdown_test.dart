@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/image_loading.dart';
+import 'package:venera_unified/app_runtime/image_loading.dart';
 
 void main() {
   test(

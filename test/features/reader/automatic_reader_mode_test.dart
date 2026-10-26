@@ -1,7 +1,7 @@
-import 'package:venera_next/features/favorites/favorites_scope.dart';
-import 'package:venera_next/features/history/history_api.dart';
-import 'package:venera_next/features/reader/reader_viewport.dart';
-import 'package:venera_next/features/reader/platform_effects.dart'
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/features/history/history_api.dart';
+import 'package:venera_unified/features/reader/reader_viewport.dart';
+import 'package:venera_unified/features/reader/platform_effects.dart'
     show ReaderPlatformEffectsScope;
 import 'dart:async';
 import 'dart:convert';
@@ -9,19 +9,19 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/message.dart';
-import 'package:venera_next/features/comic_source/models.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
-import 'package:venera_next/features/reader/layout_detection.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/features/reader/reader_page.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/comic_layout.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/features/comic_source/models.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/features/reader/layout_detection.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/features/reader/reader_page.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/comic_layout.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 void main() {
   late Directory directory;

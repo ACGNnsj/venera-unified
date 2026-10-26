@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
-import 'package:venera_next/foundation/cache_manager.dart';
-import 'package:venera_next/network/image_loading_config.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/foundation/cache_manager.dart';
+import 'package:venera_unified/network/image_loading_config.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 void main() {
   late Directory directory;

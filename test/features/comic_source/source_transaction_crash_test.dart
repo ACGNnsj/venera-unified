@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/comic_source/source_transaction_journal.dart';
+import 'package:venera_unified/features/comic_source/source_transaction_journal.dart';
 import '../../support/dart_vm.dart';
 
 Future<void> killAt(

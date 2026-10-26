@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/foundation/image_provider/base_image_provider.dart';
-import 'package:venera_next/foundation/image_provider/cached_image.dart';
-import 'package:venera_next/foundation/image_provider/image_provider_lifecycle.dart';
-import 'package:venera_next/foundation/image_provider/reader_image.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/image_provider/base_image_provider.dart';
+import 'package:venera_unified/foundation/image_provider/cached_image.dart';
+import 'package:venera_unified/foundation/image_provider/image_provider_lifecycle.dart';
+import 'package:venera_unified/foundation/image_provider/reader_image.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -194,12 +194,10 @@ void main() {
 
 class _ControlledFile extends Fake implements File {
   _ControlledFile({
-    Completer<bool>? exists,
-    Completer<int>? length,
-    Completer<Uint8List>? read,
-  }) : _exists = exists,
-       _length = length,
-       _read = read;
+    this._exists,
+    this._length,
+    this._read,
+  });
 
   final Completer<bool>? _exists;
   final Completer<int>? _length;
@@ -231,9 +229,8 @@ class _ControlledFile extends Fake implements File {
 }
 
 class _CachedProvider extends CachedImageProvider {
-  _CachedProvider(this.file, {Future<Uint8List?>? fallbackResult})
-    : _fallbackResult = fallbackResult,
-      super('file://${file.path}');
+  _CachedProvider(this.file, {this._fallbackResult})
+    : super('file://${file.path}');
 
   final File file;
   final Future<Uint8List?>? _fallbackResult;

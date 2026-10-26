@@ -2,12 +2,12 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/favorites/favorites.dart';
-import 'package:venera_next/features/history/history.dart';
-import 'package:venera_next/features/sync/app_data_transfer.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/favorites/favorites.dart';
+import 'package:venera_unified/features/history/history.dart';
+import 'package:venera_unified/features/sync/app_data_transfer.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 void main() {
   test(

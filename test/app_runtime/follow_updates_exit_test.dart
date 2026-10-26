@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/follow_updates.dart';
-import 'package:venera_next/features/follow_updates/follow_updates.dart';
+import 'package:venera_unified/app_runtime/follow_updates.dart';
+import 'package:venera_unified/features/follow_updates/follow_updates.dart';
 
 void main() {
   test(

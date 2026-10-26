@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/favorites/favorites_api.dart';
-import 'package:venera_next/features/history/history_api.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/favorites/favorites_api.dart';
+import 'package:venera_unified/features/history/history_api.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 class LegacyPicaFolderLink {
   const LegacyPicaFolderLink(this.folder, this.sourceKey, this.syncData);

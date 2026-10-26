@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 void main() {
   test('cancellation aliases stay with their cancelled request ancestry', () {

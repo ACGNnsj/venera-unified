@@ -3,8 +3,8 @@ import 'log.dart';
 
 import 'package:crypto/crypto.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/foundation/sqlite_connection.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/sqlite_connection.dart';
 
 import 'app.dart';
 

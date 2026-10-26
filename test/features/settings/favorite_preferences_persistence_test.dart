@@ -1,18 +1,18 @@
-import 'package:venera_next/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/select.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
-import 'package:venera_next/features/settings/local_favorites.dart';
-import 'package:venera_next/features/settings/setting_components.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/context.dart';
+import 'package:venera_unified/components/select.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/features/settings/local_favorites.dart';
+import 'package:venera_unified/features/settings/setting_components.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/context.dart';
 
 Future<void> _flush(WidgetTester tester, Future<void> operation) async {
   var done = false;

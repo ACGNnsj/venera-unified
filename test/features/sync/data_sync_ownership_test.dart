@@ -5,8 +5,8 @@ import 'dart:isolate';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/sync/data_sync_ownership.dart';
-import 'package:venera_next/features/sync/data_sync_commit.dart';
+import 'package:venera_unified/features/sync/data_sync_ownership.dart';
+import 'package:venera_unified/features/sync/data_sync_commit.dart';
 import '../../support/dart_vm.dart';
 
 void main() {

@@ -5,13 +5,13 @@ import 'dart:typed_data';
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rhttp/rhttp.dart' as rhttp;
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/cache_manager.dart';
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/image_http_client.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/shared_image_requests.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/cache_manager.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/image_http_client.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/shared_image_requests.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

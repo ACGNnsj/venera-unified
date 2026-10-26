@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:venera_next/network/app_dio.dart';
+import 'package:venera_unified/network/app_dio.dart';
 
 /// Controls response and native cleanup separately, like RHttp cancellation.
 class ApplicationUpdateAdapter extends RHttpAdapter {

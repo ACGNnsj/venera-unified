@@ -1,6 +1,6 @@
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
 
 class _Callback extends JSInvokable {
   _Callback(this.events, this.name, {this.fail = false});

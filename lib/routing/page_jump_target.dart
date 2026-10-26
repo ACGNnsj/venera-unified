@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/features/discovery/discovery.dart';
-import 'package:venera_next/features/search/search.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/features/discovery/discovery.dart';
+import 'package:venera_unified/features/search/search.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 extension PageJumpTargetNavigation on PageJumpTarget {
   void jump(BuildContext context) {

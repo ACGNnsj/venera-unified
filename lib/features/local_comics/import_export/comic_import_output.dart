@@ -1,6 +1,6 @@
-import 'package:venera_next/features/local_comics/local_comic_model.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
+import 'package:venera_unified/features/local_comics/local_comic_model.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
 
 /// Owns a newly created conversion directory until it is handed to its caller
 /// or registration begins. Only a confirmed non-commit permits discarding it.

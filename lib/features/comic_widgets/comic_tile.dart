@@ -1,25 +1,25 @@
 import 'dart:math' as math;
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/keyword_settings_store.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
-import 'package:venera_next/components/settings_save_state.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/keyword_settings_store.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/components/gesture.dart';
-import 'package:venera_next/components/image.dart';
-import 'package:venera_next/components/menu.dart';
-import 'package:venera_next/components/message.dart';
-import 'package:venera_next/components/select.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/app_locale.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/extensions.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/gesture.dart';
+import 'package:venera_unified/components/image.dart';
+import 'package:venera_unified/components/menu.dart';
+import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/components/select.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/app_locale.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/extensions.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'rating.dart';
 

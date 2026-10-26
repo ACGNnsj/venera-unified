@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/history/history_api.dart';
-import 'package:venera_next/features/local_comics/local_comics_api.dart';
-import 'package:venera_next/features/reader/reader_entry_loader.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/history/history_api.dart';
+import 'package:venera_unified/features/local_comics/local_comics_api.dart';
+import 'package:venera_unified/features/reader/reader_entry_loader.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 ComicDetails details(
   String id, {

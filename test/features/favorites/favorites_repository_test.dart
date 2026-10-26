@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/favorites/favorites_repository.dart';
+import 'package:venera_unified/features/favorites/favorites_repository.dart';
 
 import '../../support/legacy_favorites_fixture.dart';
 

@@ -5,18 +5,18 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/history/history_api.dart';
-import 'package:venera_next/features/history/history_image_provider.dart';
-import 'package:venera_next/features/history/image_favorites_provider.dart';
-import 'package:venera_next/features/local_comics/local_comic_image.dart';
-import 'package:venera_next/features/local_comics/local_comic_model.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/image_provider/base_image_provider.dart';
-import 'package:venera_next/foundation/image_provider/image_provider_lifecycle.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/image_stream.dart';
-import 'package:venera_next/network/shared_request_stream.dart';
+import 'package:venera_unified/features/history/history_api.dart';
+import 'package:venera_unified/features/history/history_image_provider.dart';
+import 'package:venera_unified/features/history/image_favorites_provider.dart';
+import 'package:venera_unified/features/local_comics/local_comic_image.dart';
+import 'package:venera_unified/features/local_comics/local_comic_model.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/image_provider/base_image_provider.dart';
+import 'package:venera_unified/foundation/image_provider/image_provider_lifecycle.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/image_stream.dart';
+import 'package:venera_unified/network/shared_request_stream.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

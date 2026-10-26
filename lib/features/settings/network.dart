@@ -1,17 +1,17 @@
-import 'package:venera_next/foundation/proxy_configuration.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/proxy_configuration.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/appbar.dart';
-import 'package:venera_next/components/pop_up_widget.dart';
-import 'package:venera_next/components/scroll.dart';
-import 'package:venera_next/features/settings/setting_components.dart';
-import 'package:venera_next/components/settings_save_state.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/appbar.dart';
+import 'package:venera_unified/components/pop_up_widget.dart';
+import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/features/settings/setting_components.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 final _networkSettings = GlobalPreferenceStore(appdata.settings);
 

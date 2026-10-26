@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/settings/setting_field.dart';
-import 'package:venera_next/foundation/preferences.dart';
-import 'package:venera_next/foundation/reader_preference_settings.dart';
-import 'package:venera_next/foundation/reader_preference_store.dart';
-import 'package:venera_next/foundation/reader_preferences.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
+import 'package:venera_unified/features/settings/setting_field.dart';
+import 'package:venera_unified/foundation/preferences.dart';
+import 'package:venera_unified/foundation/reader_preference_settings.dart';
+import 'package:venera_unified/foundation/reader_preference_store.dart';
+import 'package:venera_unified/foundation/reader_preferences.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
 
 // A recording port, not an Appdata replacement: production inheritance and
 // persistence are exercised by reader_preference_store/setting_persistence.

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/page_layout.dart';
+import 'package:venera_unified/features/reader/page_layout.dart';
 
 void main() {
   test(

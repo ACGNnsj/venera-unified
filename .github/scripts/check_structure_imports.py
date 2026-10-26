@@ -879,8 +879,8 @@ def _module(path: Path) -> str:
 
 
 def _resolve_import(source: Path, specifier: str) -> Path | None:
-    if specifier.startswith("package:venera_next/"):
-        return (LIB_DIR / specifier.removeprefix("package:venera_next/")).resolve()
+    if specifier.startswith("package:venera_unified/"):
+        return (LIB_DIR / specifier.removeprefix("package:venera_unified/")).resolve()
     if SCHEME_RE.match(specifier):
         return None
     return (source.parent / specifier).resolve()

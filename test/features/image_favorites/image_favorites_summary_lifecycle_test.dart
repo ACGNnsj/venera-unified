@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/scroll.dart';
-import 'package:venera_next/features/history/history.dart';
-import 'package:venera_next/features/image_favorites/image_favorites_summary.dart';
-import 'package:venera_next/foundation/app.dart';
+import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/features/history/history.dart';
+import 'package:venera_unified/features/image_favorites/image_favorites_summary.dart';
+import 'package:venera_unified/foundation/app.dart';
 import '../history/image_favorites_repository_test.dart' show comic;
 
 void main() {

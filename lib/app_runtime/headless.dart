@@ -1,14 +1,14 @@
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/features/follow_updates/follow_updates_manager.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/features/favorites/favorites_api.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/features/follow_updates/follow_updates_manager.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/features/favorites/favorites_api.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
 
 import 'bootstrap_core.dart';
 import 'core_bootstrap.dart';

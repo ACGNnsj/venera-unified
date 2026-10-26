@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/image_action.dart';
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/features/reader/image_action.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 
 void main() {
   late ImageWork work;

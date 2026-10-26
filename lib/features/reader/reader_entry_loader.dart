@@ -1,9 +1,9 @@
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/history/history_api.dart';
-import 'package:venera_next/features/local_comics/local_comics_api.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/history/history_api.dart';
+import 'package:venera_unified/features/local_comics/local_comics_api.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 /// Resolves initial reader metadata without owning a route or global manager.
 /// A missing source falls back to the local catalog; a failed source does not.

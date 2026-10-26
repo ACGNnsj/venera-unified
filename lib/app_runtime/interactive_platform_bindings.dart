@@ -1,9 +1,9 @@
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/foundation/window_placement_tracker.dart';
-import 'package:venera_next/foundation/window_hotkey_controller.dart';
-import 'package:venera_next/routing/app_links.dart';
-import 'package:venera_next/routing/handle_text_share.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/foundation/window_placement_tracker.dart';
+import 'package:venera_unified/foundation/window_hotkey_controller.dart';
+import 'package:venera_unified/routing/app_links.dart';
+import 'package:venera_unified/routing/handle_text_share.dart';
 
 import 'interactive_bindings.dart';
 import 'windows_heartbeat.dart';

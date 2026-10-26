@@ -6,17 +6,17 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/source_images_parser.dart';
-import 'package:venera_next/features/comic_source/source_parser_context.dart';
-import 'package:venera_next/features/reader/history_writer.dart';
-import 'package:venera_next/features/reader/reader_controller.dart';
-import 'package:venera_next/features/reader/reader_session.dart';
-import 'package:venera_next/features/reader/reading_session.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/comic_source/source_images_parser.dart';
+import 'package:venera_unified/features/comic_source/source_parser_context.dart';
+import 'package:venera_unified/features/reader/history_writer.dart';
+import 'package:venera_unified/features/reader/reader_controller.dart';
+import 'package:venera_unified/features/reader/reader_session.dart';
+import 'package:venera_unified/features/reader/reading_session.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 class _Adapter implements HttpClientAdapter {
   final started = Completer<RequestOptions>();

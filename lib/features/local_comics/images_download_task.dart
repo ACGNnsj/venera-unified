@@ -1,23 +1,23 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'local_chapter_storage.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'dart:async';
 import 'package:path/path.dart' as p;
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
-import 'package:venera_next/features/comic_storage/comic_storage.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/comic_storage/comic_storage.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 import 'download_task_storage.dart';
 import 'local_comic_model.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/foundation/extensions.dart';
-import 'package:venera_next/foundation/file_type.dart';
-import 'package:venera_next/foundation/file_interaction.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/foundation/extensions.dart';
+import 'package:venera_unified/foundation/file_type.dart';
+import 'package:venera_unified/foundation/file_interaction.dart';
 
 import 'download_task.dart';
 import 'download_directory_allocator.dart';
@@ -43,7 +43,7 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
   String? comicTitle;
 
   ImagesDownloadTask({
-    required DownloadTaskStorage storage,
+    required this._storage,
     required this.source,
     required this.comicId,
     this.comic,
@@ -52,12 +52,9 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
     this.skipUnavailableImages = false,
     Stream<ImageDownloadProgress> Function(String, String)? loadThumbnail,
     ComicImageLoader? loadImage,
-    Future<DownloadDirectoryAllocation> Function(String, ComicType, String)?
-    allocateDirectory,
-  }) : _storage = storage,
-       _loadThumbnail = loadThumbnail ?? ImageDownloader.loadThumbnail,
-       _loadImage = loadImage ?? ImageDownloader.loadComicImageUnwrapped,
-       _allocateDirectory = allocateDirectory;
+    this._allocateDirectory,
+  }) : _loadThumbnail = loadThumbnail ?? ImageDownloader.loadThumbnail,
+       _loadImage = loadImage ?? ImageDownloader.loadComicImageUnwrapped;
 
   final Stream<ImageDownloadProgress> Function(String, String) _loadThumbnail;
   final ComicImageLoader _loadImage;

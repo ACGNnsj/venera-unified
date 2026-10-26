@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:uuid/uuid.dart';
-import 'package:venera_next/features/local_comics/download_task.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/features/local_comics/download_task.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 /// Binds the existing Dart/JS queue to Android's foreground execution lifetime.
 /// No headless engine or second queue is created; restored tasks stay paused.

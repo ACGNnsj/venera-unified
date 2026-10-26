@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/settings/settings.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/features/settings/settings.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 void main() {
   testWidgets('WebDavConnectionFields binds all connection controllers', (

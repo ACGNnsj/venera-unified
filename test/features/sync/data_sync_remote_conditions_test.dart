@@ -7,9 +7,9 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/sync/data_sync_remote.dart';
-import 'package:venera_next/features/sync/data_sync_remote_port.dart';
-import 'package:venera_next/network/webdav.dart';
+import 'package:venera_unified/features/sync/data_sync_remote.dart';
+import 'package:venera_unified/features/sync/data_sync_remote_port.dart';
+import 'package:venera_unified/network/webdav.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 
 void main() {

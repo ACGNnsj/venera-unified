@@ -1,4 +1,4 @@
-import 'package:venera_next/features/sync/data_sync_controller.dart';
+import 'package:venera_unified/features/sync/data_sync_controller.dart';
 import '../support/data_sync_fixture.dart';
 import 'dart:async';
 import 'dart:io';
@@ -6,17 +6,17 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/sync_window_binding.dart';
-import 'package:venera_next/app_runtime/interactive_bindings.dart';
-import 'package:venera_next/foundation/event_subscription.dart';
-import 'package:venera_next/components/window_frame.dart';
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/window_placement.dart';
-import 'package:venera_next/foundation/window_placement_tracker.dart';
+import 'package:venera_unified/app_runtime/sync_window_binding.dart';
+import 'package:venera_unified/app_runtime/interactive_bindings.dart';
+import 'package:venera_unified/foundation/event_subscription.dart';
+import 'package:venera_unified/components/window_frame.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/window_placement.dart';
+import 'package:venera_unified/foundation/window_placement_tracker.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:venera_next/foundation/window_hotkey_controller.dart';
+import 'package:venera_unified/foundation/window_hotkey_controller.dart';
 import '../support/window_hotkey_fixture.dart';
 
 void main() {

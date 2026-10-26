@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:venera_next/features/comic_storage/comic_storage.dart';
-import 'package:venera_next/foundation/extensions.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/features/comic_storage/comic_storage.dart';
+import 'package:venera_unified/foundation/extensions.dart';
+import 'package:venera_unified/foundation/log.dart';
 import 'webdav_library_entries.dart';
 import 'webdav_library_session.dart';
 import 'webdav_library_snapshot.dart';

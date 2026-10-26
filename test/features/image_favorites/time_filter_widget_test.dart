@@ -4,12 +4,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/select.dart';
-import 'package:venera_next/features/history/history.dart';
-import 'package:venera_next/features/image_favorites/image_favorites_page.dart';
-import 'package:venera_next/features/image_favorites/type.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/components/select.dart';
+import 'package:venera_unified/features/history/history.dart';
+import 'package:venera_unified/features/image_favorites/image_favorites_page.dart';
+import 'package:venera_unified/features/image_favorites/type.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 const _timeKey = 'image_favorites_time_filter';
 

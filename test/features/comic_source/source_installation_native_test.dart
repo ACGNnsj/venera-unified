@@ -4,11 +4,11 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rhttp/rhttp.dart' as rhttp;
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/comic_source/source_repositories.dart';
-import 'package:venera_next/network/app_dio.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/comic_source/source_repositories.dart';
+import 'package:venera_unified/network/app_dio.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

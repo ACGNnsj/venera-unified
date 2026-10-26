@@ -1,14 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/favorites/favorite_metadata_update.dart';
-import 'package:venera_next/features/favorites/favorite_models.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/favorites/favorite_metadata_update.dart';
+import 'package:venera_unified/features/favorites/favorite_models.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 FavoriteItem _item(String id) => FavoriteItem.withTime(
   id: id,

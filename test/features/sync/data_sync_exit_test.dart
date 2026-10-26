@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/sync_configuration.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/sync_configuration.dart';
 import '../../support/data_sync_fixture.dart';
 
 void main() {

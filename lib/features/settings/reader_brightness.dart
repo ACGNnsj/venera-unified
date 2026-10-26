@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/features/reader/brightness.dart';
-import 'package:venera_next/components/settings_save_state.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/preferences.dart';
-import 'package:venera_next/foundation/reader_preference_store.dart';
-import 'package:venera_next/foundation/reader_preferences.dart';
+import 'package:venera_unified/features/reader/brightness.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/preferences.dart';
+import 'package:venera_unified/foundation/reader_preference_store.dart';
+import 'package:venera_unified/foundation/reader_preferences.dart';
 import 'setting_field.dart';
 
 class ReaderBrightnessSetting extends StatefulWidget {

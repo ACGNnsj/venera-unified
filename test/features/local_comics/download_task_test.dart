@@ -7,17 +7,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
 import 'package:rhttp/rhttp.dart' as rhttp;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/features/local_comics/local_comics.dart';
-import 'package:venera_next/features/local_comics/download_directory_allocator.dart';
-import 'package:venera_next/features/local_comics/download_task_storage.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/file_downloader.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/features/local_comics/local_comics.dart';
+import 'package:venera_unified/features/local_comics/download_directory_allocator.dart';
+import 'package:venera_unified/features/local_comics/download_task_storage.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/file_downloader.dart';
 
 void main() {
   const sourceKey = 'download_task_test_source';

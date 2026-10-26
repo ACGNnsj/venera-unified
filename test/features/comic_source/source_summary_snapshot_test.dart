@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/source.dart';
-import 'package:venera_next/features/comic_source/source_summary_snapshot.dart';
+import 'package:venera_unified/features/comic_source/source.dart';
+import 'package:venera_unified/features/comic_source/source_summary_snapshot.dart';
 
 class _Source extends Fake implements ComicSource {
   _Source(this.key, this.name, this.version);

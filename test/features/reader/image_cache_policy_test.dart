@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/image_cache_policy.dart';
+import 'package:venera_unified/features/reader/image_cache_policy.dart';
 
 void main() {
   test('memory thresholds retain the existing cache limits', () {

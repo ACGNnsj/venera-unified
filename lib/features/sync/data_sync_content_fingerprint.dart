@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/app_data_sync_fields.dart';
+import 'package:venera_unified/foundation/app_data_sync_fields.dart';
 
 /// Hash logical SQLite rows, stable JSON and the files included by application
 /// export. SQLite headers, WAL layout and ZIP metadata are not business changes.

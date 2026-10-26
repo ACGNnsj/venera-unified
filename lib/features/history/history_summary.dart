@@ -1,12 +1,12 @@
-import 'package:venera_next/features/history/history_api.dart';
+import 'package:venera_unified/features/history/history_api.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/gesture.dart';
-import 'package:venera_next/components/summary_header.dart';
-import 'package:venera_next/features/comic_details/comic_details.dart';
-import 'package:venera_next/features/comic_widgets/comic_widgets.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/gesture.dart';
+import 'package:venera_unified/components/summary_header.dart';
+import 'package:venera_unified/features/comic_details/comic_details.dart';
+import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'history_manager.dart';
 import 'history_page.dart';

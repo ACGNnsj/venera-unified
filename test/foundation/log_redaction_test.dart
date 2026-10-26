@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/log_redaction.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/log_redaction.dart';
 
 void main() {
   test('header masking is case insensitive and leaves inputs unchanged', () {

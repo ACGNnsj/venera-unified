@@ -6,9 +6,9 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/js_pool.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/js_pool.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/sync/sync.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/sync_preference_store.dart';
+import 'package:venera_unified/features/sync/sync.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/sync_preference_store.dart';
 
 void main() {
   testWidgets('summary follows replacement controller and releases listeners', (

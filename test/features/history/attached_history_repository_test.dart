@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/history/history_api.dart';
-import 'package:venera_next/features/history/history_repository.dart';
-import 'package:venera_next/features/history/image_favorites_repository.dart';
-import 'package:venera_next/features/favorites/favorites_api.dart';
-import 'package:venera_next/features/favorites/favorites_repository.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/sqlite_transaction.dart';
+import 'package:venera_unified/features/history/history_api.dart';
+import 'package:venera_unified/features/history/history_repository.dart';
+import 'package:venera_unified/features/history/image_favorites_repository.dart';
+import 'package:venera_unified/features/favorites/favorites_api.dart';
+import 'package:venera_unified/features/favorites/favorites_repository.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/sqlite_transaction.dart';
 
 History historyItem(String id) => History(
   type: ComicType(1),

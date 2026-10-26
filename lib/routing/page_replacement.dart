@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/app_page_route.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/app_page_route.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
 
 /// Redirects the current route to a root page without popping a newer route.
 bool replaceWithRootPage(BuildContext context, WidgetBuilder builder) {

@@ -1,7 +1,7 @@
-import 'package:venera_next/features/favorites/favorites_scope.dart';
-import 'package:venera_next/features/history/history_scope.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/features/history/history_scope.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
 import 'dart:io';
 
 import 'package:flutter/gestures.dart';
@@ -10,14 +10,14 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_reorderable_grid_view/widgets/reorderable_builder.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/components/button.dart';
-import 'package:venera_next/features/comic_widgets/comic_widgets.dart';
-import 'package:venera_next/features/favorites/favorites.dart';
-import 'package:venera_next/features/history/history.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/components/button.dart';
+import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
+import 'package:venera_unified/features/favorites/favorites.dart';
+import 'package:venera_unified/features/history/history.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 List<String> _comicOrder(WidgetTester tester) {
   final builder = tester.widget<ReorderableBuilder<FavoriteItem>>(

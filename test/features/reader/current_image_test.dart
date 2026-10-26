@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/current_image.dart';
+import 'package:venera_unified/features/reader/current_image.dart';
 
 void main() {
   const viewport = Rect.fromLTWH(0, 0, 400, 600);

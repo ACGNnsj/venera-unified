@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/window_controller.dart';
+import 'package:venera_unified/features/reader/window_controller.dart';
 
 class _Window {
   final events = <String>[];

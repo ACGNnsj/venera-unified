@@ -1,5 +1,5 @@
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/history_contract.dart';
+import 'package:venera_unified/foundation/history_contract.dart';
 import 'history_model.dart';
 
 /// Decode the existing SQLite representation after schema migration.

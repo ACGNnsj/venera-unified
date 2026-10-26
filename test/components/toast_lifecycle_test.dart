@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/message.dart';
+import 'package:venera_unified/components/message.dart';
 
 void main() {
   testWidgets('overlay child replacement appears without a new host', (

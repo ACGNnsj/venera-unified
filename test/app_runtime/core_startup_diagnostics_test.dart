@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/app_runtime/core_bootstrap.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/app_runtime/core_bootstrap.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 void main() {
   const phases = [

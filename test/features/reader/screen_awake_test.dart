@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/platform_effects_controller.dart';
+import 'package:venera_unified/features/reader/platform_effects_controller.dart';
 
 void main() {
   test(

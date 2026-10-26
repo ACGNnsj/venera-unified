@@ -1,7 +1,7 @@
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/cache_manager.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/cache_manager.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
 
 /// The core owns the live cache effect. UI writes, imports and restoration all
 /// use the same settings notification; a late form never opens a new cache.

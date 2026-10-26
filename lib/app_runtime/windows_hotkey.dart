@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/window_hotkey.dart';
-import 'package:venera_next/foundation/window_hotkey_controller.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/window_hotkey.dart';
+import 'package:venera_unified/foundation/window_hotkey_controller.dart';
 
 const windowHotkeySettingKey = 'windowsWindowHotkey';
 

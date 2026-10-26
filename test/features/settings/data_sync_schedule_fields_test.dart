@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/settings/data_sync_schedule_fields.dart';
-import 'package:venera_next/foundation/sync_configuration.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/features/settings/data_sync_schedule_fields.dart';
+import 'package:venera_unified/foundation/sync_configuration.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 void main() {
   for (final size in [const Size(320, 640), const Size(800, 360)]) {

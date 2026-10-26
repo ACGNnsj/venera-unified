@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/sync/legacy_pica_reader.dart';
+import 'package:venera_unified/features/sync/legacy_pica_reader.dart';
 
 void main() {
   late Database db;

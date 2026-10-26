@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rhttp/rhttp.dart' as rhttp;
-import 'package:venera_next/features/local_comics/download_retry.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/features/local_comics/download_retry.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 
 void main() {
   test(

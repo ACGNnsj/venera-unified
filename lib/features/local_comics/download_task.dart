@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart' show ChangeNotifier;
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 import 'local_comic_model.dart';
 
 abstract class DownloadTask with ChangeNotifier {

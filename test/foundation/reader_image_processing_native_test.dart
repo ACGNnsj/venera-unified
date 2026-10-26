@@ -1,16 +1,16 @@
 import 'dart:convert';
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:venera_next/foundation/image_provider/reader_image_processing.dart';
+import 'package:venera_unified/foundation/image_provider/reader_image_processing.dart';
 import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

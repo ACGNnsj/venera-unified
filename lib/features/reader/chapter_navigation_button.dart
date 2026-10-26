@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/translations.dart';
 import 'chapter_navigation.dart';
 
 /// Keeps only the last glyph for the exit animation. Hidden actions have no

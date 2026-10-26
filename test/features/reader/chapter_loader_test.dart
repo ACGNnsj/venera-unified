@@ -1,24 +1,24 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/features/comic_source/source_images_parser.dart';
-import 'package:venera_next/features/comic_source/source_parser_context.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/features/reader/chapter_loader.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/features/reader/waterfall_controller.dart';
-import 'package:venera_next/features/reader/waterfall_flow.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/features/comic_source/source_images_parser.dart';
+import 'package:venera_unified/features/comic_source/source_parser_context.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/features/reader/chapter_loader.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/features/reader/waterfall_controller.dart';
+import 'package:venera_unified/features/reader/waterfall_flow.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 const _key = 'local_chapter_test';
 final _type = ComicType.fromKey(_key);

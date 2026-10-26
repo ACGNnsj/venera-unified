@@ -1,5 +1,5 @@
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 class DownloadDirectoryAllocation {
   const DownloadDirectoryAllocation(this.directory, {required this.isNew});

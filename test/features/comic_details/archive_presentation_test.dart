@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/features/comic_details/archive_download_dialog.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/features/comic_details/archive_download_dialog.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
 
 import 'archive_selection_ownership_test.dart' show drainArchiveWork, frames;
 

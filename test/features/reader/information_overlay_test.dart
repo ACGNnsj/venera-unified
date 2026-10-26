@@ -5,15 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/auto_reading.dart';
-import 'package:venera_next/features/reader/platform_effects_controller.dart';
-import 'package:venera_next/features/reader/progress_bar.dart';
-import 'package:venera_next/features/reader/progress_navigation.dart';
-import 'package:venera_next/features/reader/scaffold.dart';
-import 'package:venera_next/features/reader/shell_data.dart';
-import 'package:venera_next/features/reader/status_info.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/foundation/reader_settings.dart';
+import 'package:venera_unified/features/reader/auto_reading.dart';
+import 'package:venera_unified/features/reader/platform_effects_controller.dart';
+import 'package:venera_unified/features/reader/progress_bar.dart';
+import 'package:venera_unified/features/reader/progress_navigation.dart';
+import 'package:venera_unified/features/reader/scaffold.dart';
+import 'package:venera_unified/features/reader/shell_data.dart';
+import 'package:venera_unified/features/reader/status_info.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/foundation/reader_settings.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

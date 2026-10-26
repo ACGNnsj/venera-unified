@@ -1,4 +1,4 @@
-import 'package:venera_next/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
 
 void configureHeadlessBindings() {
   JsEngine().bindUiMessageHandler(const HeadlessJsUiHandler());

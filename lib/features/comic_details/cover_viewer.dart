@@ -1,16 +1,16 @@
-import 'package:venera_next/components/file_save_task.dart';
+import 'package:venera_unified/components/file_save_task.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:venera_next/components/effects.dart';
-import 'package:venera_next/components/image_save_binding.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/image_provider/read_image.dart';
-import 'package:venera_next/foundation/image_save_work.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/effects.dart';
+import 'package:venera_unified/components/image_save_binding.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/image_provider/read_image.dart';
+import 'package:venera_unified/foundation/image_save_work.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 class ComicCoverViewer extends StatefulWidget {
   const ComicCoverViewer({

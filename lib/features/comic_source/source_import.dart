@@ -1,9 +1,9 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'source_failure.dart';
 import 'dart:convert';
 
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/network/app_dio.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/network/app_dio.dart';
 
 import 'parser.dart' show sourceClassName;
 import 'source_repositories.dart';

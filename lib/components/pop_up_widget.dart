@@ -1,11 +1,11 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/app_page_route.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/app_page_route.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 class PopUpWidget<T> extends PopupRoute<T> {
   PopUpWidget(this.widget, {this.onDispose, this.canDismiss});

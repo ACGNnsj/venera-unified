@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/foundation/extensions.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/extensions.dart';
 import 'log_file_writer.dart';
 import 'log_redaction.dart';
 

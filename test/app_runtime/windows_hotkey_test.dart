@@ -3,11 +3,11 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/windows_hotkey.dart';
-import 'package:venera_next/features/sync/data_sync_content_fingerprint.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/window_hotkey.dart';
+import 'package:venera_unified/app_runtime/windows_hotkey.dart';
+import 'package:venera_unified/features/sync/data_sync_content_fingerprint.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/window_hotkey.dart';
 
 import '../support/window_hotkey_fixture.dart';
 

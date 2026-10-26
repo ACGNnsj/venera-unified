@@ -2,10 +2,10 @@ import '../../support/data_sync_fixture.dart';
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/sync/data_sync_commit.dart';
-import 'package:venera_next/features/sync/data_sync_transfer.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/features/sync/data_sync_commit.dart';
+import 'package:venera_unified/features/sync/data_sync_transfer.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 void main() {
   late SyncTestFixture fixture;

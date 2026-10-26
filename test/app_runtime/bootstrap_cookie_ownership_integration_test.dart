@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
-import 'package:venera_next/app_runtime/bootstrap_core.dart';
-import 'package:venera_next/app_runtime/headless_bindings.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/network/cookie_jar.dart';
+import 'package:venera_unified/app_runtime/bootstrap_core.dart';
+import 'package:venera_unified/app_runtime/headless_bindings.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/headless_subscription_command.dart';
+import 'package:venera_unified/app_runtime/headless_subscription_command.dart';
 
 const comic = {'id': 'id', 'type': 'source', 'name': '漫画'};
 const selected = (id: 'id', sourceKey: 'source');

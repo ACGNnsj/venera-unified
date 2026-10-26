@@ -1,19 +1,19 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'dart:async';
 import 'source_failure.dart';
-import 'package:venera_next/components/settings_save_state.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
 import 'source_failure_presentation.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart' show Dio;
-import 'package:venera_next/components/pop_up_widget.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/pop_up_widget.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'comic_source_manager.dart';
 import 'source.dart';
 import 'source_repositories.dart';
 import 'source_installations_scope.dart';
 import 'source_inspection_task.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/foundation/log.dart';
 import 'source_installation_widgets.dart';
 
 class SourceRepositoriesPanel extends StatelessWidget {

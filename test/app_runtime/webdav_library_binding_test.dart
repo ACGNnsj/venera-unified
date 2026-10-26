@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/webdav_library.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/webdav_library/webdav_library_api.dart';
+import 'package:venera_unified/app_runtime/webdav_library.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/webdav_library/webdav_library_api.dart';
 
 void main() {
   test(

@@ -8,7 +8,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/image_processing.dart' as processing;
+import 'package:venera_unified/foundation/image_processing.dart' as processing;
 
 const _width = int.fromEnvironment('PIPELINE_WIDTH', defaultValue: 1600);
 const _height = int.fromEnvironment('PIPELINE_HEIGHT', defaultValue: 2400);

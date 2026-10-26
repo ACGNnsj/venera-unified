@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/settings/settings.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/features/settings/settings.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 void main() {
   testWidgets(

@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:venera_next/components/window_frame.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/features/comic_details/thumbnails.dart';
-import 'package:venera_next/features/comic_source/types.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/components/window_frame.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/features/comic_details/thumbnails.dart';
+import 'package:venera_unified/features/comic_source/types.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 Widget _preview(ComicThumbnailLoader load, {Key? key}) => Scaffold(
   body: CustomScrollView(

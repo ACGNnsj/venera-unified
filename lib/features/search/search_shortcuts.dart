@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/components/gesture.dart';
-import 'package:venera_next/components/menu.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
-import 'package:venera_next/routing/page_jump_target.dart';
+import 'package:venera_unified/components/gesture.dart';
+import 'package:venera_unified/components/menu.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
+import 'package:venera_unified/routing/page_jump_target.dart';
 
 import 'search_shortcut.dart';
 import 'search_shortcut_manager.dart';

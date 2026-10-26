@@ -2,16 +2,16 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:flutter_saf/flutter_saf.dart';
-import 'package:venera_next/features/comic_storage/comic_storage.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/comic_storage/comic_storage.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 import 'download_task_storage.dart';
 import 'local_comic_model.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/network/file_downloader.dart';
-import 'package:venera_next/foundation/file_interaction.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/network/file_downloader.dart';
+import 'package:venera_unified/foundation/file_interaction.dart';
 import 'package:zip_flutter/zip_flutter.dart';
 
 import 'download_task.dart';
@@ -30,11 +30,10 @@ class ArchiveDownloadTask extends DownloadTask {
   ArchiveDownloadTask(
     this.archiveUrl,
     this.comic, {
-    required DownloadTaskStorage storage,
+    required this._storage,
     FileDownloader Function(String, String)? createDownloader,
     Future<void> Function(String, String)? extractArchive,
-  }) : _storage = storage,
-       _createDownloader =
+  }) : _createDownloader =
            createDownloader ?? ((url, path) => FileDownloader(url, path)),
        _extract = extractArchive ?? _extractArchive {
     source = ComicSource.find(comic.sourceKey)!;

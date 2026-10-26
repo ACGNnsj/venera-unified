@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_layout.dart';
-import 'package:venera_next/foundation/reader_settings.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_layout.dart';
+import 'package:venera_unified/foundation/reader_settings.dart';
 
 void main() {
   test(

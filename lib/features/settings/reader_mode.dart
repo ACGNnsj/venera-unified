@@ -1,14 +1,14 @@
-import 'package:venera_next/foundation/preferences.dart';
-import 'package:venera_next/foundation/reader_preferences.dart';
-import 'package:venera_next/foundation/reader_preference_store.dart';
+import 'package:venera_unified/foundation/preferences.dart';
+import 'package:venera_unified/foundation/reader_preferences.dart';
+import 'package:venera_unified/foundation/reader_preference_store.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/features/reader/reader_mode_labels.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_layout.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/components/settings_save_state.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/features/reader/reader_mode_labels.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_layout.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 class ReaderModeSettings extends StatefulWidget {
   const ReaderModeSettings({

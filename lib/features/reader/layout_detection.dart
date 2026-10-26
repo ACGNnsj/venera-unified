@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:venera_next/foundation/comic_layout.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/network/image_http_client.dart';
-import 'package:venera_next/network/image_loading_config.dart';
-import 'package:venera_next/network/images.dart';
+import 'package:venera_unified/foundation/comic_layout.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/network/image_http_client.dart';
+import 'package:venera_unified/network/image_loading_config.dart';
+import 'package:venera_unified/network/images.dart';
 
 class ComicLayoutProbeFailure implements Exception {
   ComicLayoutProbeFailure(

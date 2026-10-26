@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/history/image_favorites.dart';
-import 'package:venera_next/features/history/image_favorites_models.dart';
-import 'package:venera_next/features/image_favorites/image_favorites_summary.dart';
+import 'package:venera_unified/features/history/image_favorites.dart';
+import 'package:venera_unified/features/history/image_favorites_models.dart';
+import 'package:venera_unified/features/image_favorites/image_favorites_summary.dart';
 
 class _Images extends ChangeNotifier implements ImageFavoriteManager {
   final reply = Completer<ImageFavoritesComputed>();

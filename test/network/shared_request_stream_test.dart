@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:dio/io.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/request_scope.dart';
-import 'package:venera_next/network/shared_request_stream.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/request_scope.dart';
+import 'package:venera_unified/network/shared_request_stream.dart';
 
 void main() {
   test(

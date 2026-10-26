@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/features/local_comics/local_storage_guard.dart';
-import 'package:venera_next/features/local_comics/local_import_lifecycle.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/features/local_comics/local_storage_guard.dart';
+import 'package:venera_unified/features/local_comics/local_import_lifecycle.dart';
 
 void main() {
   test(

@@ -1,8 +1,8 @@
 import 'package:flutter_saf/flutter_saf.dart';
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
-import 'package:venera_next/foundation/file_interaction.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/file_interaction.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 
 import 'comic_copy_record.dart';
 

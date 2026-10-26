@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:venera_next/features/local_comics/import_export/comic_copy_record.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_copy_record.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 /// The old writer had no source manifest. Keep that format in fixtures so the
 /// current writer cannot accidentally make legacy compatibility tests pass.

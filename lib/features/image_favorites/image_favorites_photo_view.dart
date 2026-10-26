@@ -1,5 +1,5 @@
-import 'package:venera_next/features/history/history_scope.dart';
-import 'package:venera_next/components/file_save_task.dart';
+import 'package:venera_unified/features/history/history_scope.dart';
+import 'package:venera_unified/components/file_save_task.dart';
 import 'dart:async';
 
 import 'package:flutter/gestures.dart';
@@ -7,18 +7,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
-import 'package:venera_next/components/effects.dart';
-import 'package:venera_next/components/image_save_binding.dart';
-import 'package:venera_next/components/menu.dart';
-import 'package:venera_next/features/history/history_api.dart';
-import 'package:venera_next/features/history/image_favorites.dart';
-import 'package:venera_next/features/history/image_favorites_provider.dart';
-import 'package:venera_next/features/reader/reader.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/image_save_work.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/effects.dart';
+import 'package:venera_unified/components/image_save_binding.dart';
+import 'package:venera_unified/components/menu.dart';
+import 'package:venera_unified/features/history/history_api.dart';
+import 'package:venera_unified/features/history/image_favorites.dart';
+import 'package:venera_unified/features/history/image_favorites_provider.dart';
+import 'package:venera_unified/features/reader/reader.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/image_save_work.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 class ImageFavoritesPhotoView extends StatefulWidget {
   const ImageFavoritesPhotoView({

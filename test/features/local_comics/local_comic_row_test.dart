@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/local_comics/local_comic_row.dart';
+import 'package:venera_unified/features/local_comics/local_comic_row.dart';
 
 void main() {
   test(

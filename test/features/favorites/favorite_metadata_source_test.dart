@@ -3,15 +3,15 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:venera_next/features/comic_source/source_comic_parser.dart';
-import 'package:venera_next/features/comic_source/source_parser_context.dart';
-import 'package:venera_next/features/favorites/favorite_metadata_update.dart';
-import 'package:venera_next/features/favorites/favorite_models.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/features/comic_source/source_comic_parser.dart';
+import 'package:venera_unified/features/comic_source/source_parser_context.dart';
+import 'package:venera_unified/features/favorites/favorite_metadata_update.dart';
+import 'package:venera_unified/features/favorites/favorite_models.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 
 const _key = 'favorite_metadata_native';
 

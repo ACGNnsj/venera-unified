@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_saf/flutter_saf.dart';
 import 'package:path/path.dart' as path;
-import 'package:venera_next/features/local_comics/import_export/comic_directory_copy.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_directory_copy.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 void main() {
   test(

@@ -5,12 +5,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/consts.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/consts.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 import 'package:window_manager/window_manager.dart';
 
 const _kTitleBarHeight = 36.0;
@@ -46,7 +46,7 @@ class WindowFrameController extends InheritedWidget {
   final VoidCallback forceExit;
 
   const WindowFrameController._create({
-    required bool Function() isClosing,
+    required this._isClosing,
     required this.isWindowFrameHidden,
     required this.setWindowFrame,
     required this.addCloseListener,
@@ -60,7 +60,7 @@ class WindowFrameController extends InheritedWidget {
     required this.removeCloseFailureListener,
     required this.forceExit,
     required super.child,
-  }) : _isClosing = isClosing;
+  });
 
   @override
   bool updateShouldNotify(covariant InheritedWidget oldWidget) {

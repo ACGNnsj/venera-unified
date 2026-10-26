@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/file_interaction.dart';
+import 'package:venera_unified/foundation/file_interaction.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

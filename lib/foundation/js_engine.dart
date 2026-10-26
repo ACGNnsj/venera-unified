@@ -1,4 +1,4 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
@@ -27,16 +27,16 @@ import 'package:pointycastle/block/modes/cfb.dart';
 import 'package:pointycastle/block/modes/ecb.dart';
 import 'package:pointycastle/block/modes/ofb.dart';
 import 'package:uuid/uuid.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_locale.dart';
-import 'package:venera_next/foundation/js_pool.dart';
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/cache.dart';
-import 'package:venera_next/network/cookie_jar.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/network/proxy.dart';
-import 'package:venera_next/network/request_scope.dart';
-import 'package:venera_next/foundation/init.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_locale.dart';
+import 'package:venera_unified/foundation/js_pool.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/cache.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/network/proxy.dart';
+import 'package:venera_unified/network/request_scope.dart';
+import 'package:venera_unified/foundation/init.dart';
 
 import 'consts.dart';
 import 'log.dart';
@@ -355,11 +355,10 @@ class JsEngine with _JSEngineApi, Init {
     Dio Function()? createHttpClient,
     Future<Uint8List> Function()? loadInitScript,
     JsPoolEngine Function(Uint8List)? createComputeWorker,
-    JsUiMessageHandler? uiMessageHandler,
+    this._uiMessageHandler,
   }) : _createHttpClient = createHttpClient ?? _newHttpClient,
        _loadInitScript = loadInitScript ?? _readInitScript,
-       _createComputeWorker = createComputeWorker ?? _newComputeWorker,
-       _uiMessageHandler = uiMessageHandler;
+       _createComputeWorker = createComputeWorker ?? _newComputeWorker;
 
   final Dio Function() _createHttpClient;
   final Future<Uint8List> Function() _loadInitScript;

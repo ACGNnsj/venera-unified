@@ -4,12 +4,10 @@ import 'sync_configuration.dart';
 /// Persistence and transfer transaction ownership remain with DataSyncController.
 class SyncPreferenceStore {
   const SyncPreferenceStore({
-    required Object? Function(String) readSetting,
-    required void Function(String, Object?) writeSetting,
-    required Map<String, dynamic> Function() implicitData,
-  }) : _readSetting = readSetting,
-       _writeSetting = writeSetting,
-       _implicitData = implicitData;
+    required this._readSetting,
+    required this._writeSetting,
+    required this._implicitData,
+  });
 
   final Object? Function(String) _readSetting;
   final void Function(String, Object?) _writeSetting;

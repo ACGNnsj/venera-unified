@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/local_comics/local_reading.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/local_comics/local_reading.dart';
 
 void main() {
   test('downloaded IDs follow current chapter order, not download order', () {

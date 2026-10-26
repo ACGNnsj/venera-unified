@@ -1,13 +1,13 @@
 import 'reader_session_scope.dart';
 import 'reader_entry_loader.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/loading.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/features/reader/reader_page.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/components/loading.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/features/reader/reader_page.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 class ReaderWithLoading extends StatefulWidget {
   const ReaderWithLoading({

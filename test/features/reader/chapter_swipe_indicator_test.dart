@@ -2,8 +2,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/chapter_swipe_indicator.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/features/reader/chapter_swipe_indicator.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 // Keep real ScrollPositions at a chosen overscroll until the next input.
 class _HeldPhysics extends ScrollPhysics {

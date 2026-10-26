@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/sync_configuration.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/sync_configuration.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 class DataSyncScheduleFields extends StatelessWidget {
   const DataSyncScheduleFields({

@@ -1,13 +1,13 @@
-import 'package:venera_next/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/appbar.dart';
-import 'package:venera_next/components/scroll.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/features/settings/setting_components.dart';
-import 'package:venera_next/features/settings/keyword_blocking.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
-import 'package:venera_next/routing/app_navigation.dart';
+import 'package:venera_unified/components/appbar.dart';
+import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/features/settings/setting_components.dart';
+import 'package:venera_unified/features/settings/keyword_blocking.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
 
 class ExploreSettings extends StatefulWidget {
   const ExploreSettings({super.key});

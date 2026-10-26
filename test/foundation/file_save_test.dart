@@ -1,4 +1,4 @@
-import 'package:venera_next/foundation/platform_dialog_queue.dart';
+import 'package:venera_unified/foundation/platform_dialog_queue.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -6,11 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/file_interaction.dart' as interaction;
-import 'package:venera_next/foundation/file_save_operation.dart' as saves;
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/foundation/directory_selection.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/file_interaction.dart' as interaction;
+import 'package:venera_unified/foundation/file_save_operation.dart' as saves;
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/foundation/directory_selection.dart';
 
 const _selector = MethodChannel('plugins.flutter.io/file_selector');
 const _mobile = MethodChannel('flutter_file_dialog');
@@ -630,9 +630,9 @@ final class _FileOverrides extends IOOverrides {
 class _InterceptedFile implements File {
   _InterceptedFile(
     this.raw, {
-    Future<File> Function(File, String)? copy,
+    this._copy,
     this.write,
-  }) : _copy = copy;
+  });
   final File raw;
   final Future<File> Function(File, String)? _copy;
   final Future<File> Function(File, List<int>, FileMode, bool)? write;

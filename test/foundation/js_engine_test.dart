@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
 
 void main() {
   test('read-only source retry recognizes malformed JSON responses', () {

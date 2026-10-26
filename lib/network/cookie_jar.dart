@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/extensions.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/extensions.dart';
 
 class CookieJarSql {
   Database? _database;

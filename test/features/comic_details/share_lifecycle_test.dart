@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/menu.dart';
+import 'package:venera_unified/components/menu.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 // The real serializer is an existing transitive share_plus dependency.
@@ -9,14 +9,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:share_plus_platform_interface/method_channel/method_channel_share.dart';
 // ignore: depend_on_referenced_packages
 import 'package:share_plus_platform_interface/share_plus_platform_interface.dart';
-import 'package:venera_next/components/message.dart';
-import 'package:venera_next/components/window_frame.dart';
-import 'package:venera_next/features/comic_details/actions.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/features/history/history.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/file_interaction.dart' show Share;
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/components/window_frame.dart';
+import 'package:venera_unified/features/comic_details/actions.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/features/history/history.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/file_interaction.dart' show Share;
+import 'package:venera_unified/foundation/log.dart';
 import 'package:window_manager/window_manager.dart';
 
 class _Actions with ComicPageActions {

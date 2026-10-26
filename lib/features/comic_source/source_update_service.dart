@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'source_failure.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/app_dio.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/app_dio.dart';
 
 import 'comic_source_manager.dart';
 import 'source.dart';
@@ -13,11 +13,10 @@ import 'source_repositories.dart';
 /// Presentation owns dialogs; the service owns request and commit lifetimes.
 class SourceUpdateService {
   SourceUpdateService({
-    ComicSourceManager? manager,
+    this._manager,
     SourceRepositories? repositories,
     Dio Function()? createDio,
-  }) : _manager = manager,
-       _repositories = repositories ?? SourceRepositories.instance,
+  }) : _repositories = repositories ?? SourceRepositories.instance,
        _createDio = createDio ?? (() => AppDio());
 
   final Dio Function() _createDio;

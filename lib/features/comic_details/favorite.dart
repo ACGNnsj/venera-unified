@@ -1,22 +1,22 @@
-import 'package:venera_next/features/favorites/favorites_scope.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/log.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
-import 'package:venera_next/components/appbar.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/favorites/favorites.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
-import 'package:venera_next/network/cache.dart';
+import 'package:venera_unified/components/appbar.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/favorites/favorites.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
+import 'package:venera_unified/network/cache.dart';
 
 class ComicFavoritePanel extends StatefulWidget {
   const ComicFavoritePanel({

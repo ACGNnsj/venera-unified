@@ -1,26 +1,22 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:venera_next/features/comic_source/comic_source_api.dart'
+import 'package:venera_unified/features/comic_source/comic_source_api.dart'
     show ComicThumbnailLoader;
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 /// A single comic's cursor sequence; the host retains each accepted read.
 class ComicThumbnailPages {
   ComicThumbnailPages({
     required this.comicId,
-    required ComicThumbnailLoader? load,
+    required this._load,
     required Iterable<String> initial,
-    required bool Function() canLoad,
-    required void Function() Function(RequestScope, Future<void>) retain,
-    required void Function() onChanged,
-  }) : _load = load,
-       _items = List.of(initial),
-       _canLoad = canLoad,
-       _retain = retain,
-       _onChanged = onChanged;
+    required this._canLoad,
+    required this._retain,
+    required void Function() this._onChanged,
+  }) : _items = List.of(initial);
 
   final String comicId;
   final ComicThumbnailLoader? _load;

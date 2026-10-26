@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/local_comics/local_storage_migration.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/features/local_comics/local_storage_migration.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 void main() {
   late Directory root;

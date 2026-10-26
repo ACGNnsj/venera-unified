@@ -3,14 +3,14 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/features/history/image_favorite_actions.dart';
-import 'package:venera_next/features/history/image_favorites.dart';
-import 'package:venera_next/features/history/image_favorites_models.dart';
-import 'package:venera_next/features/history/image_favorites_statistics.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/features/history/image_favorite_actions.dart';
+import 'package:venera_unified/features/history/image_favorites.dart';
+import 'package:venera_unified/features/history/image_favorites_models.dart';
+import 'package:venera_unified/features/history/image_favorites_statistics.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
 import 'image_favorites_repository_test.dart' show comic;
 import '../reader/image_favorite_actions_test.dart' show selection;
 

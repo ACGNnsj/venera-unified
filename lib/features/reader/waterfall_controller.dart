@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 import 'waterfall_flow.dart';
 
 /// Chapter loading policy; scrolling and frame callbacks belong to the view.

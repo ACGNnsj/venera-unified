@@ -5,12 +5,12 @@ import 'data_sync_remote_port.dart';
 import 'data_sync_upload_journal.dart';
 import 'data_sync_upload_executor.dart';
 import 'dart:async';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 
-import 'package:venera_next/network/webdav.dart';
+import 'package:venera_unified/network/webdav.dart';
 
 export 'data_sync_remote_port.dart';
 
@@ -82,11 +82,10 @@ class DataSyncTransferFailure extends DataSyncFailure {
 /// 123 云盘等服务的下载会跳转到 CDN，不能擅自将这些要求加回稳定流程。
 class V117WebDavDataSyncTransfer implements DataSyncTransfer {
   V117WebDavDataSyncTransfer({
-    required DataSyncParticipant participant,
+    required this._participant,
     webdav.Client Function(WebDavEndpoint)? createClient,
     DateTime Function()? now,
-  }) : _participant = participant,
-       _createClient =
+  }) : _createClient =
            createClient ??
            ((endpoint) => endpoint.createClient(logRequests: true)),
        _now = now ?? DateTime.now;
@@ -221,16 +220,12 @@ Future<void> _deleteV117Temporary(Directory directory) async {
 class WebDavDataSyncTransfer
     implements DataSyncTransfer, DataSyncUploadRecovery {
   WebDavDataSyncTransfer({
-    required DataSyncParticipant participant,
-    required DataSyncRemote Function(WebDavEndpoint) openRemote,
-    Future<int> Function(String syncOperationId)? readImportCommitTime,
-    required String Function() uploadJournalPath,
+    required this._participant,
+    required this._openRemote,
+    this._readImportCommitTime,
+    required this._uploadJournalPath,
     DateTime Function()? now,
-  }) : _participant = participant,
-       _openRemote = openRemote,
-       _readImportCommitTime = readImportCommitTime,
-       _uploadJournalPath = uploadJournalPath,
-       _now = now ?? DateTime.now;
+  }) : _now = now ?? DateTime.now;
 
   final DataSyncParticipant _participant;
   final DataSyncRemote Function(WebDavEndpoint) _openRemote;

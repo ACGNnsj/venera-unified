@@ -51,17 +51,22 @@ class SharePlusWebPlugin extends SharePlatform {
 
     try {
       await _navigator.share(data).toDart;
-    } on DOMException catch (e) {
-      if (e.name case 'AbortError') {
-        return _resultDismissed;
+    } catch (e) {
+      if (e.isA<DOMException>()) {
+        final error = e as DOMException;
+        if (error.name case 'AbortError') {
+          return _resultDismissed;
+        }
+
+        developer.log(
+          'Failed to share uri',
+          error: '${error.name}: ${error.message}',
+        );
+
+        return _fallback(params, 'Navigator.share() failed: ${error.message}');
       }
 
-      developer.log(
-        'Failed to share uri',
-        error: '${e.name}: ${e.message}',
-      );
-
-      return _fallback(params, 'Navigator.share() failed: ${e.message}');
+      return _fallback(params, 'Navigator.share() failed');
     }
 
     return ShareResult.unavailable;

@@ -7,17 +7,17 @@ import 'package:dio/io.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:rhttp/rhttp.dart' as rhttp;
-import 'package:venera_next/features/sync/data_sync_commit.dart';
-import 'package:venera_next/features/sync/data_sync_controller.dart';
-import 'package:venera_next/features/sync/data_sync_operation.dart';
-import 'package:venera_next/features/sync/data_sync_recovery.dart';
-import 'package:venera_next/features/sync/data_sync_remote.dart';
-import 'package:venera_next/features/sync/data_sync_transfer.dart';
-import 'package:venera_next/features/sync/data_sync_upload_journal.dart';
-import 'package:venera_next/foundation/sync_preference_store.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/sync/data_sync_commit.dart';
+import 'package:venera_unified/features/sync/data_sync_controller.dart';
+import 'package:venera_unified/features/sync/data_sync_operation.dart';
+import 'package:venera_unified/features/sync/data_sync_recovery.dart';
+import 'package:venera_unified/features/sync/data_sync_remote.dart';
+import 'package:venera_unified/features/sync/data_sync_transfer.dart';
+import 'package:venera_unified/features/sync/data_sync_upload_journal.dart';
+import 'package:venera_unified/foundation/sync_preference_store.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 import '../../support/directory_alias.dart';
 

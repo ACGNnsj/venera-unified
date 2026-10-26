@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/image_favorites/type.dart';
+import 'package:venera_unified/features/image_favorites/type.dart';
 
 void main() {
   for (final range in TimeRange.values) {

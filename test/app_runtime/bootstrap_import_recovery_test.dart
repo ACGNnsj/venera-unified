@@ -4,21 +4,21 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/app_runtime/bootstrap_core.dart';
-import 'package:venera_next/app_runtime/headless_bindings.dart';
-import 'package:venera_next/features/favorites/favorites.dart';
-import 'package:venera_next/features/favorites/favorites_repository.dart';
-import 'package:venera_next/features/sync/app_data_import_journal.dart';
-import 'package:venera_next/features/sync/data_sync_commit.dart';
-import 'package:venera_next/features/sync/data_sync_ownership.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/init.dart';
-import 'package:venera_next/network/cookie_jar.dart';
-import 'package:venera_next/features/comic_source/source_data_storage.dart';
-import 'package:venera_next/features/comic_source/source_transaction_journal.dart';
-import 'package:venera_next/features/comic_source/source_mutation_failure.dart';
+import 'package:venera_unified/app_runtime/bootstrap_core.dart';
+import 'package:venera_unified/app_runtime/headless_bindings.dart';
+import 'package:venera_unified/features/favorites/favorites.dart';
+import 'package:venera_unified/features/favorites/favorites_repository.dart';
+import 'package:venera_unified/features/sync/app_data_import_journal.dart';
+import 'package:venera_unified/features/sync/data_sync_commit.dart';
+import 'package:venera_unified/features/sync/data_sync_ownership.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/init.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
+import 'package:venera_unified/features/comic_source/source_data_storage.dart';
+import 'package:venera_unified/features/comic_source/source_transaction_journal.dart';
+import 'package:venera_unified/features/comic_source/source_mutation_failure.dart';
 import '../support/source_data_files.dart';
 
 void main() {

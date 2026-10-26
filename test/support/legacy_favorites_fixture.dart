@@ -1,5 +1,5 @@
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/favorites/favorites_repository.dart';
+import 'package:venera_unified/features/favorites/favorites_repository.dart';
 
 void addSqliteInternalTables(Database db) {
   // SQLite creates these tables itself; dropping the scratch table retains

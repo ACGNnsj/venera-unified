@@ -10,8 +10,8 @@ class FollowUpdatesRuntime {
     required Future<void> Function() waitForDownload,
     required FollowUpdateTask Function(String) createTask,
     required void Function(Object, StackTrace) onError,
-    required void Function() Function(void Function()) observeChanges,
-  }) : _observeChanges = observeChanges {
+    required this._observeChanges,
+  }) {
     _service = FollowUpdatesService(
       folder: folder,
       isChecking: isChecking,

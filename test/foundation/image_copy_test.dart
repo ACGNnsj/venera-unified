@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/image_processing.dart' as processing;
+import 'package:venera_unified/foundation/image_processing.dart' as processing;
 
 List<int> pixels(processing.Image image) => [
   for (var i = 0; i < image.width * image.height; i++)

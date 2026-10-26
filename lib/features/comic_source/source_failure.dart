@@ -1,4 +1,4 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 
 /// Stable source-management reasons; presentation chooses when to translate.
 enum SourceFailureCode {

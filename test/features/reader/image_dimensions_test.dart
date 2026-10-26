@@ -4,13 +4,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
-import 'package:venera_next/features/reader/comic_image.dart';
-import 'package:venera_next/features/reader/auto_reading.dart';
-import 'package:venera_next/features/reader/display_image_provider.dart';
-import 'package:venera_next/features/reader/image_dimensions.dart';
-import 'package:venera_next/foundation/image_provider/reader_image.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/foundation/reader_settings.dart';
+import 'package:venera_unified/features/reader/comic_image.dart';
+import 'package:venera_unified/features/reader/auto_reading.dart';
+import 'package:venera_unified/features/reader/display_image_provider.dart';
+import 'package:venera_unified/features/reader/image_dimensions.dart';
+import 'package:venera_unified/foundation/image_provider/reader_image.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/foundation/reader_settings.dart';
 
 class _Provider extends ReaderImageProvider {
   _Provider(this.bytes, {bool resize = false})

@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_details/favorite.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/network/cache.dart';
+import 'package:venera_unified/features/comic_details/favorite.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/network/cache.dart';
 
 void main() {
   setUp(() {

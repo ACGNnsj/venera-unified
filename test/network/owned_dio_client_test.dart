@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/owned_dio_client.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/owned_dio_client.dart';
 
 void main() {
   for (final failCleanup in [false, true]) {

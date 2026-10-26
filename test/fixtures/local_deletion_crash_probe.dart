@@ -3,9 +3,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:venera_next/features/local_comics/local_deletion_journal.dart';
-import 'package:venera_next/foundation/sqlite_connection.dart';
-import 'package:venera_next/foundation/sqlite_transaction.dart';
+import 'package:venera_unified/features/local_comics/local_deletion_journal.dart';
+import 'package:venera_unified/foundation/sqlite_connection.dart';
+import 'package:venera_unified/foundation/sqlite_transaction.dart';
 
 Future<void> main(List<String> args) async {
   final root = args[0];

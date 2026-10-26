@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/favorites/favorites_api.dart';
-import 'package:venera_next/features/favorites/favorite_row.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/favorites/favorites_api.dart';
+import 'package:venera_unified/features/favorites/favorite_row.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 void main() {
   test(

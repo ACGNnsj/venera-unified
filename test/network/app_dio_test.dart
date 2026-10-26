@@ -5,11 +5,11 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/json_response.dart';
-import 'package:venera_next/network/cookie_jar.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/json_response.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
 
 void main() {
   group('JSON response validation', () {

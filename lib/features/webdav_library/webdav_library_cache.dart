@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/sqlite_connection.dart';
+import 'package:venera_unified/foundation/sqlite_connection.dart';
 
 import 'webdav_library_snapshot.dart';
 

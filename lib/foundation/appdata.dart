@@ -1,20 +1,20 @@
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/sync_configuration.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/sync_configuration.dart';
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/app_data_sync_fields.dart';
-import 'package:venera_next/foundation/comic_layout.dart';
-import 'package:venera_next/foundation/reader_settings.dart';
-import 'package:venera_next/foundation/reader_preferences.dart';
-import 'package:venera_next/foundation/reader_preference_settings.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/foundation/init.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/app_data_sync_fields.dart';
+import 'package:venera_unified/foundation/comic_layout.dart';
+import 'package:venera_unified/foundation/reader_settings.dart';
+import 'package:venera_unified/foundation/reader_preferences.dart';
+import 'package:venera_unified/foundation/reader_preference_settings.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/init.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 class Appdata with Init {
   Appdata._create();

@@ -1,7 +1,7 @@
 import 'favorite_models.dart';
 import 'favorites_repository.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/sqlite_transaction.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/sqlite_transaction.dart';
 
 /// SQL outcome; the owner persists the selected folder and publishes caches
 /// after the transaction. Repeating a membership assignment does not move it.

@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'message.dart';
 import 'select.dart';

@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/components/side_bar.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
+import 'package:venera_unified/components/side_bar.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
 
 /// Owns the shell's pending/open sidebar and its temporary interaction pause.
 class ReaderSidebarBinding {

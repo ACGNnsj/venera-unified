@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/settings_effects.dart';
-import 'package:venera_next/foundation/reader_preferences.dart';
+import 'package:venera_unified/features/reader/settings_effects.dart';
+import 'package:venera_unified/foundation/reader_preferences.dart';
 
 void main() {
   test('settings request keeps ordered reader and shell effects', () {

@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/network/image_stream.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/image_stream.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 void main() {
   for (final outcome in ['bytes', 'error', 'cancel']) {

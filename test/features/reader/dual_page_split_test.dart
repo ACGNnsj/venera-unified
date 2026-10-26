@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/comic_image.dart';
-import 'package:venera_next/features/reader/image_position.dart';
+import 'package:venera_unified/features/reader/comic_image.dart';
+import 'package:venera_unified/features/reader/image_position.dart';
 
 void main() {
   group('dual page split helpers', () {

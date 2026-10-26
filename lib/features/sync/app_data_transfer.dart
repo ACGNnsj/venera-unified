@@ -9,19 +9,19 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 import 'package:uuid/uuid.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/app_data_sync_fields.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/app_data_sync_fields.dart';
 
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/sync_configuration.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/comic_source/source_data_storage.dart';
-import 'package:venera_next/features/comic_source/source_transaction_journal.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/network/cookie_jar.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/sync_configuration.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/comic_source/source_data_storage.dart';
+import 'package:venera_unified/features/comic_source/source_transaction_journal.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 Future<File> exportAppData({bool sync = true, File? destination}) =>
     AppDataOperations.instance.run(

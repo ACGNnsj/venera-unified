@@ -4,13 +4,13 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_details/thumbnails.dart';
-import 'package:venera_next/features/comic_details/comments_preview.dart';
-import 'package:venera_next/features/comic_source/models.dart';
-import 'package:venera_next/features/comic_source/types.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/image_provider/cached_image.dart';
+import 'package:venera_unified/features/comic_details/thumbnails.dart';
+import 'package:venera_unified/features/comic_details/comments_preview.dart';
+import 'package:venera_unified/features/comic_source/models.dart';
+import 'package:venera_unified/features/comic_source/types.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/image_provider/cached_image.dart';
 
 void main() {
   late Directory root;

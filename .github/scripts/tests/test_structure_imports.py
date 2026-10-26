@@ -28,23 +28,23 @@ class StructureImportsTest(unittest.TestCase):
                 for path, target in MODULE.FEATURE_ENTRYPOINT_TARGETS.items()
             }
             source.write_text('''
-                import 'package:venera_next/features/history/history_image_provider.dart';
-                import 'package:venera_next/features/history/image_favorites_provider.dart';
-                import 'package:venera_next/features/local_comics/download.dart';
-                import 'package:venera_next/features/history/history_api.dart';
+                import 'package:venera_unified/features/history/history_image_provider.dart';
+                import 'package:venera_unified/features/history/image_favorites_provider.dart';
+                import 'package:venera_unified/features/local_comics/download.dart';
+                import 'package:venera_unified/features/history/history_api.dart';
             ''', encoding='utf-8')
             with patch.multiple(MODULE, ROOT=root.resolve(), LIB_DIR=lib.resolve(),
                                 FEATURE_ENTRYPOINT_TARGETS=targets):
                 self.assertEqual(MODULE._scan_feature_entrypoint_violations(), set())
                 # A business entry does not grant access to UI implementation files.
                 source.write_text(
-                    "import 'package:venera_next/features/comic_details/comic_page.dart';",
+                    "import 'package:venera_unified/features/comic_details/comic_page.dart';",
                     encoding='utf-8')
                 self.assertEqual(MODULE._scan_feature_entrypoint_violations(), {
                     'lib/app_runtime/owner.dart -> lib/features/comic_details/comic_page.dart '
                     '(use lib/features/comic_details/comic_details.dart)'})
                 source.write_text(
-                    "import 'package:venera_next/features/history/image_favorites_models.dart';",
+                    "import 'package:venera_unified/features/history/image_favorites_models.dart';",
                     encoding='utf-8')
                 self.assertEqual(MODULE._scan_feature_entrypoint_violations(), {
                     'lib/app_runtime/owner.dart -> lib/features/history/image_favorites_models.dart '

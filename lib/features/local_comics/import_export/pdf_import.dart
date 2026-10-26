@@ -3,11 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show compute;
 import 'package:image/image.dart' as image;
 import 'package:pdfrx/pdfrx.dart';
-import 'package:venera_next/features/local_comics/import_export/document_import.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/features/local_comics/local_storage_guard.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
+import 'package:venera_unified/features/local_comics/import_export/document_import.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/features/local_comics/local_storage_guard.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
 import 'comic_import_output.dart';
 
 const double _pdfRenderScale = 3;

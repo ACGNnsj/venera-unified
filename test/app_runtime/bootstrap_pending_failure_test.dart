@@ -4,11 +4,11 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/app_runtime/bootstrap_core.dart';
-import 'package:venera_next/app_runtime/headless_bindings.dart';
-import 'package:venera_next/features/sync/data_sync_ownership.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/js_engine.dart';
+import 'package:venera_unified/app_runtime/bootstrap_core.dart';
+import 'package:venera_unified/app_runtime/headless_bindings.dart';
+import 'package:venera_unified/features/sync/data_sync_ownership.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

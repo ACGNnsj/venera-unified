@@ -1,4 +1,4 @@
-import 'package:venera_next/features/comic_storage/comic_storage.dart';
+import 'package:venera_unified/features/comic_storage/comic_storage.dart';
 
 class WebDavLibraryEntry {
   const WebDavLibraryEntry({

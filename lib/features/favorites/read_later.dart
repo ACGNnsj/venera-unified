@@ -1,13 +1,13 @@
-import 'package:venera_next/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'favorite_models.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/appbar.dart';
-import 'package:venera_next/components/menu.dart';
-import 'package:venera_next/features/comic_details/comic_details.dart';
-import 'package:venera_next/features/comic_widgets/comic_widgets.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/appbar.dart';
+import 'package:venera_unified/components/menu.dart';
+import 'package:venera_unified/features/comic_details/comic_details.dart';
+import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 class ReadLaterButton extends StatelessWidget {
   const ReadLaterButton({super.key, required this.comic, this.onChanged});

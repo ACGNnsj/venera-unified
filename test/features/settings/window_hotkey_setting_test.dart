@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/settings/window_hotkey_setting.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/window_hotkey.dart';
-import 'package:venera_next/foundation/window_hotkey_controller.dart';
+import 'package:venera_unified/features/settings/window_hotkey_setting.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/window_hotkey.dart';
+import 'package:venera_unified/foundation/window_hotkey_controller.dart';
 
 import '../../support/window_hotkey_fixture.dart';
 

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/init.dart';
+import 'package:venera_unified/foundation/init.dart';
 
 class _Service with Init {
   _Service(this.initialize);

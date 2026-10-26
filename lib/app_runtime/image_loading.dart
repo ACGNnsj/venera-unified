@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:venera_next/foundation/image_provider/base_image_provider.dart';
-import 'package:venera_next/network/images.dart';
+import 'package:venera_unified/foundation/image_provider/base_image_provider.dart';
+import 'package:venera_unified/network/images.dart';
 
 /// Stop producers and requests together, then join their actual cleanup. On
 /// recovery requests reopen before mounted providers resume loading images.

@@ -1,19 +1,19 @@
-import 'package:venera_next/features/history/history_scope.dart';
+import 'package:venera_unified/features/history/history_scope.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/appbar.dart';
-import 'package:venera_next/components/gesture.dart';
-import 'package:venera_next/components/image.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/components/scroll.dart';
-import 'package:venera_next/features/history/history.dart';
-import 'package:venera_next/features/image_favorites/image_favorites_photo_view.dart';
-import 'package:venera_next/features/reader/reader.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/consts.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/appbar.dart';
+import 'package:venera_unified/components/gesture.dart';
+import 'package:venera_unified/components/image.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/features/history/history.dart';
+import 'package:venera_unified/features/image_favorites/image_favorites_photo_view.dart';
+import 'package:venera_unified/features/reader/reader.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/consts.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 class ImageFavoritesGalleryPage extends StatefulWidget {
   const ImageFavoritesGalleryPage({

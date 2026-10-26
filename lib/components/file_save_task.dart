@@ -1,10 +1,10 @@
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/file_interaction.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/file_interaction.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'window_selection_task.dart';
 

@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:venera_next/foundation/directory_selection.dart';
-import 'package:venera_next/foundation/file_selection.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
+import 'package:venera_unified/foundation/directory_selection.dart';
+import 'package:venera_unified/foundation/file_selection.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
 
 class _File extends FileSelection {
   _File({this.prepareGate, this.release}) : super('selected.cbz');

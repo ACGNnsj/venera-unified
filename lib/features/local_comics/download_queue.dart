@@ -1,6 +1,6 @@
 import 'dart:collection';
 import 'dart:async';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 import 'download_task.dart';
 import 'local_comic_model.dart';
 

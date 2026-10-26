@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/history/history_api.dart';
-import 'package:venera_next/features/reader/history_progress.dart';
-import 'package:venera_next/features/reader/page_layout.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/history/history_api.dart';
+import 'package:venera_unified/features/reader/history_progress.dart';
+import 'package:venera_unified/features/reader/page_layout.dart';
 
 History history() => History.fromMap({
   'type': 0,

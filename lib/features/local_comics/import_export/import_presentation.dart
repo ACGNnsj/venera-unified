@@ -1,7 +1,7 @@
-import 'package:venera_next/components/message.dart';
+import 'package:venera_unified/components/message.dart';
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/context.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/context.dart';
 
 import 'pdf_import_dialog.dart';
 import 'pdf_import_tasks.dart';

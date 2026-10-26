@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/network/request_scope.dart';
-import 'package:venera_next/network/shared_image_requests.dart';
+import 'package:venera_unified/network/request_scope.dart';
+import 'package:venera_unified/network/shared_image_requests.dart';
 
 class _GatedSource {
   _GatedSource({this.failure, this.failureStack});

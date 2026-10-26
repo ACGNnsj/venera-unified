@@ -1,5 +1,5 @@
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 import 'favorite_models.dart';
 
 /// Decode legacy persisted fields without normalizing their timestamp or tags.

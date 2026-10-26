@@ -4,8 +4,8 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:dio/dio.dart';
 import 'package:webdav_client/webdav_client.dart' hide File;
-import 'package:venera_next/network/app_dio.dart' show RHttpAdapter;
-import 'package:venera_next/network/webdav.dart';
+import 'package:venera_unified/network/app_dio.dart' show RHttpAdapter;
+import 'package:venera_unified/network/webdav.dart';
 
 import 'data_sync_remote_port.dart';
 

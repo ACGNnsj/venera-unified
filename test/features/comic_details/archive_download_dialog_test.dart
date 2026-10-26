@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_details/archive_download_dialog.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/features/comic_details/archive_download_dialog.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 ArchiveInfo archive() => ArchiveInfo.fromJson({
   'id': 'a',

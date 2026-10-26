@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 class StarRating extends StatelessWidget {
   const StarRating({

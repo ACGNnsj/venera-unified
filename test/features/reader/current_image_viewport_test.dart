@@ -5,14 +5,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
-import 'package:venera_next/features/reader/comic_image.dart';
-import 'package:venera_next/features/reader/continuous_data.dart';
-import 'package:venera_next/features/reader/continuous_view.dart';
-import 'package:venera_next/features/reader/image_export.dart';
-import 'package:venera_next/features/reader/image_picker.dart';
-import 'package:venera_next/features/reader/reader_controller.dart';
-import 'package:venera_next/features/reader/reader_viewport.dart';
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/features/reader/comic_image.dart';
+import 'package:venera_unified/features/reader/continuous_data.dart';
+import 'package:venera_unified/features/reader/continuous_view.dart';
+import 'package:venera_unified/features/reader/image_export.dart';
+import 'package:venera_unified/features/reader/image_picker.dart';
+import 'package:venera_unified/features/reader/reader_controller.dart';
+import 'package:venera_unified/features/reader/reader_viewport.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 
 void main() {
   for (final mode in ['vertical', 'ltr', 'rtl']) {

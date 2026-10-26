@@ -9,14 +9,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rhttp/rhttp.dart' as rhttp;
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/cache_manager.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/network/image_loading_config.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/cache_manager.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/network/image_loading_config.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 class _CancelOnInspectMap extends MapBase<String, dynamic> {
   _CancelOnInspectMap(this.valuesByKey, this.cancel);

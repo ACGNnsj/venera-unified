@@ -1,4 +1,4 @@
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
 
 import 'headless_source_update_command.dart';
 

@@ -4,14 +4,14 @@ import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/request_scope.dart';
 import 'package:rhttp/rhttp.dart' as rhttp;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 class _RealHttpOverrides extends HttpOverrides {}
 

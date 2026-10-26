@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
 
 import 'source.dart';
 

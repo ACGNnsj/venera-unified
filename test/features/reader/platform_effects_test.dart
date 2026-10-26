@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/platform_effects.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
+import 'package:venera_unified/features/reader/platform_effects.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
 
 const _portrait = [
   'DeviceOrientation.portraitUp',

@@ -1,15 +1,15 @@
-import 'package:venera_next/features/local_comics/import_export/comic_import_service.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_import_service.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/local_comics/import_export/import_comic.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/features/local_comics/local_storage_guard.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/features/local_comics/import_export/import_comic.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/features/local_comics/local_storage_guard.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 void main() {
   const service = ComicImportService(

@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/sync/data_sync_content_fingerprint.dart';
-import 'package:venera_next/features/sync/data_sync_content_journal.dart';
+import 'package:venera_unified/features/sync/data_sync_content_fingerprint.dart';
+import 'package:venera_unified/features/sync/data_sync_content_journal.dart';
 
 void main(List<String> args) {
   final root = args[0];

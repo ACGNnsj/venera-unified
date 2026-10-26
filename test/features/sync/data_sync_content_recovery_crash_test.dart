@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:venera_next/features/sync/app_data_import_journal.dart';
-import 'package:venera_next/features/sync/data_sync_content_journal.dart';
-import 'package:venera_next/features/sync/data_sync_content_recovery.dart';
-import 'package:venera_next/features/sync/data_sync_ownership.dart';
+import 'package:venera_unified/features/sync/app_data_import_journal.dart';
+import 'package:venera_unified/features/sync/data_sync_content_journal.dart';
+import 'package:venera_unified/features/sync/data_sync_content_recovery.dart';
+import 'package:venera_unified/features/sync/data_sync_ownership.dart';
 import '../../support/dart_vm.dart';
 
 void main() {

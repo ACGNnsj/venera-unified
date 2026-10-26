@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
-import 'package:venera_next/features/reader/volume_controller.dart';
+import 'package:venera_unified/features/reader/volume_controller.dart';
 
 final _owners = Expando<_VolumeChannelOwner>();
 

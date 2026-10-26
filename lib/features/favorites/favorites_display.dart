@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/button.dart';
-import 'package:venera_next/components/menu.dart';
-import 'package:venera_next/components/settings_save_state.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/preferences.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/button.dart';
+import 'package:venera_unified/components/menu.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/preferences.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 class FavoriteDisplayButton extends StatefulWidget {
   const FavoriteDisplayButton({super.key});

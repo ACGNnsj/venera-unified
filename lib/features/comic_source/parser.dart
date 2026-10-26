@@ -4,10 +4,10 @@ import 'dart:convert';
 
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:uuid/uuid.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'comic_type_bridge.dart';
 import 'js_bridge.dart';

@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/features/local_comics/local_comics_page.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/features/local_comics/local_comics_page.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
 
 import '../../components/sidebar_presentation_test.dart'
     show pumpSidebar, settleSidebarWork;

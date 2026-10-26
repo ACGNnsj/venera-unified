@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 
 /// An unsuccessful progress write or error report, in submission order.
 class ReaderProgressWriteFailure {
@@ -47,12 +47,10 @@ class ReaderProgressFailure implements FailureDetails {
 /// regardless of the order in which their futures complete.
 class ReaderHistoryWriter {
   ReaderHistoryWriter({
-    required Future<void> Function() write,
-    required void Function(Object, StackTrace) onError,
-    Duration delay = const Duration(seconds: 1),
-  }) : _write = write,
-       _onError = onError,
-       _delay = delay;
+    required this._write,
+    required this._onError,
+    this._delay = const Duration(seconds: 1),
+  });
 
   final Future<void> Function() _write;
   final void Function(Object, StackTrace) _onError;

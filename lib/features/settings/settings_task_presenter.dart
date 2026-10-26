@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/components/message.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
+import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
 
 /// Owns one settings operation and its progress route until work finishes.
 /// Closing the page does not cancel an already accepted storage operation.

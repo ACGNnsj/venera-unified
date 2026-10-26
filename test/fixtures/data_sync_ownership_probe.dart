@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:venera_next/features/sync/data_sync_ownership.dart';
+import 'package:venera_unified/features/sync/data_sync_ownership.dart';
 
 void main(List<String> args) {
   final directory = args.first;

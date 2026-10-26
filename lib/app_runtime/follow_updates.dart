@@ -1,11 +1,11 @@
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
-import 'package:venera_next/features/follow_updates/follow_updates_api.dart';
-import 'package:venera_next/features/follow_updates/follow_updates_manager.dart';
-import 'package:venera_next/features/sync/data_sync_controller.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/features/follow_updates/follow_updates_api.dart';
+import 'package:venera_unified/features/follow_updates/follow_updates_manager.dart';
+import 'package:venera_unified/features/sync/data_sync_controller.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 /// Freeze foreground jobs and the mounted background scheduler together.
 /// Join both attempts before releasing either owner after preparation failure.

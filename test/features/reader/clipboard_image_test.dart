@@ -5,7 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/clipboard_image.dart';
+import 'package:venera_unified/features/reader/clipboard_image.dart';
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();

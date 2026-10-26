@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/settings/changelog_document.dart';
+import 'package:venera_unified/features/settings/changelog_document.dart';
 
 void main() {
   test('indexes versions in document order and omits empty sections', () {

@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:venera_next/foundation/application_update_service.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/foundation/application_update_service.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 import 'window_frame.dart';
 
@@ -36,13 +36,12 @@ class ApplicationUpdatePrompt {
     required BuildContext context,
     required this.service,
     RequestScope? parent,
-    bool Function()? isActive,
+    this._isActive,
   }) : _context = context,
        _navigator = Navigator.of(context, rootNavigator: true),
        _route = ModalRoute.of(context),
        _window = context.getInheritedWidgetOfExactType<WindowFrameController>(),
-       _scope = RequestScope(parent: parent),
-       _isActive = isActive;
+       _scope = RequestScope(parent: parent);
 
   final ApplicationUpdateService service;
   final BuildContext _context;

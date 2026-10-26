@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/chapter_navigation.dart';
+import 'package:venera_unified/features/reader/chapter_navigation.dart';
 
 void main() {
   late ReaderChapterNavigationController controller;

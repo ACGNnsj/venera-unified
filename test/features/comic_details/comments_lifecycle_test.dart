@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/loading.dart';
-import 'package:venera_next/features/comic_details/comments_page.dart';
-import 'package:venera_next/features/reader/chapter_comments.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/features/reader/comments_controller.dart';
+import 'package:venera_unified/components/loading.dart';
+import 'package:venera_unified/features/comic_details/comments_page.dart';
+import 'package:venera_unified/features/reader/chapter_comments.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/features/reader/comments_controller.dart';
 
 class _Source extends Fake implements ComicSource {
   final work = ImageWork();

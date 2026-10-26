@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/app_page_route.dart';
-import 'package:venera_next/foundation/edge_back_gesture.dart';
+import 'package:venera_unified/foundation/app_page_route.dart';
+import 'package:venera_unified/foundation/edge_back_gesture.dart';
 
 void main() {
   var starts = 0;

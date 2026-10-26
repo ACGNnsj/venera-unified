@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/models.dart';
+import 'package:venera_unified/features/comic_source/models.dart';
 
 void main() {
   test('ungrouped chapters retain IDs, flat numbering and history keys', () {

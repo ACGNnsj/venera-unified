@@ -7,11 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/gesture.dart';
-import 'package:venera_next/components/window_frame.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/routing/page_replacement.dart';
+import 'package:venera_unified/components/gesture.dart';
+import 'package:venera_unified/components/window_frame.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/routing/page_replacement.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() {

@@ -309,7 +309,7 @@ class ArchitectureDependenciesTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             lib = Path(directory)
             (lib / 'a.dart').write_text(
-                "import 'package:venera_next/b.dart'; part 'c.dart';", encoding='utf-8')
+                "import 'package:venera_unified/b.dart'; part 'c.dart';", encoding='utf-8')
             (lib / 'b.dart').write_text("export 'c.dart';", encoding='utf-8')
             (lib / 'c.dart').write_text("part of 'a.dart';", encoding='utf-8')
             self.assertEqual(MODULE.graph_for(lib), {

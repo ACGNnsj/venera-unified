@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/translations.dart';
 import 'platform_effects_controller.dart';
 import 'image_favorite_controller.dart';
 

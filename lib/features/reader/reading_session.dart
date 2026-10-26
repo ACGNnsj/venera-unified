@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
 
 typedef ReadingDurationWriter = Future<void> Function(Duration duration);
 typedef ReadingSessionErrorHandler =
@@ -60,14 +60,11 @@ class _FailedDuration {
 
 class ReadingSessionTracker {
   ReadingSessionTracker({
-    required ReadingDurationWriter onDuration,
-    Duration checkpointInterval = const Duration(minutes: 1),
+    required this._onDuration,
+    this._checkpointInterval = const Duration(minutes: 1),
     Duration Function()? elapsedNow,
-    ReadingSessionErrorHandler? onError,
-  }) : _onDuration = onDuration,
-       _checkpointInterval = checkpointInterval,
-       _elapsedNow = elapsedNow ?? _defaultElapsedNow,
-       _onError = onError;
+    this._onError,
+  }) : _elapsedNow = elapsedNow ?? _defaultElapsedNow;
 
   static final Stopwatch _clock = Stopwatch()..start();
 

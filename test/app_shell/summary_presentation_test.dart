@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/comic_source_summary.dart';
-import 'package:venera_next/features/history/history_summary.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/features/comic_source/comic_source_summary.dart';
+import 'package:venera_unified/features/history/history_summary.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 void main() {
   for (final size in [const Size(375, 740), const Size(812, 375)]) {

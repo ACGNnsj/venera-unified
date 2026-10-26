@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/proxy_configuration.dart';
+import 'package:venera_unified/foundation/proxy_configuration.dart';
 
 void main() {
   test(

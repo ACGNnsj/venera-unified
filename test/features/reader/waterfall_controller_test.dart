@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/features/reader/waterfall_controller.dart';
-import 'package:venera_next/features/reader/waterfall_flow.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/features/reader/waterfall_controller.dart';
+import 'package:venera_unified/features/reader/waterfall_flow.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 void main() {
   late WaterfallController controller;

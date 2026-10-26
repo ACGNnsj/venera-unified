@@ -1,5 +1,5 @@
-import 'package:venera_next/features/comic_source/source.dart';
-import 'package:venera_next/features/comic_source/source_data_storage.dart';
+import 'package:venera_unified/features/comic_source/source.dart';
+import 'package:venera_unified/features/comic_source/source_data_storage.dart';
 
 class ComicSourceFixture extends ComicSource {
   ComicSourceFixture({

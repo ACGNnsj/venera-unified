@@ -4,16 +4,16 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/comic_source/source_repositories.dart';
-import 'package:venera_next/features/sync/app_data_transfer.dart';
-import 'package:venera_next/features/sync/data_sync_commit.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/init.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/network/cookie_jar.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/comic_source/source_repositories.dart';
+import 'package:venera_unified/features/sync/app_data_transfer.dart';
+import 'package:venera_unified/features/sync/data_sync_commit.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/init.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
 
 String _script(String key, {String init = ''}) =>
     '''

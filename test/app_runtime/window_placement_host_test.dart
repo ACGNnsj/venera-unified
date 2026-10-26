@@ -4,9 +4,9 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/window_placement.dart';
-import 'package:venera_next/foundation/window_placement.dart';
-import 'package:venera_next/foundation/window_placement_tracker.dart';
+import 'package:venera_unified/app_runtime/window_placement.dart';
+import 'package:venera_unified/foundation/window_placement.dart';
+import 'package:venera_unified/foundation/window_placement_tracker.dart';
 
 const _first = WindowPlacement(Rect.fromLTWH(20, 30, 901, 602), false);
 const _latest = WindowPlacement(Rect.fromLTWH(40, 50, 1100, 750), true);

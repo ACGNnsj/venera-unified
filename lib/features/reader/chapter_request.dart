@@ -1,6 +1,6 @@
-import 'package:venera_next/features/comic_source/comic_source_api.dart'
+import 'package:venera_unified/features/comic_source/comic_source_api.dart'
     show ComicChapters;
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 /// Original chapter order and loading capability for one reader target.
 /// Accepted calls keep their complete Future even after the target retires.
@@ -10,10 +10,8 @@ class ReaderChapterRequest {
     required ComicChapters? chapters,
     required this.isCurrent,
     required this.canInteract,
-    required Future<List<String>> Function(int, ComicChapters?, RequestScope)
-    load,
-  }) : _chapters = _freeze(chapters),
-       _load = load;
+    required this._load,
+  }) : _chapters = _freeze(chapters);
 
   final Object identity;
   final ComicChapters? _chapters;

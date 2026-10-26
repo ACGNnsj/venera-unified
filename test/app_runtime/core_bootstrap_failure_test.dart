@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/app_runtime/core_bootstrap.dart';
-import 'package:venera_next/foundation/cache_manager.dart';
-import 'package:venera_next/foundation/cache_scan.dart';
+import 'package:venera_unified/app_runtime/core_bootstrap.dart';
+import 'package:venera_unified/foundation/cache_manager.dart';
+import 'package:venera_unified/foundation/cache_scan.dart';
 
 CoreBootstrap bootstrap({
   required List<CoreStartupCleanup> cleanup,

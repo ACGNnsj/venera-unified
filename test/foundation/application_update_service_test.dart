@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/application_update_service.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/foundation/application_update_service.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 import '../support/application_update_adapter.dart';
 

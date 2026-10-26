@@ -1,8 +1,8 @@
-import 'package:venera_next/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/extensions.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/extensions.dart';
 
 String? _cachedProxy;
 

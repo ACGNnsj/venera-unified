@@ -1,5 +1,5 @@
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 import '../local_comic_model.dart';
 
 typedef ExportComicFunc =

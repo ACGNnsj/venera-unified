@@ -1,4 +1,4 @@
-import 'package:venera_next/features/comic_source/comic_source_api.dart'
+import 'package:venera_unified/features/comic_source/comic_source_api.dart'
     show ComicChapters;
 
 /// Immutable chapters with global indices, including repeated IDs across groups.
@@ -106,10 +106,9 @@ class ReaderChapterEntry {
 class ReaderChapterMenuRequest {
   ReaderChapterMenuRequest({
     required this.data,
-    required bool Function() isCurrent,
-    required bool Function(int) select,
-  }) : _isCurrent = isCurrent,
-       _select = select;
+    required this._isCurrent,
+    required this._select,
+  });
   final ReaderChapterMenuData data;
   final bool Function() _isCurrent;
   final bool Function(int) _select;

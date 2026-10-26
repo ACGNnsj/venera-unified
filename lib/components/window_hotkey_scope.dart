@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/foundation/window_hotkey_controller.dart';
+import 'package:venera_unified/foundation/window_hotkey_controller.dart';
 
 class WindowHotkeyScope extends InheritedWidget {
   const WindowHotkeyScope({

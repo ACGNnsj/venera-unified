@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/headless_sync_command.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/app_runtime/headless_sync_command.dart';
+import 'package:venera_unified/foundation/res.dart';
 import '../support/data_sync_fixture.dart';
 
 void main() {

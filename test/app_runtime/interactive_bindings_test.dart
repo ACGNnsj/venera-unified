@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/interactive_bindings.dart';
-import 'package:venera_next/foundation/event_subscription.dart';
+import 'package:venera_unified/app_runtime/interactive_bindings.dart';
+import 'package:venera_unified/foundation/event_subscription.dart';
 
 EventSubscription<T> bind<T>(Stream<T> stream) => EventSubscription(
   events: stream,

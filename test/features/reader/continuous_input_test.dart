@@ -8,11 +8,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:photo_view/photo_view.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:venera_next/features/reader/continuous_data.dart';
-import 'package:venera_next/features/reader/continuous_view.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/features/reader/reader_controller.dart';
-import 'package:venera_next/features/reader/reader_viewport.dart';
+import 'package:venera_unified/features/reader/continuous_data.dart';
+import 'package:venera_unified/features/reader/continuous_view.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/features/reader/reader_controller.dart';
+import 'package:venera_unified/features/reader/reader_viewport.dart';
 
 void main() {
   for (final mode in ['ltr', 'rtl', 'vertical', 'waterfall']) {

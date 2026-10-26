@@ -1,7 +1,7 @@
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/features/history/history_api.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/features/history/history_api.dart';
 
 import 'local_comic_model.dart';
 import 'local_deletion_storage.dart';

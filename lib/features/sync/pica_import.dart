@@ -1,13 +1,13 @@
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
 import 'pica_import_storage.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/features/history/image_favorites.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/features/history/image_favorites.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/log.dart';
 import 'app_data_archive.dart';
 import 'legacy_pica_data.dart';
 

@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/comic_source/source_data_journal.dart';
-import 'package:venera_next/features/comic_source/source_data_storage.dart';
-import 'package:venera_next/features/comic_source/source_mutation_failure.dart';
+import 'package:venera_unified/features/comic_source/source_data_journal.dart';
+import 'package:venera_unified/features/comic_source/source_data_storage.dart';
+import 'package:venera_unified/features/comic_source/source_mutation_failure.dart';
 
 import '../../support/source_data_files.dart';
 

@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:venera_next/features/reader/auto_reading.dart';
-import 'package:venera_next/features/reader/comic_image.dart';
-import 'package:venera_next/features/reader/image_dimensions.dart';
+import 'package:venera_unified/features/reader/auto_reading.dart';
+import 'package:venera_unified/features/reader/comic_image.dart';
+import 'package:venera_unified/features/reader/image_dimensions.dart';
 
 class _PendingImage extends ImageProvider<_PendingImage> {
   final result = Completer<ImageInfo>();

@@ -1,10 +1,10 @@
 import 'dart:math' as math;
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/sqlite_transaction.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/sqlite_transaction.dart';
+import 'package:venera_unified/network/request_scope.dart';
 import 'favorite_models.dart';
 import 'favorites_repository.dart';
 

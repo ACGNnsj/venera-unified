@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:venera_next/foundation/window_hotkey.dart';
+import 'package:venera_unified/foundation/window_hotkey.dart';
 
 const firstHotkey = WindowHotkey.suggested;
 const secondHotkey = WindowHotkey(

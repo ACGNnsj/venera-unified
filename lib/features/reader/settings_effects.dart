@@ -1,4 +1,4 @@
-import 'package:venera_next/foundation/reader_preferences.dart';
+import 'package:venera_unified/foundation/reader_preferences.dart';
 
 /// Ordered effects of the settings form's legacy string-key notification.
 /// Resolution is UI-free; the reader host applies effects to its current state.
@@ -21,14 +21,11 @@ class ReaderSettingsRequest {
     required this.sourceKey,
     required this.isCurrent,
     required String Function() currentMode,
-    required bool Function() isDetectingLayout,
-    required Future<void> Function() detectLayout,
-    required void Function(ReaderSettingEffect) applyReaderEffect,
+    required this._isDetectingLayout,
+    required this._detectLayout,
+    required this._applyReaderEffect,
   }) : _currentMode = currentMode,
-       _initialMode = currentMode(),
-       _isDetectingLayout = isDetectingLayout,
-       _detectLayout = detectLayout,
-       _applyReaderEffect = applyReaderEffect;
+       _initialMode = currentMode();
 
   final String comicId;
   final String sourceKey;

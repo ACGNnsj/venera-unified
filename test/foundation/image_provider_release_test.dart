@@ -5,12 +5,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/image_provider/base_image_provider.dart';
-import 'package:venera_next/foundation/image_provider/image_provider_lifecycle.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/foundation/image_provider/base_image_provider.dart';
+import 'package:venera_unified/foundation/image_provider/image_provider_lifecycle.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 class _Provider extends BaseImageProvider<_Provider> {
-  _Provider(this.read, {String? cacheKey}) : _cacheKey = cacheKey;
+  _Provider(this.read, {this._cacheKey});
 
   final Future<Uint8List> Function() read;
   final String? _cacheKey;

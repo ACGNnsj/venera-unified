@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'package:venera_next/foundation/event_subscription.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/window_placement_tracker.dart';
-import 'package:venera_next/foundation/window_hotkey_controller.dart';
+import 'package:venera_unified/foundation/event_subscription.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/window_placement_tracker.dart';
+import 'package:venera_unified/foundation/window_hotkey_controller.dart';
 
 /// Platform listeners and heartbeat belong to the mounted interactive app.
 class InteractiveBindings {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'auto_reading.dart';
-import 'package:venera_next/foundation/image_provider/base_image_provider.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/image_provider/base_image_provider.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 Size decodedOriginalSize(ImageStream? stream, ImageInfo info) =>
     (stream?.completer is OriginalImageSize

@@ -1,9 +1,9 @@
-import 'package:venera_next/foundation/event_subscription.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/foundation/event_subscription.dart';
+import 'package:venera_unified/foundation/log.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/features/search/search.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/features/search/search.dart';
 
 /// A caller-owned stream binding. Awaited navigation checks cannot outlive it.
 EventSubscription<Object?> createTextShareSubscription() => EventSubscription(

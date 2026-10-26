@@ -1,4 +1,4 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 
 import 'webdav_library_config.dart';
 import 'webdav_library_entries.dart';

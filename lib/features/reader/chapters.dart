@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:venera_next/components/gesture.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/gesture.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'chapter_menu.dart';
 

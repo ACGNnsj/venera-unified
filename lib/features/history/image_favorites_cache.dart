@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 import 'image_favorites_models.dart';
 

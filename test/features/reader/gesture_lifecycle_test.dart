@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/gesture.dart';
-import 'package:venera_next/features/reader/gesture_port.dart';
-import 'package:venera_next/features/reader/gesture_request.dart';
-import 'package:venera_next/features/reader/image_favorite_swipe.dart';
-import 'package:venera_next/features/reader/reader_tap_scope.dart';
-import 'package:venera_next/features/reader/reader_viewport.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/foundation/reader_settings.dart';
+import 'package:venera_unified/features/reader/gesture.dart';
+import 'package:venera_unified/features/reader/gesture_port.dart';
+import 'package:venera_unified/features/reader/gesture_request.dart';
+import 'package:venera_unified/features/reader/image_favorite_swipe.dart';
+import 'package:venera_unified/features/reader/reader_tap_scope.dart';
+import 'package:venera_unified/features/reader/reader_viewport.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/foundation/reader_settings.dart';
 
 class _Viewport implements ReaderImageViewController {
   final calls = <String>[];

@@ -1,14 +1,14 @@
 import 'source_failure.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/extensions.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/network/app_dio.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/extensions.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/network/app_dio.dart';
 
 import 'parser.dart';
 import 'source.dart';
@@ -94,7 +94,7 @@ class SourceUpdateCheck {
 /// Catalogs are loaded per operation, so editing a URL never leaves a stale base.
 class SourceRepositories extends ChangeNotifier {
   /// An injected client is borrowed; per-operation factories own their clients.
-  SourceRepositories({Dio? client}) : _client = client;
+  SourceRepositories({this._client});
 
   final Dio? _client;
   static final instance = SourceRepositories();
@@ -534,13 +534,11 @@ class SourceRepositorySave {
     String? id,
     required String name,
     required String url,
-    String? catalogContents,
-    Dio Function()? createClient,
+    this._catalogContents,
+    this._createClient,
   }) : _editing = id != null,
        _previous = id == null ? null : _store.find(id),
        _path = App.dataPath,
-       _catalogContents = catalogContents,
-       _createClient = createClient,
        repository = SourceRepository(
          id: id ?? const Uuid().v4(),
          name: name.trim(),

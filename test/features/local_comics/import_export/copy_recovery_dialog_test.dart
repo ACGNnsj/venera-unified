@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/features/local_comics/import_export/import_presentation.dart';
-import 'package:venera_next/features/local_comics/import_export/comic_copy_record.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/features/local_comics/import_export/import_presentation.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_copy_record.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 void main() {
   setUpAll(() async {

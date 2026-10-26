@@ -1,12 +1,12 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 
 import 'package:flutter_qjs/flutter_qjs.dart';
-import 'package:venera_next/foundation/extensions.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/foundation/extensions.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 import 'category.dart';
 import 'models.dart';

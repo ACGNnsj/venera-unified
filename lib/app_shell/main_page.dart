@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/features/discovery/discovery.dart';
-import 'package:venera_next/features/favorites/favorites.dart';
-import 'package:venera_next/features/search/search.dart';
-import 'package:venera_next/features/settings/settings.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/features/discovery/discovery.dart';
+import 'package:venera_unified/features/favorites/favorites.dart';
+import 'package:venera_unified/features/search/search.dart';
+import 'package:venera_unified/features/settings/settings.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import '../components/navigation_bar.dart';
-import 'package:venera_next/routing/app_navigation.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
 import '../foundation/context.dart';
 import 'home_page.dart';
 

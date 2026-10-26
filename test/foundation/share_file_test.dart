@@ -10,10 +10,10 @@ import 'package:share_plus/share_plus.dart' as plugin;
 import 'package:share_plus_platform_interface/method_channel/method_channel_share.dart';
 // ignore: depend_on_referenced_packages
 import 'package:share_plus_platform_interface/share_plus_platform_interface.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/file_interaction.dart' as interaction;
-import 'package:venera_next/foundation/share_file_operation.dart';
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/file_interaction.dart' as interaction;
+import 'package:venera_unified/foundation/share_file_operation.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

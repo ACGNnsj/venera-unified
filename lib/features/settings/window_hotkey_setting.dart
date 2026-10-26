@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/components/settings_save_state.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/window_hotkey.dart';
-import 'package:venera_next/foundation/window_hotkey_controller.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/window_hotkey.dart';
+import 'package:venera_unified/foundation/window_hotkey_controller.dart';
 
 class WindowHotkeySetting extends StatefulWidget {
   const WindowHotkeySetting({super.key, required this.controller});

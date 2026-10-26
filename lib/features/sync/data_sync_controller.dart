@@ -1,11 +1,11 @@
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:venera_next/foundation/sync_configuration.dart';
-import 'package:venera_next/foundation/sync_preference_store.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/network/webdav.dart';
+import 'package:venera_unified/foundation/sync_configuration.dart';
+import 'package:venera_unified/foundation/sync_preference_store.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/network/webdav.dart';
 import 'package:uuid/uuid.dart';
 import 'data_sync_commit.dart';
 import 'data_sync_operation.dart';
@@ -78,26 +78,18 @@ class DataSyncController with ChangeNotifier {
   DataSyncController({
     required SyncPreferenceStore preferences,
     required DataSyncTransfer Function() transfer,
-    required Future<void> Function() saveSettings,
-    required FutureOr<void> Function() persistImplicit,
-    required void Function() Function(void Function()) observeChanges,
-    DataSyncImportRecovery? importRecovery,
-    DataSyncUploadRecovery? uploadRecovery,
-    DataSyncContent? content,
-    DataSyncOwnership? ownership,
+    required this._saveSettings,
+    required this._persistImplicit,
+    required this._observeChanges,
+    this._importRecovery,
+    this._uploadRecovery,
+    this._content,
+    this._ownership,
     DateTime Function()? now,
     Timer Function(Duration, void Function())? createTimer,
-    bool useV117WebDav = false,
+    this._useV117WebDav = false,
   }) : _syncPreferences = preferences,
        _transferFactory = transfer,
-       _saveSettings = saveSettings,
-       _persistImplicit = persistImplicit,
-       _observeChanges = observeChanges,
-       _importRecovery = importRecovery,
-       _uploadRecovery = uploadRecovery,
-       _content = content,
-       _ownership = ownership,
-       _useV117WebDav = useV117WebDav,
        _clock = now ?? DateTime.now,
        _createTimer = createTimer ?? Timer.new;
 

@@ -1,4 +1,4 @@
-import 'package:venera_next/foundation/preferences.dart';
+import 'package:venera_unified/foundation/preferences.dart';
 import 'reader_preference_settings.dart';
 import 'reader_preferences.dart';
 

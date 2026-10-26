@@ -1,22 +1,22 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:venera_next/components/window_frame.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
+import 'package:venera_unified/components/window_frame.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
 import 'thumbnail_pages.dart';
 import 'thumbnail_image.dart';
 import 'package:flutter/material.dart';
 import 'package:sliver_tools/sliver_tools.dart';
-import 'package:venera_next/components/button.dart';
-import 'package:venera_next/components/gesture.dart';
-import 'package:venera_next/components/image.dart';
-import 'package:venera_next/components/loading.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart'
+import 'package:venera_unified/components/button.dart';
+import 'package:venera_unified/components/gesture.dart';
+import 'package:venera_unified/components/image.dart';
+import 'package:venera_unified/components/loading.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart'
     show ComicThumbnailLoader;
-import 'package:venera_next/foundation/consts.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/image_provider/cached_image.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/consts.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/image_provider/cached_image.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 class ComicThumbnails extends StatefulWidget {
   const ComicThumbnails({

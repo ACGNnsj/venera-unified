@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/rich_comment_content.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/components/rich_comment_content.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 void main() {
   setUp(() {

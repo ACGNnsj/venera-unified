@@ -9,12 +9,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:dio/dio.dart' show CancelToken, DioException;
-import 'package:venera_next/foundation/cache_manager.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/request_scope.dart';
-import 'package:venera_next/network/image_loading_config.dart';
-import 'package:venera_next/network/image_http_client.dart';
-import 'package:venera_next/network/image_stream.dart';
+import 'package:venera_unified/foundation/cache_manager.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/request_scope.dart';
+import 'package:venera_unified/network/image_loading_config.dart';
+import 'package:venera_unified/network/image_http_client.dart';
+import 'package:venera_unified/network/image_stream.dart';
 
 import 'image_provider_lifecycle.dart';
 
@@ -624,14 +624,13 @@ Future<void> _joinReleasedImageWork(Iterable<Future<void>> work) async {
 class _CancellableImageStreamCompleter extends MultiFrameImageStreamCompleter
     implements OriginalImageSize {
   _CancellableImageStreamCompleter({
-    required _ImageConsumer consumer,
-    required _ImageDimensions dimensions,
+    required this._consumer,
+    required this._dimensions,
     required super.codec,
     required super.chunkEvents,
     required super.scale,
     super.informationCollector,
-  }) : _consumer = consumer,
-       _dimensions = dimensions {
+  }) {
     _unlisten = BaseImageProvider._lifecycle.listen(
       hold: () {},
       resume: _resumeImage,

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/core_bootstrap.dart';
+import 'package:venera_unified/app_runtime/core_bootstrap.dart';
 
 CoreBootstrap bootstrap({
   List<CoreStartupCleanup> cleanup = const [],

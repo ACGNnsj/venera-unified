@@ -1,15 +1,15 @@
 import 'dart:io' as io;
 
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/cloudflare.dart';
-import 'package:venera_next/network/cookie_jar.dart';
-import 'package:venera_next/routing/webview.dart';
-import 'package:venera_next/foundation/extensions.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/cloudflare.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
+import 'package:venera_unified/routing/webview.dart';
+import 'package:venera_unified/foundation/extensions.dart';
 
 void passCloudflare(CloudflareException e, void Function() onFinished) async {
   final rootContext = appNavigation.rootContext;

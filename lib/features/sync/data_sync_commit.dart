@@ -1,4 +1,4 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 
 /// A failed follow-up step cannot undo an already established commit.
 /// [recoveryRequired] means a remote acknowledgement or local rollback cannot

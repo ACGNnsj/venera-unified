@@ -13,8 +13,8 @@ class CoreBootstrap {
     this.shutdownPreparation,
     this.releaseOwnership,
     this.onStartupFailure,
-    Iterable<CoreStartupCleanup> failureCleanup = const [],
-  }) : _failureCleanup = failureCleanup;
+    this._failureCleanup = const [],
+  });
   final Future<void> Function() environment;
   final Future<void> Function() settings;
   final Future<void> Function() infrastructure;

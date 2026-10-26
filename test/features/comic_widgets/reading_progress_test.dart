@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/models.dart';
-import 'package:venera_next/features/comic_widgets/comic_tile.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/features/comic_source/models.dart';
+import 'package:venera_unified/features/comic_widgets/comic_tile.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 void main() {
   const description = '第二部 - 第100话：重新开始 - Page 23';

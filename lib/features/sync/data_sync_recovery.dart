@@ -1,6 +1,6 @@
 import 'data_sync_commit.dart';
-import 'package:venera_next/network/request_scope.dart';
-import 'package:venera_next/network/webdav.dart';
+import 'package:venera_unified/network/request_scope.dart';
+import 'package:venera_unified/network/webdav.dart';
 
 /// A terminal local import record. Reading it must never replace live files.
 class DataSyncImportReceipt {

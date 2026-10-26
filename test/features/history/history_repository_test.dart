@@ -1,9 +1,9 @@
-import 'package:venera_next/features/history/history_cache.dart';
+import 'package:venera_unified/features/history/history_cache.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/history/history_api.dart';
-import 'package:venera_next/features/history/history_repository.dart';
-import 'package:venera_next/features/history/history_row.dart';
+import 'package:venera_unified/features/history/history_api.dart';
+import 'package:venera_unified/features/history/history_repository.dart';
+import 'package:venera_unified/features/history/history_row.dart';
 
 History item({int type = 0}) => History.fromMap({
   'id': 'shared',

@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/favorites/network_favorites_page.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/components/loading.dart';
-import 'package:venera_next/network/cache.dart';
-import 'package:venera_next/features/comic_widgets/comic_widgets.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
+import 'package:venera_unified/features/favorites/network_favorites_page.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/components/loading.dart';
+import 'package:venera_unified/network/cache.dart';
+import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
 
 import '../../components/sidebar_presentation_test.dart'
     show pumpSidebar, settleSidebarWork;

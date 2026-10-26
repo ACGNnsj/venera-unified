@@ -8,17 +8,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/settings_save_state.dart';
-import 'package:venera_next/components/window_frame.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/comic_source/source_import_dialog.dart';
-import 'package:venera_next/features/comic_source/source_installations_scope.dart';
-import 'package:venera_next/features/comic_source/source_repositories.dart';
-import 'package:venera_next/features/comic_source/source_repository_page.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/context.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
+import 'package:venera_unified/components/window_frame.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/comic_source/source_import_dialog.dart';
+import 'package:venera_unified/features/comic_source/source_installations_scope.dart';
+import 'package:venera_unified/features/comic_source/source_repositories.dart';
+import 'package:venera_unified/features/comic_source/source_repository_page.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/context.dart';
 import 'package:window_manager/window_manager.dart';
 
 Future<void> _until(WidgetTester tester, bool Function() done) async {

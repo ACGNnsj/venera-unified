@@ -1,25 +1,25 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/foundation/image_provider/base_image_provider.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/image_stream.dart';
-import 'package:venera_next/network/request_scope.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/features/history/image_favorites_models.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/foundation/image_provider/base_image_provider.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/image_stream.dart';
+import 'package:venera_unified/network/request_scope.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/features/history/image_favorites_models.dart';
 import 'image_favorites_cache.dart';
 
 class ImageFavoritesProvider extends BaseImageProvider<ImageFavoritesProvider> {
   /// Image provider for imageFavorites
   const ImageFavoritesProvider(
     this.imageFavorite, {
-    ComicImageLoader loadImage = ImageDownloader.loadComicImage,
-  }) : _loadImage = loadImage;
+    this._loadImage = ImageDownloader.loadComicImage,
+  });
 
   final ImageFavorite imageFavorite;
   final ComicImageLoader _loadImage;

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_details/chapters.dart';
-import 'package:venera_next/features/comic_source/models.dart';
-import 'package:venera_next/features/history/history_model.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/comic_details/chapters.dart';
+import 'package:venera_unified/features/comic_source/models.dart';
+import 'package:venera_unified/features/history/history_model.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 void main() {
   for (final reverse in [false, true]) {

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/image_picker.dart';
+import 'package:venera_unified/features/reader/image_picker.dart';
 
 class _Viewport implements ReaderImagePickingViewport {
   @override

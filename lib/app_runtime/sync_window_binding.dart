@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
-import 'package:venera_next/components/window_frame.dart';
-import 'package:venera_next/features/sync/data_sync_controller.dart';
-import 'package:venera_next/features/follow_updates/follow_updates_manager.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/features/local_comics/local_import_lifecycle.dart';
+import 'package:venera_unified/components/window_frame.dart';
+import 'package:venera_unified/features/sync/data_sync_controller.dart';
+import 'package:venera_unified/features/follow_updates/follow_updates_manager.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/features/local_comics/local_import_lifecycle.dart';
 
 /// Window-close behavior exists only while the interactive window is mounted.
 class SyncWindowBinding extends StatefulWidget {

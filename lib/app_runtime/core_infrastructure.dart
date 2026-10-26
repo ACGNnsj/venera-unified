@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:venera_next/network/cookie_jar.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
 
 import 'core_bootstrap.dart';
 

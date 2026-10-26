@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/source_import.dart';
-import 'package:venera_next/features/comic_source/source_repositories.dart';
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/owned_dio_client.dart';
+import 'package:venera_unified/features/comic_source/source_import.dart';
+import 'package:venera_unified/features/comic_source/source_repositories.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/owned_dio_client.dart';
 
 import '../../support/application_update_adapter.dart';
 

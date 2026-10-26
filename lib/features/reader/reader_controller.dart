@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart' show CancelToken, DioException;
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 
 /// Navigation capabilities shared by gallery and continuous view adapters.
 abstract interface class ReaderNavigationViewport {

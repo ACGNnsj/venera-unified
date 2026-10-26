@@ -1,9 +1,9 @@
-import 'package:venera_next/features/favorites/favorites_manager.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/file_interaction.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/file_interaction.dart';
 import '../local_storage_guard.dart';
 import 'cbz.dart';
 import 'comic_import_service.dart';

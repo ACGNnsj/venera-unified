@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/opencc.dart';
-import 'package:venera_next/foundation/opencc_table.dart';
+import 'package:venera_unified/foundation/opencc.dart';
+import 'package:venera_unified/foundation/opencc_table.dart';
 
 class _Bundle extends CachingAssetBundle {
   final requests = <Completer<ByteData>>[];

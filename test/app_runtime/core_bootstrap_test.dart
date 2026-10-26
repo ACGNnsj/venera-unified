@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/core_bootstrap.dart';
-import 'package:venera_next/app_runtime/headless_bindings.dart';
-import 'package:venera_next/foundation/js_engine.dart';
+import 'package:venera_unified/app_runtime/core_bootstrap.dart';
+import 'package:venera_unified/app_runtime/headless_bindings.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
 
 void main() {
   test(

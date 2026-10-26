@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/settings/debug_evaluator.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/features/settings/debug_evaluator.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 
 class _BadText {
   _BadText(this.error);

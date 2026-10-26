@@ -1,19 +1,19 @@
 import 'dart:convert';
 import 'dart:isolate';
 
-import 'package:venera_next/features/comic_source/source_transaction_journal.dart';
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/features/sync/app_data_import_journal.dart';
-import 'package:venera_next/features/sync/data_sync_commit.dart';
-import 'package:venera_next/features/sync/data_sync_content.dart';
-import 'package:venera_next/features/sync/data_sync_content_fingerprint.dart';
-import 'package:venera_next/features/sync/data_sync_content_journal.dart';
-import 'package:venera_next/features/sync/data_sync_content_recovery.dart';
-import 'package:venera_next/features/sync/data_sync_operation.dart';
-import 'package:venera_next/features/sync/data_sync_upload_journal.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/features/comic_source/source_transaction_journal.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/features/sync/app_data_import_journal.dart';
+import 'package:venera_unified/features/sync/data_sync_commit.dart';
+import 'package:venera_unified/features/sync/data_sync_content.dart';
+import 'package:venera_unified/features/sync/data_sync_content_fingerprint.dart';
+import 'package:venera_unified/features/sync/data_sync_content_journal.dart';
+import 'package:venera_unified/features/sync/data_sync_content_recovery.dart';
+import 'package:venera_unified/features/sync/data_sync_operation.dart';
+import 'package:venera_unified/features/sync/data_sync_upload_journal.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 /// Application composition holds the existing writer barrier while capturing
 /// content. The protocol/journal below this adapter has no Flutter dependency.

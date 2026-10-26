@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/settings/settings_task_presenter.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/features/settings/settings_task_presenter.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 void main() {
   setUp(() {

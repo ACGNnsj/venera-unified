@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/history_writer.dart';
-import 'package:venera_next/foundation/image_work.dart';
-import 'package:venera_next/features/reader/reader_session.dart';
-import 'package:venera_next/features/reader/reading_session.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
+import 'package:venera_unified/features/reader/history_writer.dart';
+import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/features/reader/reader_session.dart';
+import 'package:venera_unified/features/reader/reading_session.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
 
 void main() {
   test(

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/file_interaction.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/file_interaction.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'settings_task_presenter.dart';
 

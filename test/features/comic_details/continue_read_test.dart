@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_details/actions.dart';
-import 'package:venera_next/features/history/history_api.dart';
+import 'package:venera_unified/features/comic_details/actions.dart';
+import 'package:venera_unified/features/history/history_api.dart';
 
 void main() {
   test('continue reading without history uses the first chapter and page', () {

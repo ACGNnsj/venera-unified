@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/throttled_task_runner.dart';
+import 'package:venera_unified/foundation/throttled_task_runner.dart';
 
 void main() {
   for (final duringThrottle in [false, true]) {

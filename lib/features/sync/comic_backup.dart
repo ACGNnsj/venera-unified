@@ -1,10 +1,10 @@
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/features/local_comics/import_export/cbz.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/network/webdav.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/features/local_comics/import_export/cbz.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/network/webdav.dart';
 import 'package:webdav_client/webdav_client.dart' hide File;
 
 /// WebDAV archive backup configuration for local comic CBZ files.
@@ -234,21 +234,13 @@ class BackupResult {
 class ComicBackupManager {
   ComicBackupManager({
     ComicBackupWebDavOps? operations,
-    BackupConfig Function() readConfig = BackupConfig.fromSettings,
-    Future<void> Function(LocalComic comic, String outputPath) exportComic =
+    this._readConfig = BackupConfig.fromSettings,
+    this._exportComic =
         CBZ.export,
-    Future<LocalComic> Function(
-          File file, {
-          Future<void> Function(LocalComic comic)? registerComic,
-        })
-        importComic =
+    this._importComic =
         CBZ.import,
-    Future<void> Function(LocalComic comic)? registerImportedComic,
-  }) : _operations = operations ?? WebDavComicBackupOps(),
-       _readConfig = readConfig,
-       _exportComic = exportComic,
-       _importComic = importComic,
-       _registerImportedComic = registerImportedComic;
+    this._registerImportedComic,
+  }) : _operations = operations ?? WebDavComicBackupOps();
 
   static final instance = ComicBackupManager();
 

@@ -1,5 +1,5 @@
-import 'package:venera_next/features/history/image_favorites_models.dart';
-import 'package:venera_next/foundation/consts.dart';
+import 'package:venera_unified/features/history/image_favorites_models.dart';
+import 'package:venera_unified/foundation/consts.dart';
 
 enum ImageFavoriteResult {
   collected,

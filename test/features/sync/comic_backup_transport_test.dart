@@ -5,11 +5,11 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rhttp/rhttp.dart' as rhttp;
-import 'package:venera_next/features/sync/comic_backup.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/rhttp_stream_request.dart';
-import 'package:venera_next/network/webdav.dart';
+import 'package:venera_unified/features/sync/comic_backup.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/rhttp_stream_request.dart';
+import 'package:venera_unified/network/webdav.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

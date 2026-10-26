@@ -1,4 +1,4 @@
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 /// Maps sync service outcomes to the existing CLI JSON/status convention.
 /// The entrypoint owns process exit and application service lifetime.

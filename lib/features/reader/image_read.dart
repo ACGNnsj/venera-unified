@@ -1,5 +1,5 @@
-import 'package:venera_next/foundation/cache_manager.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/foundation/cache_manager.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 import 'image_position.dart';
 
 /// Reads the original address and keeps the accepted cache/file Future. The

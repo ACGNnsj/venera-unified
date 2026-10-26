@@ -1,4 +1,4 @@
-import 'package:venera_next/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -7,22 +7,22 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/components/pop_up_widget.dart';
-import 'package:venera_next/components/window_frame.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/features/favorites/folder_order_dialog.dart';
-import 'package:venera_next/features/favorites/favorite_models.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/routing/app_navigation.dart';
+import 'package:venera_unified/components/pop_up_widget.dart';
+import 'package:venera_unified/components/window_frame.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/features/favorites/folder_order_dialog.dart';
+import 'package:venera_unified/features/favorites/favorite_models.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../components/sidebar_presentation_test.dart'
@@ -143,7 +143,9 @@ class _Host {
 
 ReorderCallback _reorder(WidgetTester tester) => tester
     .widget<ReorderableListView>(find.byType(ReorderableListView))
-    .onReorder;
+    // TODO(venera-unified): 3.44 起 onReorder 弃用且可为空，锁定基线后改用 onReorderItem。
+    // ignore: deprecated_member_use
+    .onReorder!;
 
 VoidCallback _help(WidgetTester tester) => tester
     .widget<IconButton>(find.widgetWithIcon(IconButton, Icons.help_outline))

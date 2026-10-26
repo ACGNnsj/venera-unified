@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/sync_configuration.dart';
-import 'package:venera_next/foundation/app_sync_preferences.dart';
+import 'package:venera_unified/foundation/sync_configuration.dart';
+import 'package:venera_unified/foundation/app_sync_preferences.dart';
 import '../../support/data_sync_fixture.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 const config = ['https://example.com/dav/VeneraNext', 'user', 'password'];
 

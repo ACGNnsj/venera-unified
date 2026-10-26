@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/models.dart';
-import 'package:venera_next/features/comic_widgets/comic_list.dart';
-import 'package:venera_next/features/comic_widgets/comic_tile.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/features/comic_source/models.dart';
+import 'package:venera_unified/features/comic_widgets/comic_list.dart';
+import 'package:venera_unified/features/comic_widgets/comic_tile.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 Comic _comic(String title, {List<String>? tags}) =>
     Comic(title, '', title, null, tags, '', 'webdav_library', null, null);

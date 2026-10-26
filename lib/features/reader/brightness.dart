@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'brightness_policy.dart';
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/side_bar.dart';
-import 'package:venera_next/features/reader/auto_reading.dart';
-import 'package:venera_next/features/reader/sidebar_binding.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
+import 'package:venera_unified/components/side_bar.dart';
+import 'package:venera_unified/features/reader/auto_reading.dart';
+import 'package:venera_unified/features/reader/sidebar_binding.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
 
 class _Host extends StatefulWidget {
   const _Host({super.key, required this.binding});

@@ -8,12 +8,10 @@ class ReaderProgressRequest {
     required this.chapter,
     required this.maxChapter,
     required this.reversed,
-    required bool Function() isCurrent,
-    required bool Function(int page, {bool animated}) toPage,
-    required bool Function(int chapter) toChapter,
-  }) : _isCurrent = isCurrent,
-       _toPage = toPage,
-       _toChapter = toChapter;
+    required this._isCurrent,
+    required this._toPage,
+    required this._toChapter,
+  });
 
   final Object identity;
   final int page, maxPage, chapter, maxChapter;

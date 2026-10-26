@@ -1,10 +1,10 @@
-import 'package:venera_next/foundation/keyword_settings_store.dart';
+import 'package:venera_unified/foundation/keyword_settings_store.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/message.dart';
-import 'package:venera_next/components/pop_up_widget.dart';
-import 'package:venera_next/components/settings_save_state.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/components/pop_up_widget.dart';
+import 'package:venera_unified/components/settings_save_state.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 final _keywordSettings = KeywordSettingsStore(
   readSettings: () => appdata.settings,

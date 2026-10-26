@@ -2,18 +2,18 @@ import 'package:archive/archive.dart' as archive;
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
-import 'package:venera_next/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:zip_flutter/zip_flutter.dart';
-import 'package:venera_next/features/favorites/favorites.dart';
-import 'package:venera_next/features/favorites/favorites_repository.dart';
-import 'package:venera_next/features/sync/app_data_transfer.dart';
-import 'package:venera_next/features/sync/data_sync_commit.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_type.dart';
+import 'package:venera_unified/features/favorites/favorites.dart';
+import 'package:venera_unified/features/favorites/favorites_repository.dart';
+import 'package:venera_unified/features/sync/app_data_transfer.dart';
+import 'package:venera_unified/features/sync/data_sync_commit.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
 
 import '../../support/legacy_favorites_fixture.dart';
 

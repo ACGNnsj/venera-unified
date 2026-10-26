@@ -1,16 +1,16 @@
-import 'package:venera_next/features/comic_source/source_installations_scope.dart';
-import 'package:venera_next/features/comic_source/comic_source_manager.dart';
-import 'package:venera_next/features/comic_source/source_repositories.dart';
-import 'package:venera_next/features/comic_source/source_failure.dart';
+import 'package:venera_unified/features/comic_source/source_installations_scope.dart';
+import 'package:venera_unified/features/comic_source/comic_source_manager.dart';
+import 'package:venera_unified/features/comic_source/source_repositories.dart';
+import 'package:venera_unified/features/comic_source/source_failure.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/network/app_dio.dart';
+import 'package:venera_unified/network/app_dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/source_import.dart';
-import 'package:venera_next/features/comic_source/source_import_dialog.dart';
-import 'package:venera_next/features/comic_source/source_installation.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/features/comic_source/source_import.dart';
+import 'package:venera_unified/features/comic_source/source_import_dialog.dart';
+import 'package:venera_unified/features/comic_source/source_installation.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 String catalog(String target) => jsonEncode([
   {'key': 'one', 'name': 'Source One', 'version': '1.0.0', 'fileName': target},

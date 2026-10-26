@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 import 'favorite_models.dart';
 
@@ -74,15 +74,12 @@ class FavoriteMetadataBatchFailure implements Exception {
 class FavoriteMetadataUpdate {
   FavoriteMetadataUpdate({
     required Iterable<FavoriteItem> comics,
-    required FavoriteMetadataLoader load,
-    required Future<void> Function(FavoriteItem item) save,
+    required this._load,
+    required this._save,
     required void Function() checkActive,
-    void Function(FavoriteMetadataProgress)? onProgress,
+    this._onProgress,
   }) : _items = comics.map((item) => item.detached()).toList(),
-       _load = load,
-       _save = save,
        _checkOwner = checkActive,
-       _onProgress = onProgress,
        _parent = RequestScope.current;
 
   final List<FavoriteItem> _items;

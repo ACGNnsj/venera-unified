@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/favorites/favorites_api.dart';
-import 'package:venera_next/features/history/history_api.dart';
+import 'package:venera_unified/features/favorites/favorites_api.dart';
+import 'package:venera_unified/features/history/history_api.dart';
 import 'legacy_pica_reader.dart';
 
 /// Fully decoded source records. Construct before changing any destination data.

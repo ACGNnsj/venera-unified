@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:rhttp/rhttp.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 
 /// One run owns its retry timers. Connectivity events shorten a wait, but never
 /// reset the attempt budget or restart a paused/cancelled run.

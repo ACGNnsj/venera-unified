@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/favorites/favorites_api.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/favorites/favorites_api.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 import 'follow_update_queue.dart';
 import 'follow_update_task.dart';

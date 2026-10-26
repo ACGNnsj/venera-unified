@@ -2,9 +2,9 @@ import 'legacy_copy_fixture.dart';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/local_comics/import_export/comic_copy_record.dart';
-import 'package:venera_next/features/local_comics/import_export/comic_directory_copy.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_copy_record.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_directory_copy.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 void main() {
   late Directory root;

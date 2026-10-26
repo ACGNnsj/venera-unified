@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:venera_next/features/history/history_api.dart'
+import 'package:venera_unified/features/history/history_api.dart'
     show ImageFavoriteResult;
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 
 enum ReaderImageFavoriteStatus {
   unavailable,

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/file_type.dart';
+import 'package:venera_unified/foundation/file_type.dart';
 
 void main() {
   test('uses an image URL extension when the response header is unknown', () {

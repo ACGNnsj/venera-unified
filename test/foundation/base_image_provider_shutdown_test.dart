@@ -4,11 +4,11 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/image_provider/base_image_provider.dart';
-import 'package:venera_next/foundation/image_provider/image_provider_lifecycle.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/image_loading_config.dart';
-import 'package:venera_next/network/image_http_client.dart';
+import 'package:venera_unified/foundation/image_provider/base_image_provider.dart';
+import 'package:venera_unified/foundation/image_provider/image_provider_lifecycle.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/image_loading_config.dart';
+import 'package:venera_unified/network/image_http_client.dart';
 
 class _Provider extends BaseImageProvider<_Provider> {
   _Provider(this.read);

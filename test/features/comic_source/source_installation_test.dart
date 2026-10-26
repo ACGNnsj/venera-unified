@@ -4,14 +4,14 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/comic_source_manager.dart';
-import 'package:venera_next/features/comic_source/source.dart';
-import 'package:venera_next/features/comic_source/source_installation.dart';
-import 'package:venera_next/features/comic_source/source_repositories.dart';
-import 'package:venera_next/features/comic_source/parser.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/file_selection.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
+import 'package:venera_unified/features/comic_source/comic_source_manager.dart';
+import 'package:venera_unified/features/comic_source/source.dart';
+import 'package:venera_unified/features/comic_source/source_installation.dart';
+import 'package:venera_unified/features/comic_source/source_repositories.dart';
+import 'package:venera_unified/features/comic_source/parser.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/file_selection.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
 
 void main() {
   late _Downloads downloads;

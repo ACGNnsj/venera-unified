@@ -1,12 +1,12 @@
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
-import 'package:venera_next/foundation/global_preference_store.dart';
-import 'package:venera_next/foundation/application_update_service.dart';
-import 'package:venera_next/foundation/startup_update_check.dart';
-import 'package:venera_next/network/app_dio.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/application_update_service.dart';
+import 'package:venera_unified/foundation/startup_update_check.dart';
+import 'package:venera_unified/network/app_dio.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 ApplicationUpdateService createApplicationUpdates() => ApplicationUpdateService(
   // Public release metadata needs network preferences, not application cookies

@@ -1,22 +1,21 @@
 import 'dart:async';
 
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/image_http_client.dart';
-import 'package:venera_next/network/image_loading_config.dart';
-import 'package:venera_next/network/image_stream.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/image_http_client.dart';
+import 'package:venera_unified/network/image_loading_config.dart';
+import 'package:venera_unified/network/image_stream.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 
 /// A view owns its subscriptions; the reading session owns their actual finish.
 class ReaderImageDownloads {
   ReaderImageDownloads({
-    required ImageWork work,
+    required this._work,
     Stream<ImageDownloadProgress> Function(String, String?, String, String)?
     loader,
-  }) : _work = work,
-       _loader = loader ?? ImageDownloader.loadComicImage;
+  }) : _loader = loader ?? ImageDownloader.loadComicImage;
 
   final ImageWork _work;
   final Stream<ImageDownloadProgress> Function(String, String?, String, String)

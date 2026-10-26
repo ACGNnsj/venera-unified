@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/local_comics/import_export/legacy_comic_metadata.dart';
+import 'package:venera_unified/features/local_comics/import_export/legacy_comic_metadata.dart';
 
 void main() {
   group('ComicExportInfo', () {

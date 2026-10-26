@@ -5,11 +5,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/js_pool.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/app_dio.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/js_pool.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/app_dio.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -397,10 +397,9 @@ throw new Error('initialization failed');
 
 class _Worker implements JsPoolEngine {
   _Worker({
-    FutureOr<dynamic> Function()? execute,
-    FutureOr<void> Function()? close,
-  }) : _execute = execute,
-       _close = close;
+    this._execute,
+    this._close,
+  });
   final FutureOr<dynamic> Function()? _execute;
   final FutureOr<void> Function()? _close;
   final _pending = <Future<dynamic>>{};

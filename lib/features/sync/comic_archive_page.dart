@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/appbar.dart';
-import 'package:venera_next/components/loading.dart';
-import 'package:venera_next/components/message.dart';
-import 'package:venera_next/features/sync/comic_backup.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/file_system.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/appbar.dart';
+import 'package:venera_unified/components/loading.dart';
+import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/features/sync/comic_backup.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 class ComicArchivePage extends StatefulWidget {
   const ComicArchivePage({super.key});

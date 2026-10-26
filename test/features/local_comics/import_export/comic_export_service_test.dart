@@ -1,10 +1,10 @@
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/foundation/directory_selection.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/foundation/directory_selection.dart';
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/local_comics/import_export/comic_export_service.dart';
-import 'package:venera_next/features/local_comics/local_comic_model.dart';
-import 'package:venera_next/foundation/file_system.dart';
+import 'package:venera_unified/features/local_comics/import_export/comic_export_service.dart';
+import 'package:venera_unified/features/local_comics/local_comic_model.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 class _Comic extends Fake implements LocalComic {
   _Comic(this.title);

@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:venera_next/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
 
 class LocalComicStorageBusy implements Exception {
   const LocalComicStorageBusy(this.message);

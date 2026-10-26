@@ -3,7 +3,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter_qjs/flutter_qjs.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 abstract class JsPoolEngine {
   int get pendingTasks;
@@ -23,10 +23,9 @@ class JSPool {
 
   /// Owns workers produced by this factory, including partial startup.
   JSPool.create({
-    required Future<Uint8List> Function() loadJsInit,
-    required JsPoolEngine Function(Uint8List) createEngine,
-  }) : _loadJsInit = loadJsInit,
-       _createEngine = createEngine;
+    required this._loadJsInit,
+    required this._createEngine,
+  });
 
   final Future<Uint8List> Function() _loadJsInit;
   final JsPoolEngine Function(Uint8List) _createEngine;

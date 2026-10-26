@@ -1,15 +1,15 @@
-import 'package:venera_next/features/favorites/favorites_scope.dart';
-import 'package:venera_next/foundation/application_preferences.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/appbar.dart';
-import 'package:venera_next/features/settings/settings_task_presenter.dart';
-import 'package:venera_next/components/scroll.dart';
-import 'package:venera_next/features/local_comics/local.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/features/settings/setting_components.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/appbar.dart';
+import 'package:venera_unified/features/settings/settings_task_presenter.dart';
+import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/features/settings/setting_components.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 class LocalFavoritesSettings extends StatefulWidget {
   const LocalFavoritesSettings({super.key});

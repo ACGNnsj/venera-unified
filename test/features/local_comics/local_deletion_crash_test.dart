@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/local_comics/local_deletion_journal.dart';
+import 'package:venera_unified/features/local_comics/local_deletion_journal.dart';
 
 String dartExecutable() {
   final executable = Platform.isWindows ? 'dart.exe' : 'dart';

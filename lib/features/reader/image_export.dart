@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:venera_next/foundation/file_type.dart';
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/foundation/file_type.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 import 'image_position.dart';
 
 class ReaderImageSelection {
@@ -72,9 +72,8 @@ class ReaderImageExport {
   ReaderImageExport(
     ReaderImageSelection selection,
     this.bytes, {
-    void Function()? checkStop,
-  }) : _checkStop = checkStop,
-       type = detectFileType(bytes),
+    this._checkStop,
+  }) : type = detectFileType(bytes),
        _stem =
            '${selection.title}_EP${selection.chapter}_P${selection.imageNumber}';
   final Uint8List bytes;

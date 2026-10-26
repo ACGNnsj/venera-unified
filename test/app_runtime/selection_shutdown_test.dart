@@ -3,14 +3,14 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/features/comic_source/source_inspection_task.dart';
-import 'package:venera_next/app_runtime/application_host.dart';
-import 'package:venera_next/app_runtime/core_bootstrap.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/file_selection.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/features/comic_source/source_inspection_task.dart';
+import 'package:venera_unified/app_runtime/application_host.dart';
+import 'package:venera_unified/app_runtime/core_bootstrap.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/file_selection.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
 
 import '../support/data_sync_fixture.dart';
 

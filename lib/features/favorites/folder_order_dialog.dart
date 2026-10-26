@@ -1,18 +1,18 @@
-import 'package:venera_next/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/button.dart';
-import 'package:venera_next/components/message.dart';
-import 'package:venera_next/components/pop_up_widget.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/button.dart';
+import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/components/pop_up_widget.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 Future<void> sortFolders(BuildContext context) {
   final result = _sortFolders(context);
@@ -147,6 +147,9 @@ Future<void> _sortFolders(BuildContext context) async {
                 ),
               ],
               body: ReorderableListView.builder(
+                // TODO(venera-unified): 升到 3.44 后改用 onReorderItem（newIndex 已自动修正）；
+                // 此处保留旧 API 以维持 3.41.4 回退档可编译，故临时压制弃用告警。
+                // ignore: deprecated_member_use
                 onReorder: (oldIndex, newIndex) {
                   if (!canEdit(view)) return;
                   if (oldIndex < newIndex) newIndex--;

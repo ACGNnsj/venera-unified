@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/comic_layout.dart';
+import 'package:venera_unified/foundation/comic_layout.dart';
 
 void main() {
   group('original image proportions', () {

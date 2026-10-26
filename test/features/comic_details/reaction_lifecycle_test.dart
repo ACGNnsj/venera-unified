@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/menu.dart';
+import 'package:venera_unified/components/menu.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_details/actions.dart';
-import 'package:venera_next/features/comic_details/rating_dialog.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/features/history/history.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/features/comic_details/actions.dart';
+import 'package:venera_unified/features/comic_details/rating_dialog.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/features/history/history.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 class _Source extends Fake implements ComicSource {
   @override

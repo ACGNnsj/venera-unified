@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'favorite_models.dart';
 import 'favorites_repository.dart';
-import 'package:venera_next/foundation/sqlite_transaction.dart';
+import 'package:venera_unified/foundation/sqlite_transaction.dart';
 
 /// Decode the entire folder before writing; publish no partial folder on error.
 (String, List<FavoriteItem>) importFavoriteFolder(

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/follow_updates/follow_update_queue.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/follow_updates/follow_update_queue.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 void main() {
   testWidgets('100 instant checks have source spacing without batch pauses', (

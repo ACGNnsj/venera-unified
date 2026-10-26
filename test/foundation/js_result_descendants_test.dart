@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
 
 class _Reference extends JSRef {
   _Reference({this.failure});

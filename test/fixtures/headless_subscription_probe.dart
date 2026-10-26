@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:venera_next/app_runtime/headless_output.dart';
-import 'package:venera_next/app_runtime/headless_subscription_command.dart';
+import 'package:venera_unified/app_runtime/headless_output.dart';
+import 'package:venera_unified/app_runtime/headless_subscription_command.dart';
 
 Future<void> main(List<String> args) async {
   final scenario = args.single;

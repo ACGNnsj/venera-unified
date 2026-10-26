@@ -4,10 +4,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:venera_next/app_runtime/headless_output.dart';
-import 'package:venera_next/app_runtime/headless_shutdown.dart';
-import 'package:venera_next/app_runtime/headless_sync_command.dart';
-import 'package:venera_next/foundation/res.dart';
+import 'package:venera_unified/app_runtime/headless_output.dart';
+import 'package:venera_unified/app_runtime/headless_shutdown.dart';
+import 'package:venera_unified/app_runtime/headless_sync_command.dart';
+import 'package:venera_unified/foundation/res.dart';
 
 Future<void> main(List<String> args) async {
   final failures = args[0].split(',').toSet();

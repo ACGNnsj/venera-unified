@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/auto_reading.dart';
+import 'package:venera_unified/features/reader/auto_reading.dart';
 
 void main() {
   Future<void> frames(

@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/reader/bottom_actions.dart';
-import 'package:venera_next/features/reader/image_favorite_controller.dart';
-import 'package:venera_next/features/reader/platform_effects_controller.dart';
-import 'package:venera_next/features/reader/progress_bar.dart';
+import 'package:venera_unified/features/reader/bottom_actions.dart';
+import 'package:venera_unified/features/reader/image_favorite_controller.dart';
+import 'package:venera_unified/features/reader/platform_effects_controller.dart';
+import 'package:venera_unified/features/reader/progress_bar.dart';
 
 void main() {
   testWidgets('closing bottom controls cancels an in-flight progress drag', (

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:venera_next/features/comic_source/source_data_storage.dart';
+import 'package:venera_unified/features/comic_source/source_data_storage.dart';
 
 class ControlledSourceDataFiles extends SourceDataFiles {
   FutureOr<void> Function(File file, String contents)? beforeWrite;

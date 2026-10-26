@@ -1,20 +1,16 @@
-import 'package:venera_next/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
 
 /// One captured retention edit. Saving and cleanup share the original data
 /// admission/connection; a retry keeps the same cutoff instead of aging it.
 class HistoryRetentionChange {
   HistoryRetentionChange({
     required int days,
-    required Future<void> Function(Future<void> Function()) access,
-    required void Function() checkTarget,
-    required Future<void> Function(int) saveDays,
-    required Future<void> Function(int) clearBefore,
+    required this._access,
+    required this._checkTarget,
+    required this._saveDays,
+    required this._clearBefore,
     DateTime Function()? now,
   }) : days = AppPreferences.historyRetentionDays.normalize(days),
-       _access = access,
-       _checkTarget = checkTarget,
-       _saveDays = saveDays,
-       _clearBefore = clearBefore,
        _now = now ?? DateTime.now;
 
   final int days;

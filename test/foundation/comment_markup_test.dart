@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/comment_markup.dart';
+import 'package:venera_unified/foundation/comment_markup.dart';
 
 void main() {
   test('plain content normalizes only CRLF and ampersands', () {

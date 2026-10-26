@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 /// Chapter loading policy with chapter-specific storage and source access.
 /// The callbacks are resolved by the adapter, not by global manager lookups.

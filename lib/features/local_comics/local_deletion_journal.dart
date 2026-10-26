@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/sqlite_transaction.dart';
+import 'package:venera_unified/foundation/sqlite_transaction.dart';
 
 /// Durable ownership of directories moved out of the live library before a
 /// database deletion. Only committed quarantine paths may be removed on retry.

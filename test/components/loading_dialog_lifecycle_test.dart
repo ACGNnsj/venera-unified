@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/message.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
+import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
 
 void main() {
   late BuildContext context;

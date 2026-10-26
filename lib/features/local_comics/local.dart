@@ -1,4 +1,4 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'local_comic_model.dart';
 import 'local_repository.dart';
 import 'local_chapter_storage.dart';
@@ -6,9 +6,9 @@ import 'local_deletion_paths.dart';
 import 'local_related_data.dart';
 import 'local_deletion_journal.dart';
 import 'local_registration_storage.dart';
-import 'package:venera_next/features/favorites/favorites_api.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
-import 'package:venera_next/foundation/sqlite_transaction.dart';
+import 'package:venera_unified/features/favorites/favorites_api.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
+import 'package:venera_unified/foundation/sqlite_transaction.dart';
 import 'download_task_store.dart';
 import 'download_directory_allocator.dart';
 import 'local_sort_type.dart';
@@ -21,20 +21,20 @@ import 'package:flutter_saf/flutter_saf.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/comic_storage/comic_storage.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/sqlite_connection.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/comic_storage/comic_storage.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/sqlite_connection.dart';
 import 'download_task.dart';
 import 'download_task_storage.dart';
 import 'download_queue.dart';
 import 'download_task_codec.dart';
-import 'package:venera_next/foundation/file_interaction.dart';
+import 'package:venera_unified/foundation/file_interaction.dart';
 
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/features/history/history_api.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/features/history/history_api.dart';
 
 import 'local_storage_guard.dart';
 import 'local_storage_migration.dart';
@@ -87,10 +87,9 @@ class LocalManager with ChangeNotifier implements DownloadTaskStorage {
 
   LocalManager._({
     Database Function(String)? openDatabase,
-    Future<void> Function()? initializeSources,
+    this._initializeSources,
     LocalComicRelatedData? relatedData,
   }) : _openDatabase = openDatabase ?? openSqliteDatabase,
-       _initializeSources = initializeSources,
        _providedRelatedData = relatedData;
 
   /// A caller-owned library that does not replace the application's default.

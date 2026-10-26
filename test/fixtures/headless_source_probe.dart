@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'package:venera_next/app_runtime/headless_arguments.dart';
-import 'package:venera_next/app_runtime/headless_output.dart';
-import 'package:venera_next/app_runtime/headless_source_update_command.dart';
+import 'package:venera_unified/app_runtime/headless_arguments.dart';
+import 'package:venera_unified/app_runtime/headless_output.dart';
+import 'package:venera_unified/app_runtime/headless_source_update_command.dart';
 
 Future<void> main(List<String> args) async {
   final parsed = parseHeadlessArguments(args);

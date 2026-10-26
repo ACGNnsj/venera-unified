@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/sync/data_sync_commit.dart';
-import 'package:venera_next/features/sync/data_sync_operation.dart';
-import 'package:venera_next/foundation/sync_preference_store.dart';
+import 'package:venera_unified/features/sync/data_sync_commit.dart';
+import 'package:venera_unified/features/sync/data_sync_operation.dart';
+import 'package:venera_unified/foundation/sync_preference_store.dart';
 
 void main() {
   test(

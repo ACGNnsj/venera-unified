@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/app_runtime/core_bootstrap.dart';
-import 'package:venera_next/app_runtime/init.dart' as runtime;
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/comic_widgets/comic_tile.dart';
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/features/history/history_model.dart';
-import 'package:venera_next/features/history/history_page.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/app_runtime/core_bootstrap.dart';
+import 'package:venera_unified/app_runtime/init.dart' as runtime;
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/comic_widgets/comic_tile.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/features/history/history_model.dart';
+import 'package:venera_unified/features/history/history_page.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 class _Source extends Fake implements ComicSource {
   int requests = 0;

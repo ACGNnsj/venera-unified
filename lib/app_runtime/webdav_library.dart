@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:venera_next/features/webdav_library/webdav_library_api.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/persistence_failure.dart';
+import 'package:venera_unified/features/webdav_library/webdav_library_api.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
 
 WebDavLibraryServices? _library;
 final _registryOwners = Expando<WebDavLibrarySource>('WebDAV registry owner');

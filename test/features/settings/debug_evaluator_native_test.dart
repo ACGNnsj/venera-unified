@@ -4,10 +4,10 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/settings/debug_evaluator.dart';
-import 'package:venera_next/features/settings/debug_evaluator_runtime.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/features/settings/debug_evaluator.dart';
+import 'package:venera_unified/features/settings/debug_evaluator_runtime.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

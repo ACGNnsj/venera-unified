@@ -3,9 +3,9 @@ import 'dart:typed_data';
 
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/operation_failure.dart';
-import 'package:venera_next/network/images.dart';
-import 'package:venera_next/network/shared_image_requests.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
+import 'package:venera_unified/network/images.dart';
+import 'package:venera_unified/network/shared_image_requests.dart';
 
 class _FakeJSInvokable extends JSInvokable {
   _FakeJSInvokable(this.callback);

@@ -1,19 +1,19 @@
-import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/comic_source/source_data_storage.dart';
+import 'package:venera_unified/features/comic_source/source_data_storage.dart';
 import '../../support/source_data_files.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/features/comic_source/source_repositories.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/js_engine.dart';
-import 'package:venera_next/foundation/init.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/features/comic_source/source_repositories.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/js_engine.dart';
+import 'package:venera_unified/foundation/init.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

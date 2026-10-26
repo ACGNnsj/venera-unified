@@ -1,6 +1,6 @@
 import 'dart:isolate';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/extensions.dart';
+import 'package:venera_unified/foundation/extensions.dart';
 import 'image_favorites_models.dart';
 import 'image_favorites_repository.dart';
 

@@ -4,9 +4,9 @@ import 'dart:io';
 import 'dart:ui' show Rect;
 
 import 'package:flutter/material.dart' show Colors, Size;
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/window_placement.dart';
-import 'package:venera_next/foundation/window_placement_tracker.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/window_placement.dart';
+import 'package:venera_unified/foundation/window_placement_tracker.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// Failed core startup never reaches normal placement initialization. Reveal a
@@ -29,12 +29,10 @@ Future<void> showStartupFailureWindow() async {
 class WindowPlacementHost {
   WindowPlacementHost({
     required Future<void> Function() initialize,
-    required Future<WindowPlacement?> Function() read,
-    required Future<void> Function(WindowPlacement placement) save,
+    required this._read,
+    required this._save,
     this.onError = _logError,
-  }) : _initializeWindow = initialize,
-       _read = read,
-       _save = save {
+  }) : _initializeWindow = initialize {
     // Initialization can fail before a widget has attached. Keep the original
     // failure for initialize()/trackers without creating an unobserved Future.
     unawaited(_ready.future.then<void>((_) {}, onError: (Object _) {}));

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/network/app_dio.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/network/app_dio.dart';
 
 import 'sponsor_catalog.dart';
 

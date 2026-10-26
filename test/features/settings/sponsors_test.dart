@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/features/settings/sponsors.dart';
-import 'package:venera_next/features/settings/sponsor_catalog.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/features/settings/sponsors.dart';
+import 'package:venera_unified/features/settings/sponsor_catalog.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 void main() {
   test('sectioned sponsor data is parsed without losing status', () {

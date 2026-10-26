@@ -1,10 +1,10 @@
-import 'package:venera_next/foundation/event_subscription.dart';
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/foundation/event_subscription.dart';
+import 'package:venera_unified/foundation/log.dart';
 import 'package:app_links/app_links.dart';
-import 'package:venera_next/routing/app_navigation.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/features/comic_source/comic_source.dart';
-import 'package:venera_next/features/comic_details/comic_details.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/features/comic_details/comic_details.dart';
 
 EventSubscription<Uri> createAppLinkSubscription() => EventSubscription(
   events: AppLinks().uriLinkStream,

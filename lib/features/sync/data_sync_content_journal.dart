@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
-import 'package:venera_next/foundation/app_data_sync_fields.dart';
-import 'package:venera_next/foundation/sqlite_connection.dart';
-import 'package:venera_next/foundation/sqlite_transaction.dart';
+import 'package:venera_unified/foundation/app_data_sync_fields.dart';
+import 'package:venera_unified/foundation/sqlite_connection.dart';
+import 'package:venera_unified/foundation/sqlite_transaction.dart';
 
 import 'data_sync_content.dart';
 import 'data_sync_commit.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/sync_configuration.dart';
-import 'package:venera_next/foundation/app_sync_preferences.dart';
-import 'package:venera_next/foundation/appdata.dart';
+import 'package:venera_unified/foundation/sync_configuration.dart';
+import 'package:venera_unified/foundation/app_sync_preferences.dart';
+import 'package:venera_unified/foundation/appdata.dart';
 
 void main() {
   test(

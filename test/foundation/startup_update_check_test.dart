@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/startup_update_check.dart';
+import 'package:venera_unified/foundation/startup_update_check.dart';
 
 void main() {
   test(

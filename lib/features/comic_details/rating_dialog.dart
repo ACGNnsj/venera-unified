@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/button.dart';
-import 'package:venera_next/features/comic_widgets/comic_widgets.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/navigation_admission.dart';
-import 'package:venera_next/foundation/res.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/button.dart';
+import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/res.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 class ComicRatingDialog extends StatefulWidget {
   const ComicRatingDialog({super.key, required this.submit});

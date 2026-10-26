@@ -1,15 +1,15 @@
-import 'package:venera_next/features/history/history_scope.dart';
+import 'package:venera_unified/features/history/history_scope.dart';
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/gesture.dart';
-import 'package:venera_next/components/scroll.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/history/image_favorites.dart';
-import 'package:venera_next/features/history/history_api.dart';
-import 'package:venera_next/foundation/app_locale.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/translations.dart';
-import 'package:venera_next/foundation/widget_utils.dart';
+import 'package:venera_unified/components/gesture.dart';
+import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/history/image_favorites.dart';
+import 'package:venera_unified/features/history/history_api.dart';
+import 'package:venera_unified/foundation/app_locale.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/translations.dart';
+import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'image_favorites_page.dart';
 

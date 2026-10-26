@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:venera_next/network/webdav.dart';
+import 'package:venera_unified/network/webdav.dart';
 
 class WebDavLibraryConfig {
   WebDavLibraryConfig({

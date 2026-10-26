@@ -3,7 +3,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/foundation/js_pool.dart';
+import 'package:venera_unified/foundation/js_pool.dart';
 
 void _cleanupWorker(JsWorkerStart start) {
   final port = ReceivePort();

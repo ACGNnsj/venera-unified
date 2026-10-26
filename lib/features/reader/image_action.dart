@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 
 /// Reads the selected image and starts an external action only while its
 /// originating content is current. An already started platform action may finish

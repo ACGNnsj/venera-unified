@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:venera_next/network/app_dio.dart'
+import 'package:venera_unified/network/app_dio.dart'
     show Dio, Options, RHttpAdapter;
-import 'package:venera_next/network/request_scope.dart';
+import 'package:venera_unified/network/request_scope.dart';
 
 import 'operation_failure.dart';
 import 'release_version.dart';
@@ -11,10 +11,9 @@ import 'release_version.dart';
 /// Owns actual HTTP completion independently of the page showing its result.
 class ApplicationUpdateService {
   ApplicationUpdateService({
-    required Dio Function() createClient,
-    required String Function() currentVersion,
-  }) : _createClient = createClient,
-       _currentVersion = currentVersion;
+    required this._createClient,
+    required this._currentVersion,
+  });
 
   final Dio Function() _createClient;
   final String Function() _currentVersion;

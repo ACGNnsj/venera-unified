@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:venera_next/network/request_scope.dart';
-import 'package:venera_next/foundation/image_work.dart';
+import 'package:venera_unified/network/request_scope.dart';
+import 'package:venera_unified/foundation/image_work.dart';
 import 'reader_controller.dart';
 
 /// Owns the view lifetime of a content attempt, independent of ReaderState.

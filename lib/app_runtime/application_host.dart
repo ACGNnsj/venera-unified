@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/application_update_service.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/foundation/window_hotkey_controller.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/application_update_service.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/foundation/window_hotkey_controller.dart';
 
-import 'package:venera_next/features/sync/data_sync_controller.dart';
-import 'package:venera_next/features/comic_source/comic_source_api.dart';
-import 'package:venera_next/features/follow_updates/follow_updates_runtime.dart';
+import 'package:venera_unified/features/sync/data_sync_controller.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/follow_updates/follow_updates_runtime.dart';
 
 import 'core_bootstrap.dart';
 import 'window_placement.dart';

@@ -16,7 +16,7 @@ import 'package:rhttp/src/rust/api/http.dart' as rust;
 import 'package:rhttp/src/rust/api/stream.dart' as rust_stream;
 import 'package:rhttp/src/rust/frb_generated.dart';
 import 'package:rhttp/src/rust/lib.dart' show CancellationToken;
-import 'package:venera_next/foundation/log.dart';
+import 'package:venera_unified/foundation/log.dart';
 
 import 'image_http3_fallback.dart';
 
