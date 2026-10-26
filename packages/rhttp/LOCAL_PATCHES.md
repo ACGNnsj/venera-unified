@@ -154,9 +154,10 @@ the application needs no change.
 
 `rust/uniffi/` (`rhttp-uniffi`) is a second binding over the same core for
 Kotlin/Swift hosts. It maps every `ClientSettings` leaf, including the dynamic
-DNS host callback. Cargokit builds with `-p rhttp`, so Flutter native builds
-neither compile nor download this crate; only the workspace member list and
-Cargo.lock mention it.
+DNS host callback, and exposes streaming downloads as a puller
+(`ResponseStream::nextChunk`) since uniffi has no async iterator. Cargokit builds
+with `-p rhttp`, so Flutter native builds neither compile nor download this
+crate; only the workspace member list and Cargo.lock mention it.
 
 Sync note: upstream `rhttp` has none of this split. When refreshing the vendored
 copy, re-apply the adapter rewrite instead of dropping `core/`, and keep the

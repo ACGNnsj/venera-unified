@@ -10,10 +10,14 @@ pure-Rust `rhttp-core` crates.
 
 | Item | Kind | Notes |
 |---|---|---|
-| `RhttpClient` | object | `new(ClientOptions)`, `fetchText(url)`, `fetchBytes(url)`, `cancelAll()` |
+| `RhttpClient` | object | `new(ClientOptions)`, `fetchText(url)`, `fetchBytes(url)`, `stream(request)`, `streamGet(url)`, `cancelAll()` |
+| `ResponseStream` | object | `head()`, `nextChunk()`, `cancel()` |
 | `RhttpError` | error enum | `Network{message}`, `Status{statusCode,message}`, `Cancelled`, `InvalidSettings{message}` |
 | `ClientOptions` | record | full mirror of `ClientSettings` |
 | `defaultClientOptions()` | function | the core defaults (`HttpVersionPref.All`, `throwOnStatusCode = true`) |
+| `StreamRequest` | record | `url`, `method` (null ⇒ `GET`), `headers` |
+| `ResponseHead` | record | `statusCode`, `headers`, `remoteIp` |
+| `RhttpHeader` | record | `name`, `value` |
 | `DnsResolverCallback` | foreign trait | host-implemented dynamic DNS |
 
 ### `ClientOptions`
@@ -33,6 +37,40 @@ Every `rhttp_core::ClientSettings` field is reachable:
 Durations arrive as `std::time::Duration` and are converted to
 `chrono::Duration` for the core; values outside `chrono`'s range surface as
 `RhttpError::InvalidSettings`.
+
+## Streaming downloads
+
+uniffi has no async iterator, so the body is modelled as a puller instead of a
+push callback:
+
+```text
+stream(request) ──► ResponseStream ──► [chunk, chunk, ..., null]
+                     head()            nextChunk()           cancel()
+```
+
+- `stream(request)` resolves once the **response head** has arrived, so a status
+  error surfaces there (`RhttpError::Status`) rather than at the first chunk.
+- `nextChunk()` returns the next chunk, or `null` at the end of the body.
+- Chunk delivery is bounded (four chunks between the transport and the host), so
+  a host that stops calling `nextChunk` applies backpressure instead of
+  buffering the whole file.
+- Kotlin wraps the loop in `flow { … }` on `Dispatchers.IO`; Swift in an
+  `AsyncSequence`. Both `nextChunk` and `stream` are `suspend`/`async` because
+  the crate exports with `async_runtime = "tokio"`.
+
+No Rust thread ever calls back into host code, so a slow or buggy host cannot
+re-enter the transport — this is the main reason the stream is a puller rather
+than a foreign callback trait.
+
+### Cancellation
+
+Cancellation is reported as `RhttpError::Cancelled`, never as a normal end, so an
+interrupted download is not mistaken for a complete one. Two levels:
+
+- `stream.cancel()` (or dropping the handle) stops that one transfer. It is safe
+  to call while `nextChunk()` is pending; the pending call resolves immediately.
+- `client.cancelAll()` also stops bodies that already started, not just requests
+  still waiting for headers.
 
 ## Dynamic DNS
 
@@ -69,14 +107,17 @@ wsl: cmd.exe /c "D:\venera\.scratch\test-uniffi.bat"   (translatePaths: false)
 `RUSTFLAGS` must be set inside the batch file; exporting it from WSL does not
 reach the Windows `cargo.exe`.
 
-Current suite: 6 tests — settings round-trip, core defaults, dynamic DNS bridge,
-plus an end-to-end request, a status-error mapping and a timeout check against a
-loopback `TcpListener`.
+Current suite: 10 tests — settings round-trip, core defaults, dynamic DNS bridge,
+an end-to-end request, a status-error mapping, a timeout check, and four
+streaming checks (incremental delivery, single-stream cancel, client-wide cancel
+of a started body, status error at stream open). All of them run against a
+loopback `TcpListener`, so the suite needs no network.
 
 ## Not implemented yet
 
-- **Streaming downloads** — `CoreResponseBody::Stream` is not exposed. Needs a
-  callback interface or a `nextChunk()` poller (ticket 06, step 5.2).
+- **Request bodies and multipart uploads** — the streaming surface is
+  download-only. `CoreRequest` already carries `body`/`body_stream`/
+  multipart values, so this is a mapping job, not a core change.
 - **Generated bindings** — `uniffi-bindgen` is not installed; no Kotlin/Swift
   output is checked in (step 5.3).
 - **Cross targets** — Android (`aarch64-linux-android`) and Windows

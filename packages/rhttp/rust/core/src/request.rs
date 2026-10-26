@@ -8,6 +8,14 @@ use std::pin::Pin;
 /// interface. Core code only sees a neutral stream.
 pub type ByteStream = Pin<Box<dyn Stream<Item = Result<Vec<u8>, CoreError>> + Send + 'static>>;
 
+/// Pull one chunk out of a [`ByteStream`].
+///
+/// Both host bindings need this loop, so it lives here instead of forcing each
+/// binding crate to depend on `StreamExt` itself.
+pub async fn next_chunk(stream: &mut ByteStream) -> Option<Result<Vec<u8>, CoreError>> {
+    std::future::poll_fn(|cx| stream.as_mut().poll_next(cx)).await
+}
+
 pub enum CoreHeaders {
     Map(HashMap<String, String>),
     List(Vec<(String, String)>),

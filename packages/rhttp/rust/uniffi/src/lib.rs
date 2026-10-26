@@ -6,10 +6,12 @@
 //! core crate.
 
 mod settings;
+mod stream;
 
 uniffi::setup_scaffolding!();
 
 pub use settings::*;
+pub use stream::*;
 
 use std::sync::Arc;
 
