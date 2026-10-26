@@ -2,16 +2,44 @@
 //!
 //! The core crate speaks plain Rust structures; uniffi needs named records and
 //! enums per host language, so this module is the single place where a host
-//! request is mirrored. Bodies are limited to the variants that need no host
-//! callback: text, bytes, form fields, and multipart parts. Streaming *uploads*
-//! (`CoreBody::BytesStream`) stay unimplemented here — pushing host bytes into
-//! Rust needs a callback interface with its own backpressure contract, and no
-//! consumer needs it yet.
+//! request is mirrored. Bodies can be text, bytes, form fields, multipart parts,
+//! or a host-provided chunk source ([`RequestBodySource`]) that is pulled while
+//! the request is in flight, so a large upload never has to be staged in memory
+//! on the Rust side.
 
 use rhttp_core::{
-    CoreBody, CoreExpectBody, CoreHeaders, CoreMultipartItem, CoreMultipartPayload,
+    ByteStream, CoreBody, CoreExpectBody, CoreHeaders, CoreMultipartItem, CoreMultipartPayload,
     CoreMultipartValue, CoreRequest,
 };
+use std::sync::Arc;
+
+/// A pull source for a request body that is too large to hand over in one piece.
+///
+/// The transport calls `nextChunk` only as fast as it can write to the socket,
+/// so an implementation on the host side sees natural backpressure: each call
+/// may suspend for as long as producing the next chunk takes. Return `null` to
+/// finish the body; a request that ends any other way (cancel, connection loss)
+/// simply stops calling.
+#[uniffi::export(foreign)]
+#[async_trait::async_trait]
+pub trait RequestBodySource: Send + Sync {
+    /// The next chunk, or `null` once the body is complete.
+    async fn next_chunk(&self) -> Option<Vec<u8>>;
+}
+
+/// Turn a host source into the neutral stream the core crate consumes.
+pub(crate) fn body_stream_from(source: Arc<dyn RequestBodySource>) -> ByteStream {
+    Box::pin(futures_util::stream::unfold(
+        Some(source),
+        |state| async move {
+            let source = state?;
+            match source.next_chunk().await {
+                Some(chunk) => Some((Ok(chunk), Some(source))),
+                None => None,
+            }
+        },
+    ))
+}
 
 /// A name/value pair: a header, a query parameter, or a form field.
 #[derive(Clone, Debug, uniffi::Record)]
@@ -22,7 +50,7 @@ pub struct RhttpHeader {
 
 /// A URL query parameter or a form field.
 ///
-/// Kept separate from [`RhttpHeader`] even though the shape is identical: hosts
+/// Kept separate from `RhttpHeader` even though the shape is identical: hosts
 /// get a name that says what it is, and the two never mix at a call site.
 #[derive(Clone, Debug, uniffi::Record)]
 pub struct RhttpField {
@@ -63,7 +91,7 @@ pub struct MultipartPayload {
 }
 
 /// The body of a request built by the host.
-#[derive(Clone, Debug, uniffi::Enum)]
+#[derive(Clone, uniffi::Enum)]
 pub enum RequestBody {
     Text {
         text: String,
@@ -79,10 +107,17 @@ pub enum RequestBody {
     Multipart {
         payload: MultipartPayload,
     },
+    /// Chunks pulled from the host while the request is sent. Because the total
+    /// length is unknown up front, the transport uses chunked transfer encoding.
+    /// Use the `Bytes` variant when the whole body is already in memory: it
+    /// carries a `Content-Length` and costs one fewer round of copying.
+    Stream {
+        source: Arc<dyn RequestBodySource>,
+    },
 }
 
 /// Everything a host needs to describe one HTTP request.
-#[derive(Clone, Debug, uniffi::Record)]
+#[derive(Clone, uniffi::Record)]
 pub struct HttpRequest {
     pub url: String,
     /// Defaults to `GET` when null. A request with a body normally wants
@@ -106,6 +141,14 @@ impl HttpRequest {
     }
 
     pub(crate) fn into_core(self, expect_body: CoreExpectBody) -> CoreRequest {
+        let (body, body_stream) = match self.body {
+            Some(body) => {
+                let (core_body, stream) = body.into_core();
+                (Some(core_body), stream)
+            }
+            None => (None, None),
+        };
+
         CoreRequest {
             method: self.method.unwrap_or_else(|| "GET".to_string()),
             url: self.url,
@@ -122,8 +165,8 @@ impl HttpRequest {
                     .collect(),
             )
             .map(CoreHeaders::List),
-            body: self.body.map(RequestBody::into_core),
-            body_stream: None,
+            body,
+            body_stream,
             expect_body,
         }
     }
@@ -140,23 +183,34 @@ fn list_or_none<T>(items: Vec<T>) -> Option<Vec<T>> {
 }
 
 impl RequestBody {
-    fn into_core(self) -> CoreBody {
+    /// Split into the core body tag and, for streamed bodies, the stream the
+    /// transport should pull from.
+    fn into_core(self) -> (CoreBody, Option<ByteStream>) {
         match self {
-            RequestBody::Text { text } => CoreBody::Text(text),
-            RequestBody::Bytes { bytes } => CoreBody::Bytes(bytes),
-            RequestBody::Form { fields } => CoreBody::Form(
-                fields
-                    .into_iter()
-                    .map(|field| (field.name, field.value))
-                    .collect(),
+            RequestBody::Text { text } => (CoreBody::Text(text), None),
+            RequestBody::Bytes { bytes } => (CoreBody::Bytes(bytes), None),
+            RequestBody::Form { fields } => (
+                CoreBody::Form(
+                    fields
+                        .into_iter()
+                        .map(|field| (field.name, field.value))
+                        .collect(),
+                ),
+                None,
             ),
-            RequestBody::Multipart { payload } => CoreBody::Multipart(CoreMultipartPayload {
-                parts: payload
-                    .parts
-                    .into_iter()
-                    .map(MultipartPart::into_core)
-                    .collect(),
-            }),
+            RequestBody::Multipart { payload } => (
+                CoreBody::Multipart(CoreMultipartPayload {
+                    parts: payload
+                        .parts
+                        .into_iter()
+                        .map(MultipartPart::into_core)
+                        .collect(),
+                }),
+                None,
+            ),
+            RequestBody::Stream { source } => {
+                (CoreBody::BytesStream, Some(body_stream_from(source)))
+            }
         }
     }
 }
@@ -187,11 +241,33 @@ impl MultipartPart {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::VecDeque;
+    use std::sync::Mutex;
 
     fn header(name: &str, value: &str) -> RhttpHeader {
         RhttpHeader {
             name: name.to_string(),
             value: value.to_string(),
+        }
+    }
+
+    /// A host callback that hands out a fixed list of chunks and then stops.
+    struct QueueSource {
+        chunks: Mutex<VecDeque<Vec<u8>>>,
+    }
+
+    impl QueueSource {
+        fn new(chunks: Vec<Vec<u8>>) -> Arc<Self> {
+            Arc::new(Self {
+                chunks: Mutex::new(chunks.into()),
+            })
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl RequestBodySource for QueueSource {
+        async fn next_chunk(&self) -> Option<Vec<u8>> {
+            self.chunks.lock().unwrap().pop_front()
         }
     }
 
@@ -327,5 +403,23 @@ mod tests {
         );
         assert_eq!(image.file_name.as_deref(), Some("cover.png"));
         assert_eq!(image.content_type.as_deref(), Some("image/png"));
+    }
+
+    #[tokio::test]
+    async fn a_stream_body_pulls_host_chunks_in_order() {
+        let source = QueueSource::new(vec![b"hello ".to_vec(), b"world".to_vec()]);
+        let mut mapped = request(Some(RequestBody::Stream { source }));
+
+        assert!(matches!(mapped.body, Some(CoreBody::BytesStream)));
+        let mut stream = mapped
+            .body_stream
+            .take()
+            .expect("a stream body must carry a byte stream");
+
+        let mut seen = Vec::new();
+        while let Some(item) = rhttp_core::next_chunk(&mut stream).await {
+            seen.push(item.expect("the queue adapter never fails"));
+        }
+        assert_eq!(seen, vec![b"hello ".to_vec(), b"world".to_vec()]);
     }
 }

@@ -34,7 +34,7 @@ pub enum RhttpError {
     #[error("cancelled")]
     Cancelled,
 
-    /// A [`ClientOptions`] value could not be represented by the core type.
+    /// A `ClientOptions` value could not be represented by the core type.
     #[error("invalid settings: {detail}")]
     InvalidSettings { detail: String },
 }
@@ -81,12 +81,12 @@ impl RhttpClient {
         Ok(Arc::new(Self { inner }))
     }
 
-    /// Fetch a URL as text. Convenience over [`RhttpClient::send_text`].
+    /// Fetch a URL as text. Convenience over `sendText`.
     pub async fn fetch_text(&self, url: String) -> Result<String, RhttpError> {
         self.send_text(HttpRequest::get(url)).await
     }
 
-    /// Fetch a URL as bytes. Convenience over [`RhttpClient::send_bytes`].
+    /// Fetch a URL as bytes. Convenience over `sendBytes`.
     pub async fn fetch_bytes(&self, url: String) -> Result<Vec<u8>, RhttpError> {
         self.send_bytes(HttpRequest::get(url)).await
     }
@@ -411,5 +411,57 @@ mod tests {
 
         let captured = captured.await.expect("the server captured the request");
         assert_eq!(captured.body_text(), "streamed");
+    }
+
+    /// A host callback that hands out a fixed list of chunks and then stops.
+    struct ChunkSource {
+        chunks: std::sync::Mutex<std::collections::VecDeque<Vec<u8>>>,
+    }
+
+    impl ChunkSource {
+        fn new(chunks: Vec<Vec<u8>>) -> std::sync::Arc<Self> {
+            std::sync::Arc::new(Self {
+                chunks: std::sync::Mutex::new(chunks.into()),
+            })
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl RequestBodySource for ChunkSource {
+        async fn next_chunk(&self) -> Option<Vec<u8>> {
+            self.chunks.lock().unwrap().pop_front()
+        }
+    }
+
+    #[tokio::test]
+    async fn a_stream_upload_pulls_every_chunk_into_the_request() {
+        let (port, captured) = capture_one().await;
+        let client = RhttpClient::new(default_client_options()).expect("client builds");
+
+        let request = HttpRequest {
+            url: format!("http://127.0.0.1:{port}/upload"),
+            method: Some("POST".to_string()),
+            headers: Vec::new(),
+            query: Vec::new(),
+            body: Some(RequestBody::Stream {
+                source: ChunkSource::new(vec![b"chunk-one".to_vec(), b"-chunk-two".to_vec()]),
+            }),
+        };
+        client.send_text(request).await.expect("response body");
+
+        let captured = captured.await.expect("the server captured the request");
+        assert_eq!(captured.body_text(), "chunk-one-chunk-two");
+        // The host stream has no known length, so the transport must fall back
+        // to chunked encoding rather than inventing a Content-Length.
+        assert_eq!(
+            captured.header("transfer-encoding"),
+            Some("chunked"),
+            "a streamed body should be chunked"
+        );
+        assert_eq!(
+            captured.header("content-length"),
+            None,
+            "a streamed body must not claim a length"
+        );
     }
 }

@@ -16,11 +16,12 @@ pure-Rust `rhttp-core` crates.
 | `ClientOptions` | record | full mirror of `ClientSettings` |
 | `defaultClientOptions()` | function | the core defaults (`HttpVersionPref.All`, `throwOnStatusCode = true`) |
 | `HttpRequest` | record | `url`, `method` (null ⇒ `GET`), `headers`, `query`, `body` |
-| `RequestBody` | enum | `Text{text}`, `Bytes{bytes}`, `Form{fields}`, `Multipart{payload}` |
+| `RequestBody` | enum | `Text{text}`, `Bytes{bytes}`, `Form{fields}`, `Multipart{payload}`, `Stream{source}` |
 | `MultipartPayload` / `MultipartPart` / `MultipartValue` | record / record / enum | parts are `Text{text}`, `Bytes{bytes}`, or `File{path}` |
 | `RhttpHeader` / `RhttpField` | record | `name`, `value` — headers use the first, query and form pairs the second |
 | `ResponseHead` | record | `statusCode`, `headers`, `remoteIp` |
 | `DnsResolverCallback` | foreign trait | host-implemented dynamic DNS |
+| `RequestBodySource` | foreign trait | host-implemented chunk source for streamed uploads |
 
 The error field is `detail` rather than `message` on purpose: uniffi generates an
 exception class per variant, and a field named `message` collides with
@@ -64,9 +65,14 @@ staged in this binding. `fileName` and `contentType` map to the part's
 Form fields land in a `HashMap` in the core, so their order on the wire is not
 part of the contract — only that they are form-encoded.
 
-Streaming *uploads* (`CoreBody::BytesStream`) are not exported: pushing host bytes
-into Rust needs a foreign trait with its own backpressure contract, and nothing
-needs it yet.
+Streamed uploads (`RequestBody::Stream{source}`) cover the bodies that do not fit
+in memory. The host implements the `RequestBodySource` foreign trait — one
+`suspend`/`async` `nextChunk()` per call, `null` at the end — and the transport
+pulls a chunk only when it is ready to write one, so a slow producer applies
+backpressure instead of being buffered. Chunk boundaries are the host's business;
+they do not have to match the socket writes. Because the total length is unknown
+up front these requests go out with `Transfer-Encoding: chunked` rather than a
+`Content-Length`; prefer `Bytes` when the body is already in memory.
 
 ## Streaming downloads
 
@@ -148,15 +154,16 @@ wsl: cmd.exe /c "D:\venera\.scratch\test-uniffi.bat"   (translatePaths: false)
 `RUSTFLAGS` must be set inside the batch file; exporting it from WSL does not
 reach the Windows `cargo.exe`.
 
-Current suite: 20 tests. Settings round-trip, core defaults, the dynamic DNS
+Current suite: 22 tests. Settings round-trip, core defaults, the dynamic DNS
 bridge; the request mapping (method default, headers, query, every body variant,
-multipart metadata); an upload seen by a capture server (text body, form
-encoding, a multipart part with a real file), a streamed request that carries a
-body; a status error, a timeout; and four streaming checks (incremental delivery,
-single-stream cancel, client-wide cancel of a started body, status error at
-stream open). Everything runs against loopback listeners, so the suite needs no
-network. `tests/throughput.rs` adds a twenty-first test that is `#[ignore]`d: it
-moves ~1 GiB to measure, and asserts nothing about speed.
+multipart metadata, a stream body drained into the core stream); an upload seen by
+a capture server (text body, form encoding, a multipart part with a real file, a
+host stream whose chunks must arrive in order and be chunk-encoded), a streamed
+request that carries a body; a status error, a timeout; and four streaming checks
+(incremental delivery, single-stream cancel, client-wide cancel of a started
+body, status error at stream open). Everything runs against loopback listeners,
+so the suite needs no network. `tests/throughput.rs` adds a twenty-third test that
+is `#[ignore]`d: it moves ~1 GiB to measure, and asserts nothing about speed.
 
 ## Generating bindings
 
@@ -283,8 +290,6 @@ prevent.
 
 ## Not implemented yet
 
-- **Streaming request bodies** (`CoreBody::BytesStream`) — uploads are limited to
-  text, bytes, form fields, and multipart parts.
 - **A Dart host for the FRB side** — until one exists, "uniffi vs FRB" stays
   unmeasured; the two numbers above are each self-contained.
 

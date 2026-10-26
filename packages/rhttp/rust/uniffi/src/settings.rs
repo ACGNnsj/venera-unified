@@ -49,7 +49,7 @@ pub struct ClientOptions {
     pub dns_settings: Option<DnsSettings>,
 }
 
-/// The settings [`rhttp_core::ClientSettings::default`] would use.
+/// The settings the core type's default would use.
 #[uniffi::export]
 pub fn default_client_options() -> ClientOptions {
     ClientOptions {

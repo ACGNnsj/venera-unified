@@ -14,6 +14,10 @@ tokio = { version = "1.48.0", features = ["rt-multi-thread", "macros"] }
 tokio-util = "0.7.17"
 chrono = "0.4.42"
 thiserror = "2"
+# uniffi 会在自己生成的 impl 上挂 `::async_trait::async_trait`，所以只要用到
+# 异步宿主回调（下方的 RequestBodySource），这个宏就必须是直接依赖。
+async-trait = "0.1.83"
+futures-util = "0.3.34"
 
 [dev-dependencies]
 tokio = { version = "1.48.0", features = ["net", "io-util", "time"] }
