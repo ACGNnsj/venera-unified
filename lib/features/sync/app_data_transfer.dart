@@ -22,6 +22,8 @@ import 'package:venera_unified/features/favorites/favorites_manager.dart';
 import 'package:venera_unified/features/history/history_manager.dart';
 import 'package:venera_unified/network/cookie_jar.dart';
 import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/features/favorites/favorites_repository.dart';
+import 'package:venera_unified/foundation/sqlite_connection.dart';
 
 Future<File> exportAppData({bool sync = true, File? destination}) =>
     AppDataOperations.instance.run(
@@ -203,6 +205,17 @@ Future<DataSyncCommitState> _importAppData(
       if (version != null &&
           SyncConfiguration.requireDataVersion(version) <= currentVersion) {
         return DataSyncCommitState.notApplied;
+      }
+    }
+
+    if (await localFavoriteFile.exists()) {
+      final stagedFavorites = openSqliteDatabase(localFavoriteFile.path);
+      try {
+        final repository = FavoritesRepository(stagedFavorites);
+        repository.initializeMetadata();
+        repository.initializeHierarchy();
+      } finally {
+        stagedFavorites.dispose();
       }
     }
 
