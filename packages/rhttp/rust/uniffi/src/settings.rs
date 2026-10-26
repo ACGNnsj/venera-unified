@@ -213,7 +213,7 @@ impl RedirectSettings {
             RedirectSettings::LimitedRedirects { max_redirects } => {
                 let max_redirects =
                     i32::try_from(max_redirects).map_err(|_| RhttpError::InvalidSettings {
-                        message: format!("max_redirects {max_redirects} does not fit in i32"),
+                        detail: format!("max_redirects {max_redirects} does not fit in i32"),
                     })?;
                 Ok(CoreRedirectSettings::LimitedRedirects(max_redirects))
             }
@@ -361,7 +361,7 @@ impl rhttp_core::DnsResolver for CallbackDnsResolver {
 
 fn duration_to_core(value: Duration) -> Result<chrono::Duration, RhttpError> {
     chrono::Duration::from_std(value).map_err(|error| RhttpError::InvalidSettings {
-        message: format!("duration is out of range: {error}"),
+        detail: format!("duration is out of range: {error}"),
     })
 }
 

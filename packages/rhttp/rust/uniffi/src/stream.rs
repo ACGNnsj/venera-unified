@@ -1,7 +1,7 @@
 //! Streaming downloads for non-Flutter hosts.
 //!
 //! uniffi has no async iterator, so the stream is modelled as a puller:
-//! [`RhttpClient::stream`] resolves once the response head is available and
+//! [`RhttpClient::send_stream`] resolves once the response head is available and
 //! hands back a [`ResponseStream`]; the host then awaits `nextChunk()` until it
 //! returns null. Kotlin wraps that loop in a `flow`, Swift in an
 //! `AsyncSequence`. No Rust thread ever calls back into host code, so a slow or
@@ -14,22 +14,16 @@
 
 use std::sync::Arc;
 
-use rhttp_core::{CoreExpectBody, CoreHeaders, CoreRequest, CoreResponseBody};
+use rhttp_core::{CoreExpectBody, CoreRequest, CoreResponseBody};
 use tokio::sync::{mpsc, Mutex};
 use tokio_util::sync::CancellationToken;
 
-use crate::{RhttpClient, RhttpError};
+use crate::{HttpRequest, RhttpClient, RhttpError, RhttpHeader};
 
 /// How many chunks may queue between the transport and the host before reading
 /// pauses. Bounded on purpose: a host that stops calling `nextChunk` must apply
 /// backpressure instead of letting a whole file pile up in memory.
 const CHUNK_BUFFER: usize = 4;
-
-#[derive(Clone, Debug, uniffi::Record)]
-pub struct RhttpHeader {
-    pub name: String,
-    pub value: String,
-}
 
 /// The part of a response that arrives before the body.
 #[derive(Clone, Debug, uniffi::Record)]
@@ -37,39 +31,6 @@ pub struct ResponseHead {
     pub status_code: u16,
     pub headers: Vec<RhttpHeader>,
     pub remote_ip: Option<String>,
-}
-
-/// A download request. Bodies and multipart uploads are not part of the
-/// streaming surface yet; this mirrors the metadata a download needs.
-#[derive(Clone, Debug, uniffi::Record)]
-pub struct StreamRequest {
-    pub url: String,
-    /// Defaults to `GET` when null.
-    pub method: Option<String>,
-    pub headers: Vec<RhttpHeader>,
-}
-
-impl StreamRequest {
-    fn into_core(self) -> CoreRequest {
-        CoreRequest {
-            method: self.method.unwrap_or_else(|| "GET".to_string()),
-            url: self.url,
-            query: None,
-            headers: if self.headers.is_empty() {
-                None
-            } else {
-                Some(CoreHeaders::List(
-                    self.headers
-                        .into_iter()
-                        .map(|header| (header.name, header.value))
-                        .collect(),
-                ))
-            },
-            body: None,
-            body_stream: None,
-            expect_body: CoreExpectBody::Stream,
-        }
-    }
 }
 
 /// A response whose body is still arriving.
@@ -131,23 +92,20 @@ impl ResponseStream {
 
 #[uniffi::export(async_runtime = "tokio")]
 impl RhttpClient {
-    /// Start a streaming download. Resolves once the response head arrives, so
+    /// Start a streaming request. Resolves once the response head arrives, so
     /// a status error surfaces here instead of at the first chunk.
-    pub async fn stream(&self, request: StreamRequest) -> Result<Arc<ResponseStream>, RhttpError> {
-        self.stream_inner(request.into_core()).await
+    pub async fn send_stream(
+        &self,
+        request: HttpRequest,
+    ) -> Result<Arc<ResponseStream>, RhttpError> {
+        self.stream_inner(request.into_core(CoreExpectBody::Stream))
+            .await
     }
 
     /// Streaming GET for the common case.
     pub async fn stream_get(&self, url: String) -> Result<Arc<ResponseStream>, RhttpError> {
-        self.stream_inner(
-            StreamRequest {
-                url,
-                method: None,
-                headers: Vec::new(),
-            }
-            .into_core(),
-        )
-        .await
+        self.stream_inner(HttpRequest::get(url).into_core(CoreExpectBody::Stream))
+            .await
     }
 }
 
@@ -169,7 +127,7 @@ impl RhttpClient {
             CoreResponseBody::Stream(stream) => stream,
             CoreResponseBody::Text(_) | CoreResponseBody::Bytes(_) => {
                 return Err(RhttpError::Network {
-                    message: "expected a streaming body".to_string(),
+                    detail: "expected a streaming body".to_string(),
                 })
             }
         };
