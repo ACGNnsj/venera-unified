@@ -36,12 +36,65 @@ jobs:
         env:
           RUSTFLAGS: --cfg reqwest_unstable
         run: cargo build --locked --manifest-path packages/rhttp/rust/Cargo.toml --lib
+      - name: 验证 uniffi 绑定的请求映射与流式行为
+        env:
+          RUSTFLAGS: --cfg reqwest_unstable
+        run: cargo test --locked --manifest-path packages/rhttp/rust/Cargo.toml -p rhttp-uniffi
       - uses: actions/upload-artifact@v7
         with:
           name: linux-rhttp-test-library
           path: packages/rhttp/rust/target/debug/librhttp.so
           if-no-files-found: error
           retention-days: 1
+
+  rhttp-android:
+    name: Android Rhttp 交叉目标（${{ matrix.target }}）
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-linux-android
+            clang: aarch64-linux-android24-clang
+          - target: armv7-linux-androideabi
+            clang: armv7a-linux-androideabi24-clang
+          - target: x86_64-linux-android
+            clang: x86_64-linux-android24-clang
+    env:
+      RUSTFLAGS: --cfg reqwest_unstable
+    steps:
+      - uses: actions/checkout@v7
+      - name: 准备与 Android 工程一致的 NDK
+        run: |
+          set -euo pipefail
+          ndk_version="$(grep -oP 'ndkVersion\s*"\K[^"]+' android/app/build.gradle)"
+          ndk_root="${ANDROID_HOME}/ndk/${ndk_version}"
+          if [[ ! -d "${ndk_root}" ]]; then
+            echo "安装 NDK ${ndk_version}"
+            yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --install "ndk;${ndk_version}" > /dev/null
+          fi
+          echo "ANDROID_NDK_HOME=${ndk_root}" >> "$GITHUB_ENV"
+      - name: 交叉编译 rhttp-uniffi
+        env:
+          TARGET: ${{ matrix.target }}
+          CLANG: ${{ matrix.clang }}
+        run: |
+          set -euo pipefail
+          toolchain="${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          triple="$(printf '%s' "${TARGET}" | tr 'a-z-' 'A-Z_')"
+          export "CC_${triple}=${toolchain}/${CLANG}"
+          export "AR_${triple}=${toolchain}/llvm-ar"
+          export "CARGO_TARGET_${triple}_LINKER=${toolchain}/${CLANG}"
+          cargo build --locked --manifest-path packages/rhttp/rust/Cargo.toml \
+            -p rhttp-uniffi --lib --release --target "${TARGET}"
+      - name: 检查产物
+        run: |
+          set -euo pipefail
+          library="packages/rhttp/rust/target/${{ matrix.target }}/release/librhttp_uniffi.so"
+          test -s "${library}"
+          file "${library}"
+          file "${library}" | grep -q "ELF"
 
   rhttp-ios:
     name: iOS Rhttp 原生依赖兼容性
