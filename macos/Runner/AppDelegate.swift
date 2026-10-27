@@ -11,7 +11,7 @@ class AppDelegate: FlutterAppDelegate {
       directoryTerminationObserver = NotificationCenter.default.addObserver(
         forName: NSApplication.willTerminateNotification, object: nil, queue: .main
       ) { [weak self] _ in self?.directoryAccess.close() }
-      let controller: FlutterViewController = mainFlutterWindow?.contentViewController as! FlutterViewController
+      guard let controller = mainFlutterWindow?.contentViewController as? FlutterViewController else { return }
       let methodChannel = FlutterMethodChannel(name: "venera/method_channel", binaryMessenger: controller.engine.binaryMessenger)
 
       methodChannel.setMethodCallHandler { (call, result) in

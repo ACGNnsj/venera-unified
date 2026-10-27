@@ -277,8 +277,12 @@ class MainActivity : FlutterFragmentActivity() {
         // so we need to copy the directory to cache directory
         val contentResolver = contentResolver
         var tmp = cacheDir
-        var dirName = DocumentFile.fromTreeUri(this, uri)?.name
-        tmp = File(tmp, dirName!!)
+        val dirName = DocumentFile.fromTreeUri(this, uri)?.name
+        if (dirName == null) {
+            result.error("invalid_directory", "Cannot resolve directory name", null)
+            return
+        }
+        tmp = File(tmp, dirName)
         if(tmp.exists()) {
             tmp.deleteRecursively()
         }

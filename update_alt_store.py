@@ -2,7 +2,8 @@ import json
 import re
 import os
 from datetime import datetime
-from urllib.error import HTTPError, URLError
+from pathlib import Path
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 from urllib.parse import urlsplit
 
@@ -48,15 +49,17 @@ def fetch_latest_release(repo_url):
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if token:
         headers["Authorization"] = f"Bearer {token}"
+    if urlsplit(api_url).scheme != "https":
+        raise RuntimeError(f"Refusing to fetch over non-HTTPS URL: {api_url}")
     request = Request(api_url, headers=headers)
     try:
-        with urlopen(request, timeout=30) as response:
+        with urlopen(request, timeout=30) as response:  # nosec B310 -- https verified above
             releases = json.load(response)
         for release in releases:
             if not release.get("draft") and not release.get("prerelease"):
                 return release
         raise RuntimeError("No published release found.")
-    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as e:
+    except (URLError, TimeoutError, json.JSONDecodeError) as e:
         print(f"Error fetching releases: {e}")
         raise
 
@@ -98,8 +101,12 @@ def update_json_file_release(json_file, latest_release):
     if not isinstance(latest_release, dict):
         raise RuntimeError("Error getting latest release")
 
+    store_path = Path(json_file)
+    if ".." in store_path.parts or store_path.suffix.lower() != ".json":
+        raise RuntimeError(f"Refusing to open unexpected store path: {json_file}")
+
     try:
-        with open(json_file, "r", encoding="utf-8-sig") as file:
+        with open(store_path, "r", encoding="utf-8-sig") as file:
             data = json.load(file)
     except json.JSONDecodeError as e:
         print(f"Error reading JSON file: {e}")
@@ -157,7 +164,7 @@ def update_json_file_release(json_file, latest_release):
     date_string = date_obj.strftime("%d/%m/%y")
     news_entry = {
         "appID": "com.github.cyrilpeng.veneranext",
-        "caption": f"Update of VeneraNext just got released!",
+        "caption": "Update of VeneraNext just got released!",
         "date": latest_release["published_at"],
         "identifier": news_identifier,
         "notify": True,
@@ -173,7 +180,7 @@ def update_json_file_release(json_file, latest_release):
         data["news"].append(news_entry)
 
     try:
-        with open(json_file, "w", encoding="utf-8") as file:
+        with open(store_path, "w", encoding="utf-8") as file:
             json.dump(data, file, indent=2)
         print("JSON file updated successfully.")
     except IOError as e:
