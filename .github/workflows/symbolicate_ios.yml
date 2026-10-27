@@ -1,0 +1,84 @@
+name: iOS dSYM 与产物配对校验
+
+# 手动触发。用途：拿到别人的崩溃日志时，先确认手上的 dSYM 是否真的对应那一版
+# 出货二进制——UUID 对不上，符号化出来的函数名就是错的。
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 产出该 IPA 的「完整构建」运行 ID
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-dsym:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: 下载 IPA 与 dSYM
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run download "${{ inputs.run_id }}" -n ios_build -D artifacts/ipa
+          if ! gh run download "${{ inputs.run_id }}" -n ios_dsyms -D artifacts/dsym; then
+            echo "::error::这次运行没有上传 ios_dsyms 产物——该版本的崩溃无法符号化，只能重新构建并留档。"
+            exit 1
+          fi
+
+      - name: 展开 IPA 并取出二进制
+        run: |
+          set -euo pipefail
+          ipa=$(find artifacts/ipa -name '*.ipa' -print -quit)
+          if [ -z "$ipa" ]; then
+            echo "::error::ios_build 产物里没有 .ipa"
+            exit 1
+          fi
+          echo "IPA: $ipa"
+          mkdir -p app
+          unzip -q "$ipa" -d app
+          binary="app/Payload/Runner.app/Runner"
+          if [ ! -f "$binary" ]; then
+            echo "::error::IPA 里没有 Payload/Runner.app/Runner"
+            exit 1
+          fi
+          echo "BIN=$binary" >> "$GITHUB_ENV"
+
+      - name: 比对 dSYM 与二进制的 UUID
+        run: |
+          set -euo pipefail
+          dwarfdump --uuid "$BIN" | tee binary.uuid
+          dsym=$(find artifacts/dsym -maxdepth 1 -name '*.dSYM' -print -quit)
+          if [ -z "$dsym" ]; then
+            echo "::error::ios_dsyms 产物里没有 .dSYM"
+            exit 1
+          fi
+          echo "dSYM: $dsym"
+          dwarfdump --uuid "$dsym" | tee dsym.uuid
+
+          binary_uuid=$(awk 'NR == 1 {print $2}' binary.uuid)
+          if ! grep -q "$binary_uuid" dsym.uuid; then
+            echo "::error::dSYM 与 IPA 中的二进制 UUID 不匹配（binary=$binary_uuid）——这份 dSYM 不能用来符号化该版本。"
+            exit 1
+          fi
+          echo "配对成功：binary 与 dSYM 的 UUID 都是 $binary_uuid"
+
+      - name: 汇总
+        run: |
+          {
+            echo "## iOS dSYM 配对结果"
+            echo
+            echo '```'
+            cat binary.uuid
+            cat dsym.uuid
+            echo '```'
+            echo
+            echo "接下来可以用同一次运行里的 dSYM 对崩溃日志做 \`atos\` 符号化："
+            echo '```bash'
+            echo "xcrun atos -arch arm64 -o \"$BIN\" -l <load_address> <address>..."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

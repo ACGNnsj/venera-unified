@@ -371,6 +371,20 @@ jobs:
           path: result/
           if-no-files-found: error
           retention-days: 7
+      - name: 归档 dSYM
+        run: |
+          set -euo pipefail
+          mkdir -p dsym
+          find build/ios -maxdepth 2 -name '*.dSYM' -exec cp -R {} dsym/ \;
+          ls -1 dsym
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ios_dsyms
+          path: dsym/
+          # dSYM 缺失时不让发版失败，但会在产物里留下空目录提示：
+          # 之后用 symbolicate_ios.yml 校验配对时能立刻发现。
+          if-no-files-found: warn
+          retention-days: 30
 
   Build_Linux_x64:
     if: ${{ inputs.build_linux_x64 }}
