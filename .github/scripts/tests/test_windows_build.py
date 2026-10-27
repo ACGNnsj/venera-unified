@@ -26,12 +26,12 @@ class WindowsBuildTest(unittest.TestCase):
             runner, suffix, _ = build.architecture_paths(arch)
             release = runner / 'Release'
             (release / 'data').mkdir(parents=True)
-            (release / 'VeneraNext.exe').write_bytes(arch.encode())
+            (release / 'VeneraUnified.exe').write_bytes(arch.encode())
             (release / 'data/plugin.dll').write_bytes(b'plugin')
             path = build.create_portable_zip('1.2.3', arch)
             with zipfile.ZipFile(path) as archive:
-                prefix = f'VeneraNext-1.2.3-{suffix}/'
-                self.assertEqual(archive.read(prefix + 'VeneraNext.exe'), arch.encode())
+                prefix = f'VeneraUnified-1.2.3-{suffix}/'
+                self.assertEqual(archive.read(prefix + 'VeneraUnified.exe'), arch.encode())
                 self.assertEqual(archive.read(prefix + 'data/plugin.dll'), b'plugin')
             self.assertFalse(path.with_suffix('').exists())
             self.assertTrue(release.exists())

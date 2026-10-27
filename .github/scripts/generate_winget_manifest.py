@@ -7,10 +7,10 @@ from pathlib import Path
 from release_version import load_release_config
 
 
-PACKAGE_IDENTIFIER = "CyrilPeng.VeneraNext"
-PACKAGE_PUBLISHER = "CyrilPeng/venera-next"
-PACKAGE_NAME = "VeneraNext"
-PACKAGE_MONIKER = "venera-next"
+PACKAGE_IDENTIFIER = "ACGNnsj.VeneraUnified"
+PACKAGE_PUBLISHER = "ACGNnsj/venera-unified"
+PACKAGE_NAME = "Venera Unified"
+PACKAGE_MONIKER = "venera-unified"
 MANIFEST_VERSION = "1.10.0"
 SCHEMA_BASE_URL = "https://aka.ms"
 SCHEMA_HEADERS = {
@@ -28,7 +28,7 @@ SCHEMA_HEADERS = {
     ),
 }
 APP_ID = "{C6B7E69A-0FD6-4F2A-AC64-7D1AE8A40FB8}_is1"
-REPOSITORY_URL = "https://github.com/CyrilPeng/venera-next"
+REPOSITORY_URL = "https://github.com/ACGNnsj/venera-unified"
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+(?:-rc\.\d+)?$")
 
 
@@ -78,7 +78,7 @@ def validate_installer_path(version: str, path: Path) -> None:
 
 
 def manifest_dir(output: Path, version: str) -> Path:
-    return output / "manifests" / "c" / "CyrilPeng" / "VeneraNext" / version
+    return output / "manifests" / "c" / "CyrilPeng" / "Venera Unified" / version
 
 
 def clean_output(path: Path) -> None:
@@ -156,7 +156,7 @@ License: GPL-3.0
 LicenseUrl: {REPOSITORY_URL}/blob/main/LICENSE
 Copyright: Copyright (C) CyrilPeng
 ShortDescription: A comic app.
-Description: VeneraNext is a free and open-source app for comic reading.
+Description: Venera Unified is a free and open-source app for comic reading.
 Moniker: {PACKAGE_MONIKER}
 Tags:
 - comic

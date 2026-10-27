@@ -41,7 +41,7 @@ def versions(value):
 
 
 def validate_bundle(bundle, arch):
-    binary = bundle / "venera-next"
+    binary = bundle / "venera-unified"
     with binary.open("rb") as stream:
         header = stream.read(20)
     if (len(header) != 20 or header[:6] != b"\x7fELF\x02\x01"
@@ -55,10 +55,10 @@ def validate_bundle(bundle, arch):
 def desktop_file(exec_path):
     return f"""[Desktop Entry]
 Type=Application
-Name=VeneraNext
+Name=VeneraUnified
 Comment=Comic reader
 Exec={exec_path} %U
-Icon=venera-next
+Icon=venera-unified
 Terminal=false
 Categories=Graphics;Viewer;
 MimeType=x-scheme-handler/venera;
@@ -67,7 +67,7 @@ MimeType=x-scheme-handler/venera;
 
 def stage_bundle(bundle, destination):
     shutil.copytree(bundle, destination, symlinks=True)
-    (destination / "venera-next").chmod(0o755)
+    (destination / "venera-unified").chmod(0o755)
     shutil.copyfile(ROOT / "LICENSE", destination / "LICENSE")
 
 
@@ -75,16 +75,16 @@ def rpm_spec(version, build, private_libs):
     # Private Flutter/plugin libraries must not become global RPM provides, nor
     # requirements on a nonexistent system package. Keep system ELF requirements.
     excluded = "|".join(re.escape(name) for name in sorted(private_libs))
-    return f"""%global __provides_exclude_from ^/opt/venera-next/.*$
+    return f"""%global __provides_exclude_from ^/opt/venera-unified/.*$
 %global __requires_exclude ^({excluded})(\\(.*\\))?$
 %global _build_id_links none
 %global __os_install_post %{{nil}}
-Name: venera-next
+Name: venera-unified
 Version: {version}
 Release: {build}
-Summary: VeneraNext comic reader
+Summary: VeneraUnified comic reader
 License: GPL-3.0-only
-URL: https://github.com/CyrilPeng/venera-next
+URL: https://github.com/ACGNnsj/venera-unified
 Requires: gtk3, webkit2gtk4.1
 
 %description
@@ -92,16 +92,16 @@ A cross-platform comic reader with JavaScript source extensions and local readin
 
 %install
 mkdir -p "%{{buildroot}}/opt" "%{{buildroot}}/usr/bin" "%{{buildroot}}/usr/share/applications" "%{{buildroot}}/usr/share/icons/hicolor/256x256/apps"
-cp -a "%{{_sourcedir}}/app" "%{{buildroot}}/opt/venera-next"
-ln -s /opt/venera-next/venera-next "%{{buildroot}}/usr/bin/venera-next"
-install -m644 "%{{_sourcedir}}/venera-next.desktop" "%{{buildroot}}/usr/share/applications/"
-install -m644 "%{{_sourcedir}}/venera-next.png" "%{{buildroot}}/usr/share/icons/hicolor/256x256/apps/"
+cp -a "%{{_sourcedir}}/app" "%{{buildroot}}/opt/venera-unified"
+ln -s /opt/venera-unified/venera-unified "%{{buildroot}}/usr/bin/venera-unified"
+install -m644 "%{{_sourcedir}}/venera-unified.desktop" "%{{buildroot}}/usr/share/applications/"
+install -m644 "%{{_sourcedir}}/venera-unified.png" "%{{buildroot}}/usr/share/icons/hicolor/256x256/apps/"
 
 %files
-/opt/venera-next
-/usr/bin/venera-next
-/usr/share/applications/venera-next.desktop
-/usr/share/icons/hicolor/256x256/apps/venera-next.png
+/opt/venera-unified
+/usr/bin/venera-unified
+/usr/share/applications/venera-unified.desktop
+/usr/share/icons/hicolor/256x256/apps/venera-unified.png
 """
 
 
@@ -111,10 +111,10 @@ def build_rpm(bundle, out, arch, version, work):
     sources.mkdir(parents=True)
     (top / "SPECS").mkdir()
     stage_bundle(bundle, sources / "app")
-    (sources / "venera-next.desktop").write_text(desktop_file("venera-next"), encoding="utf-8")
-    shutil.copyfile(ROOT / "assets/app_icon.png", sources / "venera-next.png")
+    (sources / "venera-unified.desktop").write_text(desktop_file("venera-unified"), encoding="utf-8")
+    shutil.copyfile(ROOT / "assets/app_icon.png", sources / "venera-unified.png")
     libs = {p.name for p in (bundle / "lib").rglob("*.so*")}
-    spec = top / "SPECS/venera-next.spec"
+    spec = top / "SPECS/venera-unified.spec"
     spec.write_text(rpm_spec(*versions(version), libs), encoding="utf-8")
     run("rpmbuild", "--define", f"_topdir {top}", "--target", ARCHES[arch][0], "-bb", spec)
     packages = list((top / "RPMS").rglob("*.rpm"))
@@ -137,22 +137,22 @@ def download_verified(url, path, digest):
 
 
 def stage_appdir(bundle, appdir):
-    stage_bundle(bundle, appdir / "usr/lib/venera-next")
-    (appdir / "venera-next.desktop").write_text(desktop_file("AppRun"), encoding="utf-8")
-    shutil.copyfile(ROOT / "assets/app_icon.png", appdir / "venera-next.png")
+    stage_bundle(bundle, appdir / "usr/lib/venera-unified")
+    (appdir / "venera-unified.desktop").write_text(desktop_file("AppRun"), encoding="utf-8")
+    shutil.copyfile(ROOT / "assets/app_icon.png", appdir / "venera-unified.png")
     shutil.copyfile(ROOT / "assets/app_icon.png", appdir / ".DirIcon")
     apprun = appdir / "AppRun"
     apprun.write_text('''#!/bin/sh
 set -eu
 APPDIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 . "$APPDIR/runtime-env.sh"
-"$APPDIR/usr/lib/venera-next/venera-next" "$@"
+"$APPDIR/usr/lib/venera-unified/venera-unified" "$@"
 ''', encoding="utf-8", newline="\n")
     apprun.chmod(0o755)
 
 
 def build_appimage(bundle, out, arch, version, work):
-    appdir = work / "VeneraNext.AppDir"
+    appdir = work / "VeneraUnified.AppDir"
     stage_appdir(bundle, appdir)
     collect_runtime(appdir)
     cache = out / "tools"
@@ -170,7 +170,7 @@ def build_appimage(bundle, out, arch, version, work):
     )
     # Extract the build tool so CI does not need FUSE or a privileged container.
     run(tool, "--appimage-extract", cwd=work, stdout=subprocess.DEVNULL)
-    package = out / f"VeneraNext-{version}-{machine}.AppImage"
+    package = out / f"VeneraUnified-{version}-{machine}.AppImage"
     run(work / "squashfs-root/AppRun", "--no-appstream", "--runtime-file", runtime,
         appdir, package, env={**os.environ, "ARCH": machine, "SOURCE_DATE_EPOCH": os.environ.get("SOURCE_DATE_EPOCH", "0")})
     if not package.exists() or package.stat().st_size == 0:
@@ -180,7 +180,7 @@ def build_appimage(bundle, out, arch, version, work):
     extracted = work / "verify"
     extracted.mkdir()
     run(package, "--appimage-extract", cwd=extracted, stdout=subprocess.DEVNULL)
-    validate_bundle(extracted / "squashfs-root/usr/lib/venera-next", arch)
+    validate_bundle(extracted / "squashfs-root/usr/lib/venera-unified", arch)
     validate_runtime(extracted / "squashfs-root")
     if not os.access(extracted / "squashfs-root/AppRun", os.X_OK):
         raise RuntimeError("AppImage entry point is not executable")

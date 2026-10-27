@@ -99,7 +99,7 @@ def collect_runtime(appdir):
         str(Path(__file__).with_name("appimage_relocate.c")),
         "-o", str(appdir / "usr/bin/venera-relocate-webkit"),
     ], check=True)
-    library_path = f"{lib / 'venera-next/lib'}:{lib}"
+    library_path = f"{lib / 'venera-unified/lib'}:{lib}"
     pending = [p for p in appdir.rglob("*") if is_elf(p)]
     inspected = set()
     while pending:
@@ -117,7 +117,7 @@ def collect_runtime(appdir):
                 # Preserve redistribution notices for every dependency package.
                 packages.add(owning_package(source))
 
-    notices = appdir / "usr/share/doc/venera-next-runtime"
+    notices = appdir / "usr/share/doc/venera-unified-runtime"
     for package in sorted(packages):
         copyright_file = Path("/usr/share/doc") / package.split(":")[0] / "copyright"
         if not copyright_file.is_file():
@@ -154,14 +154,14 @@ def validate_runtime(appdir):
     appdir = appdir.resolve()
     lib = appdir / "usr/lib"
     for binary in (p for p in appdir.rglob("*") if is_elf(p)):
-        for dependency in dependencies(binary, f"{lib / 'venera-next/lib'}:{lib}"):
+        for dependency in dependencies(binary, f"{lib / 'venera-unified/lib'}:{lib}"):
             if not dependency.is_relative_to(appdir) and not HOST_LIBRARIES.fullmatch(dependency.name):
                 raise RuntimeError(f"{binary} still requires host library {dependency}")
 
 
 def runtime_environment(triplet):
     return '''# Sourced by AppRun; APPDIR is the extracted or mounted image root.
-export LD_LIBRARY_PATH="$APPDIR/usr/lib/venera-next/lib:$APPDIR/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH="$APPDIR/usr/lib/venera-unified/lib:$APPDIR/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export WEBKIT_INJECTED_BUNDLE_PATH="$APPDIR/usr/lib/TRIPLET/webkit2gtk-4.1/injected-bundle"
 export XDG_DATA_DIRS="$APPDIR/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 export GSETTINGS_SCHEMA_DIR="$APPDIR/usr/share/glib-2.0/schemas"

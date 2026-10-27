@@ -19,7 +19,7 @@ class AltStoreTest(unittest.TestCase):
                                        {"version": "1.6.3", "downloadURL": upstream}]}],
                 "news": [{"url": own}, {"url": upstream}]}
         release = {"tag_name": "v2.0.0", "published_at": "2026-09-28T00:00:00Z",
-                   "assets": [{"name": "VeneraNext-ios-2.0.0.ipa", "size": 123,
+                   "assets": [{"name": "VeneraUnified-ios-2.0.0.ipa", "size": 123,
                                "browser_download_url": own.replace("v1.8.0", "v2.0.0")}]}
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "source.json"

@@ -35,7 +35,7 @@ dbus-run-session -- xvfb-run -a bash -euo pipefail <<'SMOKE'
       echo 'AppImage exited before showing a window' >&2
       exit 1
     fi
-    if xdotool search --onlyvisible --name '^VeneraNext$' >/dev/null 2>&1; then
+    if xdotool search --onlyvisible --name '^Venera Unified$' >/dev/null 2>&1; then
       found=true
       break
     fi

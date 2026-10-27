@@ -16,7 +16,7 @@ Future<void> showStartupFailureWindow() async {
   await windowManager.setPreventClose(false);
   await windowManager.waitUntilReadyToShow(
     const WindowOptions(
-      title: 'VeneraNext',
+      title: 'Venera Unified',
       titleBarStyle: TitleBarStyle.normal,
       minimumSize: Size(500, 600),
     ),

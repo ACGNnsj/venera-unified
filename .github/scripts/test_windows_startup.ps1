@@ -14,14 +14,14 @@ $ErrorActionPreference = 'Stop'
 if (-not $IsWindows -or $env:GITHUB_ACTIONS -ne 'true') {
     throw 'Full application startup tests require a disposable GitHub Actions Windows runner.'
 }
-if (@(Get-Process -Name VeneraNext -ErrorAction SilentlyContinue).Count -ne 0) {
-    throw 'VeneraNext is already running. Refusing to touch existing processes.'
+if (@(Get-Process -Name VeneraUnified -ErrorAction SilentlyContinue).Count -ne 0) {
+    throw 'VeneraUnified is already running. Refusing to touch existing processes.'
 }
 foreach ($hive in 'HKLM:', 'HKCU:') {
     foreach ($subkey in 'SOFTWARE', 'SOFTWARE\WOW6432Node') {
         $key = "$hive\$subkey\Microsoft\Windows\CurrentVersion\Uninstall\{C6B7E69A-0FD6-4F2A-AC64-7D1AE8A40FB8}_is1"
         if (Test-Path -LiteralPath $key) {
-            throw 'An existing VeneraNext installation was found. Use a fresh runner.'
+            throw 'An existing VeneraUnified installation was found. Use a fresh runner.'
         }
     }
 }
@@ -171,7 +171,7 @@ try {
     if ($PSCmdlet.ParameterSetName -eq 'Installer') {
         $installerPath = (Resolve-Path -LiteralPath $Installer).Path
         $installDir = Join-Path $testRoot 'installed'
-        $appPath = Join-Path $installDir 'VeneraNext.exe'
+        $appPath = Join-Path $installDir 'VeneraUnified.exe'
         $uninstaller = Join-Path $installDir 'unins000.exe'
         $installLog = Join-Path $testRoot 'installer.log'
         $setup = Start-Process -FilePath $installerPath -WindowStyle Hidden -PassThru `
@@ -181,9 +181,9 @@ try {
         $null = $setup.Handle
         Wait-ForExit $setup 180 0
         Start-Sleep -Seconds 2
-        if (@(Get-Process -Name VeneraNext -ErrorAction SilentlyContinue).Count -ne 0 -or
+        if (@(Get-Process -Name VeneraUnified -ErrorAction SilentlyContinue).Count -ne 0 -or
             (Test-Path -LiteralPath $startupLog)) {
-            throw 'Silent installation unexpectedly started VeneraNext.'
+            throw 'Silent installation unexpectedly started Venera Unified.'
         }
         Write-Output 'PASS: silent installation did not start the application.'
     } else {
@@ -243,7 +243,7 @@ try {
     Get-ChildItem -LiteralPath (Split-Path -Parent $appPath) -File |
         Where-Object { $_.Extension -in '.exe', '.dll' } |
         ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $brokenDir }
-    $broken = Start-TestProcess (Join-Path $brokenDir 'VeneraNext.exe') 'missing-data'
+    $broken = Start-TestProcess (Join-Path $brokenDir 'VeneraUnified.exe') 'missing-data'
     Wait-ForExit $broken 30 -ExpectFailure
     if (-not (Has-StartupEvent $broken.Id 'Creating Flutter engine and view')) {
         throw 'A failing startup did not leave native diagnostics.'
@@ -256,7 +256,7 @@ try {
     # Only stop handles started by this test, plus an installer-launched instance
     # whose executable path belongs to this fresh test installation.
     if ($uninstaller -and $appPath) {
-        Get-Process -Name VeneraNext -ErrorAction SilentlyContinue |
+        Get-Process -Name VeneraUnified -ErrorAction SilentlyContinue |
             Where-Object { $_.Path -eq $appPath } |
             ForEach-Object { $started.Add($_) }
     }

@@ -188,7 +188,7 @@ class AfdianClient:
                 headers={
                     "Accept": "application/json",
                     "Content-Type": "application/json; charset=utf-8",
-                    "User-Agent": "VeneraNext-Sponsor-Sync/1.0",
+                    "User-Agent": "VeneraUnified-Sponsor-Sync/1.0",
                 },
                 method="POST",
             )

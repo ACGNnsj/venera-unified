@@ -218,10 +218,7 @@ class AppDio with DioMixin {
 }
 
 class RHttpAdapter implements HttpClientAdapter {
-  RHttpAdapter({
-    this._startStreamCall,
-    this.allowImageHttp3Fallback = false,
-  });
+  RHttpAdapter({this._startStreamCall, this.allowImageHttp3Fallback = false});
 
   final RHttpStreamCallFactory? _startStreamCall;
   final bool allowImageHttp3Fallback;
@@ -334,7 +331,7 @@ class RHttpAdapter implements HttpClientAdapter {
   void _setUserAgent(RequestOptions options) {
     if (options.headers['User-Agent'] == null &&
         options.headers['user-agent'] == null) {
-      options.headers['User-Agent'] = "VeneraNext/v${App.version}";
+      options.headers['User-Agent'] = "VeneraUnified/v${App.version}";
     }
   }
 

@@ -157,7 +157,7 @@ class _WindowHotkeySettingState extends _HotkeySaveState<WindowHotkeySetting> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
-                'Only the main window is hidden, not other windows. This is not privacy protection. If hidden, launch VeneraNext again to restore its window.'
+                'Only the main window is hidden, not other windows. This is not privacy protection. If hidden, launch Venera Unified again to restore its window.'
                     .tl,
               ),
             ),

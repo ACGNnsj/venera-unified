@@ -27,7 +27,7 @@ class _StartupFailureAppState extends State<StartupFailureApp> {
   bool _copyFailed = false;
 
   String get _diagnostic => redactLogText(
-    'VeneraNext ${App.version} (${Platform.operatingSystem})\n'
+    'Venera Unified ${App.version} (${Platform.operatingSystem})\n'
     '${widget.error}\n${widget.stack}',
   );
 
@@ -63,14 +63,14 @@ class _StartupFailureAppState extends State<StartupFailureApp> {
   @override
   Widget build(BuildContext context) => MaterialApp(
     debugShowCheckedModeBanner: false,
-    title: 'VeneraNext',
+    title: 'Venera Unified',
     theme: ThemeData(colorSchemeSeed: Colors.blue),
     darkTheme: ThemeData(
       colorSchemeSeed: Colors.blue,
       brightness: Brightness.dark,
     ),
     home: Scaffold(
-      appBar: AppBar(title: const Text('VeneraNext')),
+      appBar: AppBar(title: const Text('Venera Unified')),
       body: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,

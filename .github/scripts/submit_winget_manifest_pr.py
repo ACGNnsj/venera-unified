@@ -33,7 +33,7 @@ def gh_api(repo_path: str, method: str = "GET", data: dict | None = None):
 
 
 def manifest_files(manifest_root: Path, version: str) -> list[Path]:
-    source = manifest_root / "c" / "CyrilPeng" / "VeneraNext" / version
+    source = manifest_root / "a" / "ACGNnsj" / "VeneraUnified" / version
     if not source.is_dir():
         raise WingetPrError(f"manifest directory does not exist: {source}")
     files = sorted(source.glob("*.yaml"))
@@ -74,7 +74,7 @@ def create_or_update_branch(
         entries.append(
             {
                 "path": (
-                    "manifests/c/CyrilPeng/VeneraNext/"
+                    "manifests/a/ACGNnsj/VeneraUnified/"
                     f"{version}/{file.name}"
                 ),
                 "mode": "100644",
@@ -92,7 +92,7 @@ def create_or_update_branch(
         f"repos/{fork_repo}/git/commits",
         "POST",
         {
-            "message": f"New version: CyrilPeng.VeneraNext version {version}",
+            "message": f"New version: ACGNnsj.VeneraUnified version {version}",
             "tree": tree["sha"],
             "parents": [base_sha],
         },
@@ -127,11 +127,11 @@ def create_pr(
         f"repos/{upstream_repo}/pulls",
         "POST",
         {
-            "title": f"New version: CyrilPeng.VeneraNext version {version}",
+            "title": f"New version: ACGNnsj.VeneraUnified version {version}",
             "head": head,
             "base": base_branch,
             "body": (
-                f"- Adds CyrilPeng.VeneraNext {version}\n"
+                f"- Adds ACGNnsj.VeneraUnified {version}\n"
                 "- Generated from the venera-next release workflow artifact.\n"
             ),
         },

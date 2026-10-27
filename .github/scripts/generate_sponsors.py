@@ -311,7 +311,7 @@ def _markdown_section(sponsors: tuple[Sponsor, ...]) -> str:
 def render_sponsors_markdown(sections: SponsorSections) -> str:
     return f"""# 赞助者名单
 
-感谢每一位支持 VeneraNext 持续维护的赞助者 ❤️
+感谢每一位支持 Venera Unified 持续维护的赞助者 ❤️
 
 名单分为置顶赞助、当前赞助者和历史赞助者。停止赞助不会导致昵称被自动移除，但赞助者可以随时申请修改昵称或取消展示。
 

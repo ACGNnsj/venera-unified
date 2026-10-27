@@ -52,7 +52,7 @@ void main() {
       );
       expect(
         calls.singleWhere((call) => call.method == 'setTitle').arguments,
-        containsPair('title', 'VeneraNext'),
+        containsPair('title', 'Venera Unified'),
       );
       expect(
         calls.singleWhere((call) => call.method == 'setBounds').arguments,

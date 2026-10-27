@@ -188,8 +188,8 @@ jobs:
       - name: 校验 Windows 构建产物
         shell: pwsh
         run: |
-          $zip = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraNext-*-windows.zip')
-          $installer = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraNext-*-windows-installer.exe')
+          $zip = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraUnified-*-windows.zip')
+          $installer = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraUnified-*-windows-installer.exe')
           if ($zip.Count -ne 1) { throw "应当恰好生成一个 Windows zip，实际为 $($zip.Count)。" }
           if ($installer.Count -ne 1) { throw "应当恰好生成一个 Windows 安装包，实际为 $($installer.Count)。" }
           $artifacts = @($zip + $installer)
@@ -207,9 +207,9 @@ jobs:
             if ($badEntries.Count -gt 0) {
               throw "Windows zip 包含 $expectedRoot/ 之外的文件：$($badEntries.FullName -join ', ')"
             }
-            $exeEntry = @($archive.Entries | Where-Object { $_.FullName -eq "$expectedRoot/VeneraNext.exe" })
+            $exeEntry = @($archive.Entries | Where-Object { $_.FullName -eq "$expectedRoot/VeneraUnified.exe" })
             if ($exeEntry.Count -ne 1) {
-              throw "Windows zip 未包含 $expectedRoot/VeneraNext.exe"
+              throw "Windows zip 未包含 $expectedRoot/VeneraUnified.exe"
             }
           } finally {
             $archive.Dispose()
@@ -226,7 +226,7 @@ jobs:
         shell: pwsh
         timeout-minutes: 12
         run: |
-          $installers = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraNext-*-windows-installer.exe')
+          $installers = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraUnified-*-windows-installer.exe')
           if ($installers.Count -ne 1) { throw '静默安装测试需要恰好一个安装包。' }
           ./.github/scripts/test_windows_startup.ps1 -Installer $installers[0].FullName
       - name: 上传 Windows 启动诊断
@@ -241,8 +241,8 @@ jobs:
         with:
           name: windows_build
           path: |
-            build/windows/VeneraNext-*-windows.zip
-            build/windows/VeneraNext-*-windows-installer.exe
+            build/windows/VeneraUnified-*-windows.zip
+            build/windows/VeneraUnified-*-windows-installer.exe
           if-no-files-found: error
           retention-days: 7
 
@@ -289,12 +289,12 @@ jobs:
           echo "打包 $(basename "$app_path")"
           cp -R "$app_path" dist/dmg_contents/
           ln -s /Applications dist/dmg_contents/Applications
-          hdiutil create -volname "VeneraNext" -srcfolder dist/dmg_contents -ov -format UDZO "dist/VeneraNext.dmg"
+          hdiutil create -volname "Venera Unified" -srcfolder dist/dmg_contents -ov -format UDZO "dist/VeneraUnified.dmg"
       - name: 将版本号写入文件名
         run: |
           APP_VERSION=$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | tr -d '\r\n')
           mkdir -p result
-          mv dist/VeneraNext.dmg "result/VeneraNext-$APP_VERSION.dmg"
+          mv dist/VeneraUnified.dmg "result/VeneraUnified-$APP_VERSION.dmg"
       - name: 上传 DMG
         uses: actions/upload-artifact@v7
         with:
@@ -359,12 +359,12 @@ jobs:
           mkdir -p build/ios/iphoneos/Payload
           mv build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload
           cd build/ios/iphoneos/
-          zip -r VeneraNext-ios.ipa Payload
+          zip -r VeneraUnified-ios.ipa Payload
       - name: 将版本号写入文件名
         run: |
           APP_VERSION=$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | tr -d '\r\n')
           mkdir -p result
-          mv build/ios/iphoneos/VeneraNext-ios.ipa "result/VeneraNext-ios-$APP_VERSION.ipa"
+          mv build/ios/iphoneos/VeneraUnified-ios.ipa "result/VeneraUnified-ios-$APP_VERSION.ipa"
       - uses: actions/upload-artifact@v7
         with:
           name: ios_build
