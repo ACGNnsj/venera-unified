@@ -9,6 +9,7 @@ import 'package:venera_unified/app_runtime/core_bootstrap.dart';
 import 'package:venera_unified/app_runtime/application_host.dart';
 import 'package:venera_unified/app_runtime/application_updates.dart';
 import 'package:venera_unified/components/application_update_prompt.dart';
+import 'package:venera_unified/features/update/in_app_update_dialog.dart';
 import 'package:venera_unified/components/night_mode_overlay.dart';
 import 'package:venera_unified/app_runtime/image_loading.dart';
 import 'package:venera_unified/app_runtime/follow_updates.dart';
@@ -171,6 +172,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         service: widget.host.applicationUpdates,
         parent: scope,
         isActive: () => mounted && !widget.host.isClosing,
+        onUpdatePressed: (page, version) => showInAppUpdate(
+          context: page,
+          service: widget.host.applicationUpdates,
+          version: version,
+        ),
       ).check(silent: true, delay: const Duration(seconds: 2));
     },
   );

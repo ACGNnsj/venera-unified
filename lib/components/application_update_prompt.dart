@@ -37,6 +37,7 @@ class ApplicationUpdatePrompt {
     required this.service,
     RequestScope? parent,
     this._isActive,
+    this.onUpdatePressed,
   }) : _context = context,
        _navigator = Navigator.of(context, rootNavigator: true),
        _route = ModalRoute.of(context),
@@ -50,6 +51,13 @@ class ApplicationUpdatePrompt {
   final WindowFrameController? _window;
   final RequestScope _scope;
   final bool Function()? _isActive;
+
+  /// Overrides the update dialog's Update action (e.g. the Android in-app
+  /// update flow). The page context is passed because the dialog's own
+  /// context is unmounted by the pop preceding this call. When null, the
+  /// release page is opened in a browser.
+  final Future<void> Function(BuildContext context, String version)?
+  onUpdatePressed;
   DialogRoute<void>? _dialog;
   Future<void>? _dialogRemoval;
   Future<void>? _checking;
@@ -131,6 +139,15 @@ class ApplicationUpdatePrompt {
                   return;
                 }
                 Navigator.of(context).pop();
+                final handler = onUpdatePressed;
+                if (handler != null) {
+                  try {
+                    if (_context.mounted) await handler(_context, version);
+                  } catch (error, stack) {
+                    Log.error('Open in-app update', error, stack);
+                  }
+                  return;
+                }
                 try {
                   await launchUrlString(
                     'https://github.com/CyrilPeng/venera-next/releases',

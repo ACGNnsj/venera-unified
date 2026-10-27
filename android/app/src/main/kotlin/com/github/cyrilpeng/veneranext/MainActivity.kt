@@ -18,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -118,6 +119,16 @@ class MainActivity : FlutterFragmentActivity() {
         ).setMethodCallHandler { call, res ->
             when (call.method) {
                 "getProxy" -> res.success(getProxy())
+                "getSupportedAbis" -> res.success(Build.SUPPORTED_ABIS.toList())
+                "validateUpdate" -> Thread {
+                    try {
+                        validateUpdate(call.argument<String>("path"))
+                        runOnUiThread { res.success(null) }
+                    } catch (e: Exception) {
+                        runOnUiThread { res.error("invalid_update", e.message, null) }
+                    }
+                }.start()
+                "installUpdate" -> installUpdate(call.argument<String>("path"), res)
                 "setScreenOn" -> {
                     val set = call.argument<Boolean>("set") ?: false
                     if (set) {
@@ -203,6 +214,105 @@ class MainActivity : FlutterFragmentActivity() {
                     textShareHandler = null
                 }
             })
+    }
+
+    // In-app updates: validates the downloaded APK (private cache path,
+    // package identity, newer version, identical signing certificates) and
+    // hands it to the system installer through a FileProvider URI.
+    // Ported from venera-prime's MainActivity.
+    @Suppress("DEPRECATION")
+    private fun validateUpdate(path: String?): File {
+        requireNotNull(path) { "Missing update path" }
+        val apk = File(path).canonicalFile
+        val updateDir = File(cacheDir, "updates").canonicalFile
+        require(apk.parentFile == updateDir && apk.isFile && apk.extension == "apk") {
+            "Invalid update path"
+        }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+            PackageManager.GET_SIGNING_CERTIFICATES else PackageManager.GET_SIGNATURES
+        val candidate = packageManager.getPackageArchiveInfo(apk.path, flags)
+            ?: throw IllegalArgumentException("Invalid APK")
+        val installed = packageManager.getPackageInfo(packageName, flags)
+        require(candidate.packageName == packageName) { "Update package does not match this app" }
+        val candidateVersion = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+            candidate.longVersionCode else candidate.versionCode.toLong()
+        val installedVersion = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+            installed.longVersionCode else installed.versionCode.toLong()
+        require(candidateVersion > installedVersion) { "Update is not newer than this app" }
+        val signaturesMatch = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val signers = candidate.signingInfo?.apkContentsSigners
+            // hasSigningCertificate also accepts historical certificates and
+            // does not establish equality for a multi-signer installation.
+            // This updater supports the exact current signing identity.
+            !signers.isNullOrEmpty() &&
+                signers.toSet() == installed.signingInfo?.apkContentsSigners?.toSet()
+        } else {
+            val signers = candidate.signatures
+            !signers.isNullOrEmpty() && signers.toSet() == installed.signatures?.toSet()
+        }
+        require(signaturesMatch) { "Update signing certificate does not match this app" }
+
+        return apk
+    }
+
+    private fun installUpdate(path: String?, result: MethodChannel.Result) {
+        Thread {
+            try {
+                val apk = validateUpdate(path)
+                runOnUiThread { launchUpdateInstaller(apk, result) }
+            } catch (e: Exception) {
+                runOnUiThread { result.error("install_update_failed", e.message, null) }
+            }
+        }.start()
+    }
+
+    private fun launchUpdateInstaller(apk: File, result: MethodChannel.Result) {
+        try {
+            fun launchInstaller() {
+                try {
+                    check(!isFinishing && !isDestroyed) { "Update activity is no longer available" }
+                    val uri = FileProvider.getUriForFile(this, "$packageName.updates", apk)
+                    val intent = Intent(Intent.ACTION_VIEW)
+                        .setDataAndType(uri, "application/vnd.android.package-archive")
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    startActivity(intent)
+                    result.success(true)
+                } catch (e: Exception) {
+                    result.error("install_update_failed", e.message, null)
+                }
+            }
+
+            check(!isFinishing && !isDestroyed) { "Update activity is no longer available" }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                !packageManager.canRequestPackageInstalls()) {
+                val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:$packageName"))
+                startContractForResult(ActivityResultContracts.StartActivityForResult(), intent) {
+                    if (packageManager.canRequestPackageInstalls()) {
+                        // Permission UI can remain open while the cached file
+                        // changes. Recheck its current bytes off the UI thread
+                        // before handing the URI to Android's installer.
+                        Thread {
+                            try {
+                                val checked = validateUpdate(apk.path)
+                                runOnUiThread { launchUpdateInstaller(checked, result) }
+                            } catch (e: Exception) {
+                                runOnUiThread {
+                                    result.error("install_update_failed", e.message, null)
+                                }
+                            }
+                        }.start()
+                    } else {
+                        result.success(false)
+                    }
+                }
+            } else {
+                launchInstaller()
+            }
+        } catch (e: Exception) {
+            result.error("install_update_failed", e.message, null)
+        }
     }
 
     private fun getProxy(): String {

@@ -227,6 +227,10 @@
     ],
     [
       "settings",
+      "update"
+    ],
+    [
+      "settings",
       "webdav_library"
     ],
     [
@@ -690,6 +694,7 @@
     "features/sync/data_sync_scope.dart",
     "features/sync/sync.dart",
     "features/sync/sync_status_summary.dart",
+    "features/update/in_app_update_dialog.dart",
     "features/webdav_library/webdav_library.dart",
     "features/webdav_library/webdav_library_scope.dart",
     "foundation/app_page_route.dart",
@@ -966,6 +971,9 @@
     "features/sync/legacy_pica_reader.dart",
     "features/sync/pica_import.dart",
     "features/sync/pica_import_storage.dart",
+    "features/update/android_app_installer.dart",
+    "features/update/in_app_update.dart",
+    "features/update/in_app_update_service.dart",
     "features/webdav_library/webdav_library_api.dart",
     "features/webdav_library/webdav_library_cache.dart",
     "features/webdav_library/webdav_library_config.dart",

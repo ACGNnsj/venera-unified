@@ -13,6 +13,7 @@ import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
 import 'package:venera_unified/components/application_update_prompt.dart';
+import 'package:venera_unified/features/update/in_app_update_dialog.dart';
 
 import 'changelog_document.dart';
 
@@ -32,6 +33,11 @@ class _AboutSettingsState extends State<AboutSettings> {
     final prompt = ApplicationUpdatePrompt(
       context: context,
       service: ApplicationUpdateScope.of(context),
+      onUpdatePressed: (page, version) => showInAppUpdate(
+        context: page,
+        service: ApplicationUpdateScope.of(context),
+        version: version,
+      ),
     );
     setState(() {
       _checking = prompt;
