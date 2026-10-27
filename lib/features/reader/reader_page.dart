@@ -19,6 +19,7 @@ import 'package:venera_unified/features/reader/auto_reading.dart';
 import 'package:venera_unified/features/reader/images_host.dart';
 import 'package:venera_unified/features/reader/image_cache_policy.dart';
 import 'package:venera_unified/features/reader/layout_detection.dart';
+import 'package:venera_unified/features/reader/reader_key_action.dart';
 import 'package:venera_unified/features/reader/reader_mode_labels.dart';
 import 'package:venera_unified/features/reader/reading_session.dart';
 import 'package:venera_unified/features/reader/reader_session.dart';
@@ -1886,7 +1887,42 @@ class ReaderState extends State<Reader>
       fullscreen();
     }
     if (!focusNode.hasPrimaryFocus) return;
+    if (event is KeyDownEvent && _handleNavigationKey(event.logicalKey)) {
+      return;
+    }
     imageViewController?.handleKeyEvent(event);
+  }
+
+  /// 桌面端的翻页快捷键。返回 true 表示这次按键已被消化，不再交给图片视图。
+  ///
+  /// 连续阅读模式不支持按页跳转，[toPage] 会返回 false，此时按键落回
+  /// [imageViewController] 的原有处理，行为与之前一致。
+  bool _handleNavigationKey(LogicalKeyboardKey key) {
+    final action = readerKeyAction(
+      key,
+      page: page,
+      maxPage: maxPage,
+      isFirstChapterOfGroup: isFirstChapterOfGroup,
+      isLastChapterOfGroup: isLastChapterOfGroup,
+    );
+    switch (action) {
+      case null:
+        return false;
+      case ReaderKeyAction.firstPage:
+        return toPage(0);
+      case ReaderKeyAction.lastPage:
+        return toPage(maxPage - 1);
+      case ReaderKeyAction.nextPage:
+        return toPage(page + 1);
+      case ReaderKeyAction.previousPage:
+        return toPage(page - 1);
+      case ReaderKeyAction.nextChapter:
+        toNextChapter();
+        return true;
+      case ReaderKeyAction.previousChapter:
+        toPrevChapter(toLastPage: true);
+        return true;
+    }
   }
 
   int get maxChapter => widget.chapters?.length ?? 1;
