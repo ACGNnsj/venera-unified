@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:venera_unified/features/comic_storage/comic_storage.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'collection_download_hooks.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
 import 'download_task_storage.dart';
 import 'local_comic_model.dart';
@@ -33,6 +34,13 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
 
   /// chapters to download. If null, all chapters will be downloaded.
   final List<String>? chapters;
+
+  /// Effective chapter filter after collection placeholder expansion.
+  /// Null when no expansion happened; serialised in place of [chapters] so a
+  /// resumed run keeps the expanded keys.
+  List<String>? _activeChapters;
+
+  List<String>? get _filterChapters => _activeChapters ?? chapters;
 
   @override
   String get id => comicId;
@@ -149,7 +157,7 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
   void cancel() {
     final directoryPath = path;
     final manager = _storage;
-    final removedChapters = List<String>.of(chapters ?? const []);
+    final removedChapters = List<String>.of(_filterChapters ?? const []);
     _stopRun();
     manager.removeTask(this);
     if (directoryPath == null &&
@@ -310,6 +318,21 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
     }
   }
 
+  /// Resolves a chapter's page list for downloading.
+  ///
+  /// A collection serves already-downloaded chapters as `file://` paths so the
+  /// reader can use them offline, but this path feeds the URLs straight to the
+  /// HTTP client. Asking the collection for the download variant makes it skip
+  /// that shortcut and return real network URLs. With no hooks registered the
+  /// source is used directly, exactly as before collections existed.
+  Future<Res<List<String>>> _loadPagesForDownload(String? ep) {
+    final hooks = collectionDownloadHooks;
+    if (hooks != null && hooks.isCollectionSource(source.key)) {
+      return hooks.loadPagesForDownload(comicId, ep);
+    }
+    return source.loadComicPages!(comicId, ep);
+  }
+
   void _scheduleTasks() {
     if (!_isRunning) return;
     final generation = _runGeneration;
@@ -459,11 +482,34 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
     }
 
     if (_images == null) {
+      final collectionHooks = collectionDownloadHooks;
+      if (collectionHooks != null &&
+          collectionHooks.isCollectionSource(source.key)) {
+        final resolved = await _runDownloadStepWithRetry(generation, () async {
+          final expansion = await collectionHooks.resolveChapters(
+            comic: comic!,
+            chapters: _filterChapters,
+            isCancelled: () => !_isCurrentRun(generation),
+          );
+          comic = expansion.comic;
+          _activeChapters = expansion.chapters;
+        });
+        if (!_isCurrentRun(generation)) {
+          return;
+        }
+        if (resolved.error) {
+          Log.error("Download", resolved.errorMessage!);
+          _setError("Error: ${resolved.errorMessage}");
+          return;
+        }
+        await _storage.saveCurrentDownloadingTasks();
+        if (!_isCurrentRun(generation)) return;
+      }
       if (comic!.chapters == null) {
         _message = "Fetching image list...".tl;
         notifyListeners();
         var res = await _runDownloadStepWithRetry(generation, () async {
-          var r = await source.loadComicPages!(comicId, null);
+          var r = await _loadPagesForDownload(null);
           return r.data;
         });
         if (!_isCurrentRun(generation)) {
@@ -482,9 +528,9 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
         var totalCount = 0;
         int cpCount = 0;
         int totalCpCount =
-            chapters?.length ?? comic!.chapters!.allChapters.length;
+            _filterChapters?.length ?? comic!.chapters!.allChapters.length;
         for (var i in comic!.chapters!.allChapters.keys) {
-          if (chapters != null && !chapters!.contains(i)) {
+          if (_filterChapters != null && !_filterChapters!.contains(i)) {
             continue;
           }
           _message = "Fetching image list (@a/@b)...".tlParams({
@@ -493,7 +539,7 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
           });
           notifyListeners();
           var res = await _runDownloadStepWithRetry(generation, () async {
-            var r = await source.loadComicPages!(comicId, i);
+            var r = await _loadPagesForDownload(i);
             return r.data;
           });
           if (!_isCurrentRun(generation)) {
@@ -596,7 +642,7 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
       "source": source.key,
       "comicId": comicId,
       "comic": comic?.toJson(),
-      "chapters": chapters,
+      "chapters": _filterChapters,
       "path": path,
       "cover": _cover,
       "images": _images,
@@ -690,7 +736,8 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
       chapters: comic!.chapters,
       cover: File(_cover!.split("file://").last).name,
       comicType: ComicType(source.key.hashCode),
-      downloadedChapters: chapters ?? comic?.chapters?.ids.toList() ?? [],
+      downloadedChapters:
+          _filterChapters ?? comic?.chapters?.ids.toList() ?? [],
       createdAt: DateTime.now(),
     );
   }

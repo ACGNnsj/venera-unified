@@ -8,9 +8,12 @@ import 'package:rhttp/rhttp.dart';
 import 'package:venera_unified/features/comic_source/comic_source_api.dart';
 import 'package:venera_unified/features/comic_source/source_data_storage.dart';
 import 'package:venera_unified/features/comic_source/source_transaction_journal.dart';
+import 'package:venera_unified/features/comic_collection/collection_source.dart';
+import 'package:venera_unified/features/comic_collection/comic_collection_store.dart';
 import 'package:venera_unified/features/favorites/favorites_manager.dart';
 import 'package:venera_unified/features/history/history_manager.dart';
 import 'package:venera_unified/features/local_comics/local.dart';
+import 'package:venera_unified/features/local_comics/collection_download_hooks.dart';
 import 'package:venera_unified/features/sync/app_data_import_journal.dart';
 import 'package:venera_unified/features/sync/data_sync_ownership.dart';
 import 'package:venera_unified/foundation/app.dart';
@@ -165,17 +168,23 @@ CoreBootstrap createCoreBootstrap({
         close: () {
           configureComicSourceDataSavedHandler(null);
           configureRuntimeComicSourcesProvider(null);
+          configureCollectionDownloadHooks(null);
         },
       ));
       configureComicTypeSourceKeyResolver();
       configureComicSourceDataSavedHandler(() async => onDataChanged());
       final library = webDavLibrary;
       registerProducer('WebDAV library', library.source.closeAndWait);
-      configureRuntimeComicSourcesProvider(
-        () => library.settings.read().connection.isValid
-            ? [library.source.create()]
-            : const [],
-      );
+      configureRuntimeComicSourcesProvider(() {
+        final sources = <ComicSource>[
+          if (library.settings.read().connection.isValid)
+            library.source.create(),
+          for (final collection in ComicCollectionStore.all())
+            buildComicCollectionSource(collection),
+        ];
+        return sources;
+      });
+      registerCollectionDownloadHooks();
       final engine = JsEngine();
       registerProducer('JS engine', engine.closeAndWait);
       await engine.init();

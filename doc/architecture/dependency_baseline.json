@@ -2,6 +2,14 @@
   "description": "Complete library boundary inventory. Business files cannot reach registered UI or pending-review files, and their dependency graph must be acyclic. Pending-review files are not assumed to be UI. Existing direct feature edges remain unchanged.",
   "allowed_feature_edges": [
     [
+      "comic_collection",
+      "comic_source"
+    ],
+    [
+      "comic_collection",
+      "local_comics"
+    ],
+    [
       "comic_details",
       "comic_source"
     ],
@@ -763,6 +771,9 @@
     "app_runtime/window_placement.dart",
     "app_runtime/windows_heartbeat.dart",
     "app_runtime/windows_hotkey.dart",
+    "features/comic_collection/collection_source.dart",
+    "features/comic_collection/comic_collection_chapter_id.dart",
+    "features/comic_collection/comic_collection_store.dart",
     "features/comic_details/archive_download.dart",
     "features/comic_details/thumbnail_image.dart",
     "features/comic_details/thumbnail_pages.dart",
@@ -849,6 +860,7 @@
     "features/history/image_favorites_statistics.dart",
     "features/image_favorites/type.dart",
     "features/local_comics/archive_download_task.dart",
+    "features/local_comics/collection_download_hooks.dart",
     "features/local_comics/download.dart",
     "features/local_comics/download_directory_allocator.dart",
     "features/local_comics/download_queue.dart",
