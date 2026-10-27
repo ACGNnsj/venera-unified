@@ -14,6 +14,7 @@ import 'package:venera_unified/features/comic_source/comic_source.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/features/history/history.dart';
+import 'package:venera_unified/features/history/history_grouping.dart';
 import 'package:venera_unified/foundation/translations.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -39,6 +40,7 @@ class _HistoryPageState extends State<HistoryPage> {
   void dispose() {
     _manager.removeListener(onUpdate);
     _cancelRefresh?.call();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -56,6 +58,20 @@ class _HistoryPageState extends State<HistoryPage> {
 
   late var comics = _manager.getAll();
   var controller = FlyoutController();
+
+  /// 标题搜索。空串表示不过滤。
+  bool _searching = false;
+  String _query = '';
+  final _searchController = TextEditingController();
+
+  static const _buckets = HistoryBucket.values;
+
+  String _bucketLabel(HistoryBucket bucket) => switch (bucket) {
+    HistoryBucket.today => 'Today'.tl,
+    HistoryBucket.yesterday => 'Yesterday'.tl,
+    HistoryBucket.lastWeek => 'Last 7 Days'.tl,
+    HistoryBucket.earlier => 'Earlier'.tl,
+  };
 
   bool multiSelectMode = false;
   Map<History, bool> selectedComics = {};
@@ -213,6 +229,19 @@ class _HistoryPageState extends State<HistoryPage> {
 
     List<Widget> normalActions = [
       IconButton(
+        icon: Icon(_searching ? Icons.search_off : Icons.search),
+        tooltip: _searching ? 'Close'.tl : 'Search'.tl,
+        onPressed: () {
+          setState(() {
+            _searching = !_searching;
+            if (!_searching) {
+              _query = '';
+              _searchController.clear();
+            }
+          });
+        },
+      ),
+      IconButton(
         icon: const Icon(Icons.query_stats),
         tooltip: 'Reading statistics'.tl,
         onPressed: () => context.to(() => ReadingStatsPage(manager: _manager)),
@@ -271,6 +300,65 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
     ];
 
+    final query = _query.trim().toLowerCase();
+    final visible = query.isEmpty
+        ? comics
+        : comics
+              .where(
+                (c) =>
+                    c.title.toLowerCase().contains(query) ||
+                    c.subtitle.toLowerCase().contains(query),
+              )
+              .toList();
+    final grouped = groupByHistoryBucket(
+      visible,
+      (History h) => h.time,
+      now: DateTime.now(),
+    );
+    final orderedBuckets = _buckets.where(grouped.containsKey).toList();
+
+    Widget grid(List<History> items) => SliverGridComics(
+      comics: items,
+      selections: selectedComics,
+      onLongPressed: null,
+      onTap: multiSelectMode
+          ? (c, heroID) {
+              setState(() {
+                if (selectedComics.containsKey(c as History)) {
+                  selectedComics.remove(c);
+                } else {
+                  selectedComics[c] = true;
+                }
+                if (selectedComics.isEmpty) {
+                  multiSelectMode = false;
+                }
+              });
+            }
+          : null,
+      badgeBuilder: (c) {
+        return ComicSource.find(c.sourceKey)?.name;
+      },
+      menuBuilder: (c) {
+        return [
+          MenuEntry(
+            icon: Icons.refresh,
+            text: 'Refresh Info'.tl,
+            onClick: () {
+              _refreshHistory(c as History);
+            },
+          ),
+          MenuEntry(
+            icon: Icons.remove,
+            text: 'Remove'.tl,
+            color: context.colorScheme.error,
+            onClick: () {
+              _removeHistory(c as History);
+            },
+          ),
+        ];
+      },
+    );
+
     return PopScope(
       canPop: !multiSelectMode,
       onPopInvokedWithResult: (didPop, result) {
@@ -305,52 +393,57 @@ class _HistoryPageState extends State<HistoryPage> {
               ),
               title: multiSelectMode
                   ? Text(selectedComics.length.toString())
-                  : Text('History'.tl),
+                  : (_searching
+                        ? TextField(
+                            controller: _searchController,
+                            autofocus: true,
+                            decoration: InputDecoration(
+                              hintText: 'Search History'.tl,
+                              border: InputBorder.none,
+                            ),
+                            onChanged: (value) =>
+                                setState(() => _query = value),
+                          )
+                        : Text('History'.tl)),
               actions: multiSelectMode ? selectActions : normalActions,
             ),
-            SliverGridComics(
-              comics: comics,
-              selections: selectedComics,
-              onLongPressed: null,
-              onTap: multiSelectMode
-                  ? (c, heroID) {
-                      setState(() {
-                        if (selectedComics.containsKey(c as History)) {
-                          selectedComics.remove(c);
-                        } else {
-                          selectedComics[c] = true;
-                        }
-                        if (selectedComics.isEmpty) {
-                          multiSelectMode = false;
-                        }
-                      });
-                    }
-                  : null,
-              badgeBuilder: (c) {
-                return ComicSource.find(c.sourceKey)?.name;
-              },
-              menuBuilder: (c) {
-                return [
-                  MenuEntry(
-                    icon: Icons.refresh,
-                    text: 'Refresh Info'.tl,
-                    onClick: () {
-                      _refreshHistory(c as History);
-                    },
-                  ),
-                  MenuEntry(
-                    icon: Icons.remove,
-                    text: 'Remove'.tl,
-                    color: context.colorScheme.error,
-                    onClick: () {
-                      _removeHistory(c as History);
-                    },
-                  ),
-                ];
-              },
-            ),
+            if (grouped.isEmpty && query.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 48),
+                  child: Center(child: Text('No results'.tl)),
+                ),
+              )
+            else if (grouped.isEmpty)
+              grid(comics)
+            else
+              for (final bucket in orderedBuckets) ...[
+                SliverToBoxAdapter(
+                  child: _HistorySectionHeader(_bucketLabel(bucket)),
+                ),
+                grid(grouped[bucket]!),
+              ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _HistorySectionHeader extends StatelessWidget {
+  const _HistorySectionHeader(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Text(
+        label,
+        style: Theme.of(
+          context,
+        ).textTheme.titleSmall?.copyWith(color: context.colorScheme.primary),
       ),
     );
   }
