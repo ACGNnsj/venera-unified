@@ -281,7 +281,13 @@ jobs:
         run: |
           mkdir -p dist
           mkdir -p dist/dmg_contents
-          cp -R build/macos/Build/Products/Release/VeneraNext.app dist/dmg_contents/
+          app_path=$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)
+          if [ -z "$app_path" ]; then
+            echo "::error::未在 build/macos/Build/Products/Release 找到 .app 产物"
+            exit 1
+          fi
+          echo "打包 $(basename "$app_path")"
+          cp -R "$app_path" dist/dmg_contents/
           ln -s /Applications dist/dmg_contents/Applications
           hdiutil create -volname "VeneraNext" -srcfolder dist/dmg_contents -ov -format UDZO "dist/VeneraNext.dmg"
       - name: 将版本号写入文件名
