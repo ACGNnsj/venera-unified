@@ -994,6 +994,7 @@
     "foundation/cache_scan.dart",
     "foundation/comic_layout.dart",
     "foundation/comic_type.dart",
+    "foundation/comic_source_selfhost.dart",
     "foundation/comment_markup.dart",
     "foundation/consts.dart",
     "foundation/directory_replacement.dart",

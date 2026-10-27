@@ -635,6 +635,7 @@ class Settings with ChangeNotifier implements ReaderPreferenceSettings {
     'comicSourceRepositories': <Map<String, dynamic>>[],
     'comicSourceOrigins': <String, dynamic>{},
     'comicSourceRepositoriesMigrated': false,
+    'comicSourceSelfhostMigrated': false,
     'comicSpecificSettings': <String, Map<String, dynamic>>{},
     'deviceSpecificSettings': <String, Map<String, dynamic>>{},
     'deviceId': '',

@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_source_selfhost.dart';
 import 'package:venera_unified/foundation/extensions.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/network/app_dio.dart';
@@ -176,20 +177,22 @@ class SourceRepositories extends ChangeNotifier {
     try {
       await appdata.updateSettings(
         (draft) {
-          if (draft['comicSourceRepositoriesMigrated'] == true) return;
-          final legacy = draft['comicSourceListUrl']?.toString().trim() ?? '';
-          if (_repositories(draft).isEmpty && legacy.isNotEmpty) {
-            draft['comicSourceRepositories'] = [
-              SourceRepository(
-                id: const Uuid().v4(),
-                name: Uri.tryParse(legacy)?.host.isNotEmpty == true
-                    ? Uri.parse(legacy).host
-                    : 'Migrated repository'.tl,
-                url: legacy,
-              ).toJson(),
-            ];
+          if (draft['comicSourceRepositoriesMigrated'] != true) {
+            final legacy = draft['comicSourceListUrl']?.toString().trim() ?? '';
+            if (_repositories(draft).isEmpty && legacy.isNotEmpty) {
+              draft['comicSourceRepositories'] = [
+                SourceRepository(
+                  id: const Uuid().v4(),
+                  name: Uri.tryParse(legacy)?.host.isNotEmpty == true
+                      ? Uri.parse(legacy).host
+                      : 'Migrated repository'.tl,
+                  url: legacy,
+                ).toJson(),
+              ];
+            }
+            draft['comicSourceRepositoriesMigrated'] = true;
           }
-          draft['comicSourceRepositoriesMigrated'] = true;
+          _migrateSelfhost(draft);
         },
         sync: false,
         persistIfUnchanged: _migrationNeedsSave,
@@ -201,6 +204,50 @@ class SourceRepositories extends ChangeNotifier {
       _migrationNeedsSave = true;
       rethrow;
     }
+  }
+
+  /// B4: ensure the self-hosted default repository exists and link the
+  /// default-catalog keys that have no live repository origin. Runs once
+  /// (gated by `comicSourceSelfhostMigrated`), idempotent, and never touches
+  /// origins already linked to a live repository (official URLs preserved).
+  /// A user removing the self-hosted repository afterwards is respected
+  /// because the flag stays set.
+  void _migrateSelfhost(Settings draft) {
+    if (draft['comicSourceSelfhostMigrated'] == true) return;
+    final repositories = _repositories(draft);
+    final selfhost =
+        repositories.firstWhereOrNull(
+          (r) => r.id == kSelfhostRepositoryId || r.url == kSelfhostCatalogUrl,
+        ) ??
+        const SourceRepository(
+          id: kSelfhostRepositoryId,
+          name: kSelfhostRepositoryName,
+          url: kSelfhostCatalogUrl,
+        );
+    if (!repositories.any((r) => r.id == selfhost.id)) {
+      repositories.add(selfhost);
+      draft['comicSourceRepositories'] = repositories
+          .map((r) => r.toJson())
+          .toList();
+    }
+    final liveIds = repositories.map((r) => r.id).toSet();
+    final currentOrigins = draft['comicSourceOrigins'];
+    final origins = currentOrigins is Map
+        ? Map<String, dynamic>.from(currentOrigins)
+        : <String, dynamic>{};
+    for (final key in kSelfhostDefaultKeys) {
+      final existing = origins[key];
+      final existingId = existing is Map ? existing['repositoryId'] : null;
+      if (existingId is String && liveIds.contains(existingId)) continue;
+      origins[key] = SourceOrigin(
+        kind: 'repository',
+        repositoryId: selfhost.id,
+        repositoryName: selfhost.name,
+        url: selfhostEntryUrlForKey(key),
+      ).toJson();
+    }
+    draft['comicSourceOrigins'] = origins;
+    draft['comicSourceSelfhostMigrated'] = true;
   }
 
   Future<T> _edit<T>(T Function(Settings) change) async {

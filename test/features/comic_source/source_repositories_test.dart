@@ -18,6 +18,7 @@ void main() {
   late dynamic originalRepositories;
   late dynamic originalOrigins;
   late dynamic originalMigrated;
+  late dynamic originalSelfhostMigrated;
 
   setUp(() async {
     dataDir = Directory.systemTemp.createTempSync(
@@ -28,10 +29,14 @@ void main() {
     originalRepositories = appdata.settings['comicSourceRepositories'];
     originalOrigins = appdata.settings['comicSourceOrigins'];
     originalMigrated = appdata.settings['comicSourceRepositoriesMigrated'];
+    originalSelfhostMigrated = appdata.settings['comicSourceSelfhostMigrated'];
     appdata.settings['comicSourceListUrl'] = '';
     appdata.settings['comicSourceRepositories'] = <Map<String, dynamic>>[];
     appdata.settings['comicSourceOrigins'] = <String, dynamic>{};
     appdata.settings['comicSourceRepositoriesMigrated'] = false;
+    // Legacy-migration tests isolate from the B4 selfhost phase; selfhost
+    // behavior is covered in source_selfhost_test.dart.
+    appdata.settings['comicSourceSelfhostMigrated'] = true;
     // Initialize the singleton against the temporary directory so that no test
     // touches the real application data.
     await appdata.init();
@@ -42,6 +47,7 @@ void main() {
     appdata.settings['comicSourceRepositories'] = originalRepositories;
     appdata.settings['comicSourceOrigins'] = originalOrigins;
     appdata.settings['comicSourceRepositoriesMigrated'] = originalMigrated;
+    appdata.settings['comicSourceSelfhostMigrated'] = originalSelfhostMigrated;
     if (dataDir.existsSync()) {
       dataDir.deleteSync(recursive: true);
     }

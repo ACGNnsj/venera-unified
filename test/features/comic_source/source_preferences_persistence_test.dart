@@ -26,6 +26,8 @@ void main() {
     appdata.settings['comicSourceRepositories'] = [];
     appdata.settings['comicSourceOrigins'] = <String, dynamic>{};
     appdata.settings['comicSourceRepositoriesMigrated'] = false;
+    // Isolate legacy-migration tests from the B4 selfhost phase.
+    appdata.settings['comicSourceSelfhostMigrated'] = true;
     appdata.settings['comicSourceListUrl'] = '';
     adapter = _Catalog();
     client = Dio()..httpClientAdapter = adapter;
