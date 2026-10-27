@@ -91,6 +91,7 @@ dependencies:
   xml: ^6.6.1
   qr_flutter: ^4.1.0
   mobile_scanner: ^7.4.2
+  tray_manager: ^0.5.3
 
 dev_dependencies:
   flutter_test:
@@ -108,6 +109,7 @@ flutter:
     - assets/translation.json
     - assets/init.js
     - assets/app_icon.png
+    - assets/tray_icon.ico
     - assets/tags.json
     - assets/tags_tw.json
     - assets/opencc.txt

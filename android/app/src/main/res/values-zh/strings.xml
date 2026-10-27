@@ -5,4 +5,11 @@
     <string name="download_active">正在下載漫畫</string>
     <string name="download_waiting">連線中斷，等待重試</string>
     <string name="download_pause">暫停</string>
+    <string name="background_channel_name">後台任務</string>
+    <string name="background_channel_desc">追更檢查、匯入、同步和圖源更新等後台任務的通知</string>
+    <string name="background_notification_default">後台任務正在執行</string>
+    <string name="background_title_follow_update">追更檢查</string>
+    <string name="background_title_import">匯入</string>
+    <string name="background_title_sync">資料同步</string>
+    <string name="background_title_source_update">圖源更新</string>
 </resources>

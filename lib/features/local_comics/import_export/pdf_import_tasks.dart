@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:venera_unified/foundation/background_keepalive.dart';
 import 'package:venera_unified/foundation/file_interaction.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'document_import.dart';
 import 'pdf_import_batch.dart';
@@ -146,6 +148,10 @@ class PdfImportTasks extends ChangeNotifier {
   }
 
   Future<void> _run(PdfImportTask task) async {
+    BackgroundKeepAlive.instance.update(
+      BackgroundKeepAlive.tagImport,
+      formatTaskStatus(title: 'Import Data'.tl, detail: task.name),
+    );
     final result = await task._batch!.run(
       task._files,
       cancellation: task._cancellation,
@@ -166,6 +172,9 @@ class PdfImportTasks extends ChangeNotifier {
     if (identical(_active, task)) {
       _active = null;
       _startNext();
+    }
+    if (activeCount == 0) {
+      BackgroundKeepAlive.instance.remove(BackgroundKeepAlive.tagImport);
     }
   }
 

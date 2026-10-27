@@ -5,4 +5,11 @@
     <string name="download_active">Downloading comics</string>
     <string name="download_waiting">Connection interrupted. Waiting to retry.</string>
     <string name="download_pause">Pause</string>
+    <string name="background_channel_name">Background tasks</string>
+    <string name="background_channel_desc">Notifications for background tasks such as follow-up checks, imports, sync and source updates</string>
+    <string name="background_notification_default">A background task is running</string>
+    <string name="background_title_follow_update">Follow update</string>
+    <string name="background_title_import">Import</string>
+    <string name="background_title_sync">Data sync</string>
+    <string name="background_title_source_update">Source update</string>
 </resources>

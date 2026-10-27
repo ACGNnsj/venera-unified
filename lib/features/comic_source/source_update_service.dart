@@ -1,8 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'source_failure.dart';
 import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/background_keepalive.dart';
 import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/network/app_dio.dart';
 
 import 'comic_source_manager.dart';
@@ -11,7 +15,12 @@ import 'source_repositories.dart';
 
 /// Source updates shared by interactive and headless callers.
 /// Presentation owns dialogs; the service owns request and commit lifetimes.
-class SourceUpdateService {
+///
+/// Also a [ChangeNotifier]: every mutation of the updating set or the running
+/// check publishes, so the tasks center can aggregate without polling. The
+/// notifier is never disposed; the service lives for the application lifetime
+/// and listeners detach themselves.
+class SourceUpdateService with ChangeNotifier {
   SourceUpdateService({
     this._manager,
     SourceRepositories? repositories,
@@ -35,10 +44,35 @@ class SourceUpdateService {
   bool get isClosed => _closed;
   bool isUpdating(String sourceKey) => _updating.containsKey(sourceKey);
 
+  /// Keys currently being updated. Unmodifiable snapshot for aggregation.
+  Set<String> get updatingKeys => Set.unmodifiable(_updating.keys);
+  int get updatingCount => _updating.length;
+  bool get isChecking => _checking != null;
+  bool get hasRunningWork => _updating.isNotEmpty || _checking != null;
+
   void cancel(String sourceKey, {CancelToken? request}) {
     if (request != null && !identical(_updating[sourceKey], request)) return;
     // Release synchronously so a retry can start before old I/O unwinds.
-    _updating.remove(sourceKey)?.cancel();
+    final token = _updating.remove(sourceKey);
+    if (token == null) return;
+    token.cancel();
+    _publish();
+  }
+
+  /// Publishes state changes and mirrors them to the generic keep-alive.
+  void _publish() {
+    notifyListeners();
+    if (hasRunningWork) {
+      BackgroundKeepAlive.instance.update(
+        BackgroundKeepAlive.tagSourceUpdate,
+        formatTaskStatus(
+          title: 'Update Sources'.tl,
+          detail: _updating.isEmpty ? 'Checking'.tl : '${_updating.length}',
+        ),
+      );
+    } else {
+      BackgroundKeepAlive.instance.remove(BackgroundKeepAlive.tagSourceUpdate);
+    }
   }
 
   ComicSourceManager _owner() {
@@ -103,6 +137,7 @@ class SourceUpdateService {
     final token = cancelToken ?? CancelToken();
     _updating[source.key] = token;
     _tokens.add(token);
+    _publish();
     var mutationAccepted = false;
     try {
       if (token.isCancelled) throw token.cancelError!;
@@ -164,6 +199,7 @@ class SourceUpdateService {
       _tokens.remove(token);
       if (identical(_updating[source.key], token)) {
         _updating.remove(source.key);
+        _publish();
       }
     }
   }
@@ -176,7 +212,9 @@ class SourceUpdateService {
     final result = _checking = completion.future.whenComplete(() {
       _checking = null;
       _checkingToken = null;
+      _publish();
     });
+    _publish();
     _checkUpdates(
       token,
     ).then(completion.complete, onError: completion.completeError);

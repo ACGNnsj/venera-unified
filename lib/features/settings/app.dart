@@ -173,9 +173,17 @@ class _AppSettingsState extends State<AppSettings> {
           },
         ).toSliver(),
         if (!App.isLinux) const AuthorizationRequiredSetting().toSliver(),
-        if (App.isWindows && hotkey != null) ...[
+        if (App.isWindows) ...[
           SettingPartTitle(title: 'Window'.tl, icon: Icons.desktop_windows),
-          WindowHotkeySetting(controller: hotkey).toSliver(),
+          if (hotkey != null)
+            WindowHotkeySetting(controller: hotkey).toSliver(),
+          SwitchSetting.preference(
+            title: 'Minimize to tray'.tl,
+            subtitle:
+                'Closing the window hides it into the tray instead of exiting.'
+                    .tl,
+            preference: AppPreferences.minimizeToTray,
+          ).toSliver(),
         ],
       ],
     );

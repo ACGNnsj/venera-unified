@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'follow_update_task.dart';
+import 'package:venera_unified/foundation/background_keepalive.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 /// Background checks own their task and never cancel unrelated foreground work.
 class FollowUpdatesService {
@@ -84,6 +86,10 @@ class FollowUpdatesService {
         run.subscription = task.updatedCounts.listen((count) {
           if (!run.cancelled && isRunning) updated = count;
         }, onError: run.recordError);
+        BackgroundKeepAlive.instance.update(
+          BackgroundKeepAlive.tagFollowUpdate,
+          formatTaskStatus(title: 'Follow Update'.tl, detail: selected),
+        );
       }
     } catch (error, stack) {
       run.recordError(error, stack);
@@ -94,6 +100,10 @@ class FollowUpdatesService {
         await run.task?.done;
       } catch (error, stack) {
         run.recordError(error, stack);
+      } finally {
+        BackgroundKeepAlive.instance.remove(
+          BackgroundKeepAlive.tagFollowUpdate,
+        );
       }
       if (run.task != null && !run.cancelled && isRunning) {
         // Deliver progress queued before done, without requiring the event

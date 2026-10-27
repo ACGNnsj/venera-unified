@@ -38,9 +38,13 @@ class MainActivity : FlutterFragmentActivity() {
     private val volumeSubscriptions = VolumeKeySubscriptions()
     private var volumeChannel: MethodChannel? = null
     private var downloadBridge: DownloadBridge? = null
+    private var keepAliveBridge: KeepAliveBridge? = null
 
     private val storageRequestCode = 0x10
     private var storagePermissionRequest: ((Boolean) -> Unit)? = null
+
+    private val notificationRequestCode = 0x11
+    private var notificationPermissionRequest: ((Boolean) -> Unit)? = null
 
     private val nextLocalRequestCode = AtomicInteger()
 
@@ -112,6 +116,12 @@ class MainActivity : FlutterFragmentActivity() {
             this, flutterEngine.dartExecutor.binaryMessenger,
             isVisible = { lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) },
             requestNotifications = ::requestDownloadNotifications,
+        )
+        keepAliveBridge?.close()
+        keepAliveBridge = KeepAliveBridge(
+            this, flutterEngine.dartExecutor.binaryMessenger,
+            isNotificationGranted = ::isNotificationGranted,
+            requestNotificationPermission = ::requestNotificationPermission,
         )
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -334,6 +344,8 @@ class MainActivity : FlutterFragmentActivity() {
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         downloadBridge?.close()
         downloadBridge = null
+        keepAliveBridge?.close()
+        keepAliveBridge = null
         clearVolumeChannel()
         super.cleanUpFlutterEngine(flutterEngine)
     }
@@ -341,17 +353,48 @@ class MainActivity : FlutterFragmentActivity() {
     override fun onDestroy() {
         downloadBridge?.close()
         downloadBridge = null
+        keepAliveBridge?.close()
+        keepAliveBridge = null
         clearVolumeChannel()
         super.onDestroy()
     }
 
     private fun requestDownloadNotifications() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        requestNotificationPermission { _ -> }
+    }
+
+    private fun isNotificationGranted(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return ContextCompat.checkSelfPermission(
+            this, Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    // Shared one-shot notification permission prompt for both keep-alive
+    // bridges. Honors the choice recorded by earlier versions under the
+    // download preferences key; reports the outcome to the caller.
+    private fun requestNotificationPermission(callback: (Boolean) -> Unit) {
+        if (isNotificationGranted()) {
+            callback(true)
+            return
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            callback(true)
+            return
+        }
         val preferences = getSharedPreferences("download_service", MODE_PRIVATE)
-        if (preferences.getBoolean("notification_requested", false)) return
+        if (preferences.getBoolean("notification_requested", false)) {
+            callback(false)
+            return
+        }
         preferences.edit().putBoolean("notification_requested", true).apply()
-        startContractForResult(ActivityResultContracts.RequestPermission(), Manifest.permission.POST_NOTIFICATIONS) { _ -> }
+        notificationPermissionRequest?.invoke(false)
+        notificationPermissionRequest = callback
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+            notificationRequestCode,
+        )
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
@@ -496,6 +539,11 @@ class MainActivity : FlutterFragmentActivity() {
                 it == PackageManager.PERMISSION_GRANTED
             })
             storagePermissionRequest = null
+        } else if (requestCode == notificationRequestCode) {
+            notificationPermissionRequest?.invoke(grantResults.all {
+                it == PackageManager.PERMISSION_GRANTED
+            })
+            notificationPermissionRequest = null
         }
     }
 

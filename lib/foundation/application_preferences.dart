@@ -44,6 +44,7 @@ abstract final class AppPreferences {
     'reverseChapterOrder',
     false,
   );
+  static const minimizeToTray = BoolPreference('minimizeToTray', false);
   static const all = <Preference<Object>>[
     language,
     checkUpdateOnStart,
@@ -52,6 +53,7 @@ abstract final class AppPreferences {
     cacheRetentionDays,
     authorizationRequired,
     reverseChapterOrder,
+    minimizeToTray,
   ];
 }
 

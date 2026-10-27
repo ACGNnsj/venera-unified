@@ -1,6 +1,8 @@
 import 'package:venera_unified/network/request_scope.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:venera_unified/foundation/background_keepalive.dart';
+import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/sync_configuration.dart';
 import 'package:venera_unified/foundation/sync_preference_store.dart';
 import 'package:venera_unified/foundation/log.dart';
@@ -1228,6 +1230,7 @@ class DataSyncController with ChangeNotifier {
     _transferResume = null;
     try {
       notifyListeners();
+      _publishKeepAlive();
       if (_disposed) return const Res.error('Sync service is disposed');
       if (pending != null) {
         return await _finishCompletion(pending, retry: true);
@@ -1312,6 +1315,7 @@ class DataSyncController with ChangeNotifier {
       _activeTaskType = null;
       _isUploading = false;
       _isDownloading = false;
+      _publishKeepAlive();
       if (!_disposed) notifyListeners();
     }
   }
@@ -1335,6 +1339,7 @@ class DataSyncController with ChangeNotifier {
         await Future<void>.sync(_persistState);
       }
       notifyListeners();
+      _publishKeepAlive();
       final result = await run();
       if (result.error) {
         _lastError = result.errorMessage;
@@ -1355,6 +1360,7 @@ class DataSyncController with ChangeNotifier {
       _activeTaskType = null;
       _isUploading = false;
       _isDownloading = false;
+      _publishKeepAlive();
       if (hasConfiguration && !_configuring && !_disposed) {
         _syncPreferences.lastAttempt = _now.millisecondsSinceEpoch;
         await Future<void>.sync(_persistState);
@@ -1619,6 +1625,30 @@ class DataSyncController with ChangeNotifier {
 
   String _taskLogTag(_DataSyncTask task) {
     return task == _DataSyncTask.upload ? 'Upload Data' : 'Data Sync';
+  }
+
+  /// Mirrors transfer activity to the generic keep-alive. This controller
+  /// serializes transfers (single [_activeTaskType]), so the images/waiting
+  /// flags stay false; they exist so future overlapping phases keep the
+  /// shared notification up via [syncKeepAliveActive].
+  void _publishKeepAlive() {
+    final active = syncKeepAliveActive(
+      uploading: _isUploading,
+      downloading: _isDownloading,
+      syncingImages: false,
+      waiting: false,
+    );
+    if (active) {
+      BackgroundKeepAlive.instance.update(
+        BackgroundKeepAlive.tagSync,
+        formatTaskStatus(
+          title: 'Sync Data'.tl,
+          detail: _isUploading ? 'Upload'.tl : 'Download'.tl,
+        ),
+      );
+    } else {
+      BackgroundKeepAlive.instance.remove(BackgroundKeepAlive.tagSync);
+    }
   }
 
   Future<Res<bool>> _uploadNow() async {
