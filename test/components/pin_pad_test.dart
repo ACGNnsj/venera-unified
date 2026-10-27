@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_unified/app_shell/pin_pad.dart';
+import 'package:venera_unified/components/pin_pad.dart';
 
 Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 

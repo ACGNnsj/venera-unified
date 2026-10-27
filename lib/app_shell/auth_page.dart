@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:venera_unified/app_shell/pin_pad.dart';
+import 'package:venera_unified/components/pin_pad.dart';
 import 'package:venera_unified/foundation/auth_storage.dart';
 import 'package:venera_unified/foundation/translations.dart';
 

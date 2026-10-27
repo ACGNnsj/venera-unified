@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:venera_unified/app_shell/pin_pad.dart';
+import 'package:venera_unified/components/pin_pad.dart';
 import 'package:venera_unified/foundation/auth_storage.dart';
 import 'package:venera_unified/foundation/translations.dart';
 
