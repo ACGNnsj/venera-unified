@@ -6,6 +6,12 @@ on:
   push:
     branches:
       - main
+    # 只影响 push 触发：纯文档/票面改动不必拖起 20 分钟的 Flutter 测试。
+    # workflow_call（「完整构建」的质量门）与 pull_request 不受影响，发版前照常全量跑。
+    paths-ignore:
+      - 'docs/**'
+      - '.scratch/**'
+      - '**/*.md'
 
 concurrency:
   group: quality-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
