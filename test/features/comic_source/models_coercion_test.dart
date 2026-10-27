@@ -20,6 +20,13 @@ void main() {
       expect(comment.isLiked, isTrue);
       expect(comment.voteStatus, 1);
     });
+
+    test('字段里塞回调函数时判为无效结果并抛', () {
+      expect(
+        () => Comment.fromJson({'userName': () => 1, 'content': 'x'}),
+        throwsArgumentError,
+      );
+    });
   });
 
   group('Comic.fromJson', () {
@@ -42,6 +49,13 @@ void main() {
     test('标签给非列表非字符串时退化成空列表', () {
       final comic = Comic.fromJson({'title': 't', 'tags': 3}, 'source');
       expect(comic.tags, isEmpty);
+    });
+
+    test('标签给回调函数时判为无效结果并抛', () {
+      expect(
+        () => Comic.fromJson({'title': 't', 'tags': () => 1}, 'source'),
+        throwsArgumentError,
+      );
     });
   });
 
