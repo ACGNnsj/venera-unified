@@ -147,7 +147,6 @@ Future<void> _reopenSavedView(WidgetTester tester, Directory root) async {
   await tester.pumpAndSettle();
 }
 
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   App.dataPath = Directory.systemTemp.path;
@@ -272,7 +271,6 @@ void main() {
     expect(find.text('Unselected'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-
 
   testWidgets(
     'folder selection previews latest folder and detached window waits for saves',
