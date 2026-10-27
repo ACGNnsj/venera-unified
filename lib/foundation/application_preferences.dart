@@ -92,7 +92,17 @@ abstract final class AppearancePreferences {
     'yellow',
     'cyan',
   ]);
-  static const all = <Preference<Object>>[themeMode, color];
+  // 评论正文的字号。只影响评论卡片里的文字，正文与阅读器等其它排版各有
+  // 自己的设置，彼此不联动。
+  static const commentFontSize = NumericPreference(
+    'commentFontSize',
+    14,
+    min: 12,
+    max: 24,
+    step: 1,
+    integer: true,
+  );
+  static const all = <Preference<Object>>[themeMode, color, commentFontSize];
 }
 
 abstract final class DiscoveryPreferences {

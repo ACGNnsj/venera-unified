@@ -50,6 +50,14 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
             appNavigation.forceRebuild();
           },
         ).toSliver(),
+        SliderSetting.preference(
+          title: "Comment Font Size".tl,
+          preference: AppearancePreferences.commentFontSize,
+          valueFormatter: (value) => value.toInt().toString(),
+          onChanged: () {
+            setState(() {});
+          },
+        ).toSliver(),
       ],
     );
   }

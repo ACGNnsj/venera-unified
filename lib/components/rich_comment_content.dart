@@ -3,6 +3,9 @@ import 'package:venera_unified/foundation/comment_markup.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/log.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/image_provider/cached_image.dart';
@@ -227,8 +230,14 @@ class _RichCommentContentState extends State<RichCommentContent> {
 
   @override
   Widget build(BuildContext context) {
+    final baseStyle = DefaultTextStyle.of(context).style;
+    final commentStyle = baseStyle.copyWith(
+      fontSize: GlobalPreferenceStore(
+        appdata.settings,
+      ).read(AppearancePreferences.commentFontSize).toDouble(),
+    );
     Widget content = SelectableText.rich(
-      TextSpan(style: DefaultTextStyle.of(context).style, children: textSpan),
+      TextSpan(style: commentStyle, children: textSpan),
     );
     if (images.isNotEmpty && widget.showImages) {
       content = Column(
