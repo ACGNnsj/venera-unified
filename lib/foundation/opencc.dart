@@ -18,13 +18,28 @@ abstract class OpenCC {
       );
 
   static Future<void> _load(AssetBundle bundle) async {
-    final data = await bundle.load('assets/opencc.txt');
+    final loaded = await Future.wait([
+      _loadText(bundle, 'assets/opencc.txt'),
+      _loadText(bundle, 'assets/opencc/STCharacters.txt'),
+      _loadText(bundle, 'assets/opencc/TSCharacters.txt'),
+      _loadText(bundle, 'assets/opencc/STPhrases.txt'),
+      _loadText(bundle, 'assets/opencc/TSPhrases.txt'),
+    ], eagerError: true);
     final table = OpenCCTable.parse(
-      utf8.decode(
-        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
-      ),
+      loaded[0],
+      simplifiedCharacters: OpenCCTable.parseCharacters(loaded[1]),
+      traditionalCharacters: OpenCCTable.parseCharacters(loaded[2]),
+      simplifiedPhrases: OpenCCTable.parsePhrases(loaded[3]),
+      traditionalPhrases: OpenCCTable.parsePhrases(loaded[4]),
     );
     _table = table;
+  }
+
+  static Future<String> _loadText(AssetBundle bundle, String key) async {
+    final data = await bundle.load(key);
+    return utf8.decode(
+      data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+    );
   }
 
   static OpenCCTable get _ready =>
