@@ -310,6 +310,19 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
               ],
             ),
           ),
+          SwitchSetting.reader(
+            title: "Flash white screen on page turn".tl,
+            subtitle:
+                "Useful for reducing ghosting on e-ink screens. Only applies to paged modes."
+                    .tl,
+            preference: ReaderPreferences.flashOnPageTurn,
+            onChanged: () {
+              widget.onChanged?.call("flashOnPageTurn");
+            },
+            comicId: isEnabledSpecificSettings ? widget.comicId : null,
+            comicSource: isEnabledSpecificSettings ? widget.comicSource : null,
+            useDeviceSettings: useDeviceSpecificSettings,
+          ).toSliver(),
           SliderSetting.reader(
             title: "Auto page turning interval (gallery)".tl,
             preference: ReaderPreferences.autoPageTurningInterval,
@@ -552,6 +565,36 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
               preference: ReaderPreferences.readerSideMargin,
               valueFormatter: (value) => '${value.toInt()}%',
               onChanged: () => widget.onChanged?.call('readerSideMargin'),
+              comicId: isEnabledSpecificSettings ? widget.comicId : null,
+              comicSource: isEnabledSpecificSettings
+                  ? widget.comicSource
+                  : null,
+              useDeviceSettings: useDeviceSpecificSettings,
+            ),
+          ),
+          SwitchSetting.reader(
+            title: 'Page margin'.tl,
+            subtitle:
+                'Continuous mode keeps pages connected; margins stay beside the reading area.'
+                    .tl,
+            preference: ReaderPreferences.readerPageMarginEnabled,
+            onChanged: () {
+              setState(() {});
+              widget.onChanged?.call('readerPageMarginEnabled');
+            },
+            comicId: isEnabledSpecificSettings ? widget.comicId : null,
+            comicSource: isEnabledSpecificSettings ? widget.comicSource : null,
+            useDeviceSettings: useDeviceSpecificSettings,
+          ).toSliver(),
+          SliverAnimatedVisibility(
+            visible:
+                _value(ReaderPreferences.readerPageMarginEnabled) == true,
+            child: SliderSetting.reader(
+              title: 'Page margin size'.tl,
+              preference: ReaderPreferences.readerPageMarginPercent,
+              valueFormatter: (value) => '${value.toStringAsFixed(1)}%',
+              onChanged: () =>
+                  widget.onChanged?.call('readerPageMarginPercent'),
               comicId: isEnabledSpecificSettings ? widget.comicId : null,
               comicSource: isEnabledSpecificSettings
                   ? widget.comicSource

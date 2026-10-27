@@ -126,4 +126,9 @@ class ReaderSettings {
       _values['showChapterCommentsAtEnd'] as bool;
   bool get splitDualPage => _values['splitDualPage'] as bool;
   bool get splitDualPageInvert => _values['splitDualPageInvert'] as bool;
+  bool get readerPageMarginEnabled =>
+      _values['readerPageMarginEnabled'] as bool;
+  double get readerPageMarginPercent =>
+      _values['readerPageMarginPercent'] as double;
+  bool get flashOnPageTurn => _values['flashOnPageTurn'] as bool;
 }

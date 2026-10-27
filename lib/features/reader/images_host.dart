@@ -13,6 +13,7 @@ import 'image_read.dart';
 import 'gallery_view.dart';
 import 'gallery_data.dart';
 import 'continuous_data.dart';
+import 'page_margin.dart';
 import 'package:venera_unified/foundation/log.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/translations.dart';
@@ -125,6 +126,10 @@ class ReaderImagesHost extends StatelessWidget {
       final preferences = reader.preferences;
       final source = reader.type.comicSource;
       final comments = reader.createChapterCommentsRequest();
+      final marginFraction = pageMarginFraction(
+        enabled: preferences.readerPageMarginEnabled,
+        percent: preferences.readerPageMarginPercent,
+      );
       return ReaderGalleryView(
         imageWork: reader.imageWork,
         key: Key(
@@ -149,6 +154,10 @@ class ReaderImagesHost extends StatelessWidget {
           chapterId: reader.eid,
           showImageDimensions: preferences.showImageDimensions,
           observeImageReadiness: preferences.autoReadingSkipUnavailableImages,
+          pageMargin: resolveGalleryPageMargin(
+            fraction: marginFraction,
+            viewport: reader.size,
+          ),
         ),
         navigation: reader.controller,
         onViewportChanged: viewportChanged,
@@ -159,7 +168,10 @@ class ReaderImagesHost extends StatelessWidget {
           }
           reader.updateShell();
           if (comments && shell.isOpen) shell.openOrClose();
-          if (refreshEInk) shell.requestEInkRefresh();
+          if (refreshEInk) {
+            shell.requestPageTurnFlash();
+            shell.requestEInkRefresh();
+          }
         },
         onChapterChanged: () {
           if (canAct()) shell.requestEInkRefresh();
@@ -177,6 +189,10 @@ class ReaderImagesHost extends StatelessWidget {
       );
     } else {
       final preferences = reader.preferences;
+      final marginFraction = pageMarginFraction(
+        enabled: preferences.readerPageMarginEnabled,
+        percent: preferences.readerPageMarginPercent,
+      );
       return ReaderContinuousView(
         imageWork: reader.imageWork,
         key: Key(reader.mode.key),
@@ -193,6 +209,7 @@ class ReaderImagesHost extends StatelessWidget {
           scrollSpeed: preferences.readerScrollSpeed,
           limitImageWidth: preferences.limitImageWidth == true,
           sideMargin: preferences.readerSideMargin,
+          pageMargin: marginFraction,
           showImageDimensions: preferences.showImageDimensions,
           doubleTapCollect:
               appdata.settings.globalReaderSettings.quickCollectImage ==

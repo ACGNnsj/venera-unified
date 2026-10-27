@@ -23,6 +23,7 @@ import 'package:venera_unified/features/reader/waterfall_controller.dart';
 
 import 'continuous_data.dart';
 import 'current_image.dart';
+import 'page_margin.dart';
 import 'display_image_provider.dart';
 import 'reader_controller.dart';
 import 'reader_viewport.dart';
@@ -1125,7 +1126,15 @@ class ContinuousModeState extends State<ReaderContinuousView>
     );
     var width = this.widget.readerSize().width;
     var height = this.widget.readerSize().height;
-    if (data.limitImageWidth && width / height > 0.7 && data.vertical) {
+    final pageMargin = resolveContinuousPageMargin(
+      fraction: data.pageMargin,
+      vertical: data.vertical,
+    );
+    // Prime disables the width cap while the page margin is active.
+    if (data.pageMargin <= 0 &&
+        data.limitImageWidth &&
+        width / height > 0.7 &&
+        data.vertical) {
       width = height * 0.7;
     }
     if (data.vertical) {
@@ -1135,6 +1144,9 @@ class ContinuousModeState extends State<ReaderContinuousView>
       // extents match the visible content, including waterfall and auto-reading.
       width *= 1 - percent * 2 / 100;
     }
+    // Page margins stay across the scrolling axis so pages still join.
+    width *= pageMargin.widthScale;
+    height *= pageMargin.heightScale;
 
     // Keep wheel and trackpad scrolling active across the full viewport,
     // including the blank margins around the narrowed image flow.

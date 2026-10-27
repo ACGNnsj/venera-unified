@@ -270,7 +270,10 @@ class GalleryModeState extends State<ReaderGalleryView>
           scrollDirection: data.vertical ? Axis.vertical : Axis.horizontal,
           itemCount: totalPages + 2,
           controller: controller,
-          itemBuilder: (context, index) => _buildPhotoPage(context, index),
+          itemBuilder: (context, index) => Padding(
+            padding: data.pageMargin,
+            child: _buildPhotoPage(context, index),
+          ),
           onPageChanged: (i) {
             if (_disposed ||
                 !mounted ||

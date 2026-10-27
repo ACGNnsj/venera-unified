@@ -21,6 +21,7 @@ import 'package:venera_unified/features/reader/chapters.dart';
 import 'package:venera_unified/features/reader/chapter_menu.dart';
 import 'package:venera_unified/features/reader/eink_refresh.dart';
 import 'package:venera_unified/features/reader/eink_refresh_controller.dart';
+import 'page_margin.dart';
 import 'package:venera_unified/features/reader/gesture_port.dart';
 import 'package:venera_unified/features/reader/image_favorite_swipe.dart';
 import 'package:venera_unified/features/reader/platform_effects_controller.dart';
@@ -97,6 +98,11 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
 
   final EInkRefreshController _eInkRefreshController = EInkRefreshController();
 
+  /// Dedicated flash controller so the every-turn white flash never disturbs
+  /// the E-Ink interval cadence.
+  final EInkRefreshController _pageTurnFlashController =
+      EInkRefreshController();
+
   static const kTopBarHeight = 56.0;
 
   bool get isOpen => _isOpen;
@@ -139,6 +145,7 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
     _imagePicker.dispose();
     _selectionOverlay.dispose();
     _eInkRefreshController.dispose();
+    _pageTurnFlashController.dispose();
     super.dispose();
   }
 
@@ -211,6 +218,25 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
     _eInkRefreshController.reset();
   }
 
+  /// White flash before the E-Ink refresh on a real page turn. Paged modes
+  /// only; continuous readers have no discrete page turns. Prime uses 90 ms;
+  /// the shared controller clamps to a 100 ms minimum.
+  void requestPageTurnFlash() {
+    if (!mounted) return;
+    if (!shouldFlashOnPageTurn(
+      enabled: widget.data.preferences.flashOnPageTurn,
+      gallery: widget.data.gallery,
+    )) {
+      _pageTurnFlashController.reset();
+      return;
+    }
+    _pageTurnFlashController.onPageChanged(
+      interval: 1,
+      durationMilliseconds: 100,
+      style: EInkRefreshStyle.white,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isOnChapterCommentsPage = widget.data.onCommentsPage;
@@ -280,6 +306,9 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
         ),
         Positioned.fill(
           child: EInkRefreshOverlay(controller: _eInkRefreshController),
+        ),
+        Positioned.fill(
+          child: EInkRefreshOverlay(controller: _pageTurnFlashController),
         ),
       ],
     );

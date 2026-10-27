@@ -19,6 +19,7 @@ class ReaderContinuousData {
     required this.sourceKey,
     required this.comicId,
     this.showImageDimensions = false,
+    this.pageMargin = 0,
   });
 
   final bool vertical;
@@ -38,4 +39,8 @@ class ReaderContinuousData {
   final String? sourceKey;
   final String comicId;
   final bool showImageDimensions;
+
+  /// Fraction of the viewport reserved on each side across the scrolling
+  /// axis, mirroring prime's readerPageMargin. Zero disables the margin.
+  final double pageMargin;
 }

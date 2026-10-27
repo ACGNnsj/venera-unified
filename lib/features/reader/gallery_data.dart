@@ -1,3 +1,5 @@
+import 'package:flutter/painting.dart';
+
 import 'page_layout.dart';
 import 'reader_controller.dart';
 
@@ -21,6 +23,7 @@ class ReaderGalleryData {
     required this.chapterId,
     this.showImageDimensions = false,
     this.observeImageReadiness = false,
+    this.pageMargin = EdgeInsets.zero,
   });
 
   final ReaderContentState content;
@@ -39,6 +42,7 @@ class ReaderGalleryData {
   final String chapterId;
   final bool showImageDimensions;
   final bool observeImageReadiness;
+  final EdgeInsets pageMargin;
 
   List<String> get images => content.images ?? const [];
   int get imagePages => layout.pageCount(images.length);

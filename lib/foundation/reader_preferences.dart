@@ -229,6 +229,21 @@ abstract final class ReaderPreferences {
     'splitDualPageInvert',
     false,
   );
+  static const readerPageMarginEnabled = BoolPreference(
+    'readerPageMarginEnabled',
+    false,
+  );
+  // Percent of the viewport reserved on each side, clamped to 0-40 by the
+  // shared helper. Prime's default is 19.3.
+  static const readerPageMarginPercent = NumericPreference(
+    'readerPageMarginPercent',
+    19.3,
+    min: 0,
+    max: 40,
+    step: 0.1,
+    integer: false,
+  );
+  static const flashOnPageTurn = BoolPreference('flashOnPageTurn', false);
   static const all = <Preference<Object>>[
     readerMode,
     pagedReaderMode,
@@ -273,6 +288,9 @@ abstract final class ReaderPreferences {
     showChapterCommentsAtEnd,
     splitDualPage,
     splitDualPageInvert,
+    readerPageMarginEnabled,
+    readerPageMarginPercent,
+    flashOnPageTurn,
   ];
   static Map<String, Object?> get storageDefaults => {
     for (final preference in all) preference.key: preference.storageDefault,
