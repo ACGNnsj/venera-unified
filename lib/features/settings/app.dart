@@ -16,6 +16,8 @@ import 'package:venera_unified/features/settings/local_storage_settings.dart';
 import 'package:venera_unified/features/settings/settings_task_presenter.dart';
 import 'package:venera_unified/features/settings/data_sync_schedule_fields.dart';
 import 'package:venera_unified/features/settings/webdav_settings.dart';
+import 'package:venera_unified/features/settings/webdav_qr_payload.dart';
+import 'package:venera_unified/features/settings/webdav_sync_qr.dart';
 import 'package:venera_unified/features/sync/sync.dart';
 import 'package:venera_unified/features/webdav_library/webdav_library.dart';
 import 'package:venera_unified/foundation/app.dart';
@@ -65,6 +67,7 @@ class _AppSettingsState extends State<AppSettings> {
           },
         ).toSliver(),
         const CacheLimitSetting().toSliver(),
+        const CacheRetentionSetting().toSliver(),
         const HistoryRetentionSetting().toSliver(),
         CallbackSetting(
           title: "Export App Data".tl,
@@ -270,6 +273,28 @@ class _WebdavSettingState extends State<_WebdavSetting> {
                 onChanged: (value) => pass = value,
               ),
               const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.qr_code_2),
+                      label: Text("Config QR code".tl),
+                      onPressed: showQrCode,
+                    ),
+                  ),
+                  if (App.isMobile) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.qr_code_scanner),
+                        label: Text("Scan config".tl),
+                        onPressed: scanQrCode,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 12),
               TextField(
                 decoration: InputDecoration(
                   labelText: "Skip Setting Fields (Optional)".tl,
@@ -440,6 +465,38 @@ class _WebdavSettingState extends State<_WebdavSetting> {
 
   BackupConfig get currentConfig =>
       BackupConfig(url: url, user: user, pass: pass, remotePath: '/');
+
+  WebdavSyncQrPayload get currentPayload => WebdavSyncQrPayload(
+    url: url,
+    user: user,
+    pass: pass,
+    excludedFields: disableSync,
+    mode: syncMode.name,
+    intervalMinutes: syncInterval,
+  );
+
+  void showQrCode() {
+    showWebdavSyncQrDialog(context, currentPayload);
+  }
+
+  Future<void> scanQrCode() async {
+    final payload = await context.to<WebdavSyncQrPayload>(
+      () => const WebdavSyncQrScannerPage(),
+    );
+    if (!mounted || payload == null) return;
+    setState(() {
+      url = payload.url;
+      user = payload.user;
+      pass = payload.pass;
+      disableSync = payload.excludedFields;
+      syncMode = DataSyncMode.values.byName(payload.mode);
+      syncInterval = payload.intervalMinutes;
+      urlController.text = url;
+      userController.text = user;
+      passController.text = pass;
+      fieldsController.text = disableSync;
+    });
+  }
 
   Future<void> testConnection() async {
     if (isTesting) return;

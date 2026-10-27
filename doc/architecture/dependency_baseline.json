@@ -154,6 +154,26 @@
       "sync"
     ],
     [
+      "random",
+      "comic_details"
+    ],
+    [
+      "random",
+      "comic_source"
+    ],
+    [
+      "random",
+      "favorites"
+    ],
+    [
+      "random",
+      "history"
+    ],
+    [
+      "random",
+      "local_comics"
+    ],
+    [
       "reader",
       "comic_source"
     ],
@@ -600,6 +620,7 @@
     "features/local_comics/local_comics.dart",
     "features/local_comics/local_comics_page.dart",
     "features/local_comics/local_comics_summary.dart",
+    "features/random/random_comic_entry.dart",
     "features/reader/bottom_actions.dart",
     "features/reader/brightness.dart",
     "features/reader/chapter_comments.dart",
@@ -662,6 +683,7 @@
     "features/settings/sponsors.dart",
     "features/settings/webdav_connection_fields.dart",
     "features/settings/webdav_settings.dart",
+    "features/settings/webdav_sync_qr.dart",
     "features/settings/window_hotkey_setting.dart",
     "features/sync/comic_archive_page.dart",
     "features/sync/data_sync_scope.dart",
@@ -858,6 +880,7 @@
     "features/local_comics/local_storage_guard.dart",
     "features/local_comics/local_storage_migration.dart",
     "features/local_comics/local_storage_relocation.dart",
+    "features/random/random_comic_picker.dart",
     "features/reader/auto_reading.dart",
     "features/reader/brightness_policy.dart",
     "features/reader/chapter_image_loader.dart",
@@ -887,6 +910,7 @@
     "features/reader/image_read.dart",
     "features/reader/layout_detection.dart",
     "features/reader/page_layout.dart",
+    "features/reader/page_margin.dart",
     "features/reader/page_order_migration.dart",
     "features/reader/platform_effects_controller.dart",
     "features/reader/progress_navigation.dart",
@@ -914,6 +938,7 @@
     "features/settings/setting_field.dart",
     "features/settings/sponsor_catalog.dart",
     "features/settings/sponsors_loader.dart",
+    "features/settings/webdav_qr_payload.dart",
     "features/sync/app_data_archive.dart",
     "features/sync/app_data_import_journal.dart",
     "features/sync/app_data_snapshot.dart",
@@ -962,7 +987,9 @@
     "foundation/application_configuration.dart",
     "foundation/application_preferences.dart",
     "foundation/application_update_service.dart",
+    "foundation/archive_security.dart",
     "foundation/auth_storage.dart",
+    "foundation/cache_maintenance_service.dart",
     "foundation/cache_manager.dart",
     "foundation/cache_scan.dart",
     "foundation/comic_layout.dart",
@@ -991,6 +1018,8 @@
     "foundation/image_provider/read_image.dart",
     "foundation/image_provider/reader_image.dart",
     "foundation/image_provider/reader_image_processing.dart",
+    "foundation/image_provider/upscale/anime4k_service.dart",
+    "foundation/image_provider/upscale/anime4k_upscaler.dart",
     "foundation/image_save_work.dart",
     "foundation/image_work.dart",
     "foundation/init.dart",
