@@ -187,6 +187,7 @@ void main() {
       );
       if (!await defaultFile.exists() || !await optionalFile.exists()) {
         markTestSkipped('configs repo not checked out next to unified');
+        return;
       }
       final defaultCatalog = SourceRepositories.parseCatalog(
         await defaultFile.readAsString(),
