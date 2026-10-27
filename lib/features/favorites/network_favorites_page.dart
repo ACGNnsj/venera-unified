@@ -11,10 +11,10 @@ import 'package:venera_unified/components/scroll.dart';
 import 'package:venera_unified/features/comic_source/comic_source.dart';
 import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
 import 'package:venera_unified/features/favorites/favorite_actions.dart';
-import 'package:venera_unified/features/favorites/favorites_constants.dart';
 import 'package:venera_unified/features/favorites/favorites_display.dart';
 import 'package:venera_unified/foundation/consts.dart';
 import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/layout_policy.dart';
 import 'package:venera_unified/foundation/res.dart';
 import 'package:venera_unified/foundation/log.dart';
 import 'package:venera_unified/foundation/persistence_failure.dart';
@@ -115,18 +115,18 @@ class _NormalFavoritePageState extends State<_NormalFavoritePage> {
             : AppbarStyle.blur,
         leading: Tooltip(
           message: "Folders".tl,
-          child: context.width <= favoritesTwoPanelChangeWidth
-              ? IconButton(
+          child: favoritesUsesSplitPane(context.width)
+              ? null
+              : IconButton(
                   icon: const Icon(Icons.menu),
                   color: context.colorScheme.primary,
                   onPressed: widget.showFolders,
-                )
-              : null,
+                ),
         ),
         title: GestureDetector(
-          onTap: context.width < favoritesTwoPanelChangeWidth
-              ? widget.showFolders
-              : null,
+          onTap: favoritesUsesSplitPane(context.width)
+              ? null
+              : widget.showFolders,
           child: Text(widget.data.title),
         ),
         actions: [
@@ -165,18 +165,18 @@ class _NormalFavoritePageState extends State<_NormalFavoritePage> {
       errorLeading: Appbar(
         leading: Tooltip(
           message: "Folders".tl,
-          child: context.width <= favoritesTwoPanelChangeWidth
-              ? IconButton(
+          child: favoritesUsesSplitPane(context.width)
+              ? null
+              : IconButton(
                   icon: const Icon(Icons.menu),
                   color: context.colorScheme.primary,
                   onPressed: widget.showFolders,
-                )
-              : null,
+                ),
         ),
         title: GestureDetector(
-          onTap: context.width < favoritesTwoPanelChangeWidth
-              ? widget.showFolders
-              : null,
+          onTap: favoritesUsesSplitPane(context.width)
+              ? null
+              : widget.showFolders,
           child: Text(widget.data.title),
         ),
       ),
@@ -291,18 +291,18 @@ class _MultiFolderFavoritesPageState extends State<_MultiFolderFavoritesPage> {
           : AppbarStyle.blur,
       leading: Tooltip(
         message: "Folders".tl,
-        child: context.width <= favoritesTwoPanelChangeWidth
-            ? IconButton(
+        child: favoritesUsesSplitPane(context.width)
+            ? null
+            : IconButton(
                 icon: const Icon(Icons.menu),
                 color: context.colorScheme.primary,
                 onPressed: widget.showFolders,
-              )
-            : null,
+              ),
       ),
       title: GestureDetector(
-        onTap: context.width < favoritesTwoPanelChangeWidth
-            ? widget.showFolders
-            : null,
+        onTap: favoritesUsesSplitPane(context.width)
+            ? null
+            : widget.showFolders,
         child: Text(widget.data.title),
       ),
     );
@@ -310,18 +310,18 @@ class _MultiFolderFavoritesPageState extends State<_MultiFolderFavoritesPage> {
     var appBar = Appbar(
       leading: Tooltip(
         message: "Folders".tl,
-        child: context.width <= favoritesTwoPanelChangeWidth
-            ? IconButton(
+        child: favoritesUsesSplitPane(context.width)
+            ? null
+            : IconButton(
                 icon: const Icon(Icons.menu),
                 color: context.colorScheme.primary,
                 onPressed: widget.showFolders,
-              )
-            : null,
+              ),
       ),
       title: GestureDetector(
-        onTap: context.width < favoritesTwoPanelChangeWidth
-            ? widget.showFolders
-            : null,
+        onTap: favoritesUsesSplitPane(context.width)
+            ? null
+            : widget.showFolders,
         child: Text(widget.data.title),
       ),
     );

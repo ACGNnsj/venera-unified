@@ -44,6 +44,7 @@ import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
 import 'package:venera_unified/foundation/consts.dart';
 import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/layout_policy.dart';
 import 'package:venera_unified/foundation/opencc.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
@@ -446,18 +447,18 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                 : AppbarStyle.blur,
             leading: Tooltip(
               message: "Folders".tl,
-              child: context.width <= favoritesTwoPanelChangeWidth
-                  ? IconButton(
+              child: favoritesUsesSplitPane(context.width)
+                  ? const SizedBox()
+                  : IconButton(
                       icon: const Icon(Icons.menu),
                       color: context.colorScheme.primary,
                       onPressed: widget.showFolders,
-                    )
-                  : const SizedBox(),
+                    ),
             ),
             title: GestureDetector(
-              onTap: context.width < favoritesTwoPanelChangeWidth
-                  ? widget.showFolders
-                  : null,
+              onTap: favoritesUsesSplitPane(context.width)
+                  ? null
+                  : widget.showFolders,
               child: Text(title),
             ),
             actions: [

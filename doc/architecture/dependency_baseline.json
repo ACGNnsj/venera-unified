@@ -1041,6 +1041,7 @@
     "foundation/log.dart",
     "foundation/log_file_writer.dart",
     "foundation/log_redaction.dart",
+    "foundation/layout_policy.dart",
     "foundation/opencc.dart",
     "foundation/opencc_table.dart",
     "foundation/operation_failure.dart",
