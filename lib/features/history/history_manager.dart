@@ -546,6 +546,8 @@ class HistoryManager with ChangeNotifier {
       _historyCache.find(id, type.value);
 
   List<History> getAll() => _repository.getAll();
+  List<History> readRange(int offset, int limit) =>
+      _repository.readRange(offset, limit);
   List<History> getRecent() => _repository.getRecent();
   int count() => _repository.count();
   int getTotalReadDurationMs() => _repository.getTotalReadDurationMs();

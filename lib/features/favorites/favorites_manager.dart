@@ -920,8 +920,11 @@ class LocalFavoritesManager with ChangeNotifier {
 
   int minValue(String folder) => _repository.minValue(folder);
 
-  List<FavoriteItem> getFolderComics(String folder) =>
-      _repository.getFolderComics(folder);
+  List<FavoriteItem> getFolderComics(
+    String folder, {
+    int? limit,
+    int offset = 0,
+  }) => _repository.getFolderComics(folder, limit: limit, offset: offset);
 
   Future<T> _runRead<T>(Future<T> Function(String path) read) =>
       _mutate(() => _startRead(read));

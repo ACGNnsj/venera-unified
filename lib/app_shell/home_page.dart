@@ -8,6 +8,7 @@ import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/features/history/history.dart';
 import 'package:venera_unified/features/favorites/favorites.dart';
 import 'package:venera_unified/features/local_comics/local_comics.dart';
+import 'package:venera_unified/features/random/random_comic_entry.dart';
 import 'package:venera_unified/features/follow_updates/follow_updates.dart';
 import 'package:venera_unified/features/image_favorites/image_favorites.dart';
 import 'package:venera_unified/features/search/search.dart';
@@ -24,6 +25,7 @@ class HomePage extends StatelessWidget {
         SliverPadding(padding: EdgeInsets.only(top: context.padding.top)),
         const SearchEntry(),
         const SyncStatusSummary(),
+        const RandomComicEntry(),
         HistorySummary(
           manager: HistoryScope.read(context),
           favoriteChanges: FavoritesScope.read(context),

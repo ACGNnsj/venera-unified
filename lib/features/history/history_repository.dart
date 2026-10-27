@@ -60,6 +60,16 @@ class HistoryRepository {
     return res.map((element) => historyFromRow(element)).toList();
   }
 
+  /// Bounded window read in history-page order (newest first).
+  List<History> readRange(int offset, int limit) {
+    var res = db.select("""
+      select * from $_table
+      order by time DESC
+      limit ? offset ?;
+    """, [limit, offset]);
+    return res.map((element) => historyFromRow(element)).toList();
+  }
+
   /// 获取最近阅读的漫画
   List<History> getRecent() {
     var res = db.select("""

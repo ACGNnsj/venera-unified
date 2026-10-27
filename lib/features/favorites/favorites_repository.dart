@@ -377,13 +377,27 @@ class FavoritesRepository {
           as int? ??
       0;
 
-  List<FavoriteItem> getFolderComics(String folder, {int? limit}) => db
-      .select(
-        'SELECT * FROM ${_table(folder)} ORDER BY display_order${limit == null ? "" : " LIMIT ?"};',
-        limit == null ? [] : [limit],
-      )
-      .map(favoriteItemFromRow)
-      .toList();
+  List<FavoriteItem> getFolderComics(
+    String folder, {
+    int? limit,
+    int offset = 0,
+  }) {
+    if (limit == null && offset == 0) {
+      return db
+          .select(
+            'SELECT * FROM ${_table(folder)} ORDER BY display_order;',
+          )
+          .map(favoriteItemFromRow)
+          .toList();
+    }
+    return db
+        .select(
+          'SELECT * FROM ${_table(folder)} ORDER BY display_order LIMIT ? OFFSET ?;',
+          [limit ?? -1, offset],
+        )
+        .map(favoriteItemFromRow)
+        .toList();
+  }
 
   List<FavoriteItem> getAllComics(Iterable<String> folders) {
     final result = <FavoriteItem>{};

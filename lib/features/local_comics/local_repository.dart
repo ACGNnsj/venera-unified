@@ -236,6 +236,16 @@ class LocalRepository {
     return res.map((row) => localComicFromRow(row)).toList();
   }
 
+  /// Bounded window read in newest-first order.
+  List<LocalComic> readRange(int offset, int limit) {
+    var res = db.select('''
+      SELECT * FROM comics
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?;
+    ''', [limit, offset]);
+    return res.map((row) => localComicFromRow(row)).toList();
+  }
+
   LocalComic? find(String id, ComicType comicType) {
     final res = db.select(
       'SELECT * FROM comics WHERE id = ? AND comic_type = ?;',

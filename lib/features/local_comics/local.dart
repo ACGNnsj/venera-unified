@@ -468,6 +468,10 @@ class LocalManager with ChangeNotifier implements DownloadTaskStorage {
   List<LocalComic> getComics(LocalSortType sortType) =>
       _repository.getComics(sortType).map(_rememberComic).toList();
 
+  /// Bounded window read in newest-first order.
+  List<LocalComic> readRange(int offset, int limit) =>
+      _repository.readRange(offset, limit).map(_rememberComic).toList();
+
   LocalComic _rememberComic(LocalComic comic, {String? id}) {
     final key = (id ?? comic.id, comic.comicType.value);
     var location = _comicDirectories[key];

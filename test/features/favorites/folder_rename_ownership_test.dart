@@ -51,7 +51,7 @@ class _Manager extends Fake implements LocalFavoritesManager {
   @override
   bool existsFolder(String name) => names.contains(name);
   @override
-  List<FavoriteItem> getFolderComics(String folder, {int? limit}) {
+  List<FavoriteItem> getFolderComics(String folder, {int? limit, int offset = 0}) {
     reads++;
     return [];
   }
