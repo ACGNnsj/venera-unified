@@ -1,6 +1,17 @@
 import 'package:venera_unified/foundation/comic_type.dart';
-import 'package:venera_unified/foundation/extensions.dart';
 import 'package:venera_unified/foundation/history_contract.dart';
+
+import 'json_coercion.dart';
+
+List<dynamic>? _asList(dynamic value) => value is List ? value : null;
+
+Map<String, dynamic> _asMap(dynamic value) {
+  if (value is! Map) return const {};
+  return value.map((key, item) => MapEntry(coerceString(key), item));
+}
+
+List<String>? _asStringListOrNull(dynamic value) =>
+    value == null ? null : coerceStringList(value);
 
 class Comment {
   final String userName;
@@ -30,15 +41,15 @@ class Comment {
   }
 
   Comment.fromJson(Map<String, dynamic> json)
-    : userName = json["userName"],
-      avatar = json["avatar"],
-      content = json["content"],
+    : userName = coerceString(json["userName"]),
+      avatar = coerceNullableString(json["avatar"]),
+      content = coerceString(json["content"]),
       time = parseTime(json["time"]),
-      replyCount = json["replyCount"],
-      id = json["id"].toString(),
-      score = json["score"],
-      isLiked = json["isLiked"],
-      voteStatus = json["voteStatus"];
+      replyCount = coerceInt(json["replyCount"]),
+      id = coerceNullableString(json["id"]),
+      score = coerceInt(json["score"]),
+      isLiked = coerceBool(json["isLiked"]),
+      voteStatus = coerceInt(json["voteStatus"]);
 }
 
 class Comic {
@@ -94,16 +105,16 @@ class Comic {
   }
 
   Comic.fromJson(Map<String, dynamic> json, this.sourceKey)
-    : title = json["title"],
-      subtitle = json["subtitle"] ?? json["subTitle"] ?? "",
-      cover = json["cover"],
-      id = json["id"],
-      tags = List<String>.from(json["tags"] ?? []),
-      description = json["description"] ?? "",
-      maxPage = json["maxPage"],
-      language = json["language"],
-      favoriteId = json["favoriteId"],
-      stars = (json["stars"] as num?)?.toDouble();
+    : title = coerceString(json["title"]),
+      subtitle = coerceString(json["subtitle"] ?? json["subTitle"]),
+      cover = coerceString(json["cover"]),
+      id = coerceString(json["id"]),
+      tags = coerceStringList(json["tags"]),
+      description = coerceString(json["description"]),
+      maxPage = coerceInt(json["maxPage"]),
+      language = coerceNullableString(json["language"]),
+      favoriteId = coerceNullableString(json["favoriteId"]),
+      stars = coerceDouble(json["stars"]);
 
   @override
   bool operator ==(Object other) {
@@ -188,43 +199,44 @@ class ComicDetails with HistoryMixin {
 
   final List<Comment>? comments;
 
-  static Map<String, List<String>> _generateMap(Map<dynamic, dynamic> map) {
+  static Map<String, List<String>> _generateMap(dynamic value) {
+    if (value is! Map) return const {};
     var res = <String, List<String>>{};
-    map.forEach((key, value) {
-      if (value is List) {
-        res[key] = List<String>.from(value);
-      }
+    value.forEach((key, item) {
+      res[coerceString(key)] = coerceStringList(item);
     });
     return res;
   }
 
   ComicDetails.fromJson(Map<String, dynamic> json)
-    : title = json["title"],
-      subTitle = json["subtitle"],
-      cover = json["cover"],
-      description = json["description"],
+    : title = coerceString(json["title"]),
+      subTitle = coerceNullableString(json["subtitle"]),
+      cover = coerceString(json["cover"]),
+      description = coerceString(json["description"]),
       tags = _generateMap(json["tags"]),
       chapters = ComicChapters.fromJsonOrNull(json["chapters"]),
-      sourceKey = json["sourceKey"],
-      comicId = json["comicId"],
-      thumbnails = ListOrNull.from(json["thumbnails"]),
-      recommend = (json["recommend"] as List?)
-          ?.map((e) => Comic.fromJson(e, json["sourceKey"]))
+      sourceKey = coerceString(json["sourceKey"]),
+      comicId = coerceString(json["comicId"]),
+      thumbnails = _asStringListOrNull(json["thumbnails"]),
+      recommend = _asList(json["recommend"])
+          ?.map(
+            (e) => Comic.fromJson(_asMap(e), coerceString(json["sourceKey"])),
+          )
           .toList(),
-      isFavorite = json["isFavorite"],
-      subId = json["subId"],
-      likesCount = json["likesCount"],
-      isLiked = json["isLiked"],
-      commentCount = json["commentCount"],
-      uploader = json["uploader"],
-      uploadTime = json["uploadTime"],
-      updateTime = json["updateTime"],
-      url = json["url"],
-      stars = (json["stars"] as num?)?.toDouble(),
-      maxPage = json["maxPage"],
-      comments = (json["comments"] as List?)
-          ?.map((e) => Comment.fromJson(e))
-          .toList();
+      isFavorite = coerceBool(json["isFavorite"]),
+      subId = coerceNullableString(json["subId"]),
+      likesCount = coerceInt(json["likesCount"]),
+      isLiked = coerceBool(json["isLiked"]),
+      commentCount = coerceInt(json["commentCount"]),
+      uploader = coerceNullableString(json["uploader"]),
+      uploadTime = coerceNullableString(json["uploadTime"]),
+      updateTime = coerceNullableString(json["updateTime"]),
+      url = coerceNullableString(json["url"]),
+      stars = coerceDouble(json["stars"]),
+      maxPage = coerceInt(json["maxPage"]),
+      comments = _asList(
+        json["comments"],
+      )?.map((e) => Comment.fromJson(_asMap(e))).toList();
 
   Map<String, dynamic> toJson() {
     return {
@@ -372,17 +384,25 @@ class ComicChapters {
   ) : _chapters = null;
 
   factory ComicChapters.fromJson(dynamic json) {
-    if (json is! Map) throw ArgumentError("Invalid json type");
+    // 书源的章节字段偶尔会给出非 Map（null / 列表 / 字符串），旧实现直接抛
+    // ArgumentError 会让整个详情页崩掉；这里退化成空章节，由上层决定怎么提示。
+    if (json is! Map) return ComicChapters(const {});
     var chapters = <String, String>{};
     var groupedChapters = <String, Map<String, String>>{};
     for (var entry in json.entries) {
-      var key = entry.key;
-      var value = entry.value;
-      if (key is! String) throw ArgumentError("Invalid key type");
+      final rawKey = entry.key;
+      if (rawKey == null) continue;
+      final key = coerceString(rawKey);
+      final value = entry.value;
       if (value is Map) {
-        groupedChapters[key] = Map.from(value);
-      } else {
-        chapters[key] = value.toString();
+        final group = <String, String>{};
+        for (final item in value.entries) {
+          if (item.key == null || item.value == null) continue;
+          group[coerceString(item.key)] = coerceString(item.value);
+        }
+        if (group.isNotEmpty) groupedChapters[key] = group;
+      } else if (value != null) {
+        chapters[key] = coerceString(value);
       }
     }
     if (chapters.isNotEmpty) {
