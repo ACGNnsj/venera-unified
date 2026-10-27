@@ -173,6 +173,25 @@ copy, re-apply the adapter rewrite instead of dropping `core/`, and keep the
 documented crate pins below — regenerating Cargo.lock from scratch re-floats
 those pinned versions to whatever is newest and compatible.
 
+## Shared-client keep-alive regression tests (2026-10-27)
+
+`rust/core/src/http.rs` gained four tests pinning the `resolve_client`
+contract the application's Dart handle pool relies on; no production code
+changed:
+
+- a provided client is passed through even when the accompanying settings
+  cannot build (proves no per-request rebuild);
+- a missing client builds from the given settings (60 s keep-alive included)
+  or from defaults;
+- two sequential requests on one shared client open exactly one TCP
+  connection against a keep-alive loopback server;
+- two requests with a per-request-built client open two connections,
+  demonstrating the keep-alive waste the shared handle eliminates.
+
+Run them with `cargo test --locked -p rhttp-core` under
+`RUSTFLAGS="--cfg reqwest_unstable"` (same flag as the callback regressions
+below).
+
 ## Building the patched source
 
 Windows/Linux CMake, Android Gradle and iOS/macOS pod scripts all invoke the

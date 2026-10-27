@@ -19,6 +19,7 @@ import 'package:rhttp/src/rust/lib.dart' show CancellationToken;
 import 'package:venera_unified/foundation/log.dart';
 
 import 'image_http3_fallback.dart';
+import 'rhttp_client_pool.dart';
 
 typedef RHttpCleanupError = ({String stage, Object error, StackTrace stack});
 
@@ -419,7 +420,14 @@ Future<RHttpStreamCall> _startNativeCall(
   late Stream<Uint8List> body;
   try {
     if (upload != null) input = StreamIterator(upload);
+    // Share one native handle per settings fingerprint so the connection pool
+    // survives across requests. The pool owns the handle; adapter close
+    // semantics never dispose it.
+    final pooled = await RhttpClientPool.instance.acquire(settings);
     body = api.crateApiHttpMakeHttpRequestReceiveStream(
+      // The handle comes from the vendored path-pinned rhttp package.
+      // ignore: invalid_use_of_internal_member
+      client: pooled.ref,
       // The conversion preserves proxy, DNS, TLS, redirect and timeout settings.
       // ignore: invalid_use_of_internal_member
       settings: settings.toRustType(),

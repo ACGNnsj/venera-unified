@@ -252,7 +252,12 @@ fn core_version(version: Version) -> CoreHttpVersion {
 mod tests {
     use super::*;
     use crate::request::{CoreExpectBody, CoreRequest};
+    use crate::settings::{
+        CustomProxy, HttpVersionPref, ProxyCondition, ProxySettings, TimeoutSettings,
+    };
     use futures_util::StreamExt;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::Arc;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio_util::sync::CancellationToken;
 
@@ -348,5 +353,146 @@ mod tests {
             data.extend_from_slice(&chunk.unwrap());
         }
         assert_eq!(data, b"hello");
+    }
+
+    /// LL-13: the Dart handle pool passes one shared client so the connection
+    /// pool (and its keep-alive settings) survives across requests. These
+    /// tests pin the `resolve_client` contract that sharing relies on, and
+    /// demonstrate the per-request-build waste it eliminates.
+
+    fn unbuildable_settings() -> ClientSettings {
+        ClientSettings {
+            proxy_settings: Some(ProxySettings::CustomProxyList(vec![CustomProxy {
+                url: "http://127.0.0.1:notaport".to_string(),
+                condition: ProxyCondition::All,
+            }])),
+            ..ClientSettings::default()
+        }
+    }
+
+    #[test]
+    fn provided_client_is_reused_without_rebuilding() {
+        // Sanity: these settings really cannot build, so resolving Ok below
+        // proves the provided client is passed through untouched.
+        assert!(build_client(unbuildable_settings()).is_err());
+
+        let shared = build_client(ClientSettings::default()).unwrap();
+        let resolved = resolve_client(Some(shared), Some(unbuildable_settings())).unwrap();
+        assert_eq!(resolved.http_version_pref, HttpVersionPref::All);
+        assert!(resolved.throw_on_status_code);
+    }
+
+    #[test]
+    fn missing_client_builds_from_settings_or_default() {
+        let settings = ClientSettings {
+            http_version_pref: HttpVersionPref::Http11,
+            throw_on_status_code: false,
+            timeout_settings: Some(TimeoutSettings {
+                timeout: None,
+                connect_timeout: None,
+                keep_alive_timeout: Some(chrono::Duration::seconds(60)),
+                keep_alive_ping: None,
+            }),
+            ..ClientSettings::default()
+        };
+        let resolved = resolve_client(None, Some(settings)).unwrap();
+        assert_eq!(resolved.http_version_pref, HttpVersionPref::Http11);
+        assert!(!resolved.throw_on_status_code);
+
+        let resolved = resolve_client(None, None).unwrap();
+        assert_eq!(resolved.http_version_pref, HttpVersionPref::All);
+        assert!(resolved.throw_on_status_code);
+    }
+
+    const KEEPALIVE_OK: &[u8] =
+        b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: keep-alive\r\n\r\nhello";
+
+    /// Loopback server that keeps connections alive and counts TCP accepts.
+    async fn serve_keepalive(
+        response: &'static [u8],
+        accepts: Arc<AtomicUsize>,
+    ) -> (u16, tokio::task::JoinHandle<()>) {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let handle = tokio::spawn(async move {
+            loop {
+                let (mut socket, _) = match listener.accept().await {
+                    Ok(conn) => conn,
+                    Err(_) => break,
+                };
+                accepts.fetch_add(1, Ordering::SeqCst);
+                tokio::spawn(async move {
+                    let mut buf = vec![0u8; 4096];
+                    loop {
+                        // Read one request head; a GET has no body.
+                        let mut head = Vec::new();
+                        let eof = loop {
+                            match socket.read(&mut buf).await {
+                                Ok(0) => break true,
+                                Ok(n) => {
+                                    head.extend_from_slice(&buf[..n]);
+                                    if head.windows(4).any(|w| w == b"\r\n\r\n") {
+                                        break false;
+                                    }
+                                }
+                                Err(_) => break true,
+                            }
+                        };
+                        if eof || socket.write_all(response).await.is_err() {
+                            break;
+                        }
+                    }
+                });
+            }
+        });
+        (port, handle)
+    }
+
+    #[tokio::test]
+    async fn shared_client_reuses_a_single_connection() {
+        let accepts = Arc::new(AtomicUsize::new(0));
+        let (port, server) = serve_keepalive(KEEPALIVE_OK, accepts.clone()).await;
+
+        let client = build_client(ClientSettings::default()).unwrap();
+        for _ in 0..2 {
+            let response = execute(
+                Some(client.clone()),
+                None,
+                get_request(port, CoreExpectBody::Text),
+                CancellationToken::new(),
+                CancellationToken::new(),
+            )
+            .await
+            .unwrap();
+            assert_eq!(response.status_code, 200);
+        }
+        server.abort();
+
+        assert_eq!(accepts.load(Ordering::SeqCst), 1);
+    }
+
+    #[tokio::test]
+    async fn fresh_client_per_request_opens_a_connection_each_time() {
+        let accepts = Arc::new(AtomicUsize::new(0));
+        let (port, server) = serve_keepalive(KEEPALIVE_OK, accepts.clone()).await;
+
+        for _ in 0..2 {
+            // None client: resolve_client builds (and drops) a client per call,
+            // so the pool cannot carry over. This is the LL-13 keep-alive waste
+            // the Dart handle pool eliminates by sharing one client.
+            let response = execute(
+                None,
+                Some(ClientSettings::default()),
+                get_request(port, CoreExpectBody::Text),
+                CancellationToken::new(),
+                CancellationToken::new(),
+            )
+            .await
+            .unwrap();
+            assert_eq!(response.status_code, 200);
+        }
+        server.abort();
+
+        assert_eq!(accepts.load(Ordering::SeqCst), 2);
     }
 }

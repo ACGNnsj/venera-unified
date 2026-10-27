@@ -1071,6 +1071,7 @@
     "network/owned_dio_client.dart",
     "network/proxy.dart",
     "network/request_scope.dart",
+    "network/rhttp_client_pool.dart",
     "network/rhttp_stream_request.dart",
     "network/shared_image_requests.dart",
     "network/shared_request_stream.dart",
