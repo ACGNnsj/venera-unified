@@ -90,6 +90,13 @@ with Rand 0.10: `rand_core` 0.10.1, `rand_pcg` 0.10.2, `chacha20` 0.10.2,
 `wit-bindgen` entries are no longer needed. The separate `getrandom` 0.2.16
 entry remains unchanged. No unrelated dependency versions are downgraded.
 
+The three crates the weekly Dependabot group touches were bumped again after
+the table above: `bytes` 1.11.1 → 1.12.1, `tokio` 1.53.3 → 1.54.1 and
+`thiserror` 2.0.17 → 2.0.21 (PR #2). `bytes` and `tokio` are listed here as
+deliberate baselines, but the newer releases stay above the security floors
+(GHSA-434x-w66g-qw3r requires ≥ 1.11.1) and pass the native, Android and iOS
+jobs, so the baselines move with them.
+
 Dependabot checks this Rust package weekly while keeping Flutter Rust Bridge
 updates separate from its generated Dart code. The dependency security workflow
 runs cargo-audit 0.22.2 against the complete lockfile on pull requests, pushes to

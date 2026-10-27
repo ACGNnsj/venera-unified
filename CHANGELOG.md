@@ -2,6 +2,19 @@
 
 本项目遵循语义化版本，记录 fork 后的主要变更。
 
+## v1.18.2-rc.3
+
+### 预发布说明
+
+- 发布 `1.18.2-rc.3+239`：产物与显示名统一为 Venera Unified，并带上三组依赖升级与 CI 触发过滤；稳定渠道仍是 v1.18.1。
+- **Windows 的可执行文件名、安装目录与 Linux 的包名都变了**（`VeneraNext.exe` → `VeneraUnified.exe`，`venera-next` → `venera-unified`）。装过 rc.2 的机器不能原地覆盖升级，需要先卸载再安装；应用数据目录仍是 `com.github.cyrilpeng\VeneraNext`，卸载时不要勾选清除数据。
+
+### 变更
+
+- 构建产物、窗口标题、启动失败窗口、安装程序、Linux 包与 AppImage 的显示名统一为 Venera Unified；发布者与项目链接指向本仓库。
+- 依赖升级：`archive` 4.5.2、`image`、`pdfrx`；`dynamic_color` 2.1.0；Rust 侧 `tokio` 1.54.1、`bytes` 1.12.1、`thiserror` 2.0.21。
+- 纯文档与票面的提交不再触发代码分析工作流。
+
 ## v1.18.2-rc.2
 
 ### 预发布说明
