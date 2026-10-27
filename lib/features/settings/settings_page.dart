@@ -12,6 +12,7 @@ import 'package:venera_unified/features/settings/network.dart';
 import 'package:venera_unified/features/settings/explore_settings.dart';
 import 'package:venera_unified/features/settings/app.dart';
 import 'package:venera_unified/features/settings/reader.dart';
+import 'package:venera_unified/features/settings/settings_search_index.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({this.initialPage = -1, super.key});
@@ -24,6 +25,9 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   int currentPage = -1;
+
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
 
   ColorScheme get colors => Theme.of(context).colorScheme;
 
@@ -57,6 +61,12 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     currentPage = widget.initialPage;
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -143,10 +153,69 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 4),
-          Expanded(child: buildCategories()),
+          buildSearchField(),
+          Expanded(
+            child: _searchQuery.trim().isEmpty
+                ? buildCategories()
+                : buildSearchResults(),
+          ),
         ],
       ),
     );
+  }
+
+  Widget buildSearchField() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (v) => setState(() => _searchQuery = v),
+        decoration: InputDecoration(
+          hintText: "Search settings".tl,
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: _searchQuery.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildSearchResults() {
+    final results = matchSettingsSearch(_searchQuery);
+    if (results.isEmpty) {
+      return Center(
+        child: Text("No matching settings".tl, style: ts.s14),
+      ).paddingTop(32);
+    }
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      itemCount: results.length,
+      itemBuilder: (context, index) {
+        final e = results[index];
+        return ListTile(
+          key: ValueKey('settings-result-${e.title}'),
+          leading: Icon(icons[e.category]),
+          title: Text(e.title.tl),
+          subtitle: Text(categories[e.category].tl),
+          onTap: () => _openSettingsResult(e),
+        );
+      },
+    );
+  }
+
+  void _openSettingsResult(SettingsSearchEntry entry) {
+    if (enableTwoViews) {
+      setState(() => currentPage = entry.category);
+    } else {
+      context.to(() => _SettingsDetailPage(pageIndex: entry.category));
+    }
   }
 
   Widget buildCategories() {

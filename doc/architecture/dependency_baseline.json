@@ -679,6 +679,7 @@
     "features/settings/setting_components.dart",
     "features/settings/settings.dart",
     "features/settings/settings_page.dart",
+    "features/settings/settings_search_index.dart",
     "features/settings/settings_task_presenter.dart",
     "features/settings/sponsors.dart",
     "features/settings/webdav_connection_fields.dart",
