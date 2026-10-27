@@ -26,6 +26,8 @@ jobs:
       - name: 校验分支构建元数据
         if: github.ref_type != 'tag'
         run: python3 .github/scripts/validate_release.py --build-only
+      - name: 校验各平台发布身份一致
+        run: python3 .github/scripts/check_release_identity.py
 
   Quality:
     needs: Release_Metadata
