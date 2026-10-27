@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:venera_unified/components/message.dart';
 import 'package:venera_unified/components/settings_save_state.dart';
+import 'package:venera_unified/features/settings/pin_setup_dialog.dart';
 import 'package:venera_unified/features/settings/setting_components.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/auth_storage.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/log.dart';
@@ -222,11 +224,31 @@ class _AuthorizationRequiredSettingState
     extends SettingsSaveState<AuthorizationRequiredSetting> {
   int _request = 0;
   bool? _preview;
+  bool? _hasPin;
 
   @override
   void initState() {
     super.initState();
     appdata.settings.addListener(_refresh);
+    _loadPinState();
+  }
+
+  Future<void> _loadPinState() async {
+    final hasPin = await AuthStorage.hasPassword();
+    if (mounted) setState(() => _hasPin = hasPin);
+  }
+
+  Future<void> _managePin() async {
+    final changed = await PinSetupDialog.show(
+      context,
+      requiresCurrent: _hasPin ?? false,
+    );
+    if (!mounted || changed != true) return;
+    await _loadPinState();
+    if (!mounted) return;
+    context.showMessage(
+      message: (_hasPin ?? false) ? 'PIN is set'.tl : 'PIN cleared'.tl,
+    );
   }
 
   void _refresh() {
@@ -295,6 +317,15 @@ class _AuthorizationRequiredSettingState
                 appdata.settings,
               ).read(AppPreferences.authorizationRequired),
           onChanged: _change,
+        ),
+        ListTile(
+          title: Text('PIN Protection'.tl),
+          subtitle: Text(
+            _hasPin == null
+                ? ''
+                : (_hasPin! ? 'PIN is set'.tl : 'No PIN set'.tl),
+          ),
+          onTap: _managePin,
         ),
         settingsSaveStatus,
       ],
