@@ -85,9 +85,9 @@ dependencies:
   enough_convert: ^1.7.1
   display_mode: ^0.0.2
   flutter_staggered_grid_view: ^0.7.0
-  archive: ^4.2.0
-  image: ^4.9.2
-  pdfrx: ^2.4.7
+  archive: ^4.5.2
+  image: ^4.12.0
+  pdfrx: ^2.4.8
   xml: ^6.6.1
 
 dev_dependencies:
