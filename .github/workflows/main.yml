@@ -145,3 +145,41 @@ jobs:
         run: |
           curl -s "https://purge.jsdelivr.net/gh/CyrilPeng/venera-next@main/pubspec.yaml" | jq '.status'
           curl -s "https://purge.jsdelivr.net/gh/CyrilPeng/venera-next@main/CHANGELOG.md" | jq '.status'
+
+  # Rebuilds CHANGELOG.md from release-notes/ after a stable release.
+  # Stable-only: prerelease tags (vX.Y.Z-*) never touch the changelog.
+  Update_Changelog:
+    runs-on: ubuntu-24.04
+    needs: [Release]
+    if: ${{ needs.Release.result == 'success' && !contains(github.ref_name, '-') }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+      - name: Regenerate changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          export RELEASES_FILE="$RUNNER_TEMP/releases.tsv"
+          gh api --paginate "repos/$GITHUB_REPOSITORY/releases" \
+            --jq '.[] | select(.draft == false and .prerelease == false) | "\(.tag_name)\t\(.published_at)"' \
+            > "$RELEASES_FILE"
+          node .github/scripts/gen-changelog.mjs
+      - name: Commit if changed
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- CHANGELOG.md)" ]; then
+            echo "Changelog unchanged; nothing to commit"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog for ${{ github.ref_name }}"
+          git push origin HEAD:main
