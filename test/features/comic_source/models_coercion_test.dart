@@ -73,9 +73,10 @@ void main() {
   });
 
   group('ComicChapters.fromJson', () {
-    test('非 Map 输入返回空章节', () {
-      expect(ComicChapters.fromJson('nope').length, 0);
+    test('null 与标量返回空章节，回调这类非数据值算无效结果', () {
       expect(ComicChapters.fromJson(null).length, 0);
+      expect(ComicChapters.fromJson('nope').length, 0);
+      expect(() => ComicChapters.fromJson(() => 1), throwsArgumentError);
     });
 
     test('键与值类型不标准时按字符串归一', () {

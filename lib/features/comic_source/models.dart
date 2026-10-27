@@ -3,11 +3,24 @@ import 'package:venera_unified/foundation/history_contract.dart';
 
 import 'json_coercion.dart';
 
-List<dynamic>? _asList(dynamic value) => value is List ? value : null;
+bool _isScalar(dynamic value) =>
+    value is String || value is num || value is bool;
+
+List<dynamic>? _asList(dynamic value) {
+  if (value == null) return null;
+  if (value is List) return value;
+  // 数据库/脚本里偶尔把列表写成标量或对象，这种降级成空；回调函数之类则属于无效结果。
+  if (_isScalar(value) || value is Map) return null;
+  throw ArgumentError.value(value, 'value', '书源返回了无法转换的值');
+}
 
 Map<String, dynamic> _asMap(dynamic value) {
-  if (value is! Map) return const {};
-  return value.map((key, item) => MapEntry(coerceString(key), item));
+  if (value == null) return const {};
+  if (value is Map) {
+    return value.map((key, item) => MapEntry(coerceString(key), item));
+  }
+  if (_isScalar(value) || value is List) return const {};
+  throw ArgumentError.value(value, 'value', '书源返回了无法转换的值');
 }
 
 List<String>? _asStringListOrNull(dynamic value) =>
@@ -385,8 +398,13 @@ class ComicChapters {
 
   factory ComicChapters.fromJson(dynamic json) {
     // 书源的章节字段偶尔会给出非 Map（null / 列表 / 字符串），旧实现直接抛
-    // ArgumentError 会让整个详情页崩掉；这里退化成空章节，由上层决定怎么提示。
-    if (json is! Map) return ComicChapters(const {});
+    // 非 Map 的标量（如字符串）按空章节处理；回调函数这类根本不是数据的值继续抛，
+    // 由上层按「书源返回了无效结果」失败处理并释放引用。
+    if (json == null) return ComicChapters(const {});
+    if (json is! Map) {
+      if (_isScalar(json)) return ComicChapters(const {});
+      throw ArgumentError.value(json, 'json', '书源返回了无法转换的值');
+    }
     var chapters = <String, String>{};
     var groupedChapters = <String, Map<String, String>>{};
     for (var entry in json.entries) {
