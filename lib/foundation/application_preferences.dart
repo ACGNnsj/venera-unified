@@ -113,11 +113,20 @@ abstract final class AppearancePreferences {
   );
   // 夜览：整屏压低蓝通道，夜里看白色页面不刺眼。默认关闭。
   static const nightMode = BoolPreference('nightMode', false);
+  // 用户 UI 字号：与系统字号相乘后再钳制（见 text_scale.dart）。
+  static const uiFontScale = NumericPreference(
+    'uiFontScale',
+    1.0,
+    min: 0.85,
+    max: 1.30,
+    step: 0.05,
+  );
   static const all = <Preference<Object>>[
     themeMode,
     color,
     commentFontSize,
     nightMode,
+    uiFontScale,
   ];
 }
 

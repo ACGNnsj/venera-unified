@@ -39,7 +39,11 @@ class AppearanceConfiguration {
       ),
       color = AppearancePreferences.color.normalize(
         read(AppearancePreferences.color.key),
-      );
+      ),
+      uiFontScale = AppearancePreferences.uiFontScale
+          .normalize(read(AppearancePreferences.uiFontScale.key))
+          .toDouble();
   final String themeMode;
   final String color;
+  final double uiFontScale;
 }

@@ -46,6 +46,7 @@ import 'foundation/app.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 import 'foundation/app_locale.dart';
 import 'foundation/appdata.dart';
+import 'foundation/text_scale.dart';
 import 'foundation/context.dart';
 import 'foundation/js_engine.dart';
 import 'features/webdav_library/webdav_library.dart';
@@ -469,6 +470,25 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   data: MediaQuery.of(context).copyWith(
                     viewPadding: const EdgeInsets.only(top: 15, bottom: 15),
                     padding: const EdgeInsets.only(top: 15, bottom: 15),
+                  ),
+                  child: widget,
+                );
+              }
+
+              /// Compose the user UI font scale with the system text scale and
+              /// cap the product, so a large system font size combined with the
+              /// max app slider cannot push text past what the fixed-height
+              /// chrome (app bars, menus, rails) is laid out for.
+              final mediaQuery = MediaQuery.of(context);
+              final systemScale = mediaQuery.textScaler.scale(1.0);
+              final userScale = GlobalPreferenceStore(
+                appdata.settings,
+              ).appearance.uiFontScale;
+              final effectiveScale = effectiveTextScale(systemScale, userScale);
+              if (systemScale != effectiveScale) {
+                widget = MediaQuery(
+                  data: mediaQuery.copyWith(
+                    textScaler: TextScaler.linear(effectiveScale),
                   ),
                   child: widget,
                 );

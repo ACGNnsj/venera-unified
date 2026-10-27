@@ -33,6 +33,14 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
             appNavigation.forceRebuild();
           },
         ).toSliver(),
+        SliderSetting.preference(
+          title: "UI font scale".tl,
+          preference: AppearancePreferences.uiFontScale,
+          valueFormatter: (value) => '${(value * 100).round()}%',
+          onChanged: () {
+            appNavigation.forceRebuild();
+          },
+        ).toSliver(),
         SelectSetting.preference(
           title: "Theme Color".tl,
           preference: AppearancePreferences.color,
