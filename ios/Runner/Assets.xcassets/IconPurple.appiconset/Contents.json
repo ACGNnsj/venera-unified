@@ -1,0 +1,116 @@
+{
+  "images": [
+    {
+      "filename": "IconPurple@2x.png",
+      "idiom": "iphone",
+      "scale": "2x",
+      "size": "60x60"
+    },
+    {
+      "filename": "IconPurple@3x.png",
+      "idiom": "iphone",
+      "scale": "3x",
+      "size": "60x60"
+    },
+    {
+      "filename": "IconPurple~ipad.png",
+      "idiom": "ipad",
+      "scale": "1x",
+      "size": "76x76"
+    },
+    {
+      "filename": "IconPurple@2x~ipad.png",
+      "idiom": "ipad",
+      "scale": "2x",
+      "size": "76x76"
+    },
+    {
+      "filename": "IconPurple-83.5@2x~ipad.png",
+      "idiom": "ipad",
+      "scale": "2x",
+      "size": "83.5x83.5"
+    },
+    {
+      "filename": "IconPurple-40@2x.png",
+      "idiom": "iphone",
+      "scale": "2x",
+      "size": "40x40"
+    },
+    {
+      "filename": "IconPurple-40@3x.png",
+      "idiom": "iphone",
+      "scale": "3x",
+      "size": "40x40"
+    },
+    {
+      "filename": "IconPurple-40~ipad.png",
+      "idiom": "ipad",
+      "scale": "1x",
+      "size": "40x40"
+    },
+    {
+      "filename": "IconPurple-40@2x~ipad.png",
+      "idiom": "ipad",
+      "scale": "2x",
+      "size": "40x40"
+    },
+    {
+      "filename": "IconPurple-20@2x.png",
+      "idiom": "iphone",
+      "scale": "2x",
+      "size": "20x20"
+    },
+    {
+      "filename": "IconPurple-20@3x.png",
+      "idiom": "iphone",
+      "scale": "3x",
+      "size": "20x20"
+    },
+    {
+      "filename": "IconPurple-20~ipad.png",
+      "idiom": "ipad",
+      "scale": "1x",
+      "size": "20x20"
+    },
+    {
+      "filename": "IconPurple-20@2x~ipad.png",
+      "idiom": "ipad",
+      "scale": "2x",
+      "size": "20x20"
+    },
+    {
+      "filename": "IconPurple-29.png",
+      "idiom": "iphone",
+      "scale": "1x",
+      "size": "29x29"
+    },
+    {
+      "filename": "IconPurple-29@2x.png",
+      "idiom": "iphone",
+      "scale": "2x",
+      "size": "29x29"
+    },
+    {
+      "filename": "IconPurple-29@3x.png",
+      "idiom": "iphone",
+      "scale": "3x",
+      "size": "29x29"
+    },
+    {
+      "filename": "IconPurple-29~ipad.png",
+      "idiom": "ipad",
+      "scale": "1x",
+      "size": "29x29"
+    },
+    {
+      "filename": "IconPurple-29@2x~ipad.png",
+      "idiom": "ipad",
+      "scale": "2x",
+      "size": "29x29"
+    }
+  ],
+  "info": {
+    "author": "iconkitchen",
+    "version": 1
+  }
+}

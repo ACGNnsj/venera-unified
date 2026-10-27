@@ -639,6 +639,9 @@ class Settings with ChangeNotifier implements ReaderPreferenceSettings {
     'comicSpecificSettings': <String, Map<String, dynamic>>{},
     'deviceSpecificSettings': <String, Map<String, dynamic>>{},
     'deviceId': '',
+    // Launcher icon preset id (see LauncherIconPreset): the alias enabled on
+    // this device's system must not propagate to another device.
+    'appLauncherIcon': 'default',
   };
 
   /// Legacy heterogeneous settings bridge; typed consumers use preference snapshots.

@@ -1,4 +1,5 @@
 import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/launcher_icon.dart';
 import 'package:venera_unified/foundation/translations.dart';
 
 /// Searchable index of unified settings (A12, mirrors VeneraX #10 behaviour).
@@ -328,6 +329,12 @@ final settingsSearchIndex = <SettingsSearchEntry>[
     5,
     keywords: const ['hotkey', 'shortcut', 'window'],
     visible: () => App.isWindows,
+  ),
+  SettingsSearchEntry(
+    'App Icon',
+    5,
+    keywords: const ['icon', 'launcher', 'logo'],
+    visible: () => LauncherIconService.isSupported,
   ),
 
   // --- 6: Network (network.dart) ---

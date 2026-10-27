@@ -10,6 +10,7 @@ import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/launcher_icon.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/tray.dart';
 import 'package:window_manager/window_manager.dart';
@@ -149,6 +150,7 @@ class _TrayBindingState extends State<_TrayBinding> {
   WindowFrameController? _frame;
   bool _guarded = false;
   int _syncGeneration = 0;
+  bool _launcherIconApplied = false;
 
   bool _wantsTray() =>
       App.isWindows &&
@@ -171,6 +173,12 @@ class _TrayBindingState extends State<_TrayBinding> {
       _frame = WindowFrame.of(context);
     }
     _sync();
+    // Re-apply the stored launcher icon to the live window once it is ready.
+    // No-op off Windows; guarded because dependencies can change repeatedly.
+    if (!_launcherIconApplied) {
+      _launcherIconApplied = true;
+      unawaited(LauncherIconService.applyForStartup());
+    }
   }
 
   @override

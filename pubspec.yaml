@@ -114,6 +114,16 @@ flutter:
     - assets/tags_tw.json
     - assets/opencc.txt
     - assets/opencc/
+    - assets/launcher_icon_default.png
+    - assets/launcher_icon_purple.png
+    - assets/launcher_icon_green.png
+    - assets/launcher_icon_orange.png
+    - assets/launcher_icon_silver.png
+    - assets/launcher_icon_default.ico
+    - assets/launcher_icon_purple.ico
+    - assets/launcher_icon_green.ico
+    - assets/launcher_icon_orange.ico
+    - assets/launcher_icon_silver.ico
 # fonts:
 
 # Metadata consumed by .github/scripts/build_arch_package.py (no Dart package required).

@@ -10,6 +10,7 @@ import 'package:venera_unified/components/pop_up_widget.dart';
 import 'package:venera_unified/components/scroll.dart';
 import 'package:venera_unified/components/window_hotkey_scope.dart';
 import 'package:venera_unified/features/settings/window_hotkey_setting.dart';
+import 'package:venera_unified/features/settings/launcher_icon_settings.dart';
 import 'package:venera_unified/features/settings/setting_components.dart';
 import 'package:venera_unified/features/settings/app_controls.dart';
 import 'package:venera_unified/features/settings/local_storage_settings.dart';
@@ -26,6 +27,7 @@ import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/cache_manager.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/file_interaction.dart';
+import 'package:venera_unified/foundation/launcher_icon.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
 
@@ -185,6 +187,20 @@ class _AppSettingsState extends State<AppSettings> {
             preference: AppPreferences.minimizeToTray,
           ).toSliver(),
         ],
+        if (LauncherIconService.isSupported)
+          ListTile(
+            title: Text("App Icon".tl),
+            subtitle: Text(
+              LauncherIconService.isWindowIconOnly
+                  ? "Choose the window and taskbar icon".tl
+                  : "Choose the home screen icon".tl,
+            ),
+            leading: const Icon(Icons.apps_outlined),
+            trailing: const Icon(Icons.arrow_right),
+            onTap: () {
+              context.to(() => const LauncherIconSettings());
+            },
+          ).toSliver(),
       ],
     );
   }
