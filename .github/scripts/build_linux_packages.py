@@ -55,7 +55,7 @@ def validate_bundle(bundle, arch):
 def desktop_file(exec_path):
     return f"""[Desktop Entry]
 Type=Application
-Name=VeneraUnified
+Name=Venera Unified
 Comment=Comic reader
 Exec={exec_path} %U
 Icon=venera-unified

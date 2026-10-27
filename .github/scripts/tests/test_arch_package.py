@@ -20,7 +20,7 @@ class ArchPackageTest(unittest.TestCase):
             bundle = root / "bundle"
             (bundle / "lib").mkdir(parents=True)
             (bundle / "data").mkdir()
-            (bundle / "venera-next").write_bytes(b"executable")
+            (bundle / "venera-unified").write_bytes(b"executable")
             (bundle / "lib/libflutter_linux_gtk.so").write_bytes(b"runtime")
             (bundle / "data/icudtl.dat").write_bytes(b"data")
             with patch.multiple(
@@ -35,17 +35,17 @@ class ArchPackageTest(unittest.TestCase):
                 arch.main()
 
             with tarfile.open(root / "arch/app.tar.gz") as archive:
-                self.assertEqual(archive.extractfile("app/venera-next").read(), b"executable")
+                self.assertEqual(archive.extractfile("app/venera-unified").read(), b"executable")
                 self.assertEqual(archive.extractfile("app/data/icudtl.dat").read(), b"data")
                 desktop = archive.extractfile("app/app.desktop").read().decode()
-                self.assertIn("Exec=/usr/bin/venera-next_pkg/venera-next", desktop)
+                self.assertIn("Exec=/usr/bin/venera-unified_pkg/venera-unified", desktop)
                 self.assertIn("app/icon.png", archive.getnames())
             pkgbuild = (root / "arch/PKGBUILD").read_text(encoding="utf-8")
             self.assertIn("depends=('gtk3' 'webkit2gtk-4.1')", pkgbuild)
-            self.assertIn("pkgname=venera-next", pkgbuild)
+            self.assertIn("pkgname=venera-unified", pkgbuild)
             self.assertTrue((root / "arch/Dockerfile").is_file())
             self.assertFalse((root / "app").exists())
-            self.assertTrue((bundle / "venera-next").is_file())
+            self.assertTrue((bundle / "venera-unified").is_file())
 
 
 if __name__ == "__main__":

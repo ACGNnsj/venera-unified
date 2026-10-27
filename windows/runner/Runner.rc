@@ -93,7 +93,7 @@ BEGIN
             VALUE "FileDescription", "Venera Unified" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "Venera Unified" "\0"
-            VALUE "LegalCopyright", "© 2026 github.com/CyrilPeng/venera-next" "\0"
+            VALUE "LegalCopyright", "© 2026 github.com/ACGNnsj/venera-unified" "\0"
             VALUE "OriginalFilename", "VeneraUnified.exe" "\0"
             VALUE "ProductName", "Venera Unified" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

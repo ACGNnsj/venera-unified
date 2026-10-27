@@ -20,7 +20,7 @@ class DebianPackageTest(unittest.TestCase):
         header = bytearray(20)
         header[:6] = b"\x7fELF\x02\x01"
         header[18:20] = (62 if arch == "x64" else 183).to_bytes(2, "little")
-        (bundle / "venera-next").write_bytes(header)
+        (bundle / "venera-unified").write_bytes(header)
         (bundle / "lib/libflutter_linux_gtk.so").write_bytes(b"fixture")
         (bundle / "data/icudtl.dat").write_bytes(b"fixture")
         return bundle
@@ -36,13 +36,13 @@ class DebianPackageTest(unittest.TestCase):
                 self.assertIn("Version: 1.16.0~rc.1\n", control)
                 self.assertIn("Depends: libwebkit2gtk-4.1-0, libgtk-3-0\n", control)
                 self.assertTrue((stage / debian.INSTALL_PATH / "LICENSE").is_file())
-                self.assertIn(f"Exec=/{debian.INSTALL_PATH}/venera-next %U",
-                              (stage / "usr/share/applications/venera-next.desktop").read_text())
+                self.assertIn(f"Exec=/{debian.INSTALL_PATH}/venera-unified %U",
+                              (stage / "usr/share/applications/venera-unified.desktop").read_text())
 
     def test_build_failure_preserves_previous_artifact(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            artifact = root / "venera-next_1.16.0_amd64.deb"
+            artifact = root / "venera-unified_1.16.0_amd64.deb"
             artifact.write_bytes(b"previous")
             with patch.object(debian.subprocess, "run", side_effect=subprocess.CalledProcessError(1, "dpkg-deb")):
                 with self.assertRaises(subprocess.CalledProcessError):

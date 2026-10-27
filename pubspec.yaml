@@ -113,11 +113,11 @@ flutter:
 
 # Metadata consumed by .github/scripts/build_arch_package.py (no Dart package required).
 flutter_to_arch:
-  name: venera-next
-  icon: debian/gui/venera-next.png
+  name: venera-unified
+  icon: debian/gui/venera-unified.png
   categories: Utility
   keywords: Flutter;comic;images;
-  url: https://github.com/CyrilPeng/venera-next
+  url: https://github.com/ACGNnsj/venera-unified
   depends:
     - gtk3
     - webkit2gtk-4.1

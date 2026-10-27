@@ -18,7 +18,7 @@ class LinuxPackagesTest(unittest.TestCase):
         header = bytearray(20)
         header[:6] = b"\x7fELF\x02\x01"
         header[18:20] = machine.to_bytes(2, "little")
-        (bundle / "venera-next").write_bytes(header)
+        (bundle / "venera-unified").write_bytes(header)
         (bundle / "lib/libflutter_linux_gtk.so").write_bytes(b"flutter")
         (bundle / "data/icudtl.dat").write_bytes(b"icu")
         (bundle / "data/flutter_assets/test.txt").write_text("asset")
@@ -40,12 +40,12 @@ class LinuxPackagesTest(unittest.TestCase):
             bundle = self.make_bundle(root, 183)
             appdir = root / "app with spaces.AppDir"
             packages.stage_appdir(bundle, appdir)
-            packages.validate_bundle(appdir / "usr/lib/venera-next", "arm64")
-            self.assertEqual((appdir / "usr/lib/venera-next/data/flutter_assets/test.txt").read_text(), "asset")
-            self.assertTrue((appdir / "usr/lib/venera-next/LICENSE").is_file())
+            packages.validate_bundle(appdir / "usr/lib/venera-unified", "arm64")
+            self.assertEqual((appdir / "usr/lib/venera-unified/data/flutter_assets/test.txt").read_text(), "asset")
+            self.assertTrue((appdir / "usr/lib/venera-unified/LICENSE").is_file())
             self.assertNotIn(b"\r", (appdir / "AppRun").read_bytes())
             self.assertIn('"$@"', (appdir / "AppRun").read_text())
-            self.assertIn("Exec=AppRun %U", (appdir / "venera-next.desktop").read_text())
+            self.assertIn("Exec=AppRun %U", (appdir / "venera-unified.desktop").read_text())
 
     def test_versions_preserve_build_and_prerelease_order(self):
         self.assertEqual(packages.versions("1.16.0+225"), ("1.16.0", "225"))

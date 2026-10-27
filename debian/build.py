@@ -1,4 +1,4 @@
-"""Build and package VeneraNext with the system dpkg-deb tool."""
+"""Build and package Venera Unified with the system dpkg-deb tool."""
 
 import argparse
 from pathlib import Path
@@ -14,7 +14,7 @@ from build_linux_packages import desktop_file, stage_bundle, validate_bundle, ve
 
 DEBIAN_ARCHES = {"x64": "amd64", "arm64": "arm64"}
 # Preserve the existing DEB installation directory across upgrades.
-INSTALL_PATH = "usr/local/lib/venera-next"
+INSTALL_PATH = "usr/local/lib/venera-unified"
 
 
 def stage_package(bundle, stage, arch, version):
@@ -24,29 +24,29 @@ def stage_package(bundle, stage, arch, version):
     control = stage / "DEBIAN"
     control.mkdir()
     (control / "control").write_text(
-        "Package: venera-next\n"
+        "Package: venera-unified\n"
         f"Version: {deb_version}\n"
         f"Architecture: {DEBIAN_ARCHES[arch]}\n"
         "Section: graphics\nPriority: optional\n"
         "Depends: libwebkit2gtk-4.1-0, libgtk-3-0\n"
-        "Maintainer: CyrilPeng <https://github.com/CyrilPeng/venera-next>\n"
-        "Description: VeneraNext comic reader\n",
+        "Maintainer: CyrilPeng <https://github.com/ACGNnsj/venera-unified>\n"
+        "Description: Venera Unified comic reader\n",
         encoding="utf-8",
     )
     applications = stage / "usr/share/applications"
     applications.mkdir(parents=True)
-    (applications / "venera-next.desktop").write_text(
-        desktop_file(f"/{INSTALL_PATH}/venera-next"), encoding="utf-8"
+    (applications / "venera-unified.desktop").write_text(
+        desktop_file(f"/{INSTALL_PATH}/venera-unified"), encoding="utf-8"
     )
     icons = stage / "usr/share/icons/hicolor/256x256/apps"
     icons.mkdir(parents=True)
-    shutil.copyfile(ROOT / "debian/gui/venera-next.png", icons / "venera-next.png")
+    shutil.copyfile(ROOT / "debian/gui/venera-unified.png", icons / "venera-unified.png")
 
 
 def package_bundle(bundle, output, arch, version):
     deb_version, _ = versions(version)
     output.mkdir(parents=True, exist_ok=True)
-    package = output / f"venera-next_{deb_version}_{DEBIAN_ARCHES[arch]}.deb"
+    package = output / f"venera-unified_{deb_version}_{DEBIAN_ARCHES[arch]}.deb"
     with tempfile.TemporaryDirectory(prefix="venera-deb-") as temp:
         stage = Path(temp) / "package"
         stage_package(bundle, stage, arch, version)

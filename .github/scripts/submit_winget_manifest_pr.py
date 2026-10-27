@@ -132,7 +132,7 @@ def create_pr(
             "base": base_branch,
             "body": (
                 f"- Adds ACGNnsj.VeneraUnified {version}\n"
-                "- Generated from the venera-next release workflow artifact.\n"
+                "- Generated from the venera-unified release workflow artifact.\n"
             ),
         },
     )
