@@ -9,6 +9,7 @@ import 'package:venera_unified/app_runtime/core_bootstrap.dart';
 import 'package:venera_unified/app_runtime/application_host.dart';
 import 'package:venera_unified/app_runtime/application_updates.dart';
 import 'package:venera_unified/components/application_update_prompt.dart';
+import 'package:venera_unified/components/night_mode_overlay.dart';
 import 'package:venera_unified/app_runtime/image_loading.dart';
 import 'package:venera_unified/app_runtime/follow_updates.dart';
 import 'package:venera_unified/app_runtime/webdav_library.dart';
@@ -550,7 +551,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               return _SystemUiProvider(
                 Material(
                   color: App.isLinux ? Colors.transparent : null,
-                  child: widget,
+                  child: NightModeOverlay(child: widget),
                 ),
               );
             }

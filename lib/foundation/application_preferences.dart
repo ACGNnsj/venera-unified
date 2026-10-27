@@ -102,7 +102,14 @@ abstract final class AppearancePreferences {
     step: 1,
     integer: true,
   );
-  static const all = <Preference<Object>>[themeMode, color, commentFontSize];
+  // 夜览：整屏压低蓝通道，夜里看白色页面不刺眼。默认关闭。
+  static const nightMode = BoolPreference('nightMode', false);
+  static const all = <Preference<Object>>[
+    themeMode,
+    color,
+    commentFontSize,
+    nightMode,
+  ];
 }
 
 abstract final class DiscoveryPreferences {

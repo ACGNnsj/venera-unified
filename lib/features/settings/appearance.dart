@@ -58,6 +58,14 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
             setState(() {});
           },
         ).toSliver(),
+        SwitchSetting.preference(
+          title: "Night Mode".tl,
+          preference: AppearancePreferences.nightMode,
+          subtitle: "Cuts blue light for reading in the dark".tl,
+          onChanged: () {
+            setState(() {});
+          },
+        ).toSliver(),
       ],
     );
   }
