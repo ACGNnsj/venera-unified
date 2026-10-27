@@ -8,6 +8,7 @@ import 'package:venera_unified/features/settings/setting_components.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/auth_storage.dart';
+import 'package:venera_unified/foundation/cache_maintenance_service.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/log.dart';
@@ -202,6 +203,47 @@ class _CacheLimitDialogState extends SettingsSaveState<_CacheLimitDialog> {
     _controller.dispose();
     super.dispose();
   }
+}
+
+class CacheRetentionSetting extends StatelessWidget {
+  const CacheRetentionSetting({super.key});
+
+  String _label(int days) => days == 0
+      ? 'Never'.tl
+      : days == 1
+      ? '1 day'.tl
+      : '@days days'.tlParams({'days': days});
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: appdata.settings,
+    builder: (context, _) {
+      final days = normalizeCacheRetentionDays(
+        GlobalPreferenceStore(
+          appdata.settings,
+        ).read(AppPreferences.cacheRetentionDays),
+      );
+      return ListTile(
+        title: Text('Keep unused cache'.tl),
+        subtitle: Text('Remove cached images after this many days without use.'.tl),
+        trailing: DropdownButton<int>(
+          value: days,
+          items: [
+            for (final option in allowedCacheRetentionDays)
+              DropdownMenuItem(value: option, child: Text(_label(option))),
+          ],
+          onChanged: (value) {
+            if (value == null) return;
+            appdata.updateSettings((draft) {
+              GlobalPreferenceStore(
+                draft,
+              ).write(AppPreferences.cacheRetentionDays, value);
+            });
+          },
+        ),
+      );
+    },
+  );
 }
 
 Future<bool> _supportsAuthorization() async {

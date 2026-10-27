@@ -31,6 +31,8 @@ class CacheManager {
   int get currentSize => _currentSize;
   int _directoryIndex = 0;
   int _limitSize = 2 * 1024 * 1024 * 1024;
+  int _retentionDays = 7;
+  int get retentionDays => _retentionDays;
 
   Future<T> _enqueue<T>(Future<T> Function() operation) {
     if (_closing) return Future.error(StateError('CacheManager is closing'));
@@ -114,12 +116,20 @@ class CacheManager {
     _limitSize = size * 1024 * 1024;
   }
 
+  /// Days an unread entry survives before age eviction. Zero keeps entries
+  /// until the size limit evicts them; negative values are rejected.
+  void setRetentionDays(int days) {
+    if (_closing) throw StateError('CacheManager is closing');
+    if (days < 0) throw ArgumentError.value(days, 'days', 'must be >= 0');
+    _retentionDays = days;
+  }
+
+  int get _retentionDurationMs => _retentionDays <= 0
+      ? const Duration(days: 36500).inMilliseconds
+      : Duration(days: _retentionDays).inMilliseconds;
+
   /// Write cache to disk.
-  Future<void> writeCache(
-    String key,
-    List<int> data, [
-    int duration = 7 * 24 * 60 * 60 * 1000,
-  ]) {
+  Future<void> writeCache(String key, List<int> data, [int? duration]) {
     final bytes = List<int>.of(data);
     return _enqueue(() => _writeCache(key, bytes, duration));
   }
@@ -127,7 +137,7 @@ class CacheManager {
   Future<void> _writeCache(
     String key,
     List<int> data, [
-    int duration = 7 * 24 * 60 * 60 * 1000,
+    int? duration,
   ]) async {
     await _delete(key);
     _directoryIndex = (_directoryIndex + 1) % 100;
@@ -136,7 +146,9 @@ class CacheManager {
     var file = File('$_cachePath/$dir/$name');
     await file.create(recursive: true);
     await file.writeAsBytes(data);
-    var expires = DateTime.now().millisecondsSinceEpoch + duration;
+    var expires =
+        DateTime.now().millisecondsSinceEpoch +
+        (duration ?? _retentionDurationMs);
     _db.execute(
       '''
       INSERT OR REPLACE INTO cache (key, dir, name, expires) VALUES (?, ?, ?, ?)
@@ -186,7 +198,7 @@ class CacheManager {
     }
     if (await file.exists()) {
       // update time
-      var expires = now + 7 * 24 * 60 * 60 * 1000;
+      var expires = now + _retentionDurationMs;
       _db.execute(
         '''
         UPDATE cache

@@ -28,6 +28,14 @@ abstract final class AppPreferences {
     step: 1,
     integer: true,
   );
+  // Days of image-cache age before eviction. Zero keeps entries until the
+  // size limit evicts them. Only the service's fixed allowlist is offered.
+  static const cacheRetentionDays = RoundedIntPreference(
+    'cacheRetentionDays',
+    7,
+    min: 0,
+    max: 30,
+  );
   static const authorizationRequired = BoolPreference(
     'authorizationRequired',
     false,
@@ -41,6 +49,7 @@ abstract final class AppPreferences {
     checkUpdateOnStart,
     historyRetentionDays,
     cacheSize,
+    cacheRetentionDays,
     authorizationRequired,
     reverseChapterOrder,
   ];

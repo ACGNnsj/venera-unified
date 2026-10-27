@@ -15,6 +15,7 @@ import 'package:venera_unified/features/sync/app_data_import_journal.dart';
 import 'package:venera_unified/features/sync/data_sync_ownership.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/cache_maintenance_service.dart';
 import 'package:venera_unified/foundation/cache_manager.dart';
 import 'package:venera_unified/foundation/js_engine.dart';
 import 'package:venera_unified/foundation/log.dart';
@@ -222,6 +223,12 @@ CoreBootstrap createCoreBootstrap({
       registerProducer('cache', cache.dispose);
       final cacheSettings = CacheSettingsBinding(appdata.settings, cache);
       registerProducer('cache settings', cacheSettings.dispose);
+      final cacheMaintenance = CacheMaintenanceService.forCache(
+        settings: appdata.settings,
+        cache: cache,
+      );
+      cacheMaintenance.start();
+      registerProducer('cache maintenance', cacheMaintenance.stop);
       // The cache owns and drains this scan; UI startup need not await it.
       unawaited(cache.start());
     },
