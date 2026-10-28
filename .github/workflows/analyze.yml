@@ -176,7 +176,7 @@ jobs:
 
   flutter-tests:
     name: Flutter 测试与覆盖率
-    needs: rhttp-native
+    needs: [rhttp-native, analyze]
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
