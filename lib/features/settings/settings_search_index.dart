@@ -274,6 +274,11 @@ final settingsSearchIndex = <SettingsSearchEntry>[
     3,
     keywords: ['simplified', 'traditional', 'chinese'],
   ),
+  const SettingsSearchEntry(
+    'Home Page Layout',
+    3,
+    keywords: ['home', 'layout', 'reorder', 'sections'],
+  ),
 
   // --- 4: Local Favorites (local_favorites.dart) ---
   const SettingsSearchEntry('Show local favorites before network favorites', 4),

@@ -2,8 +2,10 @@ import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:venera_unified/components/appbar.dart';
 import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/features/settings/home_layout.dart';
 import 'package:venera_unified/features/settings/setting_components.dart';
 import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
@@ -81,6 +83,15 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
               "Display comic titles and chapters in simplified Chinese".tl,
           onChanged: () {
             appNavigation.forceRebuild();
+          },
+        ).toSliver(),
+        ListTile(
+          title: Text("Home Page Layout".tl),
+          subtitle: Text("Long press and drag to reorder.".tl),
+          leading: const Icon(Icons.dashboard_outlined),
+          trailing: const Icon(Icons.arrow_right),
+          onTap: () {
+            context.to(() => const HomeLayoutSettings());
           },
         ).toSliver(),
       ],
