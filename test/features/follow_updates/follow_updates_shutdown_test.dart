@@ -359,6 +359,7 @@ class _Favorites extends Fake implements LocalFavoritesManager {
     String folder,
     FavoriteItem comic,
     String? updateTime, {
+    int? chapterCount,
     required int generation,
     required void Function() checkActive,
   }) async {
