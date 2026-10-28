@@ -26,8 +26,12 @@ void main() {
     appdata.settings[ComicCollectionStore.settingsKey] = originalCollections;
     appdata.settings[ComicCollectionStore.detailDisplayModeSettingsKey] =
         originalDetailMode;
-    // Store writes are fire-and-forget; let them land before removing the dir.
-    await Future<void>.delayed(const Duration(milliseconds: 50));
+    // Store writes are fire-and-forget; drain the appdata write queue before
+    // removing the dir. A fixed sleep races the queue under CI load: a write
+    // landing after deletion throws PathNotFoundException and fails the
+    // already-completed test. saveData chains behind all pending writes, so
+    // awaiting it drains them deterministically.
+    await appdata.saveData(false);
     if (dataDir.existsSync()) {
       dataDir.deleteSync(recursive: true);
     }
