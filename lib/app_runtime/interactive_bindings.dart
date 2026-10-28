@@ -15,6 +15,8 @@ class InteractiveBindings {
     this.closeHeartbeat,
     this.startDownloads,
     this.closeDownloads,
+    this.startClipboardLinks,
+    this.closeClipboardLinks,
     this.placement,
     this.windowHotkey,
     this.onError = _logError,
@@ -28,6 +30,8 @@ class InteractiveBindings {
   final Future<void> Function()? closeHeartbeat;
   final void Function()? startDownloads;
   final Future<void> Function()? closeDownloads;
+  final void Function()? startClipboardLinks;
+  final Future<void> Function()? closeClipboardLinks;
   final WindowPlacementTracker? placement;
   final WindowHotkeyController? windowHotkey;
   final void Function(Object error, StackTrace stack) onError;
@@ -65,6 +69,7 @@ class InteractiveBindings {
       placement?.start();
       if (android) {
         startDownloads?.call();
+        startClipboardLinks?.call();
         _links = links();
         _links!.start();
         _shares = shares();
@@ -208,6 +213,8 @@ class InteractiveBindings {
       if (placement != null) close('window placement', placement!.dispose),
       if (windowHotkey != null) close('window hotkey', windowHotkey!.close),
       if (closeDownloads != null) close('downloads', closeDownloads!),
+      if (closeClipboardLinks != null)
+        close('clipboard links', closeClipboardLinks!),
       // Its timer has stopped. Release the native watchdog after its own calls
       // drain, so a slow file write cannot leave an un-fed watchdog timing out.
       closeWatchdog(),

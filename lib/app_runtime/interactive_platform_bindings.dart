@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/features/local_comics/local.dart';
 import 'package:venera_unified/foundation/window_placement_tracker.dart';
 import 'package:venera_unified/foundation/window_hotkey_controller.dart';
 import 'package:venera_unified/routing/app_links.dart';
+import 'package:venera_unified/routing/clipboard_app_link.dart';
 import 'package:venera_unified/routing/handle_text_share.dart';
 
 import 'interactive_bindings.dart';
@@ -19,6 +22,9 @@ InteractiveBindings createPlatformInteractiveBindings({
   final downloads = App.isAndroid && local != null
       ? AndroidDownloads(manager: local)
       : null;
+  final clipboardLinks = App.isAndroid
+      ? const ClipboardAppLinkObserver()
+      : null;
   return InteractiveBindings(
     android: App.isAndroid,
     windows: App.isWindows,
@@ -30,5 +36,16 @@ InteractiveBindings createPlatformInteractiveBindings({
     windowHotkey: windowHotkey,
     startDownloads: downloads?.start,
     closeDownloads: downloads?.close,
+    startClipboardLinks: clipboardLinks == null
+        ? null
+        : () {
+            clipboardLinks.attach();
+            unawaited(checkClipboardForAppLink());
+          },
+    closeClipboardLinks: clipboardLinks == null
+        ? null
+        : () async {
+            clipboardLinks.detach();
+          },
   );
 }
