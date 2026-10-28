@@ -123,12 +123,18 @@ abstract final class AppearancePreferences {
     max: 1.30,
     step: 0.05,
   );
+  // 繁简显示：打开后把漫画标题/简介/章节名里的繁体转简体显示。默认关闭。
+  static const convertTraditionalToSimplified = BoolPreference(
+    'convertTraditionalToSimplified',
+    false,
+  );
   static const all = <Preference<Object>>[
     themeMode,
     color,
     commentFontSize,
     nightMode,
     uiFontScale,
+    convertTraditionalToSimplified,
   ];
 }
 

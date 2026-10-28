@@ -30,6 +30,7 @@ import 'package:venera_unified/foundation/app_locale.dart';
 import 'package:venera_unified/features/comic_source/comic_source.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
 import 'package:venera_unified/foundation/consts.dart';
+import 'package:venera_unified/foundation/opencc.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/features/history/history.dart';
 import 'package:venera_unified/foundation/image_provider/cached_image.dart';
@@ -366,7 +367,7 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
       title: AnimatedOpacity(
         opacity: showAppbarTitle ? 1.0 : 0.0,
         duration: const Duration(milliseconds: 200),
-        child: Text(comic.title),
+        child: Text(comic.title.displayText),
       ),
       actions: [
         if (_collectionId != null)
@@ -438,10 +439,10 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SelectableText(comic.title, style: ts.s18),
+                SelectableText(comic.title.displayText, style: ts.s18),
                 if (comic.subTitle != null)
                   SelectableText(
-                    comic.subTitle!,
+                    comic.subTitle!.displayText,
                     style: ts.s14,
                   ).paddingVertical(4),
                 Text(
@@ -620,7 +621,12 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
       chapterProgress = "Chapter @ep".tlParams({"ep": currentHistory.ep});
     }
 
-    final parts = [chapterProgress, ?groupName, chapterTitle, "P$page"];
+    final parts = [
+      chapterProgress,
+      ?groupName?.displayText,
+      chapterTitle.displayText,
+      "P$page",
+    ];
     return "${"Last Reading".tl}: ${parts.join(" - ")}";
   }
 
@@ -634,7 +640,9 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
           ListTile(title: Text("Description".tl)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SelectableText(comic.description!).fixWidth(double.infinity),
+            child: SelectableText(
+              comic.description!.displayText,
+            ).fixWidth(double.infinity),
           ),
           const SizedBox(height: 16),
           const Divider(),
@@ -964,7 +972,7 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
     context.to(
       () => ComicCoverViewer(
         imageProvider: imageProvider,
-        title: comic.title,
+        title: comic.title.displayText,
         heroTag: "cover${widget.heroID}",
       ),
     );
@@ -1094,7 +1102,7 @@ class _ComicPageLoadingPlaceHolder extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (title != null)
-                      Text(title ?? "", style: ts.s18)
+                      Text((title ?? "").displayText, style: ts.s18)
                     else
                       buildContainer(200, 25),
                     const SizedBox(height: 8),

@@ -74,6 +74,15 @@ class _AppearanceSettingsState extends State<AppearanceSettings> {
             setState(() {});
           },
         ).toSliver(),
+        SwitchSetting.preference(
+          title: "Convert traditional to simplified".tl,
+          preference: AppearancePreferences.convertTraditionalToSimplified,
+          subtitle:
+              "Display comic titles and chapters in simplified Chinese".tl,
+          onChanged: () {
+            appNavigation.forceRebuild();
+          },
+        ).toSliver(),
       ],
     );
   }

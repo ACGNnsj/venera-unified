@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'appdata.dart';
+import 'application_preferences.dart';
 import 'opencc_table.dart';
 
 abstract class OpenCC {
@@ -51,4 +53,22 @@ abstract class OpenCC {
       _ready.toTraditional(text);
   static String traditionalToSimplified(String text) =>
       _ready.toSimplified(text);
+
+  /// Display-layer conversion (prime #6): returns the simplified form when the
+  /// appearance switch is on, otherwise the input unchanged. The switch is
+  /// checked before touching the table so builds with the switch off never
+  /// require initialization.
+  static String displayText(String text) {
+    if (appdata.settings[AppearancePreferences
+            .convertTraditionalToSimplified
+            .key] !=
+        true) {
+      return text;
+    }
+    return traditionalToSimplified(text);
+  }
+}
+
+extension OpenCCDisplayText on String {
+  String get displayText => OpenCC.displayText(this);
 }

@@ -3,6 +3,7 @@ import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/keyword_settings_store.dart';
 import 'package:venera_unified/foundation/navigation_admission.dart';
+import 'package:venera_unified/foundation/opencc.dart';
 import 'package:venera_unified/components/settings_save_state.dart';
 
 import 'package:flutter/material.dart';
@@ -699,7 +700,7 @@ class ComicTile extends StatelessWidget {
                                 maxWidth: constraints.maxWidth,
                               ),
                               child: Text(
-                                line,
+                                line.displayText,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w500,
                                   fontSize: fortSize,
@@ -747,7 +748,7 @@ class ComicTile extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
                 child: Text(
-                  comic.title.replaceAll('\n', ''),
+                  comic.title.replaceAll('\n', '').displayText,
                   maxLines: 1,
                   overflow: TextOverflow.clip,
                   style: const TextStyle(fontWeight: FontWeight.w500),
@@ -816,7 +817,7 @@ class ComicTile extends StatelessWidget {
                 SizedBox(
                   height: compact ? 24 : 36,
                   child: Text(
-                    comic.title.replaceAll('\n', ''),
+                    comic.title.replaceAll('\n', '').displayText,
                     maxLines: compact ? 1 : 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -1044,7 +1045,7 @@ class _ComicDescription extends StatelessWidget {
         if (tag.removeAllBlank.isNotEmpty) tag.replaceAll('\n', ' '),
     ];
     Widget descriptionText = Text(
-      description,
+      description.displayText,
       style: const TextStyle(fontSize: 12.0),
       maxLines: displayTags.isEmpty ? 3 : 2,
       overflow: TextOverflow.ellipsis,
@@ -1066,7 +1067,7 @@ class _ComicDescription extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          title.trim(),
+          title.trim().displayText,
           style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14.0),
           maxLines: maxLines,
           overflow: TextOverflow.ellipsis,
@@ -1074,7 +1075,7 @@ class _ComicDescription extends StatelessWidget {
         ),
         if (subtitle != "")
           Text(
-            subtitle,
+            subtitle.displayText,
             style: TextStyle(
               fontSize: 10.0,
               color: context.colorScheme.onSurface.toOpacity(0.7),
@@ -1424,7 +1425,7 @@ class SimpleComicTile extends StatelessWidget {
             width: 92,
             child: Center(
               child: Text(
-                comic.title.replaceAll('\n', ''),
+                comic.title.replaceAll('\n', '').displayText,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

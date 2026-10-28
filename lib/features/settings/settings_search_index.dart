@@ -269,6 +269,11 @@ final settingsSearchIndex = <SettingsSearchEntry>[
     keywords: ['font', 'comment'],
   ),
   const SettingsSearchEntry('Night Mode', 3, keywords: ['dark']),
+  const SettingsSearchEntry(
+    'Convert traditional to simplified',
+    3,
+    keywords: ['simplified', 'traditional', 'chinese'],
+  ),
 
   // --- 4: Local Favorites (local_favorites.dart) ---
   const SettingsSearchEntry('Show local favorites before network favorites', 4),
@@ -325,9 +330,9 @@ final settingsSearchIndex = <SettingsSearchEntry>[
     visible: () => !App.isLinux,
   ),
   SettingsSearchEntry(
-    'PIN Protection',
+    'Unlock method',
     5,
-    keywords: const ['pin', 'password', 'lock'],
+    keywords: const ['pin', 'password', 'pattern', 'lock'],
     visible: () => !App.isLinux,
   ),
   SettingsSearchEntry(

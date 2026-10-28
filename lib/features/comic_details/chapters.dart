@@ -11,6 +11,7 @@ import 'package:venera_unified/features/history/history_api.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/opencc.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
@@ -220,7 +221,7 @@ class _NormalComicChaptersState extends State<_NormalComicChapters> {
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Center(
                           child: Text(
-                            value,
+                            value.displayText,
                             maxLines: 1,
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
@@ -411,7 +412,7 @@ class _GroupedComicChaptersState extends State<_GroupedComicChapters>
                       child:
                           widget.collectionId == null ||
                               widget.onCollectionTabAction == null
-                          ? Text(groupNames[i])
+                          ? Text(groupNames[i].displayText)
                           // For a collection each tab IS a member comic, so the
                           // tab is where renaming and reordering it belongs.
                           : GestureDetector(
@@ -427,7 +428,7 @@ class _GroupedComicChaptersState extends State<_GroupedComicChapters>
                                     i,
                                     details.globalPosition,
                                   ),
-                              child: Text(groupNames[i]),
+                              child: Text(groupNames[i].displayText),
                             ),
                     ),
                 ],
@@ -469,7 +470,7 @@ class _GroupedComicChaptersState extends State<_GroupedComicChapters>
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Center(
                           child: Text(
-                            value,
+                            value.displayText,
                             maxLines: 1,
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
