@@ -9,6 +9,8 @@ import 'package:venera_unified/components/flyout.dart';
 import 'package:venera_unified/components/menu.dart';
 import 'package:venera_unified/components/message.dart';
 import 'package:venera_unified/components/scroll.dart';
+import 'package:venera_unified/features/comic_collection/add_to_collection_dialog.dart';
+import 'package:venera_unified/features/comic_collection/comic_collection_store.dart';
 import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
 import 'package:venera_unified/features/comic_source/comic_source.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
@@ -225,6 +227,21 @@ class _HistoryPageState extends State<HistoryPage> {
                 }
               },
       ),
+      // Hidden while the selection holds a collection, since collections
+      // cannot nest. Matches the favorites list.
+      if (!selectedComics.keys.any(
+        (e) => ComicCollectionStore.isCollectionSourceKey(e.sourceKey),
+      ))
+        IconButton(
+          icon: const Icon(Icons.library_add),
+          tooltip: "Add to collection".tl,
+          onPressed: selectedComics.isEmpty
+              ? null
+              : () => showAddToCollectionDialog(
+                  context,
+                  List<Comic>.of(selectedComics.keys),
+                ),
+        ),
     ];
 
     List<Widget> normalActions = [
@@ -345,6 +362,13 @@ class _HistoryPageState extends State<HistoryPage> {
             text: 'Refresh Info'.tl,
             onClick: () {
               _refreshHistory(c as History);
+            },
+          ),
+          MenuEntry(
+            icon: Icons.library_add,
+            text: 'Add to collection'.tl,
+            onClick: () {
+              showAddToCollectionDialog(context, [c]);
             },
           ),
           MenuEntry(

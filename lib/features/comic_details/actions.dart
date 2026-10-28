@@ -12,6 +12,10 @@ import 'package:venera_unified/components/side_bar.dart';
 import 'package:venera_unified/components/window_frame.dart';
 import 'package:venera_unified/components/window_selection_task.dart';
 import 'package:venera_unified/features/comic_details/archive_download_dialog.dart';
+import 'package:venera_unified/features/comic_collection/add_to_collection_dialog.dart';
+import 'package:venera_unified/features/comic_collection/collection_source.dart';
+import 'package:venera_unified/features/comic_collection/comic_collection_edit_page.dart';
+import 'package:venera_unified/features/comic_collection/comic_collection_store.dart';
 import 'package:venera_unified/features/comic_details/comments_page.dart';
 import 'package:venera_unified/features/comic_details/favorite.dart';
 import 'package:venera_unified/features/comic_source/comic_source_api.dart';
@@ -38,6 +42,11 @@ import 'package:venera_unified/features/comic_details/rating_dialog.dart';
 abstract mixin class ComicPageActions {
   void update();
 
+  /// Re-runs the detail fetch. Needed after an edit that changes what the
+  /// source will return (currently: editing the collection this comic is),
+  /// where a plain [update] would rebuild from the stale data still in hand.
+  void reloadDetails();
+
   BuildContext get context;
 
   MenuRouteController get contextMenus;
@@ -47,6 +56,11 @@ abstract mixin class ComicPageActions {
   ComicDetails get comic;
 
   ComicSource get comicSource => ComicSource.find(comic.sourceKey)!;
+
+  /// Whether this page is showing a user-assembled collection rather than a
+  /// comic from a real source. Gates the actions that assume an upstream source.
+  bool get _isCollection =>
+      ComicCollectionStore.isCollectionSourceKey(comic.sourceKey);
 
   History? get history;
 
@@ -433,6 +447,60 @@ abstract mixin class ComicPageActions {
             context.showMessage(message: "Copied".tl);
           },
         ),
+        // A collection offers its own editor here; anything else can be filed
+        // into one. The two are mutually exclusive since collections cannot nest.
+        if (_isCollection)
+          MenuEntry(
+            icon: Icons.library_books_outlined,
+            text: 'Edit collection'.tl,
+            onClick: () {
+              final id = comic.id;
+              // Main navigator, not the root one this menu is positioned
+              // against: the editor pushes comic pages, and those must land
+              // above it.
+              final host =
+                  appNavigation.mainNavigatorKey?.currentContext ?? context;
+              unawaited(
+                host.to(() => ComicCollectionEditPage(collectionId: id)).then((
+                  _,
+                ) async {
+                  // The editor writes straight to the store, so returning
+                  // is the signal to re-read: name, cover, layout and
+                  // member order all change what the source hands back.
+                  try {
+                    refreshCollectionSources();
+                  } catch (error, stack) {
+                    Log.error(
+                      'Collection',
+                      'Refresh after edit failed: $error',
+                      stack,
+                    );
+                  }
+                  reloadDetails();
+                }),
+              );
+            },
+          )
+        else
+          MenuEntry(
+            icon: Icons.library_books_outlined,
+            text: 'Add to collection'.tl,
+            onClick: () {
+              showAddToCollectionDialog(context, [
+                Comic(
+                  comic.title,
+                  comic.cover,
+                  comic.id,
+                  comic.subTitle,
+                  comic.plainTags,
+                  comic.description ?? '',
+                  comic.sourceKey,
+                  comic.maxPage,
+                  null,
+                ),
+              ]);
+            },
+          ),
         if (target.url != null)
           MenuEntry(
             icon: Icons.link,

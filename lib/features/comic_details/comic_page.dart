@@ -17,6 +17,9 @@ import 'package:venera_unified/components/loading.dart';
 import 'package:venera_unified/components/menu.dart';
 import 'package:venera_unified/components/scroll.dart';
 import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
+import 'package:venera_unified/features/comic_collection/collection_tab_menu.dart';
+import 'package:venera_unified/features/comic_collection/collection_source.dart';
+import 'package:venera_unified/features/comic_collection/comic_collection_store.dart';
 import 'package:venera_unified/features/comic_details/action_button.dart';
 import 'package:venera_unified/features/comic_details/actions.dart';
 import 'package:venera_unified/features/comic_details/chapters.dart';
@@ -166,6 +169,7 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
   @override
   void initState() {
     scrollController.addListener(onScroll);
+    ComicCollectionStore.changes.addListener(_onCollectionChanged);
     super.initState();
   }
 
@@ -181,6 +185,7 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
   @override
   void dispose() {
     scrollController.removeListener(onScroll);
+    ComicCollectionStore.changes.removeListener(_onCollectionChanged);
     scrollController.dispose();
     super.dispose();
   }
@@ -195,6 +200,35 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
 
   @override
   ComicDetails get comic => data!;
+
+  /// The collection this page shows, or null for an ordinary comic. Keyed off
+  /// the widget (not the loaded data) so it is safe before the fetch lands.
+  String? get _collectionId =>
+      ComicCollectionStore.isCollectionSourceKey(widget.sourceKey)
+      ? widget.id
+      : null;
+
+  void _onCollectionChanged() {
+    if (mounted && _collectionId != null) setState(() {});
+  }
+
+  void _toggleCollectionDetailMode() {
+    final id = _collectionId;
+    if (id == null || ComicCollectionStore.find(id) == null) return;
+    final mode =
+        ComicCollectionStore.detailDisplayMode ==
+            CollectionDetailDisplayMode.chapters
+        ? CollectionDetailDisplayMode.covers
+        : CollectionDetailDisplayMode.chapters;
+    ComicCollectionStore.setDetailDisplayMode(mode);
+    refreshCollectionSources();
+  }
+
+  @override
+  void reloadDetails() {
+    if (!mounted) return;
+    retry();
+  }
 
   void onScroll() {
     var offset =
@@ -335,6 +369,22 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
         child: Text(comic.title),
       ),
       actions: [
+        if (_collectionId != null)
+          IconButton(
+            icon: Icon(
+              ComicCollectionStore.detailDisplayMode ==
+                      CollectionDetailDisplayMode.covers
+                  ? Icons.view_list_outlined
+                  : Icons.grid_view_outlined,
+            ),
+            tooltip:
+                (ComicCollectionStore.detailDisplayMode ==
+                            CollectionDetailDisplayMode.covers
+                        ? 'Show chapters'
+                        : 'Show covers')
+                    .tl,
+            onPressed: _toggleCollectionDetailMode,
+          ),
         IconButton(
           onPressed: showMoreActions,
           icon: const Icon(Icons.more_horiz),
@@ -782,7 +832,64 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
     );
   }
 
+  Widget _buildCollectionCovers(String collectionId) {
+    final collection = ComicCollectionStore.find(collectionId);
+    if (collection == null || collection.members.isEmpty) {
+      return const SliverPadding(padding: EdgeInsets.zero);
+    }
+    final comics = [
+      for (final member in collection.members)
+        Comic(
+          member.label,
+          member.cachedCover,
+          member.comicId,
+          member.cachedSubtitle.isEmpty ? null : member.cachedSubtitle,
+          const ['Collection member'],
+          '',
+          member.sourceKey,
+          null,
+          null,
+        ),
+    ];
+    return SliverMainAxisGroup(
+      slivers: [
+        SliverToBoxAdapter(
+          child: ListTile(
+            title: Text('Comics in collection'.tl),
+            trailing: Text(comics.length.toString()),
+          ),
+        ),
+        SliverGridComics(
+          comics: comics,
+          onTap: (comic, heroID) {
+            final member = collection.members.firstWhere(
+              (item) =>
+                  item.sourceKey == comic.sourceKey && item.comicId == comic.id,
+            );
+            context.to(
+              () => ComicPage(
+                id: member.comicId,
+                sourceKey: member.sourceKey,
+                cover: member.cachedCover,
+                title: member.label,
+                heroID: heroID,
+              ),
+            );
+          },
+          badgeBuilder: (comic) => ComicSource.find(comic.sourceKey)?.name,
+        ),
+        const SliverPadding(padding: EdgeInsets.only(bottom: 12)),
+      ],
+    );
+  }
+
   Widget buildChapters() {
+    final collectionId = _collectionId;
+    if (collectionId != null &&
+        ComicCollectionStore.detailDisplayMode ==
+            CollectionDetailDisplayMode.covers) {
+      return _buildCollectionCovers(collectionId);
+    }
     if (comic.chapters == null) {
       return const SliverPadding(padding: EdgeInsets.zero);
     }
@@ -790,6 +897,21 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
       chapters: comic.chapters!,
       history: history,
       readChapter: (chapter) => read(chapter),
+      collectionId: collectionId,
+      onCollectionTabAction: collectionId == null
+          ? null
+          : (tabIndex, position) => showCollectionTabMenu(
+              context: context,
+              menus: contextMenus,
+              location: position,
+              collectionId: collectionId,
+              tabIndex: tabIndex,
+              isValid: () => mounted,
+              onEdited: () {
+                refreshCollectionSources();
+                if (mounted) retry();
+              },
+            ),
     );
   }
 
@@ -865,6 +987,12 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
   }
 
   String? get _cover {
+    // A collection borrows its cover from the store, re-read on every build:
+    // edits elsewhere (rename, reorder, custom cover) change the image.
+    if (ComicCollectionStore.isCollectionSourceKey(comic.sourceKey)) {
+      final current = ComicCollectionStore.find(comic.id)?.displayCover;
+      if (current != null && current.trim().isNotEmpty) return current;
+    }
     final cover = widget.cover?.trim().isNotEmpty == true
         ? widget.cover
         : comic.cover;

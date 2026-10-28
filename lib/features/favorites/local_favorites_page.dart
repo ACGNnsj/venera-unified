@@ -19,6 +19,8 @@ import 'package:venera_unified/components/scroll.dart';
 import 'package:venera_unified/components/select.dart';
 import 'package:venera_unified/components/settings_save_state.dart';
 import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/features/comic_collection/add_to_collection_dialog.dart';
+import 'package:venera_unified/features/comic_collection/comic_collection_store.dart';
 import 'package:venera_unified/features/comic_details/comic_details.dart';
 import 'package:venera_unified/features/comic_source/comic_source.dart';
 import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
@@ -786,6 +788,23 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                     text: "Download".tl,
                     onClick: downloadSelected,
                   ),
+                  // Hidden when the selection contains a collection, since
+                  // collections cannot nest.
+                  if (!selectedItems.any(
+                    (e) =>
+                        ComicCollectionStore.isCollectionSourceKey(e.sourceKey),
+                  ))
+                    MenuEntry(
+                      icon: Icons.library_add,
+                      text: "Add to collection".tl,
+                      onClick: () {
+                        if (selectedItems.isEmpty) return;
+                        showAddToCollectionDialog(
+                          context,
+                          List<Comic>.of(selectedItems),
+                        );
+                      },
+                    ),
                   if (selectedComics.length == 1)
                     MenuEntry(
                       icon: Icons.copy,
@@ -964,6 +983,13 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                   onClick: () {
                     downloadComic(c as FavoriteItem);
                     context.showMessage(message: "Download started".tl);
+                  },
+                ),
+                MenuEntry(
+                  icon: Icons.library_add,
+                  text: "Add to collection".tl,
+                  onClick: () {
+                    showAddToCollectionDialog(context, [c]);
                   },
                 ),
                 if (GlobalPreferenceStore(

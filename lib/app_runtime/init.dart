@@ -6,6 +6,7 @@ import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
 import 'package:venera_unified/features/comic_details/comic_details.dart';
+import 'package:venera_unified/features/comic_collection/add_to_collection_dialog.dart';
 import 'package:venera_unified/features/comic_source/comic_source_api.dart';
 import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
 import 'package:venera_unified/features/favorites/favorites.dart';
@@ -38,6 +39,7 @@ Future<void> init(CoreBootstrap core) async {
           heroID: heroID,
         ),
     addFavorite: addFavorite,
+    addToCollection: showAddToCollectionDialog,
     tileStateResolver: _resolveComicTileState,
     tileImageProviderResolver: _resolveComicTileImageProvider,
     addStateListener: (listener) {

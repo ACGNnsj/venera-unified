@@ -13,6 +13,9 @@ import 'package:venera_unified/components/menu.dart';
 import 'package:venera_unified/components/message.dart';
 import 'package:venera_unified/components/select.dart';
 import 'package:venera_unified/features/comic_source/comic_source_api.dart';
+import 'package:venera_unified/features/comic_collection/comic_collection_store.dart';
+import 'package:venera_unified/foundation/image_provider/cached_image.dart';
+import 'package:venera_unified/foundation/log.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 import 'package:venera_unified/foundation/app_locale.dart';
 import 'package:venera_unified/foundation/appdata.dart';
@@ -34,6 +37,8 @@ typedef ComicPageBuilder =
 
 typedef AddComicFavoriteHandler =
     Future<void> Function(BuildContext context, List<Comic> comics);
+typedef AddToCollectionHandler =
+    void Function(BuildContext context, List<Comic> comics);
 typedef ComicTileStateResolver = ComicTileState Function(Comic comic);
 typedef ComicTileImageProviderResolver = ImageProvider? Function(Comic comic);
 typedef ComicWidgetListenerRegistrar = void Function(VoidCallback listener);
@@ -75,6 +80,7 @@ class ComicFavoriteDisplayState {
 ComicPageBuilder? _comicPageBuilder;
 
 AddComicFavoriteHandler? _addComicFavoriteHandler;
+AddToCollectionHandler? _addToCollectionHandler;
 ComicTileStateResolver? _comicTileStateResolver;
 ComicTileImageProviderResolver? _comicTileImageProviderResolver;
 ComicWidgetListenerRegistrar? _addComicWidgetStateListener;
@@ -84,6 +90,7 @@ ComicFavoriteDisplayStateResolver? _comicFavoriteDisplayStateResolver;
 void configureComicWidgets({
   ComicPageBuilder? comicPageBuilder,
   AddComicFavoriteHandler? addFavorite,
+  AddToCollectionHandler? addToCollection,
   ComicTileStateResolver? tileStateResolver,
   ComicTileImageProviderResolver? tileImageProviderResolver,
   ComicWidgetListenerRegistrar? addStateListener,
@@ -92,6 +99,7 @@ void configureComicWidgets({
 }) {
   _comicPageBuilder = comicPageBuilder;
   _addComicFavoriteHandler = addFavorite;
+  _addToCollectionHandler = addToCollection;
   _comicTileStateResolver = tileStateResolver;
   _comicTileImageProviderResolver = tileImageProviderResolver;
   _addComicWidgetStateListener = addStateListener;
@@ -159,7 +167,58 @@ Future<void> _addComicToFavorites(BuildContext context, List<Comic> comics) {
   return handler(context, comics);
 }
 
+void _addComicToCollection(BuildContext context, List<Comic> comics) {
+  final handler =
+      _addToCollectionHandler ??
+      (throw StateError("Add to collection handler is not configured."));
+  return handler(context, comics);
+}
+
+final _warmingCollectionCovers = <String>{};
+
+/// Loads a collection's members once so their titles and covers land in the
+/// store, then rebuilds the tiles that are waiting on it.
+void _warmCollectionCover(String collectionId) {
+  if (!_warmingCollectionCovers.add(collectionId)) return;
+  Future.microtask(() async {
+    try {
+      final source = ComicSource.find(
+        ComicCollectionStore.find(collectionId)?.sourceKey ?? '',
+      );
+      await source?.loadComicInfo?.call(collectionId);
+    } catch (e) {
+      Log.error('ComicCollection', 'Cover warm-up failed: $e');
+    } finally {
+      _warmingCollectionCovers.remove(collectionId);
+    }
+  });
+}
+
 ImageProvider? _findImageProvider(Comic comic) {
+  // A collection's cover is resolved from the store, not from the passed-in
+  // comic: a favourite or history row froze whatever the cover was when it was
+  // recorded, which is empty when the collection was favourited before its
+  // members had ever loaded. The store always holds the current one.
+  if (ComicCollectionStore.isCollectionSourceKey(comic.sourceKey)) {
+    final collection = ComicCollectionStore.find(comic.id);
+    final cover = collection?.displayCover ?? comic.cover;
+    if (cover.isEmpty) {
+      // Nothing cached yet, which happens when a collection is favourited
+      // before it has ever been opened. Warming it fills the member caches (and
+      // so the cover) for the next build.
+      if (collection != null && collection.members.isNotEmpty) {
+        _warmCollectionCover(collection.id);
+      }
+      return null;
+    }
+    // The cover belongs to a member, so image loading has to go through the
+    // collection's source to pick up that member's auth headers.
+    return CachedImageProvider(
+      cover,
+      sourceKey: comic.sourceKey,
+      cid: comic.id,
+    );
+  }
   return _comicTileImageProviderResolver?.call(comic);
 }
 
@@ -173,6 +232,17 @@ Widget _buildUpdateBadge(BuildContext context, {double size = 24}) {
     width: size,
     color: Colors.deepOrange.shade700,
     child: Icon(Icons.update, size: size * 2 / 3, color: Colors.white),
+  );
+}
+
+Widget _buildCollectionMarker({double size = 13}) {
+  return Container(
+    padding: const EdgeInsets.all(3),
+    decoration: BoxDecoration(
+      color: Colors.black.toOpacity(0.55),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Icon(Icons.library_books_outlined, size: size, color: Colors.white),
   );
 }
 
@@ -209,6 +279,23 @@ class ComicTile extends StatelessWidget {
   final int? heroID;
 
   final ComicTileDisplayMode? displayMode;
+
+  bool get _isCollection =>
+      ComicCollectionStore.isCollectionSourceKey(comic.sourceKey);
+
+  /// Badge text for the tile. A collection gets its own label instead of a
+  /// source name (its members may come from several sources), so it is
+  /// recognisable in a list without opening it. An explicit [badge] from the
+  /// host still wins.
+  String? get _effectiveBadge {
+    if (badge != null) return badge;
+    if (_isCollection) return 'Collection'.tl;
+    return comic.language;
+  }
+
+  /// Corner marker drawn over the cover of a collection: the text badge only
+  /// exists in detailed mode, and a cover marker is what makes a collection
+  /// recognisable at a glance either way.
 
   void _onTap() {
     if (onTap != null) {
@@ -274,6 +361,16 @@ class ComicTile extends StatelessWidget {
           _addComicToFavorites(context, [comic]);
         },
       ),
+      // A collection cannot hold another collection, so the entry is hidden
+      // rather than shown and refused.
+      if (!_isCollection)
+        MenuEntry(
+          icon: Icons.library_books_outlined,
+          text: 'Add to collection'.tl,
+          onClick: () {
+            _addComicToCollection(context, [comic]);
+          },
+        ),
       MenuEntry(
         icon: Icons.block,
         text: 'Block'.tl,
@@ -419,6 +516,18 @@ class ComicTile extends StatelessWidget {
   }
 
   Widget buildImage(BuildContext context) {
+    // A collection's cover arrives asynchronously the first time its members
+    // load, so this tile has to rebuild when the store fills it in.
+    if (_isCollection) {
+      return ListenableBuilder(
+        listenable: ComicCollectionStore.changes,
+        builder: (context, _) => _buildImageInner(),
+      );
+    }
+    return _buildImageInner();
+  }
+
+  Widget _buildImageInner() {
     var image = _findImageProvider(comic);
     if (image == null) {
       return const SizedBox();
@@ -458,6 +567,18 @@ class ComicTile extends StatelessWidget {
           image = Hero(tag: "cover$heroID", child: image);
         }
 
+        // Top-right: the outer Stack overlays the favourite / read-later /
+        // history badges at the top-left, which would cover this marker on
+        // exactly the collections most likely to be favourited.
+        if (_isCollection) {
+          image = Stack(
+            children: [
+              image,
+              Positioned(right: 3, top: 3, child: _buildCollectionMarker()),
+            ],
+          );
+        }
+
         return ClickInkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: _onTap,
@@ -479,7 +600,7 @@ class ComicTile extends StatelessWidget {
                     descriptionTooltip:
                         state.historyTooltipDescription ??
                         state.descriptionOverride,
-                    badge: badge ?? comic.language,
+                    badge: _effectiveBadge,
                     tags: comic.tags,
                     maxLines: 2,
                     enableTranslate:
@@ -610,6 +731,16 @@ class ComicTile extends StatelessWidget {
                         );
                       })(),
                     ),
+                    // Top-right for the same reason as detailed mode: the outer
+                    // Stack's status badges own the top-left corner.
+                    if (_isCollection)
+                      Positioned(
+                        right: 4,
+                        top: 4,
+                        child: _buildCollectionMarker(
+                          size: constraints.maxWidth < 80 ? 10 : 13,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -665,7 +796,22 @@ class ComicTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: image),
+                Expanded(
+                  child: _isCollection
+                      ? Stack(
+                          children: [
+                            image,
+                            Positioned(
+                              right: 4,
+                              top: 4,
+                              child: _buildCollectionMarker(
+                                size: compact ? 10 : 13,
+                              ),
+                            ),
+                          ],
+                        )
+                      : image,
+                ),
                 SizedBox(height: compact ? 3 : 5),
                 SizedBox(
                   height: compact ? 24 : 36,
@@ -1167,18 +1313,29 @@ class SimpleComicTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var image = _findImageProvider(comic);
+    Widget buildCover() {
+      var image = _findImageProvider(comic);
+      if (image == null) {
+        return const SizedBox();
+      }
+      return AnimatedImage(
+        image: image,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        filterQuality: FilterQuality.medium,
+        gaplessPlayback: gaplessPlayback,
+      );
+    }
 
-    Widget child = image == null
-        ? const SizedBox()
-        : AnimatedImage(
-            image: image,
-            width: double.infinity,
-            height: double.infinity,
-            fit: BoxFit.cover,
-            filterQuality: FilterQuality.medium,
-            gaplessPlayback: gaplessPlayback,
-          );
+    // A collection's cover arrives asynchronously the first time its members
+    // load, so this tile has to rebuild when the store fills it in.
+    Widget child = ComicCollectionStore.isCollectionSourceKey(comic.sourceKey)
+        ? ListenableBuilder(
+            listenable: ComicCollectionStore.changes,
+            builder: (context, _) => buildCover(),
+          )
+        : buildCover();
 
     child = Container(
       width: 98,
@@ -1190,6 +1347,17 @@ class SimpleComicTile extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: child,
     );
+
+    // Same marker as the list tiles, but top-right: the favourite and
+    // read-later badges already own the top-left corner of this tile.
+    if (ComicCollectionStore.isCollectionSourceKey(comic.sourceKey)) {
+      child = Stack(
+        children: [
+          child,
+          Positioned(right: 3, top: 3, child: _buildCollectionMarker()),
+        ],
+      );
+    }
 
     final state = _tileState(comic);
     if (state.hasNewUpdate || state.historyDescription != null) {

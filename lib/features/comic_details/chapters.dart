@@ -21,6 +21,8 @@ class ComicChaptersView extends StatefulWidget {
     required this.chapters,
     this.history,
     required this.readChapter,
+    this.collectionId,
+    this.onCollectionTabAction,
   });
 
   final ComicChapters chapters;
@@ -28,6 +30,14 @@ class ComicChaptersView extends StatefulWidget {
   final History? history;
 
   final void Function(int chapter) readChapter;
+
+  /// Set when this detail page shows a user-assembled collection. Each tab is
+  /// then one member comic, so tabs become editable.
+  final String? collectionId;
+
+  /// Opens the tab menu for [collectionId] at the given tab and position.
+  final Future<void> Function(int tabIndex, Offset position)?
+  onCollectionTabAction;
 
   @override
   State<ComicChaptersView> createState() => _ComicChaptersViewState();
@@ -88,6 +98,8 @@ class _ComicChaptersViewState extends SettingsSaveState<ComicChaptersView> {
             readChapter: widget.readChapter,
             reverse: reverse,
             orderControl: orderControl,
+            collectionId: widget.collectionId,
+            onCollectionTabAction: widget.onCollectionTabAction,
           )
         : _NormalComicChapters(
             chapters: widget.chapters,
@@ -259,6 +271,8 @@ class _GroupedComicChapters extends StatefulWidget {
     required this.readChapter,
     required this.reverse,
     required this.orderControl,
+    this.collectionId,
+    this.onCollectionTabAction,
   });
 
   final ComicChapters chapters;
@@ -268,6 +282,11 @@ class _GroupedComicChapters extends StatefulWidget {
   final History? history;
 
   final void Function(int chapter) readChapter;
+
+  final String? collectionId;
+
+  final Future<void> Function(int tabIndex, Offset position)?
+  onCollectionTabAction;
 
   @override
   State<_GroupedComicChapters> createState() => _GroupedComicChaptersState();
@@ -339,6 +358,7 @@ class _GroupedComicChaptersState extends State<_GroupedComicChapters>
   @override
   Widget build(BuildContext context) {
     final chapters = widget.chapters;
+    final groupNames = chapters.groups.toList();
     return SliverLayoutBuilder(
       builder: (context, constrains) {
         var group = _groups.isEmpty
@@ -385,7 +405,32 @@ class _GroupedComicChaptersState extends State<_GroupedComicChapters>
               child: AppTabBar(
                 withUnderLine: false,
                 controller: tabController,
-                tabs: chapters.groups.map((e) => Tab(text: e)).toList(),
+                tabs: [
+                  for (var i = 0; i < groupNames.length; i++)
+                    Tab(
+                      child:
+                          widget.collectionId == null ||
+                              widget.onCollectionTabAction == null
+                          ? Text(groupNames[i])
+                          // For a collection each tab IS a member comic, so the
+                          // tab is where renaming and reordering it belongs.
+                          : GestureDetector(
+                              onLongPress: () => widget.onCollectionTabAction!(
+                                i,
+                                Offset(
+                                  context.width / 2,
+                                  context.padding.top + 120,
+                                ),
+                              ),
+                              onSecondaryTapDown: (details) =>
+                                  widget.onCollectionTabAction!(
+                                    i,
+                                    details.globalPosition,
+                                  ),
+                              child: Text(groupNames[i]),
+                            ),
+                    ),
+                ],
               ),
             ),
             SliverPadding(padding: const EdgeInsets.only(top: 8)),

@@ -3,11 +3,31 @@
   "allowed_feature_edges": [
     [
       "comic_collection",
+      "comic_details"
+    ],
+    [
+      "comic_collection",
       "comic_source"
     ],
     [
       "comic_collection",
+      "comic_widgets"
+    ],
+    [
+      "comic_collection",
+      "favorites"
+    ],
+    [
+      "comic_collection",
+      "history"
+    ],
+    [
+      "comic_collection",
       "local_comics"
+    ],
+    [
+      "comic_details",
+      "comic_collection"
     ],
     [
       "comic_details",
@@ -39,6 +59,10 @@
     ],
     [
       "comic_widgets",
+      "comic_collection"
+    ],
+    [
+      "comic_widgets",
       "comic_source"
     ],
     [
@@ -48,6 +72,10 @@
     [
       "discovery",
       "comic_widgets"
+    ],
+    [
+      "favorites",
+      "comic_collection"
     ],
     [
       "favorites",
@@ -92,6 +120,10 @@
     [
       "follow_updates",
       "history"
+    ],
+    [
+      "history",
+      "comic_collection"
     ],
     [
       "history",
@@ -559,6 +591,10 @@
     "components/window_frame.dart",
     "components/window_hotkey_scope.dart",
     "components/window_selection_task.dart",
+    "features/comic_collection/add_to_collection_dialog.dart",
+    "features/comic_collection/collection_tab_menu.dart",
+    "features/comic_collection/comic_collection_edit_page.dart",
+    "features/comic_collection/comic_collections_page.dart",
     "features/comic_details/action_button.dart",
     "features/comic_details/actions.dart",
     "features/comic_details/archive_download_dialog.dart",
