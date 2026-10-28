@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 import hashlib
+import os
 import platform
 import re
 import shutil
@@ -147,6 +148,15 @@ def build_installer(version, arch="x64"):
     return installer_path
 
 
+def _is_arm64_host():
+    if platform.machine().lower() in ("arm64", "aarch64"):
+        return True
+    # Native CPU id under emulation (x64 Python on ARM64 Windows).
+    return os.environ.get("PROCESSOR_ARCHITECTURE", "").upper() == "ARM64" or os.environ.get(
+        "PROCESSOR_ARCHITEW6432", ""
+    ).upper() == "ARM64"
+
+
 def main(arch="x64"):
     architecture_paths(arch)
     version = read_version()
@@ -155,8 +165,9 @@ def main(arch="x64"):
     # `flutter build windows` has no --target-platform flag: it always builds
     # for the host architecture. ARM64 therefore requires an ARM64 runner
     # (windows-11-arm); refuse to run on x64 so x64 bits are never mislabeled
-    # as windows-arm64 artifacts.
-    if arch == "arm64" and platform.machine().lower() not in ("arm64", "aarch64"):
+    # as windows-arm64 artifacts. PROCESSOR_* env vars report the native CPU
+    # even when this interpreter itself runs emulated (x64 Python on ARM64).
+    if arch == "arm64" and not _is_arm64_host():
         raise RuntimeError(
             "Windows ARM64 builds require an ARM64 host "
             f"(this host reports {platform.machine()!r})"

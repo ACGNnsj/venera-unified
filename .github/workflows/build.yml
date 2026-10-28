@@ -258,7 +258,9 @@ jobs:
         with:
           channel: "stable"
           flutter-version-file: pubspec.yaml
-          architecture: arm64
+          architecture: x64
+          # x64 SDK runs emulated on the ARM64 runner; `flutter build windows`
+          # still emits native ARM64 binaries (it targets the host arch).
           cache: true
       - name: 构建 Windows ARM64 安装包
         run: |
