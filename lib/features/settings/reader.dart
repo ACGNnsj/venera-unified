@@ -588,8 +588,7 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
             useDeviceSettings: useDeviceSpecificSettings,
           ).toSliver(),
           SliverAnimatedVisibility(
-            visible:
-                _value(ReaderPreferences.readerPageMarginEnabled) == true,
+            visible: _value(ReaderPreferences.readerPageMarginEnabled) == true,
             child: SliderSetting.reader(
               title: 'Page margin size'.tl,
               preference: ReaderPreferences.readerPageMarginPercent,
