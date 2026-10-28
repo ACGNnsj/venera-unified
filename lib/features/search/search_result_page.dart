@@ -13,12 +13,14 @@ import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/features/comic_source/comic_source.dart';
 import 'package:venera_unified/foundation/global_state.dart';
 import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/res.dart';
 import 'package:venera_unified/foundation/extensions.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'search_filter.dart';
 import 'search_page.dart';
+import 'search_query.dart';
 
 class SearchResultPage extends StatefulWidget {
   const SearchResultPage({
@@ -150,6 +152,7 @@ class _SearchResultPageState extends State<SearchResultPage> {
   @override
   Widget build(BuildContext context) {
     var source = ComicSource.find(sourceKey);
+    final query = SearchQuery.parse(text);
     return ComicList(
       key: Key(text + options.toString() + sourceKey),
       errorLeading: AppSearchBar(controller: controller, action: buildAction()),
@@ -160,13 +163,36 @@ class _SearchResultPageState extends State<SearchResultPage> {
       ),
       loadPage: source!.searchPageData!.loadPage == null
           ? null
-          : (i) {
-              return source.searchPageData!.loadPage!(text, i, options);
+          : (i) async {
+              final data = source.searchPageData!;
+              // 搜索词含 `tag:` 且书源实现了精确标签搜索 → 走书源实现层；
+              // 否则维持「全文搜索 + 客户端过滤」
+              final tag = query.firstTagFilter;
+              Res<List<Comic>> res;
+              if (tag != null && data.tagSearch != null) {
+                res = await data.tagSearch!(
+                  tag,
+                  query.plainKeyword,
+                  i,
+                  options,
+                );
+                // 已下推的标签由书源服务器端过滤，客户端剥离该过滤器，
+                // 只用剩余过滤器兜底（避免把服务器命中的结果滤空）
+                return query.stripFirstTagFilter().filterResult(res);
+              }
+              res = await data.loadPage!(query.cleanKeyword, i, options);
+              // filterResult 兜底：tag:/author:/排除等过滤器客户端过滤
+              return query.filterResult(res);
             },
       loadNext: source.searchPageData!.loadNext == null
           ? null
-          : (i) {
-              return source.searchPageData!.loadNext!(text, i, options);
+          : (i) async {
+              final res = await source.searchPageData!.loadNext!(
+                query.cleanKeyword,
+                i,
+                options,
+              );
+              return query.filterResult(res);
             },
     );
   }

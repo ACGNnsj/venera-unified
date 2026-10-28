@@ -995,6 +995,7 @@
     "features/reader/waterfall_flow.dart",
     "features/reader/window_controller.dart",
     "features/search/search_filter.dart",
+    "features/search/search_query.dart",
     "features/search/search_shortcut.dart",
     "features/search/search_shortcut_manager.dart",
     "features/settings/changelog_document.dart",

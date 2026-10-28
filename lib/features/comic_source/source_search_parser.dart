@@ -42,6 +42,22 @@ class SourceSearchParser {
 
     SearchNextFunction? loadNext;
 
+    // 可选：书源实现的精确标签搜索（配合搜索层 `tag:` 语法）
+    TagSearchFunction? tagSearch;
+    if (context.checkExists('search.tagSearch')) {
+      tagSearch = (tag, keyword, page, searchOption) async {
+        try {
+          return await context.runReadCodeToCompletion<Res<List<Comic>>>("""
+          ${context.sourceExpression}.search.tagSearch(
+            ${jsonEncode(tag)}, ${jsonEncode(keyword)}, ${jsonEncode(searchOption)}, ${jsonEncode(page)})
+        """, consume: (res) => context.parseComicListResult(res, 'maxPage'));
+        } catch (e, s) {
+          Log.error("Network", "$e\n$s");
+          return context.failureResult(e, s);
+        }
+      };
+    }
+
     if (context.checkExists('search.load')) {
       loadPage = (keyword, page, searchOption) async {
         try {
@@ -68,7 +84,7 @@ class SourceSearchParser {
       };
     }
 
-    return SearchPageData(options, loadPage, loadNext);
+    return SearchPageData(options, loadPage, loadNext, tagSearch: tagSearch);
   }
 
   TagSuggestionSelectFunc? parseTagSuggestionSelectFunc() {

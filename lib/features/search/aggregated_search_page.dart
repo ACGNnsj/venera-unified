@@ -1,5 +1,6 @@
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/res.dart';
 import "package:flutter/material.dart";
 import 'package:shimmer_animation/shimmer_animation.dart';
 import "package:venera_unified/components/appbar.dart";
@@ -13,6 +14,7 @@ import "package:venera_unified/foundation/translations.dart";
 import "package:venera_unified/foundation/widget_utils.dart";
 
 import "search_result_page.dart";
+import "search_query.dart";
 
 class AggregatedSearchPage extends StatefulWidget {
   const AggregatedSearchPage({super.key, required this.keyword});
@@ -112,14 +114,29 @@ class _SliverSearchResultState extends State<_SliverSearchResult>
 
   void load() async {
     final data = widget.source.searchPageData!;
+    final query = SearchQuery.parse(widget.keyword);
     var options = (data.searchOptions ?? [])
         .map((e) => e.defaultValue)
         .toList();
     if (data.loadPage != null) {
-      var res = await data.loadPage!(widget.keyword, 1, options);
+      // 搜索词含 `tag:` 且书源实现了精确标签搜索 → 走书源实现层；
+      // 否则维持「全文搜索 + 客户端过滤」
+      final tag = query.firstTagFilter;
+      SearchQuery effectiveQuery = query;
+      Res<List<Comic>> res;
+      if (tag != null && data.tagSearch != null) {
+        res = await data.tagSearch!(tag, query.plainKeyword, 1, options);
+        // 已下推的标签由书源服务器端过滤，客户端剥离该过滤器，
+        // 只用剩余过滤器兜底（避免把服务器命中的结果滤空）
+        effectiveQuery = query.stripFirstTagFilter();
+      } else {
+        res = await data.loadPage!(query.cleanKeyword, 1, options);
+      }
       if (!res.error) {
         setState(() {
-          comics = res.data;
+          comics = effectiveQuery.hasFilters
+              ? res.data.where(effectiveQuery.matches).toList()
+              : res.data;
           isLoading = false;
         });
       } else {
@@ -129,10 +146,12 @@ class _SliverSearchResultState extends State<_SliverSearchResult>
         });
       }
     } else if (data.loadNext != null) {
-      var res = await data.loadNext!(widget.keyword, null, options);
+      var res = await data.loadNext!(query.cleanKeyword, null, options);
       if (!res.error) {
         setState(() {
-          comics = res.data;
+          comics = query.hasFilters
+              ? res.data.where(query.matches).toList()
+              : res.data;
           isLoading = false;
         });
       } else {
