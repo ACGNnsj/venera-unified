@@ -41,6 +41,8 @@ class _Actions with ComicPageActions {
   @override
   void update() {}
   @override
+  void reloadDetails() {}
+  @override
   void onReadEnd() {}
 }
 
