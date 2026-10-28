@@ -1,0 +1,44 @@
+name: "苹果平台检查"
+# 从 analyze.yml 拆出：两个 macOS job 只做提示，不影响主 CI 与发版门结论。
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '.scratch/**'
+      - '**/*.md'
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  apple-directory-access:
+    name: Apple 目录授权与跨会话恢复
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - run: swift test --package-path apple
+
+  rhttp-ios:
+    name: iOS Rhttp 原生依赖兼容性
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo xcode-select --switch /Applications/Xcode_16.4.app
+      - name: 准备 iOS Rust 工具链
+        run: python3 .github/scripts/prepare_rust_toolchain.py --target aarch64-apple-ios
+      - name: 验证锁定原生依赖可用于 iOS
+        env:
+          RUSTFLAGS: --cfg reqwest_unstable
+        run: |
+          export SDKROOT="$(xcrun --sdk iphoneos --show-sdk-path)"
+          cargo check --locked --manifest-path packages/rhttp/rust/Cargo.toml --target aarch64-apple-ios --lib
