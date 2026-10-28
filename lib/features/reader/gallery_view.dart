@@ -41,7 +41,8 @@ class ReaderGalleryView extends StatefulWidget {
   final void Function(ReaderImageViewController viewport, bool attached)
   onViewportChanged;
   final VoidCallback onReady;
-  final void Function(bool comments, bool refreshEInk) onPageReported;
+  final void Function(bool comments, bool refreshEInk, bool forward)
+  onPageReported;
   final VoidCallback onChapterChanged;
   final VoidCallback onCollectImage;
   final Size Function() readerSize;
@@ -92,9 +93,14 @@ class GalleryModeState extends State<ReaderGalleryView>
 
   int fingers = 0;
 
+  /// Last settled in-chapter page index, for turn direction. Navigation state
+  /// cannot serve this: programmatic jumps update it before onPageChanged runs.
+  late int _lastTurnIndex;
+
   @override
   void initState() {
     controller = PageController(initialPage: page);
+    _lastTurnIndex = page;
     widget.onViewportChanged(this, true);
     Future.microtask(() {
       if (mounted) widget.onReady();
@@ -108,6 +114,9 @@ class GalleryModeState extends State<ReaderGalleryView>
     if (!identical(oldWidget.data.content, data.content) ||
         !identical(oldWidget.imageWork, widget.imageWork)) {
       _singleImageStates.clear();
+      // New chapter content: the old index belongs to another chapter.
+      // Navigation state is authoritative at rest.
+      _lastTurnIndex = page;
     }
     if (!identical(oldWidget.imageWork, widget.imageWork)) {
       unawaited(_imageDownloads.dispose());
@@ -291,6 +300,8 @@ class GalleryModeState extends State<ReaderGalleryView>
                 controller.jumpToPage(1);
               } else {
                 shouldRefreshEInk = true;
+                // Stepped back a chapter: any landing index reads as backward.
+                _lastTurnIndex = 1 << 30;
               }
             } else if (i == totalPages + 1) {
               if (data.lastChapter ||
@@ -298,15 +309,20 @@ class GalleryModeState extends State<ReaderGalleryView>
                 controller.jumpToPage(totalPages);
               } else {
                 shouldRefreshEInk = true;
+                // Stepped forward a chapter: any landing index reads as forward.
+                _lastTurnIndex = 0;
               }
             } else {
               final previousPage = page;
               navigation.reportPage(i);
               shouldRefreshEInk =
                   page != previousPage && !isChapterCommentsPage(i);
+              final forward = i >= _lastTurnIndex;
+              _lastTurnIndex = i;
               widget.onPageReported(
                 isChapterCommentsPage(i),
                 shouldRefreshEInk,
+                forward,
               );
             }
             if (shouldRefreshEInk && (i == 0 || i == totalPages + 1)) {

@@ -959,6 +959,7 @@
     "features/reader/continuous_data.dart",
     "features/reader/display_image_provider.dart",
     "features/reader/eink_refresh_controller.dart",
+    "features/reader/eink_ripple.dart",
     "features/reader/gallery_data.dart",
     "features/reader/gesture_port.dart",
     "features/reader/gesture_request.dart",

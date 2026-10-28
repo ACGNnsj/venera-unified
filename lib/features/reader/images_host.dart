@@ -12,6 +12,7 @@ import 'image_read.dart';
 
 import 'gallery_view.dart';
 import 'gallery_data.dart';
+import 'eink_ripple.dart';
 import 'continuous_data.dart';
 import 'page_margin.dart';
 import 'package:venera_unified/foundation/log.dart';
@@ -19,6 +20,20 @@ import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/network/request_scope.dart';
 import 'continuous_view.dart';
+
+/// How the page content moves when a gallery turns [forward]; null outside
+/// gallery modes. Lives here (not in eink_ripple.dart) because it reads
+/// [ReaderMode]: eink_ripple.dart must stay import-light to keep the
+/// architecture gate's business graph acyclic.
+RippleSweep? galleryRippleSweep(ReaderMode mode, {required bool forward}) {
+  final sweep = switch (mode) {
+    ReaderMode.galleryLeftToRight => RippleSweep.leftward,
+    ReaderMode.galleryRightToLeft => RippleSweep.rightward,
+    ReaderMode.galleryTopToBottom => RippleSweep.upward,
+    _ => null,
+  };
+  return forward ? sweep : sweep?.opposite;
+}
 
 /// Application composition for reader content, view inputs and shell actions.
 class ReaderImagesHost extends StatelessWidget {
@@ -162,7 +177,7 @@ class ReaderImagesHost extends StatelessWidget {
         navigation: reader.controller,
         onViewportChanged: viewportChanged,
         onReady: () => reader.chapterNavigation.report(chapterNavigation, 0),
-        onPageReported: (comments, refreshEInk) {
+        onPageReported: (comments, refreshEInk, forward) {
           if (!canAct() || !identical(reader.controller.content, content)) {
             return;
           }
@@ -170,7 +185,11 @@ class ReaderImagesHost extends StatelessWidget {
           if (comments && shell.isOpen) shell.openOrClose();
           if (refreshEInk) {
             shell.requestPageTurnFlash();
-            shell.requestEInkRefresh();
+            final flashed = shell.requestEInkRefresh();
+            final sweep = galleryRippleSweep(reader.mode, forward: forward);
+            if (sweep != null) {
+              shell.requestEInkRipple(sweep, flashed: flashed);
+            }
           }
         },
         onChapterChanged: () {

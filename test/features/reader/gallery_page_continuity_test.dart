@@ -180,7 +180,7 @@ class _Fixture {
             navigation: navigation,
             onViewportChanged: viewport.update,
             onReady: () {},
-            onPageReported: (_, _) {},
+            onPageReported: (_, _, _) {},
             onChapterChanged: () {},
             onCollectImage: () {},
             readerSize: () => size,

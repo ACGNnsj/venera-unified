@@ -244,6 +244,12 @@ abstract final class ReaderPreferences {
     integer: false,
   );
   static const flashOnPageTurn = BoolPreference('flashOnPageTurn', false);
+  static const eInkRipplePageTurn = BoolPreference('eInkRipplePageTurn', false);
+  static const eInkRippleSpeed = ChoicePreference(
+    'eInkRippleSpeed',
+    'standard',
+    ['slower', 'standard', 'faster'],
+  );
   static const upscaleEnabled = BoolPreference('upscaleEnabled', false);
   static const upscaleApplyToDownloads = BoolPreference(
     'upscaleApplyToDownloads',
@@ -296,6 +302,8 @@ abstract final class ReaderPreferences {
     readerPageMarginEnabled,
     readerPageMarginPercent,
     flashOnPageTurn,
+    eInkRipplePageTurn,
+    eInkRippleSpeed,
     upscaleEnabled,
     upscaleApplyToDownloads,
   ];

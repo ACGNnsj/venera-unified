@@ -132,6 +132,12 @@ final settingsSearchIndex = <SettingsSearchEntry>[
   const SettingsSearchEntry('Refresh interval', 1, keywords: ['e-ink']),
   const SettingsSearchEntry('Refresh flash style', 1, keywords: ['e-ink']),
   const SettingsSearchEntry(
+    'Ripple page turn',
+    1,
+    keywords: ['e-ink', 'ripple'],
+  ),
+  const SettingsSearchEntry('Ripple speed', 1, keywords: ['e-ink', 'ripple']),
+  const SettingsSearchEntry(
     'Flash white screen on page turn',
     1,
     keywords: ['e-ink', 'ghosting'],

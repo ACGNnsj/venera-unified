@@ -580,7 +580,7 @@ void main() {
       );
       await tester.pumpWidget(const SizedBox());
       view.onCollectImage();
-      view.onPageReported(true, true);
+      view.onPageReported(true, true, true);
       view.onChapterChanged();
       expect(tester.takeException(), isNull);
     } finally {

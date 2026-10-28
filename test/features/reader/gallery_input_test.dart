@@ -62,7 +62,7 @@ void main() {
                   navigation: navigation,
                   onViewportChanged: viewport.update,
                   onReady: () {},
-                  onPageReported: (_, _) {},
+                  onPageReported: (_, _, _) {},
                   onChapterChanged: () {},
                   onCollectImage: () => fail('No image to collect'),
                   readerSize: () => const Size(800, 600),
@@ -119,7 +119,7 @@ void main() {
         final imageWork = ImageWork();
         var ready = 0;
         var collected = 0;
-        final reports = <(bool, bool)>[];
+        final reports = <(bool, bool, bool)>[];
         final reads = <ReaderImageAddress>[];
         late ReaderGalleryData data;
         final navigation = ReaderController(
@@ -170,8 +170,8 @@ void main() {
                 navigation: navigation,
                 onViewportChanged: binding.update,
                 onReady: () => ready++,
-                onPageReported: (comments, refresh) =>
-                    reports.add((comments, refresh)),
+                onPageReported: (comments, refresh, forward) =>
+                    reports.add((comments, refresh, forward)),
                 onChapterChanged: () => fail('Only one chapter exists'),
                 onCollectImage: () => collected++,
                 readerSize: () => size,
@@ -350,7 +350,7 @@ void main() {
           navigation.toPage(data.totalPages, animated: false);
           await tester.pump();
           expect(find.text('Injected comments'), findsOneWidget);
-          expect(reports.last, (true, false));
+          expect(reports.last, (true, false, true));
           state.fingers = 1;
           state.handleLongPressDown(Offset.zero);
           state.handleLongPressUp(Offset.zero);

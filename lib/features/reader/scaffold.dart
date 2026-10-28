@@ -21,6 +21,7 @@ import 'package:venera_unified/features/reader/chapters.dart';
 import 'package:venera_unified/features/reader/chapter_menu.dart';
 import 'package:venera_unified/features/reader/eink_refresh.dart';
 import 'package:venera_unified/features/reader/eink_refresh_controller.dart';
+import 'package:venera_unified/features/reader/eink_ripple.dart';
 import 'page_margin.dart';
 import 'package:venera_unified/features/reader/gesture_port.dart';
 import 'package:venera_unified/features/reader/image_favorite_swipe.dart';
@@ -204,20 +205,41 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
     if (mounted) setState(() {});
   }
 
-  void requestEInkRefresh() {
+  /// Returns whether a full refresh was armed for this turn, so the ripple
+  /// can stand down (it would be invisible under the flash anyway).
+  bool requestEInkRefresh() {
     if (!mounted || !widget.data.gallery) {
-      return;
+      return false;
     }
 
     final settings = widget.data.preferences;
     if (!settings.eInkRefreshEnabled) {
       _eInkRefreshController.reset();
-      return;
+      return false;
     }
-    _eInkRefreshController.onPageChanged(
+    return _eInkRefreshController.onPageChanged(
       interval: settings.eInkRefreshInterval,
       durationMilliseconds: settings.eInkRefreshDuration,
       style: EInkRefreshStyle.fromKey(settings.eInkRefreshStyle),
+    );
+  }
+
+  /// Arms the iReader panel ripple for a settled gallery page turn, unless a
+  /// full refresh covers this turn. Fire-and-forget: the command only primes
+  /// the next native screen update.
+  void requestEInkRipple(RippleSweep sweep, {required bool flashed}) {
+    if (!mounted || !widget.data.gallery || flashed) {
+      return;
+    }
+    final settings = widget.data.preferences;
+    if (!settings.eInkRipplePageTurn || !EinkPanel.rippleSupported) {
+      return;
+    }
+    unawaited(
+      EinkPanel.queueRipple(
+        sweep,
+        speed: RippleSpeed.fromKey(settings.eInkRippleSpeed),
+      ),
     );
   }
 

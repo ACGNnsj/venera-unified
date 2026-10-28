@@ -19,6 +19,7 @@ import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
+import 'package:venera_unified/features/reader/eink_ripple.dart';
 
 class ReaderSettings extends StatefulWidget {
   const ReaderSettings({
@@ -49,6 +50,9 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
   void initState() {
     super.initState();
     appdata.settings.addListener(_refresh);
+    // The ripple switch only shows on supported panels; refresh once the
+    // probe completes (startup already probed, this is usually instant).
+    EinkPanel.probeRipple().then((_) => _refresh());
   }
 
   @override
@@ -311,6 +315,42 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
               ],
             ),
           ),
+          if (EinkPanel.rippleSupported) ...[
+            SwitchSetting.reader(
+              title: "Ripple page turn".tl,
+              subtitle:
+                  "Use the system ripple effect when turning pages in gallery modes. Only works on supported e-ink panels."
+                      .tl,
+              preference: ReaderPreferences.eInkRipplePageTurn,
+              onChanged: () {
+                setState(() {});
+                widget.onChanged?.call("eInkRipplePageTurn");
+              },
+              comicId: isEnabledSpecificSettings ? widget.comicId : null,
+              comicSource: isEnabledSpecificSettings
+                  ? widget.comicSource
+                  : null,
+              useDeviceSettings: useDeviceSpecificSettings,
+            ).toSliver(),
+            if (_value(ReaderPreferences.eInkRipplePageTurn) == true)
+              SelectSetting.reader(
+                title: "Ripple speed".tl,
+                preference: ReaderPreferences.eInkRippleSpeed,
+                optionTranslation: {
+                  "slower": "Slower".tl,
+                  "standard": "Standard".tl,
+                  "faster": "Faster".tl,
+                },
+                onChanged: () {
+                  widget.onChanged?.call("eInkRippleSpeed");
+                },
+                comicId: isEnabledSpecificSettings ? widget.comicId : null,
+                comicSource: isEnabledSpecificSettings
+                    ? widget.comicSource
+                    : null,
+                useDeviceSettings: useDeviceSpecificSettings,
+              ).toSliver(),
+          ],
           SwitchSetting.reader(
             title: "Flash white screen on page turn".tl,
             subtitle:

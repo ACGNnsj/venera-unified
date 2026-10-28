@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:display_mode/display_mode.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/features/reader/eink_ripple.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
@@ -67,6 +70,9 @@ Future<void> init(CoreBootstrap core) async {
     } catch (e) {
       Log.error("Display Mode", "Failed to set high refresh rate: $e");
     }
+    // Probe the iReader ripple panel once; the reader and settings page read
+    // the cached result. Fire-and-forget, never blocks startup.
+    unawaited(EinkPanel.probeRipple());
   }
   FlutterError.onError = (details) {
     Log.error("Unhandled Exception", "${details.exception}\n${details.stack}");

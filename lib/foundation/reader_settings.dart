@@ -131,4 +131,6 @@ class ReaderSettings {
   double get readerPageMarginPercent =>
       _values['readerPageMarginPercent'] as double;
   bool get flashOnPageTurn => _values['flashOnPageTurn'] as bool;
+  bool get eInkRipplePageTurn => _values['eInkRipplePageTurn'] as bool;
+  String get eInkRippleSpeed => _values['eInkRippleSpeed'] as String;
 }
