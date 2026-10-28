@@ -312,6 +312,7 @@ class LocalFavoritesManager with ChangeNotifier {
     String? updateTime, {
     required int generation,
     required void Function() checkActive,
+    int? chapterCount,
   }) {
     final captured = comic.detached();
     return _mutate(() {
@@ -322,6 +323,7 @@ class LocalFavoritesManager with ChangeNotifier {
         captured,
         updateTime,
         DateTime.now().millisecondsSinceEpoch,
+        chapterCount: chapterCount,
       );
       if (updated) {
         _updates.recordCommittedUpdate(

@@ -75,6 +75,7 @@ Future<ComicUpdateResult> updateComic(
       info.findUpdateTime(),
       generation: sourceGeneration,
       checkActive: request.check,
+      chapterCount: info.chapters?.length,
     );
     return ComicUpdateResult(updated, null);
   } catch (error, stack) {

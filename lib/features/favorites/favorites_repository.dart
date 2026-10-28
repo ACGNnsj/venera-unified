@@ -40,9 +40,13 @@ class FavoritesRepository {
     }
   });
 
-  bool isPreparedForFollowUpdates(String folder) => _columns(
-    folder,
-  ).containsAll(['last_update_time', 'has_new_update', 'last_check_time']);
+  bool isPreparedForFollowUpdates(String folder) =>
+      _columns(folder).containsAll([
+        'last_update_time',
+        'has_new_update',
+        'last_check_time',
+        'chapter_count',
+      ]);
 
   void prepareForFollowUpdates(String folder, {required bool clearData}) =>
       _transaction(() {
@@ -51,6 +55,7 @@ class FavoritesRepository {
           ('last_update_time', 'TEXT'),
           ('has_new_update', 'INT'),
           ('last_check_time', 'INT'),
+          ('chapter_count', 'INT'),
         ]) {
           if (!columns.contains(name)) {
             db.execute('ALTER TABLE ${_table(folder)} ADD COLUMN $name $type;');
@@ -212,29 +217,56 @@ class FavoritesRepository {
 
   /// Metadata and tracking time are one logical commit. An unchanged time
   /// preserves an unread update flag from a previous check.
+  ///
+  /// Narrow chapter-count fallback (lll LL-10): only when [updateTime] is
+  /// missing does [chapterCount] decide. A present time always wins, even if
+  /// the count grew — no dual-signal OR.
   bool applyFollowUpdate(
     String folder,
     FavoriteItem item,
     String? updateTime,
-    int checkedAt,
-  ) => _transaction(() {
+    int checkedAt, {
+    int? chapterCount,
+  }) => _transaction(() {
     final row = db.select(
-      'SELECT last_update_time FROM ${_table(folder)} WHERE id = ? AND type = ?;',
+      'SELECT last_update_time, ifnull(chapter_count, 0) AS chapter_count FROM ${_table(folder)} WHERE id = ? AND type = ?;',
       [item.id, item.type.value],
     ).firstOrNull;
     if (row == null) throw StateError('Favorite no longer exists');
     updateInfo(folder, item);
-    if (updateTime == null || row['last_update_time'] == updateTime) {
+    if (updateTime != null) {
+      if (row['last_update_time'] == updateTime) {
+        updateCheckTime(folder, item.id, item.type.value, checkedAt);
+        return false;
+      }
+      return updateUpdateTime(
+        folder,
+        item.id,
+        item.type.value,
+        updateTime,
+        checkedAt,
+      );
+    }
+    if (chapterCount == null) {
       updateCheckTime(folder, item.id, item.type.value, checkedAt);
       return false;
     }
-    return updateUpdateTime(
-      folder,
-      item.id,
-      item.type.value,
-      updateTime,
-      checkedAt,
-    );
+    // No baseline yet counts as 0, so the first sighting of a missing-time
+    // comic flags it once, matching lll. The count is always rebaselined, but
+    // an unchanged count preserves an unread flag from a previous check.
+    final changed = chapterCount > (row['chapter_count'] as int? ?? 0);
+    if (changed) {
+      db.execute(
+        'UPDATE ${_table(folder)} SET chapter_count = ?, has_new_update = 1, last_check_time = ? WHERE id = ? AND type = ?;',
+        [chapterCount, checkedAt, item.id, item.type.value],
+      );
+    } else {
+      db.execute(
+        'UPDATE ${_table(folder)} SET chapter_count = ?, last_check_time = ? WHERE id = ? AND type = ?;',
+        [chapterCount, checkedAt, item.id, item.type.value],
+      );
+    }
+    return changed;
   });
 
   void transferToFolders(
@@ -384,9 +416,7 @@ class FavoritesRepository {
   }) {
     if (limit == null && offset == 0) {
       return db
-          .select(
-            'SELECT * FROM ${_table(folder)} ORDER BY display_order;',
-          )
+          .select('SELECT * FROM ${_table(folder)} ORDER BY display_order;')
           .map(favoriteItemFromRow)
           .toList();
     }
