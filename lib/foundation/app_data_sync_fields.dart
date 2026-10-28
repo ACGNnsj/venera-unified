@@ -17,7 +17,13 @@ const appDataLocalFields = {
 };
 
 /// Native registrations must not travel in portable backups or WebDAV uploads.
-const appDataDeviceOnlyFields = {'windowsWindowHotkey', 'appLauncherIcon'};
+const appDataDeviceOnlyFields = {
+  'windowsWindowHotkey',
+  'appLauncherIcon',
+  // Shortcuts follow the machine: modifiers differ between macOS and the
+  // rest, and a binding free on one PC may be taken on another.
+  'keyboardShortcuts',
+};
 
 const appDataOptionalArchiveFields = {'backupWebdav', 'backupWebdavPath'};
 

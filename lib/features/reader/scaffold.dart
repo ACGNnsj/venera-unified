@@ -62,6 +62,7 @@ class ReaderScaffold extends StatefulWidget {
     required this.createChapterComments,
     required this.chapterNavigation,
     required this.child,
+    this.onScaffoldChanged,
   });
 
   final ReaderShellData data;
@@ -84,6 +85,10 @@ class ReaderScaffold extends StatefulWidget {
   final ReaderChapterCommentsRequest? Function() createChapterComments;
   final ReaderChapterNavigationAction? chapterNavigation;
   final Widget child;
+
+  /// Reports this state for keyboard-shortcut dispatch (menu/collect).
+  /// Wired by composition only; the scaffold never imports the reader.
+  final void Function(ReaderScaffoldState?)? onScaffoldChanged;
 
   @override
   State<ReaderScaffold> createState() => ReaderScaffoldState();
@@ -131,10 +136,12 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
     super.initState();
     _brightnessPreview.addListener(update);
     widget.favoriteChanges.addListener(_imageFavoritesChanged);
+    widget.onScaffoldChanged?.call(this);
   }
 
   @override
   void dispose() {
+    widget.onScaffoldChanged?.call(null);
     _brightnessPreview.dispose();
     widget.favoriteChanges.removeListener(_imageFavoritesChanged);
     unawaited(_favorites.dispose());

@@ -10,6 +10,7 @@ import 'package:venera_unified/components/pop_up_widget.dart';
 import 'package:venera_unified/components/scroll.dart';
 import 'package:venera_unified/components/window_hotkey_scope.dart';
 import 'package:venera_unified/features/settings/window_hotkey_setting.dart';
+import 'package:venera_unified/features/settings/keyboard_shortcuts_settings.dart';
 import 'package:venera_unified/features/settings/launcher_icon_settings.dart';
 import 'package:venera_unified/features/settings/setting_components.dart';
 import 'package:venera_unified/features/settings/app_controls.dart';
@@ -175,16 +176,26 @@ class _AppSettingsState extends State<AppSettings> {
           },
         ).toSliver(),
         if (!App.isLinux) const AuthorizationRequiredSetting().toSliver(),
-        if (App.isWindows) ...[
+        if (App.isDesktop) ...[
           SettingPartTitle(title: 'Window'.tl, icon: Icons.desktop_windows),
-          if (hotkey != null)
+          if (App.isWindows && hotkey != null)
             WindowHotkeySetting(controller: hotkey).toSliver(),
-          SwitchSetting.preference(
-            title: 'Minimize to tray'.tl,
-            subtitle:
-                'Closing the window hides it into the tray instead of exiting.'
-                    .tl,
-            preference: AppPreferences.minimizeToTray,
+          if (App.isWindows)
+            SwitchSetting.preference(
+              title: 'Minimize to tray'.tl,
+              subtitle:
+                  'Closing the window hides it into the tray instead of exiting.'
+                      .tl,
+              preference: AppPreferences.minimizeToTray,
+            ).toSliver(),
+          ListTile(
+            title: Text("Keyboard shortcuts".tl),
+            subtitle: Text("Fullscreen, page turning and the reader menu".tl),
+            leading: const Icon(Icons.keyboard_outlined),
+            trailing: const Icon(Icons.arrow_right),
+            onTap: () {
+              context.to(() => const KeyboardShortcutsSettings());
+            },
           ).toSliver(),
         ],
         if (LauncherIconService.isSupported)

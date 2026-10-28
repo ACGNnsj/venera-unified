@@ -56,6 +56,7 @@ import 'package:venera_unified/foundation/reader_preferences.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
 import 'package:venera_unified/foundation/comic_layout.dart';
 import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/app_shortcuts.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -1652,6 +1653,10 @@ class ReaderState extends State<Reader>
 
   ReaderWindowController? _windowController;
   Future<void>? _windowClosing;
+  // Fullscreen state from before the reader attached. The coordinator only
+  // tracks what it set itself, so entering from a root-toggle fullscreen
+  // needs this snapshot to leave (and restore) the outside state alone.
+  bool? _fullscreenBeforeReading;
   void Function()? _releaseWindowHost;
   WindowFrameController? _exitFrame;
   final _exitGuardKey = GlobalKey<ReaderExitGuardState>();
@@ -1736,6 +1741,12 @@ class ReaderState extends State<Reader>
     frame.addExitTask(_prepareWindowEffects);
     if (frame.isClosing) _holdWindowEffects();
     _observeWindow(_windowController!.attach());
+    // Best-effort snapshot: set(true) is a frame-only sync when the native
+    // state already matches, so this never flashes the window itself.
+    windowManager.isFullScreen().then((fullscreen) {
+      _fullscreenBeforeReading ??= fullscreen;
+      if (fullscreen) unawaited(WindowFullscreen.set(true));
+    }, onError: (_) {});
   }
 
   // window_manager addresses one native window per engine. Keep its serial
@@ -1789,6 +1800,14 @@ class ReaderState extends State<Reader>
           _exitFrame?.removeCloseStartListener(_holdWindowEffects);
           _exitFrame?.removeCloseFailureListener(_resumeWindowEffects);
           _exitFrame?.removeExitTask(_prepareWindowEffects);
+          // The coordinator leaves the window windowed once the last reader
+          // owner detaches; if the reader entered from fullscreen, put back
+          // the outside state. set() skips native calls when already there.
+          final restoreFullscreen = _fullscreenBeforeReading;
+          _fullscreenBeforeReading = null;
+          if (restoreFullscreen == true) {
+            unawaited(WindowFullscreen.set(true));
+          }
         },
         onError: (Object _, StackTrace _) {
           _windowClosing = null;
@@ -1883,14 +1902,75 @@ class ReaderState extends State<Reader>
 
   void onKeyEvent(KeyEvent event) {
     if (_sessionFrozen) return;
-    if (event.logicalKey == LogicalKeyboardKey.f12 && event is KeyUpEvent) {
-      fullscreen();
+    if (event is! KeyUpEvent) {
+      final action = AppShortcuts.match(event, const {
+        ShortcutScope.app,
+        ShortcutScope.reader,
+      });
+      // App-scope actions run from the root handler; either way the key is
+      // taken, so the built-in keys never act on it as well.
+      if (action != null) {
+        if (action.scope == ShortcutScope.reader) {
+          _runShortcut(action, event is KeyRepeatEvent);
+        }
+        return;
+      }
     }
     if (!focusNode.hasPrimaryFocus) return;
     if (event is KeyDownEvent && _handleNavigationKey(event.logicalKey)) {
       return;
     }
     imageViewController?.handleKeyEvent(event);
+  }
+
+  ReaderScaffoldState? _scaffoldState;
+
+  /// Wired by [ReaderShellHost]; see [ReaderScaffold.onScaffoldChanged].
+  void setScaffoldState(ReaderScaffoldState? state) => _scaffoldState = state;
+
+  DateTime _lastShortcutTurn = DateTime.fromMillisecondsSinceEpoch(0);
+
+  void _runShortcut(ShortcutAction action, bool isRepeat) {
+    final turnsPage =
+        action == ShortcutAction.nextPage || action == ShortcutAction.prevPage;
+    // Held keys turn pages at the arrow keys' pace; other actions fire once.
+    if (isRepeat) {
+      if (!turnsPage) return;
+      final gap = preferences.enablePageAnimation
+          ? const Duration(milliseconds: 200)
+          : const Duration(milliseconds: 50);
+      if (DateTime.now().difference(_lastShortcutTurn) < gap) return;
+    }
+    if (turnsPage) _lastShortcutTurn = DateTime.now();
+    final scaffold = _scaffoldState;
+    switch (action) {
+      // Same as the volume keys: past the last page, on to the next chapter.
+      // A held key stops at the chapter end instead of racing through them.
+      case ShortcutAction.nextPage:
+        if (isRepeat) {
+          toNextPage();
+        } else {
+          _handleNavigationKey(LogicalKeyboardKey.pageDown);
+        }
+      case ShortcutAction.prevPage:
+        if (isRepeat) {
+          toPrevPage();
+        } else {
+          _handleNavigationKey(LogicalKeyboardKey.pageUp);
+        }
+      case ShortcutAction.nextChapter:
+        toNextChapter();
+      case ShortcutAction.prevChapter:
+        toPrevChapter(toLastPage: true);
+      case ShortcutAction.toggleReaderMenu:
+        if (scaffold?.mounted == true) scaffold!.openOrClose();
+      case ShortcutAction.toggleAutomaticReading:
+        toggleAutomaticReading();
+      case ShortcutAction.collectImage:
+        if (scaffold?.mounted == true) scaffold!.addImageFavorite();
+      case ShortcutAction.toggleFullscreen:
+        break;
+    }
   }
 
   /// 桌面端的翻页快捷键。返回 true 表示这次按键已被消化，不再交给图片视图。

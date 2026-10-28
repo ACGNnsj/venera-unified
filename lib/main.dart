@@ -21,7 +21,9 @@ import 'package:venera_unified/app_runtime/background_sync.dart';
 import 'package:venera_unified/app_runtime/interactive_platform_bindings.dart';
 import 'package:venera_unified/app_runtime/window_placement.dart';
 import 'package:venera_unified/app_runtime/windows_hotkey.dart';
+import 'package:venera_unified/components/window_frame.dart';
 import 'package:venera_unified/components/window_hotkey_scope.dart';
+import 'package:venera_unified/foundation/app_shortcuts.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/translations.dart';
@@ -41,7 +43,6 @@ import 'package:venera_unified/foundation/file_interaction.dart';
 import 'components/gesture.dart';
 import 'components/js_ui.dart';
 import 'components/message.dart';
-import 'components/window_frame.dart';
 import 'components/window_selection_task.dart';
 import 'foundation/app.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
@@ -127,6 +128,9 @@ void main(List<String> args) {
           );
           runApp(MyApp(host: host));
           applicationShown = true;
+          if (App.isDesktop) {
+            AppShortcuts.install(onToggleFullscreen: WindowFullscreen.toggle);
+          }
           await placement?.initialize();
         } catch (error, stack) {
           Log.error('Startup', error, stack);

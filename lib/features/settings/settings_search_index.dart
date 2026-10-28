@@ -352,6 +352,12 @@ final settingsSearchIndex = <SettingsSearchEntry>[
     keywords: const ['icon', 'launcher', 'logo'],
     visible: () => LauncherIconService.isSupported,
   ),
+  SettingsSearchEntry(
+    'Keyboard shortcuts',
+    5,
+    keywords: const ['hotkey', 'shortcut', 'keyboard', 'fullscreen'],
+    visible: () => App.isDesktop,
+  ),
 
   // --- 6: Network (network.dart) ---
   const SettingsSearchEntry('Proxy', 6, keywords: ['vpn', 'socks', 'http']),

@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/consts.dart';
 import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/log.dart';
 import 'package:venera_unified/foundation/navigation_admission.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
@@ -100,6 +101,50 @@ class WindowFrame extends StatefulWidget {
 typedef WindowCloseListener = bool Function();
 typedef WindowFinalizer = Future<void> Function(Future<void> Function() drain);
 
+/// App-scope fullscreen executor (the fullscreen keyboard shortcut and the
+/// reader's fullscreen snapshot restore). Requests run one at a time so a
+/// quick double toggle can't interleave the hide / switch / show steps.
+///
+/// This bypasses the reader's ownership coordinator on purpose: it only runs
+/// while no reader owner is attached (in-reader toggles keep using the
+/// controller). The frame hook below is the only frame coupling: a visibility
+/// read/write pair installed by [_WindowFrameState], so the context-less
+/// executor can still hide the app-drawn title bar.
+abstract final class WindowFullscreen {
+  static Future<void> _queue = Future.value();
+
+  static void Function(bool)? _setFrameVisible;
+
+  /// Installs (or, with null, clears) the frame visibility hook.
+  static void installFrameHook({void Function(bool)? setVisible}) {
+    _setFrameVisible = setVisible;
+  }
+
+  static Future<void> toggle() => _enqueue(() async {
+    await _apply(!await windowManager.isFullScreen());
+  });
+
+  static Future<void> set(bool fullscreen) =>
+      _enqueue(() => _apply(fullscreen));
+
+  static Future<void> _enqueue(Future<void> Function() task) {
+    if (!App.isDesktop) return Future.value();
+    return _queue = _queue.then((_) => task()).catchError((Object e) {
+      Log.error('Window', 'Failed to switch fullscreen: $e');
+    });
+  }
+
+  static Future<void> _apply(bool fullscreen) async {
+    if (await windowManager.isFullScreen() != fullscreen) {
+      await windowManager.hide();
+      await windowManager.setFullScreen(fullscreen);
+      await windowManager.show();
+    }
+    // The title bar is drawn by the app; fullscreen hides it.
+    _setFrameVisible?.call(!fullscreen);
+  }
+}
+
 class _WindowFrameState extends State<WindowFrame> with WindowListener {
   bool isWindowFrameHidden = false;
   bool useDarkTheme = false;
@@ -126,6 +171,7 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
   void initState() {
     super.initState();
     if (App.isDesktop) windowManager.addListener(this);
+    WindowFullscreen.installFrameHook(setVisible: setWindowFrame);
     if (widget.isFinalizing?.call() == true) {
       _finalizing = true;
       _closing = true;
@@ -142,6 +188,7 @@ class _WindowFrameState extends State<WindowFrame> with WindowListener {
 
   @override
   void dispose() {
+    WindowFullscreen.installFrameHook();
     if (App.isDesktop) windowManager.removeListener(this);
     _contentFocus.dispose();
     _shutdownFocus.dispose();
