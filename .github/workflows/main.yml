@@ -75,10 +75,6 @@ jobs:
           path: outputs
       - uses: actions/download-artifact@v8
         with:
-          name: windows_build_arm64
-          path: outputs
-      - uses: actions/download-artifact@v8
-        with:
           name: deb_build
           path: outputs
       - uses: actions/download-artifact@v8
