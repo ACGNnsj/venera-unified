@@ -161,7 +161,7 @@ jobs:
   Build_Windows:
     if: ${{ inputs.build_windows }}
     runs-on: windows-2025
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
       - name: 安装 Inno Setup
@@ -176,6 +176,8 @@ jobs:
         run: |
           flutter pub get --enforce-lockfile
           python windows/build.py
+      - name: 构建 Windows ARM64 安装包
+        run: python windows/build_arm64.py
       - name: 验证 Windows 分享请求与 COM 归属
         shell: pwsh
         run: |
@@ -197,6 +199,15 @@ jobs:
           if ($empty.Count -gt 0) {
             throw "Windows 构建产物包含空文件：$($empty.Name -join ', ')"
           }
+          $armZip = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraUnified-*-windows-arm64.zip')
+          $armInstaller = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraUnified-*-windows-arm64-installer.exe')
+          if ($armZip.Count -ne 1) { throw "应当恰好生成一个 Windows ARM64 zip，实际为 $($armZip.Count)。" }
+          if ($armInstaller.Count -ne 1) { throw "应当恰好生成一个 Windows ARM64 安装包，实际为 $($armInstaller.Count)。" }
+          $armArtifacts = @($armZip + $armInstaller)
+          $armEmpty = @($armArtifacts | Where-Object { $_.Length -le 0 })
+          if ($armEmpty.Count -gt 0) {
+            throw "Windows ARM64 构建产物包含空文件：$($armEmpty.Name -join ', ')"
+          }
           Add-Type -AssemblyName System.IO.Compression.FileSystem
           $expectedRoot = [System.IO.Path]::GetFileNameWithoutExtension($zip[0].Name)
           $archive = [System.IO.Compression.ZipFile]::OpenRead($zip[0].FullName)
@@ -214,6 +225,7 @@ jobs:
           } finally {
             $archive.Dispose()
           }
+          $artifacts = @($artifacts + $armArtifacts)
           $artifacts | Sort-Object Name | ForEach-Object { "$($_.Name) $($_.Length) bytes" }
       - name: 编译并运行 Windows 原生启动测试
         shell: pwsh
@@ -243,6 +255,8 @@ jobs:
           path: |
             build/windows/VeneraUnified-*-windows.zip
             build/windows/VeneraUnified-*-windows-installer.exe
+            build/windows/VeneraUnified-*-windows-arm64.zip
+            build/windows/VeneraUnified-*-windows-arm64-installer.exe
           if-no-files-found: error
           retention-days: 7
 
