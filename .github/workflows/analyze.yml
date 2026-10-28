@@ -197,7 +197,7 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y cmake ninja-build g++ libsqlite3-dev
           python3 .github/scripts/prepare_linux_test_libraries.py
-      - run: flutter test --coverage
+      - run: flutter test --coverage --fail-fast
         env:
           LD_LIBRARY_PATH: ${{ github.workspace }}/build/test-native/lib
       - name: 汇总 Dart 覆盖率
