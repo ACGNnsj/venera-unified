@@ -37,10 +37,19 @@ class WindowsBuildTest(unittest.TestCase):
             self.assertTrue(release.exists())
 
     def test_build_failure_does_not_package_stale_outputs(self):
-        with patch.object(build, 'read_version', return_value='1.2.3'), patch.object(build, 'validate_icon_resources'), patch.object(build, 'clean_windows_runner_build'), patch.object(build, 'run', side_effect=RuntimeError('build failed')), patch.object(build, 'create_portable_zip') as package:
+        with patch.object(build, 'read_version', return_value='1.2.3'), patch.object(build, 'validate_icon_resources'), patch.object(build, 'clean_windows_runner_build'), patch.object(build.platform, 'machine', return_value='ARM64'), patch.object(build, 'run', side_effect=RuntimeError('build failed')), patch.object(build, 'create_portable_zip') as package:
             with self.assertRaisesRegex(RuntimeError, 'build failed'):
                 build.main('arm64')
             package.assert_not_called()
+
+    def test_arm64_build_refuses_non_arm_host(self):
+        import platform as host_platform
+
+        if host_platform.machine().lower() in ('arm64', 'aarch64'):
+            self.skipTest('requires a non-ARM host')
+        with patch.object(build, 'read_version', return_value='1.2.3'), patch.object(build, 'validate_icon_resources'), patch.object(build, 'clean_windows_runner_build'):
+            with self.assertRaisesRegex(RuntimeError, 'require an ARM64 host'):
+                build.main('arm64')
 
     def test_installer_failure_restores_exact_template_bytes(self):
         for arch in ('x64', 'arm64'):
