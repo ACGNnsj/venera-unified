@@ -51,7 +51,7 @@ Future<void> showCollectionTabMenu({
           context: context,
           title: 'Display name'.tl,
           initialValue: member.displayName,
-          hintText: 'Leave empty to use the comic\'s title'.tl,
+          hintText: "Leave empty to use the comic's title".tl,
           onConfirm: (value) {
             unawaited(
               apply(() {
