@@ -8,8 +8,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as image;
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/image_provider/reader_image.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/image_provider/reader_image.dart';
 
 const _width = int.fromEnvironment('READER_PROBE_WIDTH', defaultValue: 1500);
 const _height = int.fromEnvironment('READER_PROBE_HEIGHT', defaultValue: 2400);
