@@ -10,6 +10,7 @@ from release_version import load_release_config
 PACKAGE_IDENTIFIER = "ACGNnsj.VeneraUnified"
 PACKAGE_PUBLISHER = "ACGNnsj/venera-unified"
 PACKAGE_NAME = "Venera Unified"
+PACKAGE_FILE_NAME = "VeneraUnified"
 PACKAGE_MONIKER = "venera-unified"
 MANIFEST_VERSION = "1.10.0"
 SCHEMA_BASE_URL = "https://aka.ms"
@@ -53,7 +54,7 @@ def package_version(version: str | None) -> str:
 def installer_url(version: str) -> str:
     return (
         f"{REPOSITORY_URL}/releases/download/v{version}/"
-        f"{PACKAGE_NAME}-{version}-windows-installer.exe"
+        f"{PACKAGE_FILE_NAME}-{version}-windows-installer.exe"
     )
 
 
@@ -66,7 +67,7 @@ def installer_sha256(path: Path) -> str:
 
 
 def expected_installer_name(version: str) -> str:
-    return f"{PACKAGE_NAME}-{version}-windows-installer.exe"
+    return f"{PACKAGE_FILE_NAME}-{version}-windows-installer.exe"
 
 
 def validate_installer_path(version: str, path: Path) -> None:

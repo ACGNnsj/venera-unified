@@ -41,20 +41,20 @@ jobs:
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "url=https://github.com/CyrilPeng/venera-next/releases/download/$tag/VeneraNext-$version-windows-installer.exe" >> "$GITHUB_OUTPUT"
+          echo "url=https://github.com/ACGNnsj/venera-unified/releases/download/$tag/VeneraUnified-$version-windows-installer.exe" >> "$GITHUB_OUTPUT"
       - name: 下载 Windows 安装包
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p dist
           gh release download "${{ steps.release.outputs.tag }}" \
-            --pattern "VeneraNext-${{ steps.release.outputs.version }}-windows-installer.exe" \
+            --pattern "VeneraUnified-${{ steps.release.outputs.version }}-windows-installer.exe" \
             --dir dist
       - name: 生成 Winget Manifest
         run: |
           python3 .github/scripts/generate_winget_manifest.py \
             --version "${{ steps.release.outputs.version }}" \
-            --installer "dist/VeneraNext-${{ steps.release.outputs.version }}-windows-installer.exe" \
+            --installer "dist/VeneraUnified-${{ steps.release.outputs.version }}-windows-installer.exe" \
             --release-date "$(date -u +%F)" \
             --output build/winget \
             --print-path
@@ -83,12 +83,12 @@ jobs:
             printf '## Winget Manifest\n\n'
             printf '`winget_manifest` 构建产物包含以下命令需要的 manifest 文件：\n\n'
             printf '```powershell\n'
-            printf 'winget install CyrilPeng.VeneraNext\n'
-            printf 'winget upgrade CyrilPeng.VeneraNext\n'
+            printf 'winget install ACGNnsj.VeneraUnified\n'
+            printf 'winget upgrade ACGNnsj.VeneraUnified\n'
             printf '```\n\n'
             printf '可以把生成的 manifest 目录提交到 `microsoft/winget-pkgs`；已有 winget 条目后，也可以使用 WingetCreate 更新：\n\n'
             printf '```powershell\n'
-            printf 'wingetcreate update CyrilPeng.VeneraNext -u "${{ steps.release.outputs.url }}" -v "${{ steps.release.outputs.version }}" -t <GitHub PAT> --submit\n'
+            printf 'wingetcreate update ACGNnsj.VeneraUnified -u "${{ steps.release.outputs.url }}" -v "${{ steps.release.outputs.version }}" -t <GitHub PAT> --submit\n'
             printf '```\n'
             if [[ "${{ inputs.submit_pr }}" == "true" ]]; then
               printf '\n已启用 `submit_pr`；请在工作流日志中查看创建的 PR 链接。\n'

@@ -96,7 +96,7 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           python3 .github/scripts/generate_winget_manifest.py \
             --version "$version" \
-            --installer "outputs/VeneraNext-${version}-windows-installer.exe" \
+            --installer "outputs/VeneraUnified-${version}-windows-installer.exe" \
             --release-date "$(date -u +%F)" \
             --output outputs/winget \
             --print-path
