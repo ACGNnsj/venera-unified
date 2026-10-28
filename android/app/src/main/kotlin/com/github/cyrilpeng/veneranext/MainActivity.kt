@@ -2,6 +2,7 @@ package com.github.cyrilpeng.veneranext
 
 import android.Manifest
 import android.app.Activity
+import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -151,6 +152,21 @@ class MainActivity : FlutterFragmentActivity() {
                     res.success(null)
                 }
 
+                // 桌面图标切换：立即启用目标 activity-alias、停用其余，用
+                // DONT_KILL_APP 保证不重启进程。所有 alias 都指向同一个
+                // MainActivity，运行中的组件不受影响，故可安全即时生效。
+                "setLauncherIcon" -> {
+                    val target = call.argument<String>("alias")
+                    if (target.isNullOrEmpty()) {
+                        res.error("INVALID_ARGUMENT", "alias is required", null)
+                        return@setMethodCallHandler
+                    }
+                    val ok = runCatching { applyLauncherIcon(target) }
+                        .onFailure { Log.w("VeneraUnified", "set launcher icon failed: ${it.message}") }
+                        .getOrDefault(false)
+                    res.success(ok)
+                }
+
                 "getDirectoryPath" -> {
                     val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
                     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
@@ -229,6 +245,24 @@ class MainActivity : FlutterFragmentActivity() {
 
         upscaleBridge?.close()
         upscaleBridge = UpscalePlugin.registerWith(this, flutterEngine.dartExecutor.binaryMessenger)
+
+        // iReader page-turn ripple (ported from VeneraX). The Dart side arms
+        // one command code per display rotation; native picks by rotation.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "venera/eink")
+            .setMethodCallHandler { call, res ->
+                when (call.method) {
+                    "rippleSupported" -> res.success(EinkPanel.rippleSupported)
+                    "queueRipple" -> {
+                        val codes = (call.arguments as? List<*>)
+                            ?.mapNotNull { (it as? Number)?.toInt() }
+                        res.success(
+                            codes != null && codes.size == 4 &&
+                                EinkPanel.queueRipple(codes, this)
+                        )
+                    }
+                    else -> res.notImplemented()
+                }
+            }
     }
 
     // In-app updates: validates the downloaded APK (private cache path,
@@ -338,6 +372,33 @@ class MainActivity : FlutterFragmentActivity() {
         } else {
             "No Proxy"
         }
+    }
+
+    // 与 AndroidManifest 中声明的 5 个 activity-alias 一一对应，短名与 Dart
+    // 侧 LauncherIconPreset.androidAlias 一致。切换时启用目标、停用其余，
+    // 任何时刻只有一个入口处于启用态（launcher 里就不会出现重复图标）。
+    private val launcherAliases =
+        listOf("IconDefault", "IconPurple", "IconGreen", "IconOrange", "IconSilver")
+
+    private fun applyLauncherIcon(alias: String): Boolean {
+        if (alias !in launcherAliases) return false
+        val pm = packageManager
+        fun setState(name: String, enabled: Boolean) {
+            pm.setComponentEnabledSetting(
+                ComponentName(this, "$packageName.$name"),
+                if (enabled) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP,
+            )
+        }
+        // Enable the target first, then disable the rest, so there is never a
+        // moment with zero enabled launcher entries (which could drop the app
+        // from the home screen on some launchers).
+        setState(alias, true)
+        for (name in launcherAliases) {
+            if (name != alias) setState(name, false)
+        }
+        return true
     }
 
     private fun clearVolumeChannel() {

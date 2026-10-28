@@ -68,5 +68,96 @@
   <string>Ensure that the operation is being performed by the user themselves.</string>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.books</string>
+	<!-- Alternate launcher icons, switched at runtime from AppDelegate's
+	     venera/method_channel handler ("setLauncherIcon").
+	     Keys (IconPurple / IconGreen / IconOrange / IconSilver) are the names
+	     passed to setAlternateIconName; each CFBundleIconFiles entry names the
+	     matching .appiconset inside Assets.xcassets (which carries the full
+	     iPhone + iPad size table, unlike loose PNGs). The primary icon stays
+	     in the asset catalog. Both iPhone and iPad blocks are required. -->
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundleAlternateIcons</key>
+		<dict>
+			<key>IconPurple</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>IconPurple</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>IconGreen</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>IconGreen</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>IconOrange</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>IconOrange</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>IconSilver</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>IconSilver</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+		</dict>
+	</dict>
+	<key>CFBundleIcons~ipad</key>
+	<dict>
+		<key>CFBundleAlternateIcons</key>
+		<dict>
+			<key>IconPurple</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>IconPurple</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>IconGreen</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>IconGreen</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>IconOrange</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>IconOrange</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>IconSilver</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>IconSilver</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+		</dict>
+	</dict>
 </dict>
 </plist>
