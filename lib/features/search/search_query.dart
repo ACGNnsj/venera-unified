@@ -1,4 +1,4 @@
-import 'package:venera_unified/features/comic_source/comic_source.dart';
+import 'package:venera_unified/features/comic_source/comic_source_api.dart';
 import 'package:venera_unified/foundation/res.dart';
 
 /// Parses a search query string with optional syntax and provides
