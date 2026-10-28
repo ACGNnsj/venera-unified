@@ -1,6 +1,7 @@
 import 'package:venera_unified/foundation/operation_failure.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/reader_preferences.dart';
 import 'dart:async' show Future;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'reader_image_processing.dart';
 import 'package:venera_unified/network/images.dart';
 import 'package:venera_unified/network/image_stream.dart';
 import 'base_image_provider.dart';
+import 'upscale/upscale_gate.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 
 class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
@@ -97,6 +99,14 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
         cancelSignal: BaseImageProvider.cancelSignalOf(checkStop),
       );
     }
+    // 超分（upscaleEnabled 门控，默认关；失败回退原图）。
+    imageBytes = await upscaleIfEnabled(
+      imageBytes,
+      cacheKey: 'reader:$cid:$eid:$page:${imageKey.hashCode}',
+      enabled: GlobalPreferenceStore(
+        appdata.settings,
+      ).read(ReaderPreferences.upscaleEnabled),
+    );
     return imageBytes;
   }
 

@@ -1,6 +1,8 @@
 import 'package:venera_unified/foundation/operation_failure.dart';
 import 'local_chapter_storage.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/reader_preferences.dart';
+import 'package:venera_unified/foundation/image_provider/upscale/upscale_gate.dart';
 import 'dart:async';
 import 'package:path/path.dart' as p;
 
@@ -461,9 +463,16 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
         if (data == null) {
           throw OperationFailure.message("Failed to download cover");
         }
-        var fileType = detectFileType(data);
+        var coverBytes = await upscaleIfEnabled(
+          data,
+          cacheKey: 'dl:$comicId:cover',
+          enabled: GlobalPreferenceStore(
+            appdata.settings,
+          ).read(ReaderPreferences.upscaleApplyToDownloads),
+        );
+        var fileType = detectFileType(coverBytes);
         var file = File(FilePath.join(path!, "cover${fileType.ext}"));
-        file.writeAsBytesSync(data);
+        file.writeAsBytesSync(coverBytes);
         return "file://${file.path}";
       });
       if (!_isCurrentRun(generation)) {
@@ -839,11 +848,21 @@ class _ImageDownloadWrapper {
         task.onData(progress.currentBytes - lastBytes);
         lastBytes = progress.currentBytes;
         if (progress.imageBytes != null) {
+          var bytes = progress.imageBytes!;
+          // 超分（upscaleApplyToDownloads 门控，默认关；失败回退原图）。
+          // 文件类型探测必须跑在超分之后（超分输出为 PNG）。
+          bytes = await upscaleIfEnabled(
+            bytes,
+            cacheKey: 'dl:${task.comicId}:$chapter:$index:${image.hashCode}',
+            enabled: GlobalPreferenceStore(
+              appdata.settings,
+            ).read(ReaderPreferences.upscaleApplyToDownloads),
+          );
           final uri = Uri.tryParse(image);
           final imagePath = uri?.path ?? image.split('?').first;
           final fallbackExtension = p.extension(imagePath);
           var fileType = detectFileType(
-            progress.imageBytes!,
+            bytes,
             fallbackExtension: fallbackExtension.isEmpty
                 ? null
                 : fallbackExtension,
@@ -854,9 +873,7 @@ class _ImageDownloadWrapper {
             continue;
           }
           var file = saveTo.joinFile(fileName);
-          final activeWrite = file
-              .writeAsBytes(progress.imageBytes!)
-              .then<void>((_) {});
+          final activeWrite = file.writeAsBytes(bytes).then<void>((_) {});
           _activeWrite = activeWrite;
           try {
             await activeWrite;

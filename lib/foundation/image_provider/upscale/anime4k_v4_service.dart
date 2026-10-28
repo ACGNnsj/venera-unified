@@ -44,6 +44,7 @@ class Anime4KV4Service {
 
   String? _cacheDir;
   String? _modelPath;
+  Future<void>? _initFuture;
 
   final Set<String> _processingKeys = {};
   static const int _maxConcurrentTasks = 2;
@@ -74,6 +75,12 @@ class Anime4KV4Service {
     } catch (e) {
       Log.error('Anime4KV4', 'init error: $e');
     }
+  }
+
+  /// 懒初始化：首次超分请求时触发一次即可，调用方无需显式启动钩子。
+  /// 可重复调用；并发调用共享同一个在途 init。
+  Future<void> ensureInitialized() {
+    return _initFuture ??= init();
   }
 
   /// 模型是否可用（已就绪到本地且当前平台支持）。
@@ -163,6 +170,8 @@ class Anime4KV4Service {
       // v4 依赖 Android 原生 ONNX Runtime，非 Android 不处理。
       return null;
     }
+    // 首次请求时懒初始化（抽取内置模型 + 建缓存目录），调用方无需启动钩子。
+    await ensureInitialized();
     if (_modelPath == null) {
       if (!await checkModelAvailable()) {
         Log.warning('Anime4KV4', 'Model not available, skipping for $cacheKey');

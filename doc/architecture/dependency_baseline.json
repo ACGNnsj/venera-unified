@@ -1051,6 +1051,7 @@
     "foundation/image_provider/upscale/anime4k_upscaler.dart",
     "foundation/image_provider/upscale/anime4k_v4_model_manager.dart",
     "foundation/image_provider/upscale/anime4k_v4_service.dart",
+    "foundation/image_provider/upscale/upscale_gate.dart",
     "foundation/image_save_work.dart",
     "foundation/image_work.dart",
     "foundation/init.dart",
