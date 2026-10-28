@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:venera_unified/components/message.dart';
 import 'package:venera_unified/components/settings_save_state.dart';
-import 'package:venera_unified/features/settings/pin_setup_dialog.dart';
+import 'package:venera_unified/features/settings/credential_setup_dialog.dart';
 import 'package:venera_unified/features/settings/setting_components.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
@@ -225,7 +225,9 @@ class CacheRetentionSetting extends StatelessWidget {
       );
       return ListTile(
         title: Text('Keep unused cache'.tl),
-        subtitle: Text('Remove cached images after this many days without use.'.tl),
+        subtitle: Text(
+          'Remove cached images after this many days without use.'.tl,
+        ),
         trailing: DropdownButton<int>(
           value: days,
           items: [
@@ -266,32 +268,40 @@ class _AuthorizationRequiredSettingState
     extends SettingsSaveState<AuthorizationRequiredSetting> {
   int _request = 0;
   bool? _preview;
-  bool? _hasPin;
+  AppLockType? _lockType;
+  bool _lockTypeLoaded = false;
 
   @override
   void initState() {
     super.initState();
     appdata.settings.addListener(_refresh);
-    _loadPinState();
+    _loadLockState();
   }
 
-  Future<void> _loadPinState() async {
-    final hasPin = await AuthStorage.hasPassword();
-    if (mounted) setState(() => _hasPin = hasPin);
+  Future<void> _loadLockState() async {
+    final type = await AuthStorage.credentialType();
+    if (mounted) {
+      setState(() {
+        _lockType = type;
+        _lockTypeLoaded = true;
+      });
+    }
   }
 
   Future<void> _managePin() async {
-    final changed = await PinSetupDialog.show(
-      context,
-      requiresCurrent: _hasPin ?? false,
-    );
-    if (!mounted || changed != true) return;
-    await _loadPinState();
+    final changed = await manageAppLockCredential(context);
+    if (!mounted || !changed) return;
+    await _loadLockState();
     if (!mounted) return;
-    context.showMessage(
-      message: (_hasPin ?? false) ? 'PIN is set'.tl : 'PIN cleared'.tl,
-    );
+    context.showMessage(message: _lockTypeMessage);
   }
+
+  String get _lockTypeMessage => switch (_lockType) {
+    AppLockType.pin => 'PIN is set'.tl,
+    AppLockType.password => 'Password is set'.tl,
+    AppLockType.pattern => 'Pattern is set'.tl,
+    _ => 'Lock removed'.tl,
+  };
 
   void _refresh() {
     if (mounted) setState(() {});
@@ -361,11 +371,16 @@ class _AuthorizationRequiredSettingState
           onChanged: _change,
         ),
         ListTile(
-          title: Text('PIN Protection'.tl),
+          title: Text('Unlock method'.tl),
           subtitle: Text(
-            _hasPin == null
+            !_lockTypeLoaded
                 ? ''
-                : (_hasPin! ? 'PIN is set'.tl : 'No PIN set'.tl),
+                : switch (_lockType) {
+                    AppLockType.pin => 'PIN is set'.tl,
+                    AppLockType.password => 'Password is set'.tl,
+                    AppLockType.pattern => 'Pattern is set'.tl,
+                    _ => 'No lock set'.tl,
+                  },
           ),
           onTap: _managePin,
         ),

@@ -90,7 +90,7 @@ void main() {
       final filtered = titlesOf('authorization');
       expect(filtered.contains('Authorization Required'), !Platform.isLinux);
       expect(
-        titlesOf('pin protection').contains('PIN Protection'),
+        titlesOf('unlock method').contains('Unlock method'),
         !Platform.isLinux,
       );
     });

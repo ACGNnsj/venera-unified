@@ -73,7 +73,7 @@ class _PinSetupDialogState extends State<PinSetupDialog> {
           });
           return;
         }
-        await AuthStorage.writePassword(pin);
+        await AuthStorage.writeCredential(AppLockType.pin, pin);
         if (!mounted) return;
         Navigator.of(context).pop(true);
     }
@@ -92,7 +92,7 @@ class _PinSetupDialogState extends State<PinSetupDialog> {
         if (widget.requiresCurrent)
           TextButton(
             onPressed: () async {
-              await AuthStorage.writePassword(null);
+              await AuthStorage.writeCredential(AppLockType.biometric);
               if (!context.mounted) return;
               Navigator.of(context).pop(true);
             },
