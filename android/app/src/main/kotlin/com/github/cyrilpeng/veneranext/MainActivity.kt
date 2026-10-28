@@ -29,6 +29,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
+import com.github.cyrilpeng.veneranext.upscale.UpscalePlugin
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -39,6 +40,7 @@ class MainActivity : FlutterFragmentActivity() {
     private var volumeChannel: MethodChannel? = null
     private var downloadBridge: DownloadBridge? = null
     private var keepAliveBridge: KeepAliveBridge? = null
+    private var upscaleBridge: UpscalePlugin? = null
 
     private val storageRequestCode = 0x10
     private var storagePermissionRequest: ((Boolean) -> Unit)? = null
@@ -224,6 +226,9 @@ class MainActivity : FlutterFragmentActivity() {
                     textShareHandler = null
                 }
             })
+
+        upscaleBridge?.close()
+        upscaleBridge = UpscalePlugin.registerWith(this, flutterEngine.dartExecutor.binaryMessenger)
     }
 
     // In-app updates: validates the downloaded APK (private cache path,
@@ -346,6 +351,8 @@ class MainActivity : FlutterFragmentActivity() {
         downloadBridge = null
         keepAliveBridge?.close()
         keepAliveBridge = null
+        upscaleBridge?.close()
+        upscaleBridge = null
         clearVolumeChannel()
         super.cleanUpFlutterEngine(flutterEngine)
     }
@@ -355,6 +362,8 @@ class MainActivity : FlutterFragmentActivity() {
         downloadBridge = null
         keepAliveBridge?.close()
         keepAliveBridge = null
+        upscaleBridge?.close()
+        upscaleBridge = null
         clearVolumeChannel()
         super.onDestroy()
     }

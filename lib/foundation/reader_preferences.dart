@@ -244,6 +244,11 @@ abstract final class ReaderPreferences {
     integer: false,
   );
   static const flashOnPageTurn = BoolPreference('flashOnPageTurn', false);
+  static const upscaleEnabled = BoolPreference('upscaleEnabled', false);
+  static const upscaleApplyToDownloads = BoolPreference(
+    'upscaleApplyToDownloads',
+    false,
+  );
   static const all = <Preference<Object>>[
     readerMode,
     pagedReaderMode,
@@ -291,6 +296,8 @@ abstract final class ReaderPreferences {
     readerPageMarginEnabled,
     readerPageMarginPercent,
     flashOnPageTurn,
+    upscaleEnabled,
+    upscaleApplyToDownloads,
   ];
   static Map<String, Object?> get storageDefaults => {
     for (final preference in all) preference.key: preference.storageDefault,

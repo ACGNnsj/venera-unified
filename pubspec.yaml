@@ -113,6 +113,7 @@ flutter:
     - assets/tags.json
     - assets/tags_tw.json
     - assets/opencc.txt
+    - assets/models/anime4k_acnet.onnx
     - assets/opencc/
     - assets/launcher_icon_default.png
     - assets/launcher_icon_purple.png

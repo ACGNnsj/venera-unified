@@ -12,6 +12,7 @@ import 'package:venera_unified/features/reader/brightness.dart';
 import 'package:venera_unified/features/settings/setting_components.dart';
 import 'package:venera_unified/features/settings/reader_mode.dart';
 import 'package:venera_unified/features/settings/reader_brightness.dart';
+import 'package:venera_unified/features/settings/upscale.dart';
 import 'package:venera_unified/components/settings_save_state.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/appdata.dart';
@@ -697,6 +698,12 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
             callback: () => context.to(() => _CustomImageProcessing()),
             actionTitle: "Edit".tl,
           ).toSliver(),
+          if (App.isAndroid)
+            CallbackSetting(
+              title: "Image Upscaling".tl,
+              callback: () => context.to(() => const UpscaleSetting()),
+              actionTitle: "Edit".tl,
+            ).toSliver(),
           SliderSetting.reader(
             title: "Number of images preloaded".tl,
             preference: ReaderPreferences.preloadImageCount,

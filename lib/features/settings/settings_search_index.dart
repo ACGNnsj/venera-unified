@@ -233,6 +233,12 @@ final settingsSearchIndex = <SettingsSearchEntry>[
   const SettingsSearchEntry('Show system status bar', 1),
   const SettingsSearchEntry('Quick collect image', 1),
   const SettingsSearchEntry('Custom Image Processing', 1, keywords: ['script']),
+  SettingsSearchEntry(
+    'Image Upscaling',
+    1,
+    keywords: const ['upscale'],
+    visible: () => App.isAndroid,
+  ),
   const SettingsSearchEntry(
     'Number of images preloaded',
     1,
