@@ -104,7 +104,7 @@ class _FavoritesPageState extends SettingsSaveState<FavoritesPage> {
                 data: IconThemeData(
                   color: Theme.of(context).colorScheme.secondary,
                 ),
-                child: split ? _buildWideLayout() : _buildNarrowLayout(),
+                child: _buildPaneLayout(),
               ),
             ),
           ],
@@ -124,64 +124,76 @@ class _FavoritesPageState extends SettingsSaveState<FavoritesPage> {
     );
   }
 
-  /// 窄档：现结构逐像素不变（零回归线）。
-  Widget _buildNarrowLayout() {
-    final split = favoritesUsesSplitPane(context.width);
-    return Stack(
-      children: [
-        AnimatedPositioned(
-          left: split ? 0 : -_kLeftBarWidth,
-          top: 0,
-          bottom: 0,
-          duration: const Duration(milliseconds: 200),
-          child: _buildSidebar().fixWidth(_kLeftBarWidth),
-        ),
-        Positioned(
-          top: 0,
-          left: split ? _kLeftBarWidth : 0,
-          right: 0,
-          bottom: 0,
-          child: buildBody(),
-        ),
-      ],
-    );
-  }
-
-  /// 宽档：weight 排布 + 空右栏归零（抄 miuix FavoritesSplitPaneHost）。
+  /// 窄/宽统一骨架：永远是同一棵 Stack，窄宽只换数值。
   ///
-  /// 左栏宽由 [favoritesPaneWidths] 给（含 360 封顶），已选 1:2、未选 3:0；
-  /// 右栏权重归零时不组合那一格（阈值 0.5dp，动画尾帧直接消失）。
-  Widget _buildWideLayout() {
+  /// 教训（rc.4 favorites-suite-repair）：B7 初版窄用 Stack、宽用 Row，
+  /// 过断点整棵子树 remount —— LocalFavoritesPage 的 context 当场卸载，
+  /// 之前从它身上 capture 的 WindowSelectionTask（owner.active）永久变 false，
+  /// 排序页的 _canEdit 跟着死，拖拽全部静默 no-op。现在两档同构，
+  /// 过断点只是数值动画，element 与 state 原位保留。
+  ///
+  /// 几何（和 B7 初版逐像素一致）：
+  /// - 窄档：侧栏滑出屏幕外（-256），内容全宽；
+  /// - 宽档：侧栏 0 起、宽走 [favoritesPaneWidths]（1:2，360 封顶），
+  ///   内容占剩下；未选中时 3:0，右栏归零。
+  ///
+  /// 右栏常驻组合（含 0 宽稳态），视觉上和「不组合」完全一致，
+  /// 但树是稳定的：选中后下一帧内容页必在树上（无动画阈值空窗），
+  /// 未选中时 Unselected 占位也在树上（0 宽不可见）。上游 port 测试
+  /// （favorites_view_persistence）断言的就是这份存在性，不许悄悄改弱。
+  Widget _buildPaneLayout() {
     final detailOpen = folder != null;
     return LayoutBuilder(
       builder: (context, constraints) {
         final totalWidth = constraints.maxWidth;
+        final split = favoritesUsesSplitPane(totalWidth);
         final (listTarget, _) = favoritesPaneWidths(
           totalWidth: totalWidth,
           detailOpen: detailOpen,
         );
         return TweenAnimationBuilder<double>(
-          tween: Tween<double>(end: listTarget),
+          tween: Tween<double>(end: split ? 0.0 : -_kLeftBarWidth),
           duration: const Duration(milliseconds: 200),
-          builder: (context, listWidth, _) {
-            final clampedList = listWidth.clamp(0.0, totalWidth).toDouble();
-            final detailWidth = totalWidth - clampedList;
-            return Row(
-              children: [
-                SizedBox(width: clampedList, child: _buildSidebar()),
-                if (detailWidth > 0.5)
-                  SizedBox(width: detailWidth, child: _buildDetailBody()),
-              ],
-            );
-          },
+          builder: (context, sidebarLeft, _) => TweenAnimationBuilder<double>(
+            tween: Tween<double>(end: split ? listTarget : _kLeftBarWidth),
+            duration: const Duration(milliseconds: 200),
+            builder: (context, listWidth, _) {
+              final sidebarWidth = listWidth.clamp(0.0, totalWidth).toDouble();
+              final bodyLeft = split ? sidebarWidth : 0.0;
+              return Stack(
+                children: [
+                  Positioned(
+                    left: sidebarLeft,
+                    top: 0,
+                    bottom: 0,
+                    width: sidebarWidth,
+                    child: _buildSidebar(),
+                  ),
+                  // 右栏常驻组合：0 宽稳态下占位仍在树上（不可见），
+                  // 选中后下一帧内容页即存在，无阈值空窗。
+                  Positioned(
+                    left: bodyLeft,
+                    top: 0,
+                    bottom: 0,
+                    right: 0,
+                    child: _buildDetailBody(),
+                  ),
+                ],
+              );
+            },
+          ),
         );
       },
     );
   }
 
-  /// 宽档右栏内容。收栏那一瞬右栏还在往 0 长回去，内容不许先空掉 ——
+  /// 右栏内容。收栏那一瞬右栏还在往 0 长回去，内容不许先空掉 ——
   /// 所以关掉时仍按上一帧画（抄 miuix shownKey）。
   Widget _buildDetailBody() {
+    // 沿用旧逻辑：进页时发现持久化的网络夹已消失，当场丢掉回到未选中。
+    if (folder != null && isNetwork && getFavoriteDataOrNull(folder!) == null) {
+      folder = null;
+    }
     if (folder != null) return _buildBodyContent(isNetwork, folder);
     return _buildBodyContent(_lastDetailIsNetwork, _lastDetailFolder);
   }
@@ -255,14 +267,6 @@ class _FavoritesPageState extends SettingsSaveState<FavoritesPage> {
       }
     });
     super.dispose();
-  }
-
-  Widget buildBody() {
-    // 沿用旧逻辑：进页时发现持久化的网络夹已消失，当场丢掉回到未选中。
-    if (folder != null && isNetwork && getFavoriteDataOrNull(folder!) == null) {
-      folder = null;
-    }
-    return _buildBodyContent(isNetwork, folder);
   }
 
   Widget _buildBodyContent(bool isNetwork, String? folder) {

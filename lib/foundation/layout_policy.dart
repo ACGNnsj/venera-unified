@@ -40,8 +40,8 @@ bool favoritesUsesSplitPane(double windowWidth) =>
 /// 双栏两栏各占多少重量（`列表 to 内容`）。
 ///
 /// - 内容**打开**时 `1 to 2`；
-/// - 内容**没选中**时 `3 to 0` —— 右栏给 0 而不是「很窄」，
-///   宿主直接不组合那一格，占宽与空白板一起消失。
+/// - 内容**没选中**时 `3 to 0` —— 右栏占宽归零（宿主仍组合那一格，
+///   0 宽不可见，保树稳定；见 favorites_page 的 _buildPaneLayout 注释）。
 (double, double) favoritesPaneWeights({required bool detailOpen}) =>
     detailOpen ? (1.0, 2.0) : (3.0, 0.0);
 
