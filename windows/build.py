@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 import hashlib
+import platform
 import re
 import shutil
 import subprocess
@@ -151,10 +152,16 @@ def main(arch="x64"):
     version = read_version()
     validate_icon_resources()
     clean_windows_runner_build(arch)
-    command = ["flutter", "build", "windows"]
-    if arch == "arm64":
-        command += ["--target-platform", "windows-arm64"]
-    run(command)
+    # `flutter build windows` has no --target-platform flag: it always builds
+    # for the host architecture. ARM64 therefore requires an ARM64 runner
+    # (windows-11-arm); refuse to run on x64 so x64 bits are never mislabeled
+    # as windows-arm64 artifacts.
+    if arch == "arm64" and platform.machine().lower() not in ("arm64", "aarch64"):
+        raise RuntimeError(
+            "Windows ARM64 builds require an ARM64 host "
+            f"(this host reports {platform.machine()!r})"
+        )
+    run(["flutter", "build", "windows"])
     create_portable_zip(version, arch)
     build_installer(version, arch)
 
