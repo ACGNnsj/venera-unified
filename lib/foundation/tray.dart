@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/launcher_icon.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -30,8 +31,6 @@ class TrayController with TrayListener {
   static const _menuShow = 'show';
   static const _menuQuit = 'quit';
 
-  static const _iconAsset = 'assets/tray_icon.ico';
-
   bool get isSupported => App.isWindows;
 
   /// Set by the shell binding. Must unregister the close guard, then request
@@ -53,6 +52,14 @@ class TrayController with TrayListener {
     if (_wired) return;
     _wired = true;
     trayManager.addListener(this);
+    // Follow the chosen launcher preset so the tray icon stays in step
+    // with the window icon (task-12 phase 2).
+    LauncherIconService.onWindowsIconChanged = _applyPresetIcon;
+  }
+
+  Future<void> _applyPresetIcon(String icoAsset) async {
+    if (!isSupported || !_enabled) return;
+    await trayManager.setIcon(icoAsset);
   }
 
   /// Applies the setting. Enabling builds tray icon/menu; the caller
@@ -62,7 +69,9 @@ class TrayController with TrayListener {
     if (!isSupported || enabled == _enabled) return;
     _wire();
     if (enabled) {
-      await trayManager.setIcon(_iconAsset);
+      // New default art ships per-preset; fall back to the legacy static
+      // icon only if the stored preset somehow has no bundled .ico.
+      await trayManager.setIcon(LauncherIconService.current.windowsIcoAsset);
       await trayManager.setToolTip('Venera Unified');
       await trayManager.setContextMenu(_buildMenu());
       _enabled = true;
@@ -120,5 +129,6 @@ class TrayController with TrayListener {
     _enabled = false;
     _wired = false;
     onQuitRequest = null;
+    LauncherIconService.onWindowsIconChanged = null;
   }
 }
