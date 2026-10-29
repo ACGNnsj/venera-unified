@@ -1,3 +1,4 @@
+import 'package:venera_unified/foundation/comic_type.dart';
 import 'package:venera_unified/foundation/operation_failure.dart';
 import 'package:venera_unified/features/history/history_api.dart';
 import 'dart:async' show Future, Stream, StreamController;
@@ -34,7 +35,9 @@ class HistoryImageProvider extends BaseImageProvider<HistoryImageProvider> {
     final id = history.id;
     final type = history.type;
     var url = history.cover;
-    if (!url.contains('/')) {
+    // A local cover is relative to the comic directory and may sit inside a
+    // chapter folder (`ch1/01.jpg`), so the type decides, not the slash.
+    if (type == ComicType.local || !url.contains('/')) {
       var localComic = LocalManager().find(id, type);
       if (localComic != null) {
         final bytes = await localComic.coverFile.readAsBytes();

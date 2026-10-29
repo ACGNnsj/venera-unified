@@ -81,19 +81,27 @@ class LocalRepository {
     return findPageMigration(id, type)!;
   });
 
+  /// Highest id this process has issued. A deleted row is gone from [comics],
+  /// so the table alone cannot prevent reissuing its id in the same
+  /// millisecond, nor distinguish ids allocated before the first insert.
+  static int _highestIssuedId = 0;
+
+  /// Ids are never handed out twice. History, favorites and sync backups are
+  /// keyed by id and can outlive a deleted comic (restored archives, other
+  /// devices), so a reused id would inherit them.
+  ///
+  /// Time-based so devices adding comics independently don't collide either.
   String findValidId(ComicType type) {
     final res = db.select(
-      '''
-      SELECT id FROM comics WHERE comic_type = ?
-      ORDER BY CAST(id AS INTEGER) DESC
-      LIMIT 1;
-      ''',
+      'SELECT MAX(CAST(id AS INTEGER)) AS max_id FROM comics WHERE comic_type = ?;',
       [type.value],
     );
-    if (res.isEmpty) {
-      return '1';
-    }
-    return (int.parse(res.first['id'] as String) + 1).toString();
+    final storedMax = (res.first['max_id'] as int?) ?? 0;
+    final floor = storedMax > _highestIssuedId ? storedMax : _highestIssuedId;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final next = now > floor ? now : floor + 1;
+    _highestIssuedId = next;
+    return next.toString();
   }
 
   void add(LocalComic comic, [String? id]) => runSqliteTransaction(db, () {
@@ -238,11 +246,14 @@ class LocalRepository {
 
   /// Bounded window read in newest-first order.
   List<LocalComic> readRange(int offset, int limit) {
-    var res = db.select('''
+    var res = db.select(
+      '''
       SELECT * FROM comics
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?;
-    ''', [limit, offset]);
+    ''',
+      [limit, offset],
+    );
     return res.map((row) => localComicFromRow(row)).toList();
   }
 

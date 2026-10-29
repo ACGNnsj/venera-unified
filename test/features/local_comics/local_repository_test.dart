@@ -156,8 +156,15 @@ void main() {
       expect(repository.count, 0);
       db.execute('DROP TRIGGER reject_insert;');
       repository.add(comic('ignored', const ['old']), '1');
-      expect(repository.findValidId(const ComicType(17)), '2');
-      expect(repository.findValidId(const ComicType(18)), '1');
+      // Ids are never reused: a fresh id is a timestamp above every stored id.
+      final nextId = int.parse(repository.findValidId(const ComicType(17)));
+      expect(nextId, greaterThan(1));
+      expect(nextId, greaterThanOrEqualTo(1700000000000));
+      // A type holding no comics never gets a bare, reusable id either.
+      final emptyTypeId = int.parse(
+        repository.findValidId(const ComicType(18)),
+      );
+      expect(emptyTypeId, greaterThanOrEqualTo(1700000000000));
       final updated = comic('1', const ['new', 'old']);
       repository.add(updated);
       expect(updated.downloadedChapters, ['new', 'old']);
@@ -260,4 +267,56 @@ void main() {
       }
     },
   );
+
+  test('a deleted id is never handed out again', () {
+    final db = sqlite3.openInMemory();
+    final repository = LocalRepository(db)..initialize();
+    LocalComic comic(String id, String title) => LocalComic(
+      id: id,
+      title: title,
+      subtitle: '',
+      tags: const [],
+      directory: 'folder',
+      chapters: null,
+      cover: '',
+      comicType: ComicType.local,
+      downloadedChapters: const [],
+      createdAt: DateTime(2026),
+    );
+    try {
+      final first = repository.findValidId(ComicType.local);
+      repository.add(comic(first, 'First'));
+      repository.remove(first, ComicType.local);
+      // History and favorites are keyed by id and may outlive the comic
+      // (restored archives, other devices), so the freed id stays retired.
+      final second = repository.findValidId(ComicType.local);
+      expect(second, isNot(first));
+      expect(int.parse(second), greaterThanOrEqualTo(1700000000000));
+      repository.add(comic(second, 'Second'));
+      expect(repository.find(second, ComicType.local)!.title, 'Second');
+    } finally {
+      db.close();
+    }
+  });
+
+  // Importers such as document_import allocate an id when the model is built
+  // and insert later, so two allocations may land in the same millisecond.
+  // Upstream VeneraX 47f3b7dd still returns that one timestamp twice and the
+  // second INSERT OR REPLACE then silently swallows the first comic; the local
+  // high-water mark deliberately deviates from upstream to keep them apart.
+  test('consecutive allocations without an insert stay distinct', () {
+    final db = sqlite3.openInMemory();
+    final repository = LocalRepository(db)..initialize();
+    try {
+      final first = repository.findValidId(ComicType.local);
+      final second = repository.findValidId(ComicType.local);
+      final third = repository.findValidId(const ComicType(17));
+      expect(second, isNot(first));
+      expect(third, isNot(anyOf(first, second)));
+      expect(int.parse(second), greaterThan(int.parse(first)));
+      expect(int.parse(third), greaterThan(int.parse(second)));
+    } finally {
+      db.close();
+    }
+  });
 }
