@@ -1,0 +1,69 @@
+name: "集成测试（模拟器）"
+
+# T4 pilot:只跑 integration_test/performance_lists_test.dart 一个 target。
+# 跑法重（emulator 启动 + Rust x86_64 交叉编译），只在相关路径变动时触发。
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'integration_test/**'
+      - 'test/support/performance_lists_cases.dart'
+      - 'lib/features/history/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.github/workflows/integration_test.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'integration_test/**'
+      - 'test/support/performance_lists_cases.dart'
+      - 'lib/features/history/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.github/workflows/integration_test.yml'
+
+concurrency:
+  group: integration-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  android-emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - name: 释放 Android 构建所需磁盘空间
+        run: rm -rf /opt/hostedtoolcache
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version-file: pubspec.yaml
+          architecture: x64
+          cache: true
+      - uses: actions/setup-java@v6
+        with:
+          distribution: 'oracle'
+          java-version: '17'
+          cache: gradle
+          cache-dependency-path: |
+            android/**/*.gradle*
+            android/gradle/wrapper/gradle-wrapper.properties
+            pubspec.lock
+      - name: 准备 Rust 工具链（模拟器 x86_64）
+        run: |
+          python3 .github/scripts/prepare_rust_toolchain.py \
+            --target x86_64-linux-android
+      - run: flutter pub get --enforce-lockfile
+      - name: 模拟器跑 performance_lists
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: flutter test integration_test/performance_lists_test.dart
