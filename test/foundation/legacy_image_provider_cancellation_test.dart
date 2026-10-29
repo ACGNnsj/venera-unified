@@ -20,6 +20,15 @@ import 'package:venera_unified/network/shared_request_stream.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  // These tests exercise the network stream path. A local history resolves its
+  // cover as a local file, so the fixture uses a synthetic remote source type;
+  // `sourceKey` needs a resolver because no comic source is registered here.
+  setUpAll(() {
+    ComicType.configureSourceKeyResolver((value) => 'test$value');
+  });
+  tearDownAll(() {
+    ComicType.configureSourceKeyResolver(null);
+  });
   late bool previousLogMuted;
   setUp(() {
     previousLogMuted = Log.isMuted;
@@ -352,7 +361,7 @@ class _HistoryProvider extends HistoryImageProvider {
   _HistoryProvider(this.source)
     : super(
         History(
-          type: ComicType.local,
+          type: ComicType(1),
           time: DateTime(2026),
           title: 'Book',
           subtitle: '',
