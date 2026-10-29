@@ -211,7 +211,7 @@ abstract mixin class ComicPageActions {
     final window = owner.getInheritedWidgetOfExactType<WindowFrameController>();
     final operation = () async {
       try {
-        await Share.shareText(
+        final result = await Share.shareText(
           text,
           resolveOrigin: () => owner.sharePositionOrigin,
           canShare: () =>
@@ -219,6 +219,12 @@ abstract mixin class ComicPageActions {
               window?.isClosing != true &&
               NavigationAdmission.allows(owner),
         );
+        if (result == ShareTextResult.copied &&
+            owner.mounted &&
+            isCurrentOwner() &&
+            window?.isClosing != true) {
+          owner.showMessage(message: 'Copied'.tl);
+        }
       } catch (error, stack) {
         Log.error('Share', error, stack);
         if (owner.mounted && isCurrentOwner() && window?.isClosing != true) {

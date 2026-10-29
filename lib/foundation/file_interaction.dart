@@ -309,6 +309,9 @@ T overrideIO<T>(T Function() f) {
   return IOOverrides.runWithIOOverrides<T>(f, _IOOverrides());
 }
 
+/// Outcome of [Share.shareText] so the caller can own user feedback.
+enum ShareTextResult { shared, copied, skipped }
+
 class Share {
   static final _dialogs = PlatformDialogQueue();
 
@@ -346,18 +349,26 @@ class Share {
     );
   });
 
-  static Future<void> shareText(
+  static Future<ShareTextResult> shareText(
     String text, {
     Rect? origin,
     Rect Function()? resolveOrigin,
     bool Function()? canShare,
   }) => _dialogs.run(() async {
-    if (canShare?.call() == false) return;
+    if (canShare?.call() == false) return ShareTextResult.skipped;
+    // Ported from venera (haukuen) 10cb52d: desktop cannot reach a share
+    // target, so copy the text to the clipboard instead of a no-op share.
+    // The caller owns user feedback so this file stays out of the UI layer.
+    if (App.isDesktop) {
+      await Clipboard.setData(ClipboardData(text: text));
+      return ShareTextResult.copied;
+    }
     await s.SharePlus.instance.share(
       s.ShareParams(
         text: text,
         sharePositionOrigin: resolveOrigin?.call() ?? origin,
       ),
     );
+    return ShareTextResult.shared;
   });
 }
