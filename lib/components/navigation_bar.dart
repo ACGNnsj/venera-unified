@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
@@ -12,6 +13,8 @@ import 'package:venera_unified/foundation/edge_back_gesture.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'consts.dart';
+import 'layout.dart'
+    show wideScreenExpandedSideBarWidth, wideScreenFoldedSideBarWidth;
 import 'gesture.dart';
 
 class PaneItemEntry {
@@ -78,6 +81,83 @@ class NaviPane extends StatefulWidget {
 
 typedef NaviItemTapListener = void Function(int);
 
+// ①b 画框药丸指示器常量：照抄 miuix VeneraDockedNavBar.kt。
+//
+// - base 78dp（:84）、拉伸 +26dp（:96）、药丸高 38 / 圆角 19（:126/:129）、
+//   阴影 3dp（:127）、描边 0.8dp（:140）、纵向偏移 8dp（:124）、
+//   两侧内距 8dp（:80）。
+// - 中心位移 spring：dampingRatio 0.76 + StiffnessMediumLow（:111-114）；
+//   拉伸两段：先 StiffnessHigh + NoBouncy 撑开（:97），再
+//   StiffnessMediumLow + 0.72 回弹（:102）；选中出字 12sp（:197）。
+// Compose stiffness 名换算成值：StiffnessHigh = 10000、StiffnessMedium = 1700、
+// StiffnessMediumLow = 400；damping 由 [springDamping] 从 ratio 反推。
+const dockedPillBaseWidth = 78.0;
+const dockedPillStretch = 26.0;
+const dockedPillHeight = 38.0;
+const dockedPillRadius = 19.0;
+const dockedPillTopOffset = 8.0;
+const dockedPillSidePadding = 8.0;
+
+/// 从 Compose 的 dampingRatio 反推 Flutter [SpringDescription] 的 damping。
+///
+/// Compose 与 Flutter 都用 mass = 1 的欠阻尼弹簧：
+/// damping = ratio * 2 * sqrt(stiffness)。
+double springDamping(double stiffness, double ratio) =>
+    ratio * 2 * math.sqrt(stiffness);
+
+/// 药丸中心横向位移的弹簧（miuix :111-114：0.76 + MediumLow）。
+SpringDescription get dockedPillCenterSpring => SpringDescription(
+  mass: 1,
+  stiffness: 400,
+  damping: springDamping(400, 0.76),
+);
+
+/// 拉伸前半程：高速撑开（miuix :97：High + NoBouncy）。
+SpringDescription get dockedPillStretchUpSpring => SpringDescription(
+  mass: 1,
+  stiffness: 10000,
+  damping: springDamping(10000, 1),
+);
+
+/// 拉伸后半程：平滑回弹（miuix :102：MediumLow + 0.72）。
+SpringDescription get dockedPillStretchDownSpring => SpringDescription(
+  mass: 1,
+  stiffness: 400,
+  damping: springDamping(400, 0.72),
+);
+
+/// 选中文字淡入（miuix :190：Medium；Compose spring 默认 ratio 1）。
+SpringDescription get dockedPillLabelInSpring => SpringDescription(
+  mass: 1,
+  stiffness: 1700,
+  damping: springDamping(1700, 1),
+);
+
+/// 选中文字淡出（miuix :191：High；默认 ratio 1）。
+SpringDescription get dockedPillLabelOutSpring => SpringDescription(
+  mass: 1,
+  stiffness: 10000,
+  damping: springDamping(10000, 1),
+);
+
+/// 药丸几何：给定栏宽/格数/选中下标/当前拉伸量，算出药丸的左缘与宽度。
+///
+/// 口径抄 miuix :82-83/:108/:118-119：格宽按扣除两侧内距后均分，
+/// 中心落在选中格正中，宽度 = base + 拉伸。下标取 double 以便动画中
+/// 逐帧求值（弹簧在线性系统里时长与距离无关，格空间与 dp 空间等价）。
+({double left, double width}) dockedPillGeometry({
+  required double barWidth,
+  required int tabCount,
+  required double selectedIndex,
+  required double stretch,
+}) {
+  final cellWidth = (barWidth - dockedPillSidePadding * 2) / tabCount;
+  final centerX =
+      dockedPillSidePadding + cellWidth * selectedIndex + cellWidth / 2;
+  final width = dockedPillBaseWidth + stretch;
+  return (left: centerX - width / 2, width: width);
+}
+
 class NaviPaneState extends State<NaviPane>
     with SingleTickerProviderStateMixin {
   bool _canPop = true;
@@ -106,11 +186,12 @@ class NaviPaneState extends State<NaviPane>
     _naviItemTapListeners.remove(listener);
   }
 
-  static const _kBottomBarHeight = 58.0;
+  static const _kBottomBarHeight = 54.0;
 
-  static const _kFoldedSideBarWidth = 72.0;
+  // ②b 侧栏宽唯一口径在 layout.dart；此处直接引用，不留第二份数字。
+  static const _kFoldedSideBarWidth = wideScreenFoldedSideBarWidth;
 
-  static const _kSideBarWidth = 224.0;
+  static const _kSideBarWidth = wideScreenExpandedSideBarWidth;
 
   static const _kTopBarHeight = 48.0;
 
@@ -320,30 +401,52 @@ class NaviPaneState extends State<NaviPane>
     return Material(
       textStyle: Theme.of(context).textTheme.labelSmall,
       elevation: 0,
-      child: Container(
-        height: _kBottomBarHeight,
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: Theme.of(context).colorScheme.outlineVariant,
-              width: 1,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            height: _kBottomBarHeight,
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Stack(
+              children: [
+                // ①b 单药丸画在 cell 行之下。
+                Positioned.fill(
+                  child: _DockedPillIndicator(
+                    selectedIndex: currentPage,
+                    tabCount: widget.paneItems.length,
+                  ),
+                ),
+                Row(
+                  children: List<Widget>.generate(widget.paneItems.length, (
+                    index,
+                  ) {
+                    return Expanded(
+                      child: _SingleBottomNaviWidget(
+                        enabled: currentPage == index,
+                        entry: widget.paneItems[index],
+                        onTap: () {
+                          updatePage(index);
+                        },
+                        key: ValueKey(index),
+                      ),
+                    );
+                  }),
+                ),
+              ],
             ),
           ),
-        ),
-        child: Row(
-          children: List<Widget>.generate(widget.paneItems.length, (index) {
-            return Expanded(
-              child: _SingleBottomNaviWidget(
-                enabled: currentPage == index,
-                entry: widget.paneItems[index],
-                onTap: () {
-                  updatePage(index);
-                },
-                key: ValueKey(index),
-              ),
-            );
-          }),
-        ),
+          // ①a：底部安全区吃在着色面内（miuix VeneraDockedNavBar :211），
+          // 而不是栏外。今天与栏外写法像素一致，价值在底栏换独立
+          // surface 色那天兑现；横向安全区仍走 :207-212，不动。
+          SizedBox(height: context.padding.bottom),
+        ],
       ),
     );
   }
@@ -483,6 +586,134 @@ class _PaneActionWidget extends StatelessWidget {
   }
 }
 
+/// ①b 单药丸跨格指示器：一个药丸在整条底栏上平移，切换时前缘拉伸再回弹。
+///
+/// 画在 cell 行之下（cell 背景透明，药丸从下方透出）。中心动画走「格空间」
+/// 下标（double），逐帧由 [dockedPillGeometry] 换算成 dp——旋转/窗口缩放时
+/// 几何自动重算，无需 snap 逻辑。动画状态由本 widget 持有，在 Stack 中
+/// 位置固定，跨 buildBottom 重建保持。
+class _DockedPillIndicator extends StatefulWidget {
+  const _DockedPillIndicator({
+    required this.selectedIndex,
+    required this.tabCount,
+  });
+
+  final int selectedIndex;
+
+  final int tabCount;
+
+  @override
+  State<_DockedPillIndicator> createState() => _DockedPillIndicatorState();
+}
+
+class _DockedPillIndicatorState extends State<_DockedPillIndicator>
+    with TickerProviderStateMixin {
+  /// 中心位置（格空间下标），初值直接落在选中格，首帧无滑动。
+  late final AnimationController _center = AnimationController.unbounded(
+    vsync: this,
+    value: widget.selectedIndex.toDouble(),
+  );
+
+  /// 当前拉伸量（dp），静息为 0。
+  late final AnimationController _stretch = AnimationController.unbounded(
+    vsync: this,
+    value: 0,
+  );
+
+  @override
+  void dispose() {
+    _center.dispose();
+    _stretch.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant _DockedPillIndicator oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedIndex == widget.selectedIndex) return;
+    // 中心位移 + 拉伸两段，与 miuix LaunchedEffect :90-105 同序。
+    // 快速连点时 animateWith 从当前值中断重起，与上游语义一致。
+    _center.animateWith(
+      SpringSimulation(
+        dockedPillCenterSpring,
+        _center.value,
+        widget.selectedIndex.toDouble(),
+        0,
+      ),
+    );
+    _stretch
+        .animateWith(
+          SpringSimulation(
+            dockedPillStretchUpSpring,
+            _stretch.value,
+            dockedPillStretch,
+            0,
+          ),
+        )
+        .then((_) {
+          if (!mounted) return;
+          _stretch.animateWith(
+            SpringSimulation(dockedPillStretchDownSpring, _stretch.value, 0, 0),
+          );
+        });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.tabCount <= 0) return const SizedBox.shrink();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return AnimatedBuilder(
+          animation: Listenable.merge([_center, _stretch]),
+          builder: (context, _) {
+            final geometry = dockedPillGeometry(
+              barWidth: constraints.maxWidth,
+              tabCount: widget.tabCount,
+              selectedIndex: _center.value,
+              stretch: _stretch.value,
+            );
+            return Stack(
+              children: [
+                Positioned(
+                  left: geometry.left,
+                  top: dockedPillTopOffset,
+                  width: geometry.width,
+                  height: dockedPillHeight,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(dockedPillRadius),
+                      color: colors.primaryContainer.withValues(
+                        alpha: isDark ? 0.45 : 0.65,
+                      ),
+                      border: Border.all(
+                        width: 0.8,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.22)
+                            : colors.primary.withValues(alpha: 0.25),
+                      ),
+                      // Compose elevation 3dp 的近似：单层柔阴影。
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: isDark ? 0.35 : 0.08,
+                          ),
+                          blurRadius: 3,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
 class _SingleBottomNaviWidget extends StatefulWidget {
   const _SingleBottomNaviWidget({
     required this.enabled,
@@ -518,10 +749,15 @@ class _SingleBottomNaviWidgetState extends State<_SingleBottomNaviWidget>
   void didUpdateWidget(covariant _SingleBottomNaviWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.enabled != widget.enabled) {
+      // ①b 选中出字：淡入/淡出走上游弹簧（miuix :190-191）。
       if (widget.enabled) {
-        controller.forward(from: 0);
+        controller.animateWith(
+          SpringSimulation(dockedPillLabelInSpring, controller.value, 1, 0),
+        );
       } else {
-        controller.reverse(from: 1);
+        controller.animateWith(
+          SpringSimulation(dockedPillLabelOutSpring, controller.value, 0, 0),
+        );
       }
     }
   }
@@ -532,7 +768,6 @@ class _SingleBottomNaviWidgetState extends State<_SingleBottomNaviWidget>
     controller = AnimationController(
       value: widget.enabled ? 1 : 0,
       vsync: this,
-      duration: fastAnimationDuration,
     );
   }
 
@@ -557,31 +792,67 @@ class _SingleBottomNaviWidgetState extends State<_SingleBottomNaviWidget>
 
   Widget buildContent() {
     final value = controller.value;
+    // 弹簧动画只渐近 0 永不到 0；低于 epsilon 即视为消失摘除，
+    // 否则无形文字常驻树（单测抓到）。
+    final labelValue = value < 0.01 ? 0.0 : value;
     final colorScheme = Theme.of(context).colorScheme;
-    final icon = Icon(
-      widget.enabled ? widget.entry.activeIcon : widget.entry.icon,
-    );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // miuix :153-158：选中 primary，未选中 onSurface 降 alpha。
+    final contentColor = Color.lerp(
+      colorScheme.onSurface.withValues(alpha: isDark ? 0.55 : 0.45),
+      colorScheme.primary,
+      value,
+    )!;
     return Center(
-      child: Container(
-        width: 64,
-        height: 28,
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.all(Radius.circular(32)),
-          color: isHovering ? colorScheme.surfaceContainer : Colors.transparent,
-        ),
-        child: Center(
-          child: Container(
-            width: 32 + value * 32,
+      // hover 底只是一块 64×28 背景，内容行不限宽（图标+字常超过 64，
+      // 收进同一盒会 RenderFlex 溢出），两者居中叠放。
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 64,
             height: 28,
             decoration: BoxDecoration(
               borderRadius: const BorderRadius.all(Radius.circular(32)),
-              color: value != 0
-                  ? colorScheme.secondaryContainer
+              color: isHovering
+                  ? colorScheme.surfaceContainer
                   : Colors.transparent,
             ),
-            child: Center(child: icon),
           ),
-        ),
+          // ①b：仅选中项出 12sp 字（miuix :188-203），图标 21→22。
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                widget.enabled ? widget.entry.activeIcon : widget.entry.icon,
+                size: 21 + value,
+                color: contentColor,
+              ),
+              if (labelValue > 0)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(width: 4),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 64),
+                      child: Text(
+                        widget.entry.label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: contentColor.withValues(alpha: labelValue),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.clip,
+                        softWrap: false,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -778,8 +1049,7 @@ class _NaviMainViewState extends State<_NaviMainView> {
             ),
           ),
         ),
-        if (shouldShowAppBar)
-          state.buildBottom().paddingBottom(context.padding.bottom),
+        if (shouldShowAppBar) state.buildBottom(),
       ],
     );
   }

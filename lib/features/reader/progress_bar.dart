@@ -5,6 +5,7 @@ import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
 import 'information_text.dart';
+import 'top_bar.dart' show readerTopBarMaxWidth;
 
 /// Presentation for progress and actions. The content owner supplies commands.
 class ReaderBottomBar extends StatelessWidget {
@@ -136,7 +137,15 @@ class ReaderBottomBar extends StatelessWidget {
             left: context.padding.left,
             right: context.padding.right,
           ),
-          child: child,
+          // ②b 控制岛镜像顶栏写法：与顶栏同一视觉宽度居中。
+          // 手机档宽度本来就小于 540，约束不生效，像素无差。
+          child: Align(
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: readerTopBarMaxWidth),
+              child: child,
+            ),
+          ),
         ),
       ),
     );

@@ -233,6 +233,8 @@ class _SliverGridComics extends StatelessWidget {
       gridDelegate: SliverGridDelegateWithComics(
         galleryColumns: galleryColumns,
         forceDetailed: favoriteDisplayMode == ComicTileDisplayMode.detailed,
+        // Q2A：传窗宽供宽窗档列数反推；手机档 delegate 内保持容器实测。
+        windowWidth: context.width,
       ),
     );
   }

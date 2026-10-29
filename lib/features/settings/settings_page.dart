@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:venera_unified/components/gesture.dart';
+import 'package:venera_unified/components/layout.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
@@ -276,15 +277,23 @@ class _SettingsPageState extends State<SettingsPage> {
     if (currentPage == -1) {
       return const SizedBox();
     }
-    return Navigator(
-      onGenerateRoute: (settings) {
-        return PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) {
-            return _buildSettingsContent(currentPage);
+    // ②b 内容列 840 居中：只在双栏右栏生效；手机档不走 buildRight，
+    // 天然无效果。
+    return Align(
+      alignment: Alignment.center,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: contentColumnMaxWidth),
+        child: Navigator(
+          onGenerateRoute: (settings) {
+            return PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) {
+                return _buildSettingsContent(currentPage);
+              },
+              transitionDuration: Duration.zero,
+            );
           },
-          transitionDuration: Duration.zero,
-        );
-      },
+        ),
+      ),
     );
   }
 
