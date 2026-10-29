@@ -149,9 +149,11 @@ Document import never overwrites an existing comic with the same title.
 
 ## WebDAV CBZ Archive Results and Retries
 
-New on main (unreleased, #126): archiving local comics to WebDAV and downloading
+Starting with v1.18.2-rc.4 (#126), archiving local comics to WebDAV and downloading
 archives for import keep a result dialog open with each title, remote filename,
 status and selectable error details instead of a brief count-only message.
+v1.18.1 and earlier release candidates do not include these result and retry
+improvements.
 
 - Retry one failed item or all failed items without replaying successful uploads
   or imports. Cancellation waits for active work to finish safely, keeps completed
