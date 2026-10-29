@@ -102,6 +102,10 @@
       "reader"
     ],
     [
+      "favorites",
+      "source_migration"
+    ],
+    [
       "follow_updates",
       "comic_details"
     ],
@@ -272,6 +276,18 @@
     [
       "settings",
       "webdav_library"
+    ],
+    [
+      "source_migration",
+      "comic_source"
+    ],
+    [
+      "source_migration",
+      "favorites"
+    ],
+    [
+      "source_migration",
+      "history"
     ],
     [
       "sync",
@@ -744,6 +760,9 @@
     "features/settings/webdav_settings.dart",
     "features/settings/webdav_sync_qr.dart",
     "features/settings/window_hotkey_setting.dart",
+    "features/source_migration/source_migration_dialogs.dart",
+    "features/source_migration/source_migration_page.dart",
+    "features/source_migration/source_migration_tasks.dart",
     "features/sync/comic_archive_page.dart",
     "features/sync/data_sync_scope.dart",
     "features/sync/sync.dart",

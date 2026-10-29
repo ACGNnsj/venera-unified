@@ -35,6 +35,8 @@ import 'package:venera_unified/features/favorites/favorite_transfer_dialog.dart'
 import 'package:venera_unified/features/favorites/favorite_metadata_dialog.dart';
 import 'package:venera_unified/features/local_comics/local_comics.dart';
 import 'package:venera_unified/features/reader/reader.dart';
+import 'package:venera_unified/features/source_migration/source_migration_dialogs.dart';
+import 'package:venera_unified/features/source_migration/source_migration_page.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/app_data_operations.dart';
 import 'package:venera_unified/foundation/selection_operation.dart';
@@ -643,6 +645,27 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                       },
                     ),
                     MenuEntry(
+                      icon: Icons.swap_horiz,
+                      text: "Migrate Source".tl,
+                      onClick: () async {
+                        if (_queryOwner?.canPresent != true ||
+                            !_canReadObservedFolder ||
+                            widget.folder != target.folder) {
+                          return;
+                        }
+                        final comics = await _observedManager
+                            .getFolderComicsAsync(target.folder);
+                        if (!context.mounted) return;
+                        showBatchSourceMigrationDialog(
+                          context,
+                          folder: target.folder,
+                          comics: comics,
+                          onStarted: () =>
+                              SourceMigrationTasksPage.open(context),
+                        );
+                      },
+                    ),
+                    MenuEntry(
                       icon: Icons.delete_outline,
                       text: "Delete Folder".tl,
                       color: context.colorScheme.error,
@@ -737,6 +760,26 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                           move: false,
                           isCurrent: isCurrentSelection,
                           onCommitted: _cancel,
+                        );
+                      },
+                    ),
+                  if (!isAllFolder)
+                    MenuEntry(
+                      icon: Icons.swap_horiz,
+                      text: "Migrate Source".tl,
+                      onClick: () {
+                        if (_queryOwner?.canPresent != true ||
+                            !isCurrentSelection()) {
+                          return;
+                        }
+                        showBatchSourceMigrationDialog(
+                          context,
+                          folder: target.folder,
+                          comics: selectedItems,
+                          onStarted: () {
+                            _cancel();
+                            SourceMigrationTasksPage.open(context);
+                          },
                         );
                       },
                     ),
@@ -839,6 +882,15 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                         appNavigation.mainNavigatorKey?.currentContext?.to(
                           () => ComicPage(id: c.id, sourceKey: c.sourceKey),
                         );
+                      },
+                    ),
+                  if (selectedComics.length == 1)
+                    MenuEntry(
+                      icon: Icons.swap_horiz,
+                      text: "Migrate Source".tl,
+                      onClick: () {
+                        final c = selectedComics.keys.first as FavoriteItem;
+                        showSourceMigrationDialog(context, c);
                       },
                     ),
                 ],
