@@ -38,6 +38,7 @@ import 'package:venera_unified/features/reader/image_export.dart';
 import 'package:venera_unified/features/reader/settings_effects.dart';
 import 'package:venera_unified/features/reader/comments_controller.dart';
 import 'package:venera_unified/features/reader/chapter_navigation.dart';
+import 'package:venera_unified/features/reader/page_translation.dart';
 
 import 'package:venera_unified/features/reader/page_layout.dart';
 import 'package:venera_unified/features/reader/history_progress.dart';
@@ -51,6 +52,7 @@ import 'package:venera_unified/features/reader/window_controller.dart';
 import 'package:venera_unified/features/reader/platform_effects.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/reader_settings.dart';
 import 'package:venera_unified/foundation/reader_preferences.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
@@ -163,6 +165,54 @@ class ReaderState extends State<Reader>
       viewport: viewport,
       images: currentImages,
       chapter: chapter,
+    );
+  }
+
+  bool _translatingPage = false;
+
+  /// Translates whatever image sits under the screen center: gallery resolves
+  /// the current page (a spread resolves its centered half), continuous
+  /// resolves the centered image. Runs on its own page so reader gestures
+  /// keep working; the flag only guards double taps on the action itself.
+  Future<void> translateCurrentPage(BuildContext navContext) async {
+    if (!mounted ||
+        _stateDisposed ||
+        _sessionFrozen ||
+        _session.isHeld ||
+        _translatingPage) {
+      return;
+    }
+    final viewport = imageViewController;
+    if (viewport == null) {
+      navContext.showMessage(message: 'No Image'.tl);
+      return;
+    }
+    _translatingPage = true;
+    Uint8List? bytes;
+    try {
+      final box = context.findRenderObject() as RenderBox?;
+      final center = box == null
+          ? Offset.zero
+          : box.localToGlobal(box.size.center(Offset.zero));
+      bytes = await viewport.getImageByOffset(center);
+    } catch (_) {
+      bytes = null;
+    } finally {
+      _translatingPage = false;
+    }
+    if (!mounted || _stateDisposed || !navContext.mounted) return;
+    if (bytes == null) {
+      navContext.showMessage(message: 'No Image'.tl);
+      return;
+    }
+    final target = preferences.translationTargetLanguage;
+    final label = 'P$page';
+    navContext.to(
+      () => PageTranslationPage(
+        imageBytes: bytes!,
+        targetLang: target,
+        pageLabel: label,
+      ),
     );
   }
 

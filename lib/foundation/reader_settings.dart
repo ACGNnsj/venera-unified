@@ -133,4 +133,6 @@ class ReaderSettings {
   bool get flashOnPageTurn => _values['flashOnPageTurn'] as bool;
   bool get eInkRipplePageTurn => _values['eInkRipplePageTurn'] as bool;
   String get eInkRippleSpeed => _values['eInkRippleSpeed'] as String;
+  String get translationTargetLanguage =>
+      _values['translationTargetLanguage'] as String;
 }

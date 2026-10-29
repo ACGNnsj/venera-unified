@@ -53,6 +53,7 @@ class ReaderShellHost extends StatelessWidget {
       createSettings: reader.createSettingsRequest,
       createChapterComments: reader.createChapterCommentsRequest,
       onScaffoldChanged: reader.setScaffoldState,
+      onTranslatePage: reader.translateCurrentPage,
       child: child!,
     ),
   );

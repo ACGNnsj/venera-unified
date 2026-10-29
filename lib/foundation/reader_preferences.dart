@@ -250,6 +250,11 @@ abstract final class ReaderPreferences {
     'standard',
     ['slower', 'standard', 'faster'],
   );
+  static const translationTargetLanguage = ChoicePreference(
+    'translationTargetLanguage',
+    'zh',
+    ['en', 'zh', 'zh-TW'],
+  );
   static const upscaleEnabled = BoolPreference('upscaleEnabled', false);
   static const upscaleApplyToDownloads = BoolPreference(
     'upscaleApplyToDownloads',
@@ -304,6 +309,7 @@ abstract final class ReaderPreferences {
     flashOnPageTurn,
     eInkRipplePageTurn,
     eInkRippleSpeed,
+    translationTargetLanguage,
     upscaleEnabled,
     upscaleApplyToDownloads,
   ];

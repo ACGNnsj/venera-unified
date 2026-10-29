@@ -64,6 +64,7 @@ class ReaderScaffold extends StatefulWidget {
     required this.chapterNavigation,
     required this.child,
     this.onScaffoldChanged,
+    this.onTranslatePage,
   });
 
   final ReaderShellData data;
@@ -90,6 +91,9 @@ class ReaderScaffold extends StatefulWidget {
   /// Reports this state for keyboard-shortcut dispatch (menu/collect).
   /// Wired by composition only; the scaffold never imports the reader.
   final void Function(ReaderScaffoldState?)? onScaffoldChanged;
+
+  /// Translates the current page. Null when the reader cannot resolve one.
+  final Future<void> Function(BuildContext context)? onTranslatePage;
 
   @override
   State<ReaderScaffold> createState() => ReaderScaffoldState();
@@ -363,6 +367,14 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
           child: IconButton(
             icon: const Icon(Icons.comment),
             onPressed: openChapterComments,
+          ),
+        ),
+      if (widget.onTranslatePage != null)
+        Tooltip(
+          message: "Translate page".tl,
+          child: IconButton(
+            icon: const Icon(Icons.translate),
+            onPressed: () => unawaited(widget.onTranslatePage!(context)),
           ),
         ),
       Tooltip(

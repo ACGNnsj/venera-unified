@@ -92,6 +92,11 @@ dependencies:
   qr_flutter: ^4.1.0
   mobile_scanner: ^7.4.2
   tray_manager: ^0.5.3
+  ffi: ^2.2.0
+  # Native ONNX Runtime bundler for page translation (Dart bypasses its
+  # channels via foundation/image_translation/ort_ffi.dart). Exact pin:
+  # 1.9.0 ships ORT 1.28.x and requires iOS 16 (see task-41 report).
+  flutter_onnxruntime: 1.9.0
 
 dev_dependencies:
   flutter_test:

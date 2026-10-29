@@ -588,6 +588,22 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
               useDeviceSettings: useDeviceSpecificSettings,
             ),
           ),
+          SelectSetting.reader(
+            title: 'Translation target language'.tl,
+            help: 'Used by the translate-page action in the reader'.tl,
+            preference: ReaderPreferences.translationTargetLanguage,
+            optionTranslation: {
+              'en': 'English'.tl,
+              'zh': 'Simplified Chinese'.tl,
+              'zh-TW': 'Traditional Chinese'.tl,
+            },
+            onChanged: () {
+              widget.onChanged?.call('translationTargetLanguage');
+            },
+            comicId: isEnabledSpecificSettings ? widget.comicId : null,
+            comicSource: isEnabledSpecificSettings ? widget.comicSource : null,
+            useDeviceSettings: useDeviceSpecificSettings,
+          ).toSliver(),
           SwitchSetting.reader(
             title: 'Limit image width'.tl,
             subtitle: 'When using Continuous(Top to Bottom) mode'.tl,
