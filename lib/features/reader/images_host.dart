@@ -8,6 +8,7 @@ import 'package:venera_unified/features/reader/reader_controller.dart';
 import 'package:venera_unified/features/comic_source/comic_source.dart';
 import 'package:venera_unified/features/reader/chapter_comments.dart';
 import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/wide_page_split.dart';
 import 'image_read.dart';
 
 import 'gallery_view.dart';
@@ -196,6 +197,15 @@ class ReaderImagesHost extends StatelessWidget {
           if (canAct()) shell.requestEInkRefresh();
         },
         onCollectImage: collect,
+        onWideImage: reader.noteWideImage,
+        onRegroup: () {
+          if (!identical(reader.controller.content, content)) return null;
+          final newPage = reader.regroupGallery();
+          if (newPage == null) return null;
+          reader.page = newPage;
+          reader.update();
+          return newPage;
+        },
         readerSize: () => reader.size,
         readImage: readReaderImageBytes,
         commentsBuilder: comments == null
@@ -212,6 +222,15 @@ class ReaderImagesHost extends StatelessWidget {
         enabled: preferences.readerPageMarginEnabled,
         percent: preferences.readerPageMarginPercent,
       );
+      var splitWideImages = preferences.splitDualPage == true;
+      var invertSplit = preferences.splitDualPageInvert == true;
+      final widePageSplit = reader.mode == ReaderMode.continuousTopToBottom
+          ? WidePageSplit.fromSetting(preferences.splitWidePages)
+          : WidePageSplit.off;
+      if (widePageSplit != WidePageSplit.off) {
+        splitWideImages = true;
+        invertSplit = widePageSplit == WidePageSplit.leftFirst;
+      }
       return ReaderContinuousView(
         imageWork: reader.imageWork,
         key: Key(reader.mode.key),
@@ -223,8 +242,8 @@ class ReaderImagesHost extends StatelessWidget {
           lastChapter: reader.isLastChapterOfGroup,
           maxChapter: reader.maxChapter,
           preloadCount: appdata.settings.globalReaderSettings.preloadImageCount,
-          splitWideImages: preferences.splitDualPage == true,
-          invertSplit: preferences.splitDualPageInvert == true,
+          splitWideImages: splitWideImages,
+          invertSplit: invertSplit,
           scrollSpeed: preferences.readerScrollSpeed,
           limitImageWidth: preferences.limitImageWidth == true,
           sideMargin: preferences.readerSideMargin,

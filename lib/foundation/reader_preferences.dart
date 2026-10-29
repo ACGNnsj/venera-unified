@@ -229,6 +229,11 @@ abstract final class ReaderPreferences {
     'splitDualPageInvert',
     false,
   );
+  static const splitWidePages = ChoicePreference('splitWidePages', 'off', [
+    'off',
+    'rightFirst',
+    'leftFirst',
+  ]);
   static const readerPageMarginEnabled = BoolPreference(
     'readerPageMarginEnabled',
     false,
@@ -304,6 +309,7 @@ abstract final class ReaderPreferences {
     showChapterCommentsAtEnd,
     splitDualPage,
     splitDualPageInvert,
+    splitWidePages,
     readerPageMarginEnabled,
     readerPageMarginPercent,
     flashOnPageTurn,

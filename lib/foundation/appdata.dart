@@ -619,6 +619,8 @@ class Settings with ChangeNotifier implements ReaderPreferenceSettings {
     ...applicationPreferenceDefaults,
     'searchShortcuts': [],
     'comicLayoutDetections': <String, dynamic>{},
+    // Continuous (top to bottom): cut landscape pages into stacked halves.
+    'splitWidePages': 'off', // off, rightFirst, leftFirst
     'enableLongPressToZoom': true,
     'webdav': [], // empty means not configured
     'webdavProxyEnabled': true,

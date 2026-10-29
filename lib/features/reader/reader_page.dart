@@ -23,6 +23,7 @@ import 'package:venera_unified/features/reader/reader_key_action.dart';
 import 'package:venera_unified/features/reader/reader_mode_labels.dart';
 import 'package:venera_unified/features/reader/reading_session.dart';
 import 'package:venera_unified/features/reader/reader_session.dart';
+import 'package:venera_unified/foundation/gallery_layout.dart';
 import 'package:venera_unified/foundation/image_work.dart';
 import 'package:venera_unified/foundation/selection_operation.dart';
 import 'package:venera_unified/features/reader/history_writer.dart';
@@ -289,8 +290,7 @@ class ReaderState extends State<Reader>
           chapter == ep &&
           mode == currentMode &&
           maxPage == count &&
-          pageLayout.imagesPerPage == layout.imagesPerPage &&
-          pageLayout.singleImageOnFirstPage == layout.singleImageOnFirstPage &&
+          pageLayout.sameScreensAs(layout) &&
           identical(widget.chapters, chapters) &&
           identical(ComicSource.find(comicType.sourceKey), source) &&
           listEquals(chapters?.ids.toList(growable: false), ids) &&
@@ -338,8 +338,7 @@ class ReaderState extends State<Reader>
         identical(widget.chapters, chapters) &&
         listEquals(chapters?.ids.toList(growable: false), ids) &&
         listEquals(chapters?.titles.toList(growable: false), titles) &&
-        pageLayout.imagesPerPage == layout.imagesPerPage &&
-        pageLayout.singleImageOnFirstPage == layout.singleImageOnFirstPage &&
+        pageLayout.sameScreensAs(layout) &&
         preferences.enableDoubleTapToZoom == settings.enableDoubleTapToZoom &&
         preferences.enableTapToTurnPages == settings.enableTapToTurnPages &&
         preferences.reverseTapToTurnPages == settings.reverseTapToTurnPages &&
@@ -622,8 +621,7 @@ class ReaderState extends State<Reader>
           eid == chapterId &&
           page == imagePage &&
           mode == currentMode &&
-          pageLayout.imagesPerPage == layout.imagesPerPage &&
-          pageLayout.singleImageOnFirstPage == layout.singleImageOnFirstPage &&
+          pageLayout.sameScreensAs(layout) &&
           identical(images, currentImages) &&
           identical(ComicSource.find(comicType.sourceKey), source),
       read: () => sourcePage == null
@@ -2128,10 +2126,81 @@ abstract mixin class ReaderImagePerPageHandler {
     if (imagesPerPage != 1) page = pageLayout.pageForImage(initialPage);
   }
 
-  ReaderPageLayout get pageLayout => ReaderPageLayout(
-    imagesPerPage: imagesPerPage,
-    singleImageOnFirstPage: showSingleImageOnFirstPage(),
-  );
+  /// Zero-based indices of the landscape images found for this chapter. They
+  /// stand alone on their screen, so the page count and ranges depend on them.
+  final _wideImages = <int>{};
+
+  /// The chapter [_wideImages] describe. A new chapter starts over.
+  List<String>? _wideImagesChapter;
+
+  /// A grouping computed when a landscape image turned up under the reader,
+  /// keeping the screen being read where it is; see [regroupGallery].
+  GalleryLayout? _regroupedLayout;
+
+  void _syncWideImages() {
+    final current = images;
+    if (!identical(_wideImagesChapter, current)) {
+      _wideImagesChapter = current;
+      _wideImages.clear();
+      _regroupedLayout = null;
+    }
+  }
+
+  /// A snapshot of the landscape images, safe to keep in a stored layout.
+  Set<int> get _wideImageSnapshot =>
+      _wideImages.isEmpty ? const {} : Set.unmodifiable(_wideImages);
+
+  ReaderPageLayout get pageLayout {
+    _syncWideImages();
+    final perPage = imagesPerPage;
+    final singleFirst = showSingleImageOnFirstPage();
+    final regrouped = _regroupedLayout;
+    final imageCount = images?.length ?? 0;
+    final validRegrouped =
+        regrouped != null &&
+        regrouped.imagesPerScreen == perPage &&
+        regrouped.singleFirst == singleFirst &&
+        regrouped.imageCount == imageCount;
+    return ReaderPageLayout(
+      imagesPerPage: perPage,
+      singleImageOnFirstPage: singleFirst,
+      wideImages: _wideImageSnapshot,
+      grouping: validRegrouped ? regrouped : null,
+    );
+  }
+
+  /// Records that image [index] (zero-based) is landscape and so must stand
+  /// alone. Returns whether this is new information.
+  bool noteWideImage(int index) {
+    if (mode.isContinuous) return false;
+    if (imagesPerPage <= 1) return false;
+    final count = images?.length ?? 0;
+    if (index < 0 || index >= count) return false;
+    _syncWideImages();
+    return _wideImages.add(index);
+  }
+
+  /// Regroups the chapter around the page being read so a landscape image
+  /// found late does not move the screen under the reader. Returns the page to
+  /// show, or null when the screens would not change.
+  int? regroupGallery() {
+    _syncWideImages();
+    final count = images?.length ?? 0;
+    if (count == 0 || mode.isContinuous || imagesPerPage <= 1) return null;
+    final before = pageLayout.galleryLayout(count);
+    final screen = page > before.screenCount ? before.screenCount + 1 : page;
+    final after = before.regroupedAround(screen, _wideImages);
+    final layout = ReaderPageLayout(
+      imagesPerPage: imagesPerPage,
+      singleImageOnFirstPage: showSingleImageOnFirstPage(),
+      wideImages: _wideImageSnapshot,
+      grouping: after,
+    );
+    if (layout.sameScreensAs(pageLayout)) return null;
+    _regroupedLayout = after;
+    if (page > before.screenCount) return after.screenCount + 1;
+    return after.screenOf(before.imagesOf(screen).$1);
+  }
 
   bool showSingleImageOnFirstPage() => appdata.settings
       .readerSettings(cid, type.sourceKey)
@@ -2165,6 +2234,7 @@ abstract mixin class ReaderImagePerPageHandler {
       final previousLayout = ReaderPageLayout(
         imagesPerPage: _lastImagesPerPage,
         singleImageOnFirstPage: showSingleImageOnFirstPage(),
+        wideImages: _wideImageSnapshot,
       );
       page = previousLayout.remapPage(
         page,

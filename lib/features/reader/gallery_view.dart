@@ -19,6 +19,23 @@ import 'image_position.dart';
 import 'reader_controller.dart';
 import 'reader_viewport.dart';
 
+/// The images of a multi-image gallery page in the order they are laid out,
+/// each with its 1-based number in the chapter.
+///
+/// Right-to-left reading lays them out reversed, but every image keeps its own
+/// number: translations and custom image processing are addressed by it.
+List<(String, int)> galleryPageOrder(
+  List<String> imageKeys,
+  int startIndex, {
+  required bool rightToLeft,
+}) {
+  final order = [
+    for (var i = 0; i < imageKeys.length; i++)
+      (imageKeys[i], startIndex + i + 1),
+  ];
+  return rightToLeft ? order.reversed.toList() : order;
+}
+
 class ReaderGalleryView extends StatefulWidget {
   const ReaderGalleryView({
     super.key,
@@ -33,6 +50,8 @@ class ReaderGalleryView extends StatefulWidget {
     required this.readerSize,
     required this.readImage,
     this.commentsBuilder,
+    this.onWideImage,
+    this.onRegroup,
   });
 
   final ReaderGalleryData data;
@@ -48,6 +67,14 @@ class ReaderGalleryView extends StatefulWidget {
   final Size Function() readerSize;
   final Future<Uint8List?> Function(ReaderImageAddress image) readImage;
   final WidgetBuilder? commentsBuilder;
+
+  /// Called the first time an image is measured as landscape. It returns
+  /// whether the image needs a screen of its own.
+  final bool Function(int index)? onWideImage;
+
+  /// Regroups the pages after a landscape image turned up, returning the page
+  /// to show. Null when the screens stay as they are.
+  final int? Function()? onRegroup;
 
   @override
   State<ReaderGalleryView> createState() => GalleryModeState();
@@ -87,6 +114,17 @@ class GalleryModeState extends State<ReaderGalleryView>
   final imageStates = <State<ComicImage>, int>{};
   final _singleImageStates = <int, AutoReadingImageState>{};
 
+  /// Chapter image indices already measured for landscape orientation.
+  final _measuredImages = <int>{};
+
+  /// A landscape image turned up; regroup once the reader is at rest.
+  bool _regroupPending = false;
+  bool _regroupScheduled = false;
+
+  /// Changes when the pager is remounted after a regrouping, so the pages are
+  /// rebuilt from their new image ranges.
+  int _pagerGeneration = 0;
+
   bool isLongPressing = false;
   bool _disposed = false;
   PhotoViewController? _longPressController;
@@ -114,9 +152,25 @@ class GalleryModeState extends State<ReaderGalleryView>
     if (!identical(oldWidget.data.content, data.content) ||
         !identical(oldWidget.imageWork, widget.imageWork)) {
       _singleImageStates.clear();
+      _measuredImages.clear();
+      _regroupPending = false;
       // New chapter content: the old index belongs to another chapter.
       // Navigation state is authoritative at rest.
       _lastTurnIndex = page;
+    }
+    if (!oldWidget.data.layout.sameScreensAs(data.layout)) {
+      // The screens were regrouped (or the per-screen settings changed): the
+      // pager indexes pages under the old grouping, so remount it.
+      _measuredImages.clear();
+      _regroupPending = false;
+      _pagerGeneration++;
+      final oldController = controller;
+      controller = PageController(initialPage: page);
+      photoViewControllers.clear();
+      _lastTurnIndex = page;
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => oldController.dispose(),
+      );
     }
     if (!identical(oldWidget.imageWork, widget.imageWork)) {
       unawaited(_imageDownloads.dispose());
@@ -201,6 +255,101 @@ class GalleryModeState extends State<ReaderGalleryView>
   (int start, int end) getPageImagesRange(int page) =>
       data.layout.imageRange(page, data.images.length);
 
+  void _measureImages(int start, int end) {
+    for (var i = start; i < end; i++) {
+      _measureImage(i);
+    }
+  }
+
+  /// Measures an image's orientation once, so a landscape image can be given a
+  /// screen of its own. Images already cached resolve without another fetch.
+  void _measureImage(int index) {
+    final onWideImage = widget.onWideImage;
+    if (onWideImage == null) return;
+    if (data.layout.imagesPerPage <= 1) return;
+    if (index < 0 || index >= data.images.length) return;
+    if (!_measuredImages.add(index)) return;
+    final image = _displayImage(data.images[index]);
+    final stream = image.resolve(createLocalImageConfiguration(context));
+    late final ImageStreamListener listener;
+    listener = ImageStreamListener(
+      (info, _) {
+        stream.removeListener(listener);
+        final landscape = info.image.width > info.image.height;
+        info.dispose();
+        if (!mounted || _disposed) return;
+        if (landscape && onWideImage(index)) {
+          _regroupPending = true;
+          _scheduleRegroup();
+        }
+      },
+      onError: (error, stackTrace) {
+        stream.removeListener(listener);
+        _measuredImages.remove(index);
+      },
+    );
+    stream.addListener(listener);
+  }
+
+  void _scheduleRegroup({bool later = false}) {
+    if (_regroupScheduled || _disposed) return;
+    _regroupScheduled = true;
+    void run() {
+      _regroupScheduled = false;
+      _regroup();
+    }
+
+    if (later) {
+      Future<void>.delayed(const Duration(milliseconds: 100), () {
+        if (!mounted || _disposed) return;
+        run();
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _disposed) return;
+        run();
+      });
+    }
+  }
+
+  /// Regroups around the current page, but only at rest: not mid-swipe, not
+  /// zoomed, and not on the comments page.
+  void _regroup() {
+    if (!mounted || _disposed || !_regroupPending) return;
+    final onRegroup = widget.onRegroup;
+    if (onRegroup == null) {
+      _regroupPending = false;
+      return;
+    }
+    if (fingers > 0 ||
+        isLongPressing ||
+        !controller.hasClients ||
+        controller.position.isScrollingNotifier.value ||
+        data.isCommentsPage(page)) {
+      _scheduleRegroup(later: true);
+      return;
+    }
+    final photo = photoViewControllers[page];
+    final initialScale = photo?.getInitialScale?.call();
+    if (initialScale != null &&
+        ((photo?.scale ?? initialScale) - initialScale).abs() > 0.01) {
+      _scheduleRegroup(later: true);
+      return;
+    }
+    _regroupPending = false;
+    final newPage = onRegroup();
+    if (newPage == null || !mounted || _disposed) return;
+    _pagerGeneration++;
+    final oldController = controller;
+    controller = PageController(initialPage: page);
+    photoViewControllers.clear();
+    _lastTurnIndex = page;
+    setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => oldController.dispose(),
+    );
+  }
+
   /// Get the image indices for current page. Returns null if no images.
   /// Returns a single index if only one image, or a range if multiple images.
   @override
@@ -228,6 +377,7 @@ class GalleryModeState extends State<ReaderGalleryView>
     if (isChapterCommentsPage(page)) return;
     var (startIndex, endIndex) = getPageImagesRange(page);
     for (int i = startIndex; i < endIndex; i++) {
+      _measureImage(i);
       final key = data.images[i];
       if (shouldPreCache) {
         _imagePrecache.preload(
@@ -249,6 +399,7 @@ class GalleryModeState extends State<ReaderGalleryView>
   Widget build(BuildContext context) {
     final originalContent = data.content;
     final originalNavigation = navigation;
+    if (_regroupPending) _scheduleRegroup();
     return Listener(
       onPointerDown: (event) {
         fingers++;
@@ -275,6 +426,7 @@ class GalleryModeState extends State<ReaderGalleryView>
       child: PhotoViewGestureDetectorScope(
         axis: data.vertical ? Axis.vertical : Axis.horizontal,
         child: PageView.builder(
+          key: ValueKey(_pagerGeneration),
           reverse: data.reverse,
           scrollDirection: data.vertical ? Axis.vertical : Axis.horizontal,
           itemCount: totalPages + 2,
@@ -360,6 +512,7 @@ class GalleryModeState extends State<ReaderGalleryView>
     final originalWork = widget.imageWork;
     final (start, end) = getPageImagesRange(index);
     final images = List.generate(end - start, (i) => start + i);
+    _measureImages(start, end);
     cache(index);
     return _GalleryPhotoPage(
       key: ValueKey((
@@ -451,59 +604,60 @@ class GalleryModeState extends State<ReaderGalleryView>
   }
 
   Widget buildPageImages(List<int> images) {
-    Axis axis = (data.vertical) ? Axis.vertical : Axis.horizontal;
+    final axis = data.vertical ? Axis.vertical : Axis.horizontal;
+    if (images.isEmpty) return const SizedBox.shrink();
+    // Right-to-left reading reverses the layout order, but each image keeps
+    // its own number so translations and processing still address it.
+    final order = galleryPageOrder(
+      [for (final index in images) data.images[index]],
+      images.first,
+      rightToLeft: data.reverse,
+    );
 
-    bool reverse = data.reverse;
-    if (reverse) {
-      images = images.reversed.toList();
-    }
+    final List<Widget> imageWidgets;
 
-    List<Widget> imageWidgets;
-
-    if (images.length == 2) {
-      imageWidgets = [
-        Expanded(
-          child: ComicImage(
-            width: double.infinity,
-            height: double.infinity,
-            image: _displayImage(data.images[images[0]]),
-            showImageDimensions: data.showImageDimensions,
-            fit: BoxFit.contain,
-            alignment: axis == Axis.vertical
-                ? Alignment.bottomCenter
-                : Alignment.centerRight,
-            onInit: (state) => imageStates[state] = images[0],
-            onDispose: (state) => imageStates.remove(state),
-          ),
-        ),
-        Expanded(
-          child: ComicImage(
-            width: double.infinity,
-            height: double.infinity,
-            image: _displayImage(data.images[images[1]]),
-            showImageDimensions: data.showImageDimensions,
-            fit: BoxFit.contain,
-            alignment: axis == Axis.vertical
-                ? Alignment.topCenter
-                : Alignment.centerLeft,
-            onInit: (state) => imageStates[state] = images[1],
-            onDispose: (state) => imageStates.remove(state),
-          ),
-        ),
-      ];
-    } else {
-      imageWidgets = images.map((imageIndex) {
-        ImageProvider imageProvider = _displayImage(data.images[imageIndex]);
+    if (order.length == 2) {
+      Widget half((String, int) entry, Alignment alignment) {
+        final (imageKey, number) = entry;
         return Expanded(
           child: ComicImage(
-            image: imageProvider,
+            width: double.infinity,
+            height: double.infinity,
+            image: _displayImage(imageKey),
             showImageDimensions: data.showImageDimensions,
             fit: BoxFit.contain,
-            onInit: (state) => imageStates[state] = imageIndex,
+            alignment: alignment,
+            onInit: (state) => imageStates[state] = number - 1,
             onDispose: (state) => imageStates.remove(state),
           ),
         );
-      }).toList();
+      }
+
+      imageWidgets = [
+        half(
+          order[0],
+          axis == Axis.vertical
+              ? Alignment.bottomCenter
+              : Alignment.centerRight,
+        ),
+        half(
+          order[1],
+          axis == Axis.vertical ? Alignment.topCenter : Alignment.centerLeft,
+        ),
+      ];
+    } else {
+      imageWidgets = [
+        for (final (imageKey, number) in order)
+          Expanded(
+            child: ComicImage(
+              image: _displayImage(imageKey),
+              showImageDimensions: data.showImageDimensions,
+              fit: BoxFit.contain,
+              onInit: (state) => imageStates[state] = number - 1,
+              onDispose: (state) => imageStates.remove(state),
+            ),
+          ),
+      ];
     }
 
     return axis == Axis.vertical
