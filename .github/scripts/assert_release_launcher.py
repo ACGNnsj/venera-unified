@@ -49,7 +49,7 @@ print('source manifest: MainActivity has LAUNCHER (tool discovery OK)')
 
 # 2. release merged manifest：单图标。
 merged = glob.glob(
-    'android/app/build/intermediates/merged_manifest/**/AndroidManifest.xml',
+    'android/app/build/intermediates/merged_manifest*/**/AndroidManifest.xml',
     recursive=True,
 )
 merged = [m for m in merged if '/release/' in m.replace('\\', '/')]
