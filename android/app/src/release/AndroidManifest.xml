@@ -1,0 +1,14 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- release 合并时摘掉 MainActivity 的 MAIN/LAUNCHER：源码 manifest 里那份只为
+         flutter tool 的 launch activity 发现而存在，留在 release 里会和启用的
+         Icon* 别名形成双桌面图标。emulator CI 断言摘除生效。 -->
+    <application>
+        <activity android:name=".MainActivity">
+            <intent-filter tools:node="remove">
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

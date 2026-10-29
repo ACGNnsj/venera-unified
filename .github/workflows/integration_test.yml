@@ -2,6 +2,8 @@ name: "集成测试（模拟器）"
 
 # T4 pilot:只跑 integration_test/performance_lists_test.dart 一个 target。
 # 跑法重（emulator 启动 + Rust x86_64 交叉编译），只在相关路径变动时触发。
+# manifest 改动也触发：源码 manifest 决定 tool 能否发现 launch activity，
+# 本 job 尾部断言 release 合并 manifest 单图标。
 on:
   workflow_dispatch:
   pull_request:
@@ -11,6 +13,7 @@ on:
       - 'lib/features/history/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
+      - 'android/app/src/**/AndroidManifest.xml'
       - '.github/workflows/integration_test.yml'
   push:
     branches:
@@ -21,6 +24,7 @@ on:
       - 'lib/features/history/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
+      - 'android/app/src/**/AndroidManifest.xml'
       - '.github/workflows/integration_test.yml'
 
 concurrency:
@@ -58,6 +62,14 @@ jobs:
           python3 .github/scripts/prepare_rust_toolchain.py \
             --target x86_64-linux-android
       - run: flutter pub get --enforce-lockfile
+      # app/build.gradle 配置期无条件读 android/key.properties（CI 里没有该文件），
+      # 且 debug 构建签名需要一个真实 keystore：现场生成临时 debug 证书。
+      - name: 准备 debug 签名（CI 临时）
+        run: |
+          keytool -genkey -v -keystore /tmp/ci-debug.keystore -alias androiddebugkey \
+            -storepass android -keypass android -keyalg RSA -validity 365 \
+            -dname "CN=CI, OU=CI, O=CI, L=CI, S=CI, C=CN"
+          printf 'storePassword=android\nkeyPassword=android\nkeyAlias=androiddebugkey\nstoreFile=/tmp/ci-debug.keystore\n' > android/key.properties
       # android-emulator-runner 官方前置：runner 用户默认无 /dev/kvm 权限，
       # 无 KVM 时 x86_64 镜像回退 TCG 软模拟，API 34 一直起不来（device offline）。
       - name: 开放 KVM 给模拟器
@@ -74,3 +86,10 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: flutter test integration_test/performance_lists_test.dart
+      # release 单图标回归保护：源码 manifest 里 MainActivity 的 MAIN/LAUNCHER
+      # 只为 tool 发现而存在，必须被 src/release overlay 从 release 合并里摘掉。
+      - name: 断言 release 合并 manifest 单图标
+        run: |
+          if [ -n "$ANDROID_SDK_ROOT" ]; then echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties; fi
+          cd android && ./gradlew :app:processReleaseMainManifest -q && cd ..
+          python3 .github/scripts/assert_release_launcher.py

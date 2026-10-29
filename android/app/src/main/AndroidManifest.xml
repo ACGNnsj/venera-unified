@@ -49,9 +49,15 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
-            <!-- The MAIN/LAUNCHER entry lives on the Icon* activity-aliases
-                 below (exactly one enabled at a time), not here: keeping it on
-                 MainActivity as well would show a duplicate launcher icon. -->
+            <!-- flutter tool 只认 activity 上的 MAIN/LAUNCHER（不认 activity-alias），
+                 所以 MainActivity 必须带一份，否则 flutter run / integration_test 报
+                 "package identifier or launch activity not found"。
+                 release 合并时由 src/release/AndroidManifest.xml 摘掉，桌面只剩
+                 Icon* 别名其中之一，无双图标。用户可见的入口仍在下面的别名上。 -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
