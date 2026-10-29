@@ -46,7 +46,7 @@ void main() {
             'item_name',
           );
         } finally {
-          exported.dispose();
+          exported.close();
         }
         expect(
           writer.select('SELECT name FROM items;').single['name'],
@@ -57,7 +57,7 @@ void main() {
           'wal',
         );
       } finally {
-        writer.dispose();
+        writer.close();
       }
     },
   );

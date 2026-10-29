@@ -673,7 +673,7 @@ class ComicImportOperation {
           }
         }
       } finally {
-        db.dispose();
+        db.close();
       }
     } catch (error, stack) {
       issues.add(

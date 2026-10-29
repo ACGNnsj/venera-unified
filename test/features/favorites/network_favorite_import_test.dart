@@ -407,7 +407,7 @@ void main() {
     'network commit rolls back batch and preserves linked folder on SQL failure',
     () {
       final db = sqlite3.openInMemory();
-      addTearDown(db.dispose);
+      addTearDown(db.close);
       final repo = FavoritesRepository(db)..initializeMetadata();
       repo.createFolder('Target');
       repo.linkFolderToNetwork('Target', 'test', 'remote');
@@ -435,7 +435,7 @@ void main() {
     'commit checks network ownership and creates no orphan folder on failure',
     () {
       final db = sqlite3.openInMemory();
-      addTearDown(db.dispose);
+      addTearDown(db.close);
       final repo = FavoritesRepository(db)..initializeMetadata();
       expect(
         () => commitNetworkFavorites(
@@ -483,7 +483,7 @@ void main() {
   );
   test('new folder and link roll back if metadata insertion fails', () {
     final db = sqlite3.openInMemory();
-    addTearDown(db.dispose);
+    addTearDown(db.close);
     final repo = FavoritesRepository(db)..initializeMetadata();
     db.execute(
       "CREATE TRIGGER fail_link BEFORE INSERT ON folder_sync BEGIN SELECT RAISE(ABORT, 'injected'); END;",
@@ -508,7 +508,7 @@ void main() {
     'publication failure retains SQL count and refresh never reimports',
     (tester) async {
       final db = sqlite3.openInMemory();
-      addTearDown(db.dispose);
+      addTearDown(db.close);
       final repo = FavoritesRepository(db)..initializeMetadata();
       var collections = 0;
       var commits = 0;

@@ -103,7 +103,7 @@ class SourceTransactionJournal {
         (stage: 'open source transaction', error: error, stack: stack),
       ];
       try {
-        db?.dispose();
+        db?.close();
       } catch (error, stack) {
         failures.add((
           stage: 'close source transaction database',
@@ -964,7 +964,7 @@ class SourceTransactionJournal {
     _closed = true;
     final failures = <SourceMutationError>[];
     try {
-      _db.dispose();
+      _db.close();
     } catch (error, stack) {
       failures.add((
         stage: 'close source transaction database',

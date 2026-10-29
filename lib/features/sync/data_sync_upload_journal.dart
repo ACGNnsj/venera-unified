@@ -265,7 +265,7 @@ class DataSyncUploadJournal {
           .records; // Validate all persisted evidence before accepting writes.
       return result;
     } catch (_) {
-      db.dispose();
+      db.close();
       rethrow;
     }
   }
@@ -372,7 +372,7 @@ class DataSyncUploadJournal {
 
   void close() {
     if (_closed) return;
-    _db.dispose();
+    _db.close();
     _closed = true;
   }
 }

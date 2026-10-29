@@ -119,7 +119,7 @@ class WebDavLibraryCache {
         );
       }
     } catch (_) {
-      db.dispose();
+      db.close();
       rethrow;
     }
     _db = db;
@@ -319,7 +319,7 @@ class WebDavLibraryCache {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
-    _db?.dispose();
+    _db?.close();
     _db = null;
   }
 }

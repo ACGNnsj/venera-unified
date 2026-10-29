@@ -540,7 +540,7 @@ void main() {
           await database.updateOrder(['Other', 'Original']);
         });
         final connection = sqlite3.open(database.databasePath);
-        addTearDown(connection.dispose);
+        addTearDown(connection.close);
         connection.execute(
           'UPDATE "Original" SET has_new_update = 1, last_update_time = ?, last_check_time = ?, translated_tags = ?;',
           ['legacy: update', 12345, 'old translated tags'],

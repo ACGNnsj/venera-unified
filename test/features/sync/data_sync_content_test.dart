@@ -50,7 +50,7 @@ void main() {
         'first',
         Uint8List.fromList([0, 1, 255]),
       ]);
-      db.dispose();
+      db.close();
     }
   });
   tearDown(() => root.deleteSync(recursive: true));
@@ -105,7 +105,7 @@ void main() {
         db.execute('VACUUM');
         expect(capture(), changed);
       } finally {
-        db.dispose();
+        db.close();
       }
     });
   }
@@ -158,7 +158,7 @@ void main() {
       db.execute("UPDATE keyed SET value = '1'");
       expect(capture(), isNot(number));
     } finally {
-      db.dispose();
+      db.close();
     }
   });
 
@@ -319,7 +319,7 @@ void main() {
     );
     final db = sqlite3.open('${root.path}/${DataSyncContentJournal.fileName}');
     db.execute("UPDATE content_operations SET digest = 'bad'");
-    db.dispose();
+    db.close();
     expect(() => journal.acknowledge(first), throwsFormatException);
     journal.close();
     final reopened = sqlite3.open(
@@ -329,6 +329,6 @@ void main() {
       reopened.select('SELECT id FROM content_operations').single['id'],
       first,
     );
-    reopened.dispose();
+    reopened.close();
   });
 }

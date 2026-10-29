@@ -47,7 +47,7 @@ Future<void> _openReorder(WidgetTester tester) async {
 bool _sqliteAvailable() {
   try {
     final database = sqlite3.openInMemory();
-    database.dispose();
+    database.close();
     return true;
   } catch (_) {
     return false;

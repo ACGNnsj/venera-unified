@@ -73,7 +73,7 @@ void main() {
     () async {
       final db = sqlite3.open('${directory.path}/history.db');
       db.execute('CREATE VIEW history AS SELECT 1 AS id');
-      db.dispose();
+      db.close();
       final failed = manager.init();
       expect(manager.init(), same(failed));
       await expectLater(failed, throwsA(isA<SqliteException>()));
@@ -83,7 +83,7 @@ void main() {
       manager.close();
       final repaired = sqlite3.open('${directory.path}/history.db');
       repaired.execute('DROP VIEW history');
-      repaired.dispose();
+      repaired.close();
       await manager.init();
       expect(manager.isInitialized, isTrue);
       expect(manager.count(), 0);
@@ -99,7 +99,7 @@ void main() {
       db.execute(
         "CREATE TRIGGER fail_retention BEFORE DELETE ON history BEGIN SELECT RAISE(ABORT, 'retention'); END",
       );
-      db.dispose();
+      db.close();
       appdata.settings['historyRetentionDays'] = 1;
       var notifications = 0;
       manager.addListener(() => notifications++);
@@ -112,7 +112,7 @@ void main() {
       final repaired = sqlite3.open('${directory.path}/history.db');
       expect(repaired.select('SELECT * FROM history'), hasLength(1));
       repaired.execute('DROP TRIGGER fail_retention');
-      repaired.dispose();
+      repaired.close();
       await manager.init();
       expect(manager.count(), 0);
       expect(notifications, 1);

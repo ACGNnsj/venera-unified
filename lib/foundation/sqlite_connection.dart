@@ -34,7 +34,7 @@ Database openSqliteDatabase(
     return db;
   } catch (error, stack) {
     try {
-      db.dispose();
+      db.close();
     } catch (cleanupError, cleanupStack) {
       Error.throwWithStackTrace(
         SqliteConnectionSetupFailure(error, stack, cleanupError, cleanupStack),
@@ -55,6 +55,6 @@ Future<T> withDatabase<T>(
   try {
     return await fn(db);
   } finally {
-    db.dispose();
+    db.close();
   }
 }

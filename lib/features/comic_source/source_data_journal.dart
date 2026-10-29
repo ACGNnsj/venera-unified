@@ -69,7 +69,7 @@ class SourceDataJournal {
       ''');
       return SourceDataJournal._(root, directory, db);
     } catch (_) {
-      db.dispose();
+      db.close();
       rethrow;
     }
   }
@@ -312,7 +312,7 @@ class SourceDataJournal {
     only?.verifyComplete();
   }
 
-  void close() => _db.dispose();
+  void close() => _db.close();
 }
 
 class SourceDataWriteRecord {

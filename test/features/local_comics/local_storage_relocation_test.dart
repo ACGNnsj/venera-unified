@@ -54,7 +54,7 @@ void main() {
     errors = [];
   });
   tearDown(() {
-    db.dispose();
+    db.close();
     root.deleteSync(recursive: true);
   });
 
@@ -97,7 +97,7 @@ void main() {
   }
 
   void reopen() {
-    db.dispose();
+    db.close();
     db = sqlite3.open(p.join(root.path, 'local.db'));
     repository = LocalRepository(db);
     relocation = LocalStorageRelocation(db);

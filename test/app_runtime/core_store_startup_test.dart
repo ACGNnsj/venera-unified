@@ -29,7 +29,7 @@ void main() {
       },
       close: () {
         events.add('close $name');
-        databases[name]?.dispose();
+        databases[name]?.close();
       },
     );
     final result = initializeCoreStores([

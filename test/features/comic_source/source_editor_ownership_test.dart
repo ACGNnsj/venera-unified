@@ -452,7 +452,7 @@ void main() {
             BEGIN SELECT RAISE(ABORT, 'editor commit denied'); END;''',
             );
           } finally {
-            db.dispose();
+            db.close();
           }
         };
         SourceMutationFailure? failure;
@@ -481,7 +481,7 @@ void main() {
           );
           db.execute('DROP TRIGGER reject_editor_commit');
         } finally {
-          db.dispose();
+          db.close();
         }
         expect(failure!.state, SourceMutationState.applied);
         expect(

@@ -38,7 +38,7 @@ Future<CacheScanResult> scanCacheDirectory(String dbPath, String dir) async {
         }
       }
     } finally {
-      db.dispose();
+      db.close();
     }
     return CacheScanResult(totalSize, unmanagedFiles);
   });

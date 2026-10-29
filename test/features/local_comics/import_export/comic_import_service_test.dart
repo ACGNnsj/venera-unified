@@ -757,7 +757,7 @@ void main() {
             ['Second', "Reader's"],
           );
         } finally {
-          db.dispose();
+          db.close();
         }
         final result = await service.runImport(
           (operation) => operation.ehViewer(
@@ -786,7 +786,7 @@ void main() {
         try {
           expect(reopened.select('SELECT * FROM DOWNLOADS'), hasLength(2));
         } finally {
-          reopened.dispose();
+          reopened.close();
         }
       });
     },

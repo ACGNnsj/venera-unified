@@ -43,7 +43,7 @@ void main() {
             '{"folderId":"remote"}',
           ]);
         } finally {
-          legacyFavorites.dispose();
+          legacyFavorites.close();
         }
         final historyPath = '${root.path}/history.db';
         final legacyHistory = sqlite3.open(historyPath);
@@ -65,7 +65,7 @@ void main() {
             'CREATE TABLE image_favorites (id TEXT, ep INT, page INT, title TEXT);',
           );
         } finally {
-          legacyHistory.dispose();
+          legacyHistory.close();
         }
         final package = File('${root.path}/legacy.picadata');
         void writePackage() {
@@ -129,7 +129,7 @@ void main() {
         invalidLink.execute(
           "UPDATE folder_sync SET sync_data = 'invalid json';",
         );
-        invalidLink.dispose();
+        invalidLink.close();
         writePackage();
         await importPicaData(package);
         expect(favorites.getFolderComics('旧收藏 "A"'), hasLength(1));
@@ -190,7 +190,7 @@ void main() {
           "INSERT INTO imported VALUES ('bad', 0, 'bad title', '', '', NULL);",
         );
       } finally {
-        source.dispose();
+        source.close();
       }
       final legacyHistory = sqlite3.open('${root.path}/history.db');
       try {
@@ -207,7 +207,7 @@ void main() {
           "INSERT INTO image_favorites VALUES (NULL, 1, 1, 'invalid image');",
         );
       } finally {
-        legacyHistory.dispose();
+        legacyHistory.close();
       }
       final package = File('${root.path}/legacy.picadata');
       void writePackage() {
@@ -237,21 +237,21 @@ void main() {
       try {
         repairFavorites.execute("DELETE FROM imported WHERE target = 'bad';");
       } finally {
-        repairFavorites.dispose();
+        repairFavorites.close();
       }
       await expectUnchanged();
       final repairHistory = sqlite3.open('${root.path}/history.db');
       try {
         repairHistory.execute('UPDATE history SET ep = 1;');
       } finally {
-        repairHistory.dispose();
+        repairHistory.close();
       }
       await expectUnchanged();
       final repairImages = sqlite3.open('${root.path}/history.db');
       try {
         repairImages.execute('DELETE FROM image_favorites;');
       } finally {
-        repairImages.dispose();
+        repairImages.close();
       }
       writePackage();
       await importPicaData(package);

@@ -43,7 +43,7 @@ void main() {
             name: 'store',
             close: () {
               events.add('store');
-              database.dispose();
+              database.close();
             },
           ));
         },

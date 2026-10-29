@@ -93,7 +93,7 @@ void main() {
                 );
               }
             } finally {
-              db.dispose();
+              db.close();
             }
             Error.throwWithStackTrace(original, originalStack);
           });
@@ -165,7 +165,7 @@ void main() {
             expect(row['sync_id'], transfer.operationId);
             expect(row['cleaned'], 0);
           } finally {
-            journal.dispose();
+            journal.close();
           }
           final repeated = await controller.downloadData();
           expect(repeated.error, isTrue);
@@ -215,7 +215,7 @@ void _writeDatabase(String path, String value) {
     db.execute('CREATE TABLE marker (value TEXT NOT NULL)');
     db.execute('INSERT INTO marker VALUES (?)', [value]);
   } finally {
-    db.dispose();
+    db.close();
   }
 }
 
@@ -224,7 +224,7 @@ String _readDatabase(String path) {
   try {
     return db.select('SELECT value FROM marker').single['value'] as String;
   } finally {
-    db.dispose();
+    db.close();
   }
 }
 

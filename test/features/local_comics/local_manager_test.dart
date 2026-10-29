@@ -28,7 +28,7 @@ LocalComic _localComic(String id, {List<String> downloaded = const []}) {
 bool _sqliteAvailable() {
   try {
     final db = sqlite3.openInMemory();
-    db.dispose();
+    db.close();
     return true;
   } catch (_) {
     return false;
@@ -130,7 +130,7 @@ void main() {
       } finally {
         if (!gate.isCompleted) gate.complete();
         await importing;
-        db.dispose();
+        db.close();
         LocalManager.current?.dispose();
         root.deleteSync(recursive: true);
       }
@@ -148,7 +148,7 @@ void main() {
       await manager.init();
       final db = sqlite3.open('${root.path}/local.db');
       addTearDown(() {
-        db.dispose();
+        db.close();
         LocalManager.current?.dispose();
         root.deleteSync(recursive: true);
       });

@@ -28,7 +28,7 @@ void main() {
     db = sqlite3.openInMemory();
     repository = LocalRepository(db)..initialize();
   });
-  tearDown(() => db.dispose());
+  tearDown(() => db.close());
 
   test(
     'chapter deletion uses current rows and preserves other sources and duplicates',

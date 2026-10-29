@@ -58,6 +58,6 @@ Future<void> main(List<String> args) async {
       if (phase == 'committed') rendezvous();
     });
   } finally {
-    db.dispose();
+    db.close();
   }
 }

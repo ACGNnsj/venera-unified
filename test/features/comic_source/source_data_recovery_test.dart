@@ -36,7 +36,7 @@ void main() {
       return db.select('SELECT COUNT(*) AS count FROM writes').single['count']
           as int;
     } finally {
-      db.dispose();
+      db.close();
     }
   }
 
@@ -168,7 +168,7 @@ void main() {
       final residue = await leaveResidue();
       final db = sqlite3.open(database());
       db.execute('UPDATE writes SET $field = ?', ['../outside']);
-      db.dispose();
+      db.close();
       await expectLater(
         storage.recover(root.path),
         throwsA(isA<SourceMutationFailure>()),

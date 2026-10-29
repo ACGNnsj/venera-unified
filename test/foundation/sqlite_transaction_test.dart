@@ -15,7 +15,7 @@ void main() {
     db = sqlite3.openInMemory();
     db.execute('CREATE TABLE records (value TEXT);');
   });
-  tearDown(() => db.dispose());
+  tearDown(() => db.close());
   List<String> values() => db
       .select('SELECT value FROM records ORDER BY rowid;')
       .map((row) => row['value'] as String)
@@ -137,8 +137,8 @@ void main() {
         ['deferred', 'released'],
       );
     } finally {
-      first.dispose();
-      second.dispose();
+      first.close();
+      second.close();
       root.deleteSync(recursive: true);
     }
   });

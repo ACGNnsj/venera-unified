@@ -13,7 +13,7 @@ Future<ImageFavoritesComputed> readImageFavoritesStatistics(String path) =>
           ImageFavoritesRepository(database).getAll(),
         );
       } finally {
-        database.dispose();
+        database.close();
       }
     });
 

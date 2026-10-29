@@ -313,7 +313,7 @@ void main() {
       _id,
       '{"phase":"finished"}',
     ]);
-    db.dispose();
+    db.close();
     expect(
       () => DataSyncUploadJournal.open(p.dirname(path)),
       throwsFormatException,
@@ -467,7 +467,7 @@ class _Fixture {
         BEGIN SELECT RAISE(FAIL, 'injected upload journal write failure'); END;
       ''');
     } finally {
-      db.dispose();
+      db.close();
     }
   }
 
@@ -478,7 +478,7 @@ class _Fixture {
     try {
       db.execute('DROP TRIGGER reject_upload_phase');
     } finally {
-      db.dispose();
+      db.close();
     }
   }
 

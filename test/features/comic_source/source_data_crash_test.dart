@@ -25,7 +25,7 @@ void main() {
             'test',
             '{"token":"old"}',
           );
-          child = await Process.start(dartExecutable(), [
+          child = await startProbeProcess([
             '--packages=${p.absolute('.dart_tool/package_config.json')}',
             'test/fixtures/source_data_crash_probe.dart',
             root.path,
@@ -98,7 +98,7 @@ void main() {
           await ready.delete();
           // Interrupt the recovery process too, after its file cleanup but
           // before removing the directory/acknowledging the durable intent.
-          child = await Process.start(dartExecutable(), [
+          child = await startProbeProcess([
             '--packages=${p.absolute('.dart_tool/package_config.json')}',
             'test/fixtures/source_data_crash_probe.dart',
             root.path,

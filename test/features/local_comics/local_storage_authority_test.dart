@@ -571,7 +571,10 @@ class _DatabaseProxy extends Fake implements Database {
   }
 
   @override
-  void dispose() => actual.dispose();
+  void close() => actual.close();
+
+  @override
+  void dispose() => close();
 }
 
 class _Task extends DownloadTask {

@@ -30,7 +30,7 @@ History _history(String id) {
 bool _sqliteAvailable() {
   try {
     final db = sqlite3.openInMemory();
-    db.dispose();
+    db.close();
     return true;
   } catch (_) {
     return false;
@@ -88,7 +88,7 @@ void main() {
                     ..title = 'Imported',
                 );
               } finally {
-                db.dispose();
+                db.close();
               }
             },
             onCommitted: () {
@@ -297,7 +297,7 @@ void main() {
             try {
               HistoryRepository(db).removeMany(identities);
             } finally {
-              db.dispose();
+              db.close();
             }
           }, onCommitted: () {});
           ids.clear();
@@ -325,7 +325,7 @@ void main() {
           expect(manager.getAll().map((item) => item.id), ['good']);
           expect(manager.hasPendingWrites, isFalse);
         } finally {
-          db.dispose();
+          db.close();
         }
       });
 
@@ -418,7 +418,7 @@ void main() {
           try {
             expect(old.select('SELECT * FROM history'), isEmpty);
           } finally {
-            old.dispose();
+            old.close();
           }
         },
       );
@@ -641,7 +641,7 @@ void main() {
           hasLength(1),
         );
       } finally {
-        oldDatabase.dispose();
+        oldDatabase.close();
       }
       manager.close();
 
@@ -656,7 +656,7 @@ void main() {
         expect(rows.first['page'], 2);
         expect(rows.first['max_page'], 10);
       } finally {
-        db.dispose();
+        db.close();
       }
     },
     skip: _sqliteAvailable() ? false : 'sqlite3 native library is unavailable',
@@ -716,7 +716,7 @@ void main() {
           null,
         ],
       );
-      oldDb.dispose();
+      oldDb.close();
 
       App.dataPath = dataDir.path;
       App.cachePath = cacheDir.path;
@@ -787,7 +787,7 @@ void main() {
           null,
         ],
       );
-      oldDb.dispose();
+      oldDb.close();
 
       App.dataPath = dataDir.path;
       App.cachePath = cacheDir.path;
@@ -818,7 +818,7 @@ void main() {
           2,
         );
       } finally {
-        db.dispose();
+        db.close();
       }
     },
     skip: _sqliteAvailable() ? false : 'sqlite3 native library is unavailable',
@@ -878,7 +878,7 @@ void main() {
         expect(row['max_page'], 12);
         expect(row['read_duration_ms'], 60000);
       } finally {
-        db.dispose();
+        db.close();
       }
 
       expect(manager.getTotalReadDurationMs(), 90000);

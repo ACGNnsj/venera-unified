@@ -111,7 +111,7 @@ void main() {
           db.execute('CREATE TABLE recovery_marker (value TEXT)');
           db.execute("INSERT INTO recovery_marker VALUES ('old snapshot')");
         }
-        db.dispose();
+        db.close();
       }
       Directory('${data.path}/comic_source').createSync();
       File('${data.path}/comic_source/.keep').writeAsStringSync('old source');
@@ -208,7 +208,7 @@ void main() {
             'old snapshot',
           );
         } finally {
-          db.dispose();
+          db.close();
         }
       }
       final recovered = AppDataImportJournal.open(data.path);

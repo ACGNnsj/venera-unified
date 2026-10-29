@@ -694,7 +694,7 @@ class LocalFavoritesManager with ChangeNotifier {
       await _initCounts(publishChange: publishChange);
     } catch (_) {
       if (!published) {
-        database?.dispose();
+        database?.close();
       } else if (identical(_database, database)) {
         close();
       }
@@ -895,7 +895,7 @@ class LocalFavoritesManager with ChangeNotifier {
         }
         return identities;
       } finally {
-        db.dispose();
+        db.close();
       }
     });
   }
@@ -961,7 +961,7 @@ class LocalFavoritesManager with ChangeNotifier {
       try {
         return FavoritesRepository(db).getFolderComics(folder);
       } finally {
-        db.dispose();
+        db.close();
       }
     });
   }
@@ -982,7 +982,7 @@ class LocalFavoritesManager with ChangeNotifier {
       try {
         return FavoritesRepository(db).getAllComics(folders);
       } finally {
-        db.dispose();
+        db.close();
       }
     });
   }
@@ -1806,7 +1806,7 @@ class LocalFavoritesManager with ChangeNotifier {
     counts.clear();
     final database = _database;
     _database = null;
-    database?.dispose();
+    database?.close();
   }
 
   void notifyChanges() {

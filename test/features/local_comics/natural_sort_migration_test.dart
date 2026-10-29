@@ -71,7 +71,7 @@ void main() {
         if (!gate.isCompleted) gate.complete();
         await exclusive;
         await converting;
-        db.dispose();
+        db.close();
       }
     },
   );
@@ -79,7 +79,7 @@ void main() {
   test('concurrent conversions reuse the first mapping', () async {
     final db = sqlite3.open('${root.path}/local.db');
     db.execute('DELETE FROM natural_sort_migration');
-    db.dispose();
+    db.close();
     final second = history.copy();
     await Future.wait([
       local.migrateLegacyPageOrder(history),
@@ -95,7 +95,7 @@ void main() {
     () async {
       final localDb = sqlite3.open('${root.path}/local.db');
       localDb.execute('DELETE FROM natural_sort_migration');
-      localDb.dispose();
+      localDb.close();
       final historyDb = sqlite3.open('${root.path}/history.db');
       try {
         historyDb.execute(
@@ -111,7 +111,7 @@ void main() {
         expect(history.page, 3);
         expect(HistoryManager().find('1', ComicType.local)!.page, 3);
       } finally {
-        historyDb.dispose();
+        historyDb.close();
       }
     },
   );
@@ -132,7 +132,7 @@ void main() {
     () async {
       final db = sqlite3.open('${root.path}/local.db');
       db.execute('DELETE FROM natural_sort_migration');
-      db.dispose();
+      db.close();
       await local.migrateLegacyPageOrder(history);
       expect(history.page, 3);
       expect(HistoryManager().find('1', ComicType.local)!.page, 3);

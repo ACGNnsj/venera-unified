@@ -32,7 +32,7 @@ void main() {
     ''');
     repository = HistoryRepository(db)..initialize();
   });
-  tearDown(() => db.dispose());
+  tearDown(() => db.close());
 
   test(
     'chapter snapshots survive reload, duration writes and metadata refresh',

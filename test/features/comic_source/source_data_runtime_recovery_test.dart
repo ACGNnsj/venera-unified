@@ -178,7 +178,7 @@ void main() {
     final failure = await failSave();
     final db = sqlite3.open(journal().path);
     db.execute('DELETE FROM writes');
-    db.dispose();
+    db.close();
     await expectLater(
       source.retryDataCleanup(),
       throwsA(isA<SourceMutationFailure>()),
@@ -196,7 +196,7 @@ void main() {
       final failure = await failSave();
       final db = sqlite3.open(journal().path);
       db.execute("UPDATE writes SET source_key = 'another'");
-      db.dispose();
+      db.close();
       await expectLater(
         source.retryDataCleanup(),
         throwsA(isA<SourceMutationFailure>()),
@@ -204,7 +204,7 @@ void main() {
       expect(Directory(failure.recoveryPath!).existsSync(), isTrue);
       final repaired = sqlite3.open(journal().path);
       repaired.execute("UPDATE writes SET source_key = 'fixture'");
-      repaired.dispose();
+      repaired.close();
       await source.retryDataCleanup();
     },
   );

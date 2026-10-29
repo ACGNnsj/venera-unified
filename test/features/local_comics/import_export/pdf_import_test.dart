@@ -227,7 +227,7 @@ void main() {
             BEGIN SELECT RAISE(ABORT, 'test insertion failure'); END;
           ''');
             } finally {
-              database.dispose();
+              database.close();
             }
             await expectLater(
               PdfComicImporter.importDocument(
@@ -486,7 +486,7 @@ void main() {
 bool _sqliteAvailable() {
   try {
     final database = sqlite3.openInMemory();
-    database.dispose();
+    database.close();
     return true;
   } catch (_) {
     return false;

@@ -66,7 +66,7 @@ void main() {
     try {
       db.execute(statement);
     } finally {
-      db.dispose();
+      db.close();
     }
   }
 

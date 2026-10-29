@@ -1535,7 +1535,7 @@ void _writeMarker(String path, String value) {
     db.execute('CREATE TABLE marker (value TEXT NOT NULL)');
     db.execute('INSERT INTO marker VALUES (?)', [value]);
   } finally {
-    db.dispose();
+    db.close();
   }
 }
 
@@ -1547,7 +1547,7 @@ String _readMarker(String path) {
     }
     return db.select('SELECT value FROM marker').single['value'] as String;
   } finally {
-    db.dispose();
+    db.close();
   }
 }
 

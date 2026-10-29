@@ -44,7 +44,7 @@ void main() {
       }
       final raw = sqlite3.open(jar.path);
       expect(raw.select('SELECT name FROM cookies').single['name'], 'expired');
-      raw.dispose();
+      raw.close();
       release.complete();
       await replacement;
       expect(jar.loadForRequest(uri), isEmpty);
@@ -245,7 +245,7 @@ void main() {
           'CREATE TRIGGER fail_cookie BEFORE ${loadFailure ? 'DELETE' : 'INSERT'} '
           "ON cookies BEGIN SELECT RAISE(ABORT, 'cookie disk failure'); END",
         );
-        raw.dispose();
+        raw.close();
         final adapter = _ResponseGate();
         final dio = Dio()..httpClientAdapter = adapter;
         dio.interceptors.add(CookieManagerSql(jar));

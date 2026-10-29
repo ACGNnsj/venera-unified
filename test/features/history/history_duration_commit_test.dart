@@ -57,14 +57,14 @@ Future<void> _persistDuration(
   try {
     HistoryRepository(database).addReadDuration(snapshot, durationMs);
   } finally {
-    database.dispose();
+    database.close();
   }
 }
 
 bool _sqliteAvailable() {
   try {
     final database = sqlite3.openInMemory();
-    database.dispose();
+    database.close();
     return true;
   } catch (_) {
     return false;
@@ -99,7 +99,7 @@ void main() {
       tearDown(() async {
         manager.failNotifications = false;
         await manager.waitForAsyncWrites();
-        database.dispose();
+        database.close();
         manager.close();
         directory.deleteSync(recursive: true);
       });

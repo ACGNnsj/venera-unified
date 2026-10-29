@@ -22,7 +22,7 @@ void main() {
           db.execute('CREATE TABLE content (value TEXT);');
           db.execute('INSERT INTO content VALUES (?);', [name]);
         } finally {
-          db.dispose();
+          db.close();
         }
       }
       Directory('${source.path}/comic_source').createSync();
@@ -52,7 +52,7 @@ void main() {
           'history.db',
         );
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );

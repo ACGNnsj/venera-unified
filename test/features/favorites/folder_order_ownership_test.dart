@@ -852,7 +852,7 @@ void main() {
           expected,
         );
       } finally {
-        raw.dispose();
+        raw.close();
       }
       await tester.runAsync(() async {
         await database.closeAndWait();

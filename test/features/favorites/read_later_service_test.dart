@@ -8,7 +8,7 @@ import 'package:venera_unified/foundation/comic_type.dart';
 void main() {
   test('failed member insertion rolls back the new folder', () {
     final db = sqlite3.openInMemory();
-    addTearDown(db.dispose);
+    addTearDown(db.close);
     final repository = _FailingInsertRepository(db)..initializeMetadata();
     final service = ReadLaterService(
       repository: () => repository,
@@ -83,8 +83,8 @@ void main() {
         expect(service.comics().single.id, 'id');
         expect(FavoritesRepository(first).count('Later (2)'), 1);
       } finally {
-        first.dispose();
-        second.dispose();
+        first.close();
+        second.close();
       }
     },
   );

@@ -24,7 +24,7 @@ void main() {
     try {
       db.execute(sql, parameters);
     } finally {
-      db.dispose();
+      db.close();
     }
   }
 
@@ -372,7 +372,7 @@ void main() {
       try {
         expect(db.select('SELECT * FROM import_operations'), isEmpty);
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );

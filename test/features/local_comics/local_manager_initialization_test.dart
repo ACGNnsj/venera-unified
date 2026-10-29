@@ -195,8 +195,11 @@ class _FailCloseDatabase extends Fake implements Database {
   ResultSet select(String sql, [List<Object?> parameters = const []]) =>
       actual.select(sql, parameters);
   @override
-  void dispose() {
+  void close() {
     if (++closes == 1) throw StateError('close failed');
-    actual.dispose();
+    actual.close();
   }
+
+  @override
+  void dispose() => close();
 }

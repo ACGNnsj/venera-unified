@@ -123,7 +123,7 @@ void main() {
     'post-save cache failure remains retryable with original invalidation',
     () async {
       final db = openSqliteDatabase('${root.path}/webdav_library.db');
-      addTearDown(db.dispose);
+      addTearDown(db.close);
       db.execute(
         "CREATE TRIGGER reject_clear BEFORE DELETE ON webdav_library_state BEGIN SELECT RAISE(ABORT, 'injected invalidation'); END",
       );

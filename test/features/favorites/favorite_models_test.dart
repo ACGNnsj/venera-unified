@@ -24,7 +24,7 @@ void main() {
         expect(item.time, 'legacy timestamp');
         expect(item.tags, ['a', '', 'a', '']);
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );

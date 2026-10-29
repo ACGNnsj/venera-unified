@@ -67,7 +67,7 @@ void main() {
         expect(appdata.settings['moveFavoriteAfterRead'], 'unknown');
         expect(appdata.settings['newFavoriteAddTo'], 'unknown');
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );
@@ -138,7 +138,7 @@ void main() {
         expect(appdata.settings['followUpdatesFolder'], tracking);
       } finally {
         if (!release.isCompleted) release.complete();
-        db.dispose();
+        db.close();
       }
     },
   );
@@ -293,7 +293,7 @@ void main() {
           );
           checkedSchema = true;
         } finally {
-          db.dispose();
+          db.close();
         }
       }
 
@@ -353,7 +353,7 @@ void main() {
       try {
         expect(db.select('SELECT id FROM old').single['id'], 'original');
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );
@@ -433,7 +433,7 @@ void main() {
       try {
         expect(db.select('SELECT id FROM old').single['id'], 'original');
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );

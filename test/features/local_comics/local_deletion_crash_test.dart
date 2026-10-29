@@ -5,32 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
 import 'package:venera_unified/features/local_comics/local_deletion_journal.dart';
-
-String dartExecutable() {
-  final executable = Platform.isWindows ? 'dart.exe' : 'dart';
-  var directory = File(Platform.resolvedExecutable).parent;
-  while (true) {
-    for (final relative in [
-      'bin/cache/dart-sdk/bin/$executable',
-      'bin/$executable',
-    ]) {
-      final candidate = File(p.join(directory.path, relative));
-      if (candidate.existsSync()) {
-        final vm = File(
-          p.join(
-            candidate.parent.path,
-            Platform.isWindows ? 'dartvm.exe' : 'dartvm',
-          ),
-        );
-        return vm.existsSync() ? vm.path : candidate.path;
-      }
-    }
-    final parent = directory.parent;
-    if (parent.path == directory.path) break;
-    directory = parent;
-  }
-  throw StateError('Cannot locate the Dart SDK executable without a shell');
-}
+import '../../support/dart_vm.dart';
 
 void main() {
   for (final phase in ['staged', 'transaction', 'committed']) {
@@ -45,7 +20,7 @@ void main() {
         Future<String>? output;
         var exited = false;
         try {
-          child = await Process.start(dartExecutable(), [
+          child = await startProbeProcess([
             '--packages=${p.absolute('.dart_tool/package_config.json')}',
             'test/fixtures/local_deletion_crash_probe.dart',
             root.path,
@@ -97,7 +72,7 @@ void main() {
                   hasLength(expectedCount),
                 );
               } finally {
-                other.dispose();
+                other.close();
               }
             }
             if (phase == 'committed') {
@@ -130,7 +105,7 @@ void main() {
             }
             await journal.recover();
           } finally {
-            db.dispose();
+            db.close();
           }
         } finally {
           if (child != null) {

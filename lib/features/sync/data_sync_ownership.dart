@@ -119,7 +119,7 @@ class SqliteDataSyncOwnership implements DataSyncOwnership {
     if (database == null) return;
     // Closing rolls back and releases the transaction. Do not unlock early or
     // forget the connection when its close reports failure.
-    database.dispose();
+    database.close();
     _database = null;
     _root = null;
     _acquired = false;

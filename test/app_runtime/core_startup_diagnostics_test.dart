@@ -82,7 +82,7 @@ void main() {
       final databasePath = '${root.path}/readonly.db';
       final seed = sqlite3.open(databasePath);
       seed.execute('CREATE TABLE existing (id INTEGER)');
-      seed.dispose();
+      seed.close();
       final muted = Log.isMuted;
       Log.isMuted = false;
       Log.clear();
@@ -100,7 +100,7 @@ void main() {
           try {
             db.execute('CREATE TABLE new_table (id INTEGER)');
           } finally {
-            db.dispose();
+            db.close();
           }
         },
         sources: () async => fail('sources must not start'),

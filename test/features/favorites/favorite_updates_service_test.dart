@@ -38,7 +38,7 @@ void main() {
         selected = 'first';
         expect(service.contains('same', 1), isFalse);
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );

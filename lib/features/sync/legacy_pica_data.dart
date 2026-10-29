@@ -29,7 +29,7 @@ class LegacyPicaData {
       try {
         read(LegacyPicaReader(db));
       } finally {
-        db.dispose();
+        db.close();
       }
     }
 

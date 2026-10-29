@@ -301,7 +301,7 @@ void main() {
         try {
           db.execute(sql);
         } finally {
-          db.dispose();
+          db.close();
         }
         await expectLater(
           recovery.recover(root.path, null),
@@ -446,6 +446,6 @@ void _editPayload(String root, void Function(Map<String, dynamic>) edit) {
       sha256.convert(utf8.encode(encoded)).toString(),
     ]);
   } finally {
-    db.dispose();
+    db.close();
   }
 }

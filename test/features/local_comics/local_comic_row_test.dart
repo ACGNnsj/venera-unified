@@ -33,7 +33,7 @@ void main() {
           throwsFormatException,
         );
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );

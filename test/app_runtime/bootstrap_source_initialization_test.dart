@@ -71,14 +71,14 @@ void main() {
       final history = sqlite3.open('${root.path}/history.db');
       history.execute('CREATE TABLE legacy_marker (value TEXT)');
       history.execute("INSERT INTO legacy_marker VALUES ('preserved history')");
-      history.dispose();
+      history.close();
       final favorites = sqlite3.open('${root.path}/local_favorite.db');
       late Map<String, Object?> internalBefore;
       try {
         seedAnalyzedLegacyFavorites(favorites);
         internalBefore = sqliteInternalTableSnapshot(favorites);
       } finally {
-        favorites.dispose();
+        favorites.close();
       }
       configureHeadlessBindings();
       final core = createCoreBootstrap(
@@ -136,7 +136,7 @@ void main() {
         try {
           expect(sqliteInternalTableSnapshot(favorites), internalBefore);
         } finally {
-          favorites.dispose();
+          favorites.close();
         }
         expect(appdata.searchHistory, ['preserved search']);
         expect(appdata.settings['readerMode'], 'galleryRightToLeft');
@@ -151,7 +151,7 @@ void main() {
             'preserved history',
           );
         } finally {
-          persisted.dispose();
+          persisted.close();
         }
       } finally {
         if (engine.initializationState == InitializationState.ready &&

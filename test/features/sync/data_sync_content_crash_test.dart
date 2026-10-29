@@ -38,7 +38,7 @@ void main() {
         final db = sqlite3.open('${root.path}/history.db');
         db.execute('CREATE TABLE records (id INTEGER PRIMARY KEY, value TEXT)');
         db.execute("INSERT INTO records VALUES (1, 'before')");
-        db.dispose();
+        db.close();
         String capture() =>
             DataSyncContentFingerprint.capture(root.path, excludedFields: '');
         final before = capture();
@@ -105,7 +105,7 @@ void main() {
 
 Future<void> _killAt(Directory root, String phase) async {
   final ready = File('${root.path}/ready.json');
-  final child = await Process.start(dartExecutable(), [
+  final child = await startProbeProcess([
     '--packages=${p.absolute('.dart_tool/package_config.json')}',
     'test/fixtures/data_sync_content_crash_probe.dart',
     root.path,

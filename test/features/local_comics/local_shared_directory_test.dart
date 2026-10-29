@@ -57,7 +57,7 @@ void main() {
         expect(manager.count, 1);
         expect(db.select('SELECT id FROM comics').single['id'], 'second');
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );
@@ -249,7 +249,7 @@ void main() {
             db.execute("DELETE FROM comics WHERE id = 'interrupted'");
           }
         } finally {
-          db.dispose();
+          db.close();
         }
         await original.rename(quarantine);
         if (committed) {

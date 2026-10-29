@@ -38,7 +38,7 @@ void main() {
     repository = ImageFavoritesRepository(db);
     repository.initialize();
   });
-  tearDown(() => db.dispose());
+  tearDown(() => db.close());
 
   test('stored compact legacy rows retain identity, defaults and metadata', () {
     repository.save(comic('shared'));

@@ -51,7 +51,7 @@ class CacheManager {
   Future<void> dispose() {
     _closing = true;
     return _disposal ??= _operations.then((_) {
-      _db.dispose();
+      _db.close();
       // Do not reopen the singleton while accepted writes are still draining.
       if (identical(instance, this)) instance = null;
     });
@@ -80,7 +80,7 @@ class CacheManager {
       ''');
       _db = database;
     } catch (_) {
-      database.dispose();
+      database.close();
       rethrow;
     }
   }

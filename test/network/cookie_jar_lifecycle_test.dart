@@ -22,7 +22,7 @@ void main() {
   });
 
   test('schema failure releases the opened connection and allows retry', () {
-    sqlite3.open(path).dispose();
+    sqlite3.open(path).close();
     late Database opened;
     expect(
       () => CookieJarSql(

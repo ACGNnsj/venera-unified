@@ -83,7 +83,7 @@ void main() {
   });
 
   tearDown(() async {
-    faultDb.dispose();
+    faultDb.close();
     await history.waitForAsyncWrites();
     history.close();
     await favorites.debugWaitForHashedIdsRefresh();
@@ -175,7 +175,7 @@ void main() {
       } finally {
         if (!release.isCompleted) release.complete();
         await preceding;
-        database.dispose();
+        database.close();
       }
     },
   );
@@ -206,7 +206,7 @@ void main() {
         expect(favorites.folderComics('second'), 0);
         expect(page.existsSync(), isFalse);
       } finally {
-        db.dispose();
+        db.close();
       }
     });
   }

@@ -1091,7 +1091,7 @@ void main() {
       final db = sqlite3.open('${root.path}/local.db');
       addTearDown(() async {
         await manager.pendingDownloadTaskWrites;
-        db.dispose();
+        db.close();
         LocalManager.current?.dispose();
         root.deleteSync(recursive: true);
       });
@@ -1167,7 +1167,7 @@ void main() {
       addTearDown(() async {
         task.pause();
         await manager.pendingDownloadTaskWrites;
-        db.dispose();
+        db.close();
         LocalManager.current?.dispose();
         root.deleteSync(recursive: true);
       });

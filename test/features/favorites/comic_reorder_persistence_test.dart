@@ -41,7 +41,7 @@ List<Map<String, Object?>> _rows(LocalFavoritesManager manager, String query) {
         .map((row) => Map<String, Object?>.from(row))
         .toList();
   } finally {
-    database.dispose();
+    database.close();
   }
 }
 
@@ -50,7 +50,7 @@ void _sql(LocalFavoritesManager manager, String sql) {
   try {
     database.execute(sql);
   } finally {
-    database.dispose();
+    database.close();
   }
 }
 

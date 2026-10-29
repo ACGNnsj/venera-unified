@@ -121,7 +121,7 @@ void main() {
         expect(db.select('SELECT * FROM content_operations'), isEmpty);
         expect(db.select('SELECT * FROM content_baselines'), hasLength(1));
       } finally {
-        db.dispose();
+        db.close();
       }
       // Transport bookkeeping is persisted after export and must not be echoed.
       await appdata.updateSettings((settings) {
@@ -405,7 +405,7 @@ void main() {
               .toList();
           db.execute('DELETE FROM content_operations');
         } finally {
-          db.dispose();
+          db.close();
         }
       };
       final result = await fixture.controller.uploadData();
@@ -425,7 +425,7 @@ void main() {
           record,
         );
       } finally {
-        db.dispose();
+        db.close();
       }
       fixture.remote.beforePut = null;
       expect((await fixture.controller.uploadData()).success, isTrue);
@@ -527,7 +527,7 @@ class _Fixture {
           "INSERT INTO sync_content_regression VALUES ('committed-without-notification')",
         );
       } finally {
-        db.dispose();
+        db.close();
       }
     } else {
       File(

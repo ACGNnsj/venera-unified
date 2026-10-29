@@ -69,7 +69,7 @@ void main() {
     try {
       expect(old.select('SELECT * FROM image_favorites'), isEmpty);
     } finally {
-      old.dispose();
+      old.close();
     }
   });
 

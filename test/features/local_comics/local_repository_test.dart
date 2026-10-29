@@ -65,7 +65,7 @@ void main() {
           isEmpty,
         );
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );
@@ -123,7 +123,7 @@ void main() {
           3,
         );
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );
@@ -195,7 +195,7 @@ void main() {
       expect(repository.count, 0);
       expect(db.select('SELECT * FROM natural_sort_migration;'), isEmpty);
     } finally {
-      db.dispose();
+      db.close();
     }
   });
 
@@ -256,7 +256,7 @@ void main() {
         expect(repository.search("' OR 1=1 --"), isEmpty);
         expect(LocalSortType.fromString('unknown'), LocalSortType.name);
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );

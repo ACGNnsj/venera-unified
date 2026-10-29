@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
+import '../../support/dart_vm.dart';
 
 const _databases = ['history.db', 'local_favorite.db', 'cookie.db'];
 const _metadata = ['appdata.json', 'syncdata.json'];
@@ -93,7 +94,7 @@ void main() {
             'later local edit',
           ]);
         } finally {
-          db.dispose();
+          db.close();
         }
         File(p.join(fixture.data.path, 'appdata.json')).writeAsStringSync(
           jsonEncode({
@@ -161,7 +162,7 @@ class _ImportFixture {
           db.execute('CREATE TABLE marker(value TEXT NOT NULL)');
           db.execute('INSERT INTO marker(value) VALUES (?)', ['$label:$name']);
         } finally {
-          db.dispose();
+          db.close();
         }
       }
       final sources = Directory(
@@ -209,7 +210,7 @@ class _ImportFixture {
           '${applied ? 'new' : 'old'}:$name',
         );
       } finally {
-        db.dispose();
+        db.close();
       }
     }
   }
@@ -342,36 +343,10 @@ Future<List<Object?>> _runProbe(
 }
 
 Future<Process> _startProbe(Directory root, String command, String argument) =>
-    Process.start(_dartExecutable(), [
+    startProbeProcess([
       '--packages=${p.absolute('.dart_tool/package_config.json')}',
       'test/fixtures/app_data_import_crash_probe.dart',
       root.path,
       command,
       argument,
     ]);
-
-String _dartExecutable() {
-  final executable = Platform.isWindows ? 'dart.exe' : 'dart';
-  var directory = File(Platform.resolvedExecutable).parent;
-  while (true) {
-    for (final relative in [
-      'bin/cache/dart-sdk/bin/$executable',
-      'bin/$executable',
-    ]) {
-      final candidate = File(p.join(directory.path, relative));
-      if (candidate.existsSync()) {
-        final vm = File(
-          p.join(
-            candidate.parent.path,
-            Platform.isWindows ? 'dartvm.exe' : 'dartvm',
-          ),
-        );
-        return vm.existsSync() ? vm.path : candidate.path;
-      }
-    }
-    final parent = directory.parent;
-    if (parent.path == directory.path) break;
-    directory = parent;
-  }
-  throw StateError('Cannot locate the Dart SDK executable without a shell');
-}

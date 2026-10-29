@@ -60,7 +60,7 @@ void registerListPerformanceTests({bool device = false}) {
         await manager.waitForAsyncWrites();
         manager.close();
         manager.dispose();
-        seedDatabase?.dispose();
+        seedDatabase?.close();
         if (previousDataPath != null) App.dataPath = previousDataPath;
         if (previousCachePath != null) App.cachePath = previousCachePath;
         await directory.delete(recursive: true);
@@ -84,7 +84,7 @@ void registerListPerformanceTests({bool device = false}) {
               statement.execute(['$i', 'Comic $i']);
             }
           } finally {
-            statement.dispose();
+            statement.close();
           }
           db.execute('COMMIT');
         } catch (_) {

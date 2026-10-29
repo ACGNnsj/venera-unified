@@ -159,7 +159,7 @@ class HistoryManager with ChangeNotifier {
         isInitialized = false;
         _historyCache.clear();
         _database = null;
-        database?.dispose();
+        database?.close();
       }
       rethrow;
     }
@@ -180,7 +180,7 @@ class HistoryManager with ChangeNotifier {
           repository.writeProgress(newItem);
         }
       } finally {
-        db.dispose();
+        db.close();
       }
     });
   }
@@ -211,7 +211,7 @@ class HistoryManager with ChangeNotifier {
           );
         } finally {
           try {
-            db?.dispose();
+            db?.close();
           } catch (error, stack) {
             final original = failure;
             failure = PersistenceFailure(
@@ -456,7 +456,7 @@ class HistoryManager with ChangeNotifier {
         cover: cover,
       );
     } finally {
-      db.dispose();
+      db.close();
     }
   });
 
@@ -470,7 +470,7 @@ class HistoryManager with ChangeNotifier {
     try {
       mutate(HistoryRepository(db));
     } finally {
-      db.dispose();
+      db.close();
     }
   });
 
@@ -561,7 +561,7 @@ class HistoryManager with ChangeNotifier {
     _historyCache.clear();
     final database = _database;
     _database = null;
-    database?.dispose();
+    database?.close();
   }
 
   void notifyChanges() {

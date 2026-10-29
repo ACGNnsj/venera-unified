@@ -10,14 +10,14 @@ void _initializeDatabase(String path) {
     db.execute('CREATE TABLE items (id INTEGER PRIMARY KEY, value TEXT);');
     db.execute("INSERT INTO items (value) VALUES ('seed');");
   } finally {
-    db.dispose();
+    db.close();
   }
 }
 
 bool _sqliteAvailable() {
   try {
     final db = sqlite3.openInMemory();
-    db.dispose();
+    db.close();
     return true;
   } catch (_) {
     return false;
@@ -52,13 +52,16 @@ class _SetupDatabase implements Database {
   }
 
   @override
-  void dispose() {
+  void close() {
     disposeCalls++;
-    delegate.dispose();
+    delegate.close();
     if (cleanupError case final error?) {
       Error.throwWithStackTrace(error, cleanupStack);
     }
   }
+
+  @override
+  void dispose() => close();
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -94,7 +97,7 @@ void main() {
           expect(native.select('PRAGMA synchronous;').single['synchronous'], 1);
           expect(native.select('PRAGMA busy_timeout;').single['timeout'], 5000);
         } finally {
-          connection.dispose();
+          connection.close();
         }
         expect(database.disposeCalls, 1);
         expect(() => native.execute('SELECT 1;'), throwsStateError);
@@ -193,7 +196,7 @@ void main() {
       try {
         expect(db.select('SELECT value FROM items;').single['value'], 'seed');
       } finally {
-        db.dispose();
+        db.close();
       }
     } finally {
       dir.deleteSync(recursive: true);
@@ -211,7 +214,7 @@ void main() {
       });
 
       final db = openSqliteDatabase('${dir.path}/helper.db');
-      addTearDown(db.dispose);
+      addTearDown(db.close);
 
       final journalMode = db
           .select('PRAGMA journal_mode;')
@@ -266,8 +269,8 @@ void main() {
 
       final reader = sqlite3.open(dbPath);
       final writer = sqlite3.open(dbPath);
-      addTearDown(reader.dispose);
-      addTearDown(writer.dispose);
+      addTearDown(reader.close);
+      addTearDown(writer.close);
 
       reader.execute('BEGIN;');
       reader.select('SELECT * FROM items;');

@@ -95,7 +95,7 @@ class AppDataImportJournal {
       });
       return AppDataImportJournal._(resolved, db, observer);
     } catch (_) {
-      db.dispose();
+      db.close();
       rethrow;
     }
   }
@@ -379,7 +379,7 @@ class AppDataImportJournal {
 
   void close() {
     if (_closed) return;
-    _db.dispose();
+    _db.close();
     _closed = true;
   }
 

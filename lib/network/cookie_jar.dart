@@ -38,7 +38,7 @@ class CookieJarSql {
       ''');
         _database = database;
       } catch (_) {
-        database.dispose();
+        database.close();
         rethrow;
       }
     });
@@ -248,7 +248,7 @@ class CookieJarSql {
   void dispose() => _operations.accessSync(() {
     final database = _database;
     _database = null;
-    database?.dispose();
+    database?.close();
   });
 }
 

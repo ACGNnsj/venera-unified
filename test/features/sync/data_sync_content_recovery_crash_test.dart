@@ -64,7 +64,7 @@ void main() {
 Future<void> _kill(Directory root, String phase) async {
   final ready = File('${root.path}/recovery-ready');
   if (ready.existsSync()) ready.deleteSync();
-  final child = await Process.start(dartExecutable(), [
+  final child = await startProbeProcess([
     '--packages=${p.absolute('.dart_tool/package_config.json')}',
     'test/fixtures/data_sync_content_recovery_probe.dart',
     root.path,

@@ -156,7 +156,7 @@ void main() {
           .select('SELECT sql FROM sqlite_master')
           .map((r) => r['sql'])
           .toList();
-      db.dispose();
+      db.close();
       final owner = SqliteDataSyncOwnership(() => root.path);
       expect(owner.acquire, throwsFormatException);
       owner.release();
@@ -169,7 +169,7 @@ void main() {
           schema,
         );
       } finally {
-        reopened.dispose();
+        reopened.close();
       }
     });
   }
@@ -217,7 +217,7 @@ void main() {
     test(
       'independent VM excludes contenders and process death releases ownership (application=$application)',
       () async {
-        final child = await Process.start(dartExecutable(), [
+        final child = await startProbeProcess([
           '--packages=${p.absolute('.dart_tool/package_config.json')}',
           'test/fixtures/data_sync_ownership_probe.dart',
           root.path,
@@ -284,10 +284,13 @@ class _ClosingDatabase implements Database {
   bool failAcquisition;
   int closes = 0;
   @override
-  void dispose() {
+  void close() {
     if (++closes == 1) throw StateError('injected close failure');
-    inner.dispose();
+    inner.close();
   }
+
+  @override
+  void dispose() => close();
 
   @override
   void execute(String sql, [List<Object?> parameters = const []]) {

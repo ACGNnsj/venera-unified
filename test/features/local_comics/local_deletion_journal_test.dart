@@ -19,7 +19,7 @@ void main() {
   }
 
   void reopen() {
-    db.dispose();
+    db.close();
     db = sqlite3.open('${root.path}/journal.db');
     journal = LocalDeletionJournal(db, exists: exists)..initialize();
   }
@@ -33,7 +33,7 @@ void main() {
     );
   });
   tearDown(() {
-    db.dispose();
+    db.close();
     root.deleteSync(recursive: true);
   });
 

@@ -890,7 +890,7 @@ void main() {
             },
           );
         } finally {
-          raw.dispose();
+          raw.close();
         }
         registerFollowUpdatesChangeListener(null);
         await tester.runAsync(() async {

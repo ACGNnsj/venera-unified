@@ -35,7 +35,7 @@ void main() {
         "INSERT INTO imported VALUES ('book', 0, 'Title', 'Author', 'Cover', 'tag');",
       );
     } finally {
-      oldFavorites.dispose();
+      oldFavorites.close();
     }
     final oldHistory = sqlite3.open('${source.path}/history.db');
     try {
@@ -52,7 +52,7 @@ void main() {
         "INSERT INTO image_favorites VALUES ('source-book-part', 1, 2, 'Image title'), ('source-book-part', 1, 3, 'Image title'), ('source-book-part', 2, 4, 'Image title');",
       );
     } finally {
-      oldHistory.dispose();
+      oldHistory.close();
     }
     data = LegacyPicaData.read(source.path, sourceAvailable: (_) => true);
     favoritesDb = sqlite3.open('${root.path}/favorites.db');
@@ -63,8 +63,8 @@ void main() {
     linkErrors.clear();
   });
   tearDown(() {
-    favoritesDb.dispose();
-    historyDb.dispose();
+    favoritesDb.close();
+    historyDb.close();
     root.deleteSync(recursive: true);
   });
   void commit() => commitLegacyPicaData(
@@ -190,7 +190,7 @@ void main() {
       try {
         source.execute("UPDATE folder_sync SET sync_data = 'invalid';");
       } finally {
-        source.dispose();
+        source.close();
       }
       data = LegacyPicaData.read(
         '${root.path}/source',
@@ -209,7 +209,7 @@ void main() {
           "UPDATE folder_sync SET sync_data = '{\"folderId\":\"remote\"}';",
         );
       } finally {
-        repair.dispose();
+        repair.close();
       }
       data = LegacyPicaData.read(
         '${root.path}/source',

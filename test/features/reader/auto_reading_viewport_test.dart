@@ -29,7 +29,7 @@ import 'package:venera_unified/foundation/log.dart';
 bool _sqliteAvailable() {
   try {
     final db = sqlite3.openInMemory();
-    db.dispose();
+    db.close();
     return true;
   } catch (_) {
     return false;

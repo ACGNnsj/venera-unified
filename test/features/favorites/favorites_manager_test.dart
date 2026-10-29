@@ -39,14 +39,14 @@ void _deleteExternally(LocalFavoritesManager manager, List<ComicID> comics) {
     );
     manager.refreshDeletedFavorites(removed);
   } finally {
-    db.dispose();
+    db.close();
   }
 }
 
 bool _sqliteAvailable() {
   try {
     final db = sqlite3.openInMemory();
-    db.dispose();
+    db.close();
     return true;
   } catch (_) {
     return false;
@@ -178,7 +178,7 @@ void main() {
                       );
                       return item;
                     } finally {
-                      db.dispose();
+                      db.close();
                     }
                   });
                 case 'move':
@@ -309,7 +309,7 @@ void main() {
             unorderedEquals(['good', 'bad']),
           );
         } finally {
-          db.dispose();
+          db.close();
         }
       });
     },
@@ -671,7 +671,7 @@ void main() {
           expect(notifications, 1);
         } finally {
           manager.removeListener(changed);
-          db.dispose();
+          db.close();
         }
       });
     },
@@ -734,7 +734,7 @@ void main() {
             isTrue,
           );
         } finally {
-          db.dispose();
+          db.close();
         }
       });
     },
@@ -1236,7 +1236,7 @@ void main() {
         final db = sqlite3.open(path);
         db.execute('DROP TABLE folder_order;');
         db.execute('CREATE TABLE folder_order (invalid TEXT);');
-        db.dispose();
+        db.close();
         final first = manager.init();
         final second = manager.init();
         await Future.wait([
@@ -1249,7 +1249,7 @@ void main() {
         File('$path.failed').renameSync(path);
         final repaired = sqlite3.open(path);
         repaired.execute('DROP TABLE folder_order;');
-        repaired.dispose();
+        repaired.close();
         await manager.init();
         expect(
           manager.folderNames,
@@ -1449,7 +1449,7 @@ void main() {
               -1,
             );
           } finally {
-            db.dispose();
+            db.close();
           }
         });
       } finally {
@@ -1493,7 +1493,7 @@ void main() {
           expect(manager.findLinked(source), ('key', 'remote'));
         } finally {
           manager.removeListener(listener);
-          db.dispose();
+          db.close();
         }
       });
     },
@@ -1550,7 +1550,7 @@ void main() {
           expect(cover.existsSync(), isFalse);
         } finally {
           manager.removeListener(listener);
-          db.dispose();
+          db.close();
         }
       });
     },
@@ -1620,7 +1620,7 @@ void main() {
             manager.removeListener(listener);
           }
         } finally {
-          db.dispose();
+          db.close();
         }
       });
     },
@@ -1745,7 +1745,7 @@ void main() {
           seedAnalyzedLegacyFavorites(seed);
           internalBefore = sqliteInternalTableSnapshot(seed);
         } finally {
-          seed.dispose();
+          seed.close();
         }
 
         for (var attempt = 0; attempt < 2; attempt++) {
@@ -1791,7 +1791,7 @@ void main() {
               'ok',
             );
           } finally {
-            persisted.dispose();
+            persisted.close();
           }
           await manager.closeAndWait();
         }
@@ -1864,7 +1864,7 @@ void main() {
           );
         """);
       } finally {
-        seed.dispose();
+        seed.close();
       }
 
       final manager = _ownedFavorites();

@@ -140,6 +140,6 @@ void commitLegacyPicaData(
       }
     }, immediate: true);
   } finally {
-    db.dispose();
+    db.close();
   }
 }

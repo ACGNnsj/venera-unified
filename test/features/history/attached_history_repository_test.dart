@@ -56,7 +56,7 @@ void main() {
     db.execute('ATTACH DATABASE ? AS $quoted;', ['${root.path}/history.db']);
   });
   tearDown(() {
-    db.dispose();
+    db.close();
     root.deleteSync(recursive: true);
   });
 
@@ -223,8 +223,8 @@ void main() {
         isEmpty,
       );
     } finally {
-      mainCheck.dispose();
-      historyCheck.dispose();
+      mainCheck.close();
+      historyCheck.close();
     }
   });
 }

@@ -343,7 +343,7 @@ class LocalManager with ChangeNotifier implements DownloadTaskStorage {
     ) {
       final database = _database;
       try {
-        database?.dispose();
+        database?.close();
         _database = null;
       } catch (closeError, closeStack) {
         // A failed close retains the original handle and forbids a second
@@ -536,7 +536,7 @@ class LocalManager with ChangeNotifier implements DownloadTaskStorage {
     if (_notifierDisposed) return;
     _disposed = true;
     // Do not discard a handle or publish a replacement owner if close fails.
-    _database?.dispose();
+    _database?.close();
     _database = null;
     _comicDirectories.clear();
     super.dispose();

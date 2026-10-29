@@ -47,7 +47,7 @@ void main() {
     errors.clear();
   });
   tearDown(() {
-    db.dispose();
+    db.close();
     root.deleteSync(recursive: true);
   });
 
@@ -122,7 +122,7 @@ void main() {
           'retained page',
         );
         expect(errors, isEmpty);
-        db.dispose();
+        db.close();
         db = sqlite3.open(p.join(root.path, 'local.db'));
         repository = LocalRepository(db);
         relocation = LocalStorageRelocation(db);
@@ -160,7 +160,7 @@ void main() {
           relocation.prepare(oldRoot, newRoot, snapshot, targets);
           if (committed) relocation.commit(snapshot);
         });
-        db.dispose();
+        db.close();
         db = sqlite3.open(p.join(root.path, 'local.db'));
         repository = LocalRepository(db);
         relocation = LocalStorageRelocation(db);

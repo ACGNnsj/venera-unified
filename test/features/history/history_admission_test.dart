@@ -47,7 +47,7 @@ void main() {
         try {
           HistoryRepository(database).addReadDuration(snapshot, durationMs);
         } finally {
-          database.dispose();
+          database.close();
         }
       },
     );
@@ -132,7 +132,7 @@ void main() {
             database,
           ).importHistory(_history('external import'));
         } finally {
-          database.dispose();
+          database.close();
         }
       }, onCommitted: () => events.add('external import'));
       await started.future;
@@ -164,7 +164,7 @@ void main() {
         );
         expect(repository.find(original.id, original.type.value)!.page, 7);
       } finally {
-        old.dispose();
+        old.close();
       }
     },
   );
@@ -269,7 +269,7 @@ void main() {
           try {
             HistoryRepository(database).importHistory(_history('external'));
           } finally {
-            database.dispose();
+            database.close();
           }
         },
         onCommitted: () {

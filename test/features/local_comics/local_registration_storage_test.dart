@@ -47,8 +47,8 @@ void main() {
   });
   tearDown(() {
     if (!local.autocommit) local.execute('ROLLBACK;');
-    local.dispose();
-    favorites.dispose();
+    local.close();
+    favorites.close();
     root.deleteSync(recursive: true);
   });
 

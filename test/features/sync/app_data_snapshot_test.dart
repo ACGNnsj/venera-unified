@@ -43,7 +43,7 @@ void main() {
         ).writeAsStringSync('// source');
         final cookies = sqlite3.open('${App.dataPath}/cookie.db');
         cookies.execute('CREATE TABLE cookie (value TEXT);');
-        cookies.dispose();
+        cookies.close();
         await favorites.init();
         await history.init();
         final write = history.addHistory(
@@ -126,7 +126,7 @@ void main() {
             'ok',
           );
         } finally {
-          exported.dispose();
+          exported.close();
         }
         final filtered = ZipDecoder().decodeBytes(
           (await exportAppData()).readAsBytesSync(),

@@ -9,7 +9,7 @@ void main() {
     db = sqlite3.openInMemory();
     reader = LegacyPicaReader(db);
   });
-  tearDown(() => db.dispose());
+  tearDown(() => db.close());
 
   test(
     'favorites retain legacy type numbering, quoted folders and tag positions',

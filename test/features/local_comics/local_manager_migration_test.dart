@@ -233,7 +233,7 @@ void main() {
           p.join(destination.path, 'Book'),
         );
       } finally {
-        db.dispose();
+        db.close();
       }
     },
   );

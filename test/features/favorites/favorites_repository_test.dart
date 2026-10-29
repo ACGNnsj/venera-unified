@@ -37,7 +37,7 @@ void main() {
       "INSERT INTO second VALUES ('same', 2, 'Other source', '', '', '', 'old time', 1);",
     );
   });
-  tearDown(() => db.dispose());
+  tearDown(() => db.close());
 
   test('reference counts batch identities and preserve full source keys', () {
     final requested = <(String, int)>[

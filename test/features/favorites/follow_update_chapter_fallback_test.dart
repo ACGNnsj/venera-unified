@@ -37,7 +37,7 @@ void main() {
     );
     repository.prepareForFollowUpdates('tracking', clearData: false);
   });
-  tearDown(() => db.dispose());
+  tearDown(() => db.close());
 
   test('present updateTime keeps the original time-only logic', () {
     // Changed time flags, unchanged time does not — even with a bigger count.

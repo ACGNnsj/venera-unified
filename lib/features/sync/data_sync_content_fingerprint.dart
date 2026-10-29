@@ -132,14 +132,14 @@ abstract final class DataSyncContentFingerprint {
             );
           }
         } finally {
-          statement.dispose();
+          statement.close();
         }
         hashes.sort();
         contents.add([name, sql, columns, hasRowId, hashes]);
       }
       return _hash(contents);
     } finally {
-      db.dispose();
+      db.close();
     }
   }
 

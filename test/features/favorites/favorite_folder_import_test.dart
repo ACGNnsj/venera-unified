@@ -23,7 +23,7 @@ void main() {
     db = sqlite3.openInMemory();
     repository = FavoritesRepository(db)..initializeMetadata();
   });
-  tearDown(() => db.dispose());
+  tearDown(() => db.close());
   Map<String, Object> item(String id, [int type = 17]) => {
     'id': id,
     'name': id,

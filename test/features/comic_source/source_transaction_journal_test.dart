@@ -407,7 +407,7 @@ void main() {
       '${root.path}/.source-transactions/transactions.sqlite',
     );
     db.execute("UPDATE mutations SET digest = 'invalid'");
-    db.dispose();
+    db.close();
     await expectLater(
       SourceTransactionJournal.recover(root.path),
       throwsA(isA<SourceMutationFailure>()),

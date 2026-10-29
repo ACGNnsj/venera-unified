@@ -26,8 +26,8 @@ Future<void> createSqliteSnapshot(
       destination = sqlite3.open(destinationPath);
       await source.backup(destination, nPage: -1).drain<void>();
     } finally {
-      destination?.dispose();
-      source?.dispose();
+      destination?.close();
+      source?.close();
     }
   } catch (_) {
     if (ownsTarget) {

@@ -15,7 +15,7 @@ Future<void> killAt(
 }) async {
   final ready = File('${root.path}/ready.json');
   if (ready.existsSync()) ready.deleteSync();
-  final child = await Process.start(dartExecutable(), [
+  final child = await startProbeProcess([
     '--packages=${p.absolute('.dart_tool/package_config.json')}',
     'test/fixtures/source_transaction_crash_probe.dart',
     root.path,
@@ -168,7 +168,7 @@ void main() {
               0,
             );
           } finally {
-            db.dispose();
+            db.close();
           }
         },
       );

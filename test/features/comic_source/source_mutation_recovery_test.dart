@@ -154,7 +154,7 @@ void main() {
               )
               as Map<String, dynamic>;
         } finally {
-          db.dispose();
+          db.close();
         }
       }
 

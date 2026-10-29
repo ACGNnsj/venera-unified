@@ -42,7 +42,7 @@ void main() {
         for (final name in ['history.db', 'cookie.db']) {
           final db = sqlite3.open('${App.dataPath}/$name');
           db.execute('CREATE TABLE seed (id INT);');
-          db.dispose();
+          db.close();
         }
         await manager.init();
         await manager.createFolder('original');
@@ -59,7 +59,7 @@ void main() {
           translatedTags: '',
           append: true,
         );
-        incoming.dispose();
+        incoming.close();
         final source = File('${root.path}/incoming.venera');
         final zip = ZipFile.open(source.path);
         zip.addFile('local_favorite.db', incomingPath);
@@ -115,8 +115,8 @@ void main() {
             0,
           );
         } finally {
-          beforeDb.dispose();
-          afterDb.dispose();
+          beforeDb.close();
+          afterDb.close();
         }
         Directory('${App.dataPath}/comic_source').deleteSync();
         await expectLater(
@@ -172,7 +172,7 @@ void main() {
           seedAnalyzedLegacyFavorites(incoming);
           internalBefore = sqliteInternalTableSnapshot(incoming);
         } finally {
-          incoming.dispose();
+          incoming.close();
         }
         final settings =
             jsonDecode(jsonEncode(appdata.toJson())) as Map<String, dynamic>;
@@ -227,7 +227,7 @@ void main() {
               'ok',
             );
           } finally {
-            persisted.dispose();
+            persisted.close();
           }
           await manager.closeAndWait();
           if (attempt == 0) await manager.init();
@@ -270,7 +270,7 @@ void main() {
                 append: true,
               );
             } finally {
-              incoming.dispose();
+              incoming.close();
             }
           }
           final archivePath = '${root.path}/import.venera';

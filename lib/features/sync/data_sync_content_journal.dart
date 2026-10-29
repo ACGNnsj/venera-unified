@@ -126,7 +126,7 @@ class DataSyncContentJournal {
       ''');
       return DataSyncContentJournal._(root, db);
     } catch (_) {
-      db.dispose();
+      db.close();
       rethrow;
     }
   }
@@ -369,7 +369,7 @@ class DataSyncContentJournal {
 
   void close() {
     if (_closed) return;
-    _db.dispose();
+    _db.close();
     _closed = true;
   }
 }

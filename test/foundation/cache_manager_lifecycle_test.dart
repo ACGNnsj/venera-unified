@@ -27,7 +27,7 @@ void main() {
     'schema failure closes its owned connection and permits repair',
     () async {
       final path = '${directory.path}/cache.db';
-      sqlite3.open(path).dispose();
+      sqlite3.open(path).close();
       late Database opened;
       expect(
         () => CacheManager.open(

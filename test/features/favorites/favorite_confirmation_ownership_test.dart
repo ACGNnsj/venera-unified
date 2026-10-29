@@ -303,7 +303,7 @@ class _Host {
             );
           }
         } finally {
-          connection.dispose();
+          connection.close();
         }
         appdata.settings['followUpdatesFolder'] = 'Original';
         database.refreshUpdateIds();
@@ -738,7 +738,7 @@ void main() {
       await host.mount(tester);
       final database = host.actual!;
       final connection = sqlite3.open(database.databasePath);
-      addTearDown(connection.dispose);
+      addTearDown(connection.close);
       final original = connection
           .select('SELECT * FROM "Original" ORDER BY id;')
           .map((row) => Map<String, Object?>.from(row))
@@ -965,7 +965,7 @@ void main() {
           .select('SELECT rowid, * FROM "Original" ORDER BY rowid;')
           .map((row) => Map<String, Object?>.from(row))
           .toList();
-      connection.dispose();
+      connection.close();
       var notifications = 0;
       void changed() => notifications++;
       database.addListener(changed);
@@ -998,7 +998,7 @@ void main() {
         expect(database.hasNewUpdate('A', ComicType.local), isFalse);
         expect(database.countUpdates('Other'), 2);
       } finally {
-        reopened.dispose();
+        reopened.close();
       }
       expect(tester.takeException(), isNull);
     },
