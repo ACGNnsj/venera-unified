@@ -139,8 +139,12 @@ class ReaderBottomBar extends StatelessWidget {
           ),
           // ②b 控制岛镜像顶栏写法：与顶栏同一视觉宽度居中。
           // 手机档宽度本来就小于 540，约束不生效，像素无差。
+          // 注意：bottomNavigationBar 槽位高度是 loose 的，Align 必须用
+          // heightFactor 收成内容高度，否则会撑满剩余高度（center 还会把
+          // 内容垂直居中顶出屏，topCenter 也会抬高整个栏改变 tooltip 位置）。
           child: Align(
-            alignment: Alignment.center,
+            alignment: Alignment.topCenter,
+            heightFactor: 1.0,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: readerTopBarMaxWidth),
               child: child,
