@@ -48,8 +48,10 @@ if not has_launcher(mains[0]):
 print('source manifest: MainActivity has LAUNCHER (tool discovery OK)')
 
 # 2. release merged manifest：单图标。
+# 注意：flutter gradle 插件把 buildDir 重定向到仓库根 build/ 下，
+# merged manifest 不在 android/app/build/ 里。
 merged = glob.glob(
-    'android/app/build/intermediates/merged_manifest*/**/AndroidManifest.xml',
+    'build/app/intermediates/merged_manifest*/**/AndroidManifest.xml',
     recursive=True,
 )
 merged = [m for m in merged if '/release/' in m.replace('\\', '/')]

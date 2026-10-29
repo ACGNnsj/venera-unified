@@ -92,5 +92,5 @@ jobs:
         run: |
           if [ -n "$ANDROID_SDK_ROOT" ]; then printf '\nsdk.dir=%s\n' "$ANDROID_SDK_ROOT" >> android/local.properties; fi
           (cd android && ./gradlew :app:processReleaseMainManifest -q)
-          find android/app/build/intermediates -name 'AndroidManifest.xml' 2>/dev/null || true
+          find build/app/intermediates -name 'AndroidManifest.xml' 2>/dev/null || true
           python3 .github/scripts/assert_release_launcher.py
