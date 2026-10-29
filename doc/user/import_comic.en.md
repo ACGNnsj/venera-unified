@@ -17,6 +17,15 @@ brackets and double extensions do not by themselves make a filename invalid.
 Check the actual success/failure counts and named errors for batch imports;
 do not rename all archives or delete data as a first step.
 
+The number at the top left in multi-select mode is the selection count, not the
+import success count. Bulk selection including hidden entries and stale selection
+after refresh in the local list are fixed (ported from upstream, see upstream
+#115 investigation notes). This does not resolve every reported Android
+archive-visibility scenario. Distinguish import results, visible/hidden entries
+and selection counts when reporting, and include the full version and whether
+single or batch archive import was used; there is no need to clear data or
+upload private archives again.
+
 ## Restore Local Downloads
 
 If you migrated the app and kept the local download folder but lost `local.db`,
