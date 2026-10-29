@@ -315,6 +315,10 @@ enum ShareTextResult { shared, copied, skipped }
 class Share {
   static final _dialogs = PlatformDialogQueue();
 
+  /// Whether text sharing lands on the clipboard instead of a platform share
+  /// target. Desktop platforms have none; tests pin this to the path they cover.
+  static bool Function() usesClipboard = () => App.isDesktop;
+
   static Future<void> shareFile({
     required Uint8List data,
     required String filename,
@@ -359,7 +363,7 @@ class Share {
     // Ported from venera (haukuen) 10cb52d: desktop cannot reach a share
     // target, so copy the text to the clipboard instead of a no-op share.
     // The caller owns user feedback so this file stays out of the UI layer.
-    if (App.isDesktop) {
+    if (usesClipboard()) {
       await Clipboard.setData(ClipboardData(text: text));
       return ShareTextResult.copied;
     }

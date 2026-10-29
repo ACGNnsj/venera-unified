@@ -36,6 +36,7 @@ void main() {
     App.cachePath = root.path;
     calls.clear();
     replies.clear();
+    interaction.Share.usesClipboard = () => false;
     messenger.setMockMethodCallHandler(MethodChannelShare.channel, (call) {
       calls.add(call);
       final reply = Completer<String?>();
@@ -44,6 +45,7 @@ void main() {
     });
   });
   tearDown(() {
+    interaction.Share.usesClipboard = () => App.isDesktop;
     messenger.setMockMethodCallHandler(MethodChannelShare.channel, null);
     App.cachePath = previousCache;
     root.deleteSync(recursive: true);
@@ -134,6 +136,20 @@ void main() {
     },
     skip: Platform.isLinux,
   );
+
+  test('desktop copies text instead of dispatching a native share', () async {
+    interaction.Share.usesClipboard = () => true;
+    expect(
+      await interaction.Share.shareText('copied text'),
+      interaction.ShareTextResult.copied,
+    );
+    expect(calls, isEmpty);
+    expect(
+      await interaction.Share.shareText('again'),
+      interaction.ShareTextResult.copied,
+    );
+    expect(calls, isEmpty);
+  });
 
   test('transport error retains original stack and queue continues', () async {
     final error = StateError('transport failed');

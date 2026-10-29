@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:venera_unified/components/menu.dart';
+import 'package:venera_unified/foundation/app.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 // The real serializer is an existing transitive share_plus dependency.
@@ -69,6 +70,7 @@ void main() {
     messages.clear();
     previousMuted = Log.isMuted;
     Log.isMuted = true;
+    Share.usesClipboard = () => false;
     registerShowMessageHandler((context, message) {
       messages.add((context: context, message: message));
       showToast(message: message, context: context);
@@ -86,6 +88,7 @@ void main() {
   });
   tearDown(() {
     Log.isMuted = previousMuted;
+    Share.usesClipboard = () => App.isDesktop;
     registerShowMessageHandler((context, message) {});
     messenger.setMockMethodCallHandler(
       const MethodChannel('window_manager'),
@@ -313,6 +316,20 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+
+  testWidgets('desktop copy reports success instead of dispatching a share', (
+    tester,
+  ) async {
+    Share.usesClipboard = () => true;
+    final host = await mount(tester, onExit: () {});
+    final done = (await _start(tester, host.actions.share)).done;
+    await _flush(tester);
+    expect(calls, isEmpty);
+    await tester.runAsync(() => done);
+    await _flush(tester);
+    expect(messages.map((entry) => entry.message), ['Copied']);
+    await tester.pumpWidget(const SizedBox());
+  });
 
   for (final invalidation in ['unmount', 'replacement', 'window close']) {
     testWidgets(
