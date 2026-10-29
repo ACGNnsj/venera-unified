@@ -134,11 +134,7 @@ class CacheManager {
     return _enqueue(() => _writeCache(key, bytes, duration));
   }
 
-  Future<void> _writeCache(
-    String key,
-    List<int> data, [
-    int? duration,
-  ]) async {
+  Future<void> _writeCache(String key, List<int> data, [int? duration]) async {
     await _delete(key);
     _directoryIndex = (_directoryIndex + 1) % 100;
     final dir = _directoryIndex;

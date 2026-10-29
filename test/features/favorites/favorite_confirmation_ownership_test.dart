@@ -76,8 +76,11 @@ class _Manager extends Fake implements LocalFavoritesManager {
   @override
   (String?, String?) findLinked(String folder) => (null, null);
   @override
-  List<FavoriteItem> getFolderComics(String name, {int? limit, int offset = 0}) =>
-      contents[name]?.map((comic) => comic.detached()).toList() ?? [];
+  List<FavoriteItem> getFolderComics(
+    String name, {
+    int? limit,
+    int offset = 0,
+  }) => contents[name]?.map((comic) => comic.detached()).toList() ?? [];
   @override
   List<FavoriteItemWithUpdateInfo> getComicsWithUpdatesInfo(String name) =>
       getFolderComics(name)
