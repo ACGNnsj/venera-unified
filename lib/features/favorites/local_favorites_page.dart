@@ -123,6 +123,13 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
   bool isLoading = false;
   int _queryGeneration = 0;
   int _filterRequest = 0;
+  bool _leavingMissingFolder = false;
+  // Rename/delete from this page publish the replacement selection themselves;
+  // the missing-folder fallback must not publish a second time.
+  bool _pagePublishedSelection = false;
+  // Rename/delete run on behalf of this page: while their dialog is still up the
+  // old folder name is already gone, and the fallback must not publish null.
+  int _ownFolderMutations = 0;
   ModalRoute<dynamic>? _updateFlyoutRoute;
   Object? _loadError;
 
@@ -154,6 +161,29 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
     if (searchMode) _refreshSearchResults();
   }
 
+  /// Persists the fallback to the overview after the open folder disappears.
+  ///
+  /// Emptying the list is not enough: the selected folder lives in the page's
+  /// preferences, so a restart would reopen a folder that no longer exists.
+  /// The callback goes through [LocalFavoritesPage.onFolderSelected] (the
+  /// page's setFolder) after the frame that emptied the list, and only while
+  /// this page still observes the same missing folder, so a restore that
+  /// recreates the folder first wins.
+  void _leaveMissingFolder(String folder) {
+    if (_leavingMissingFolder) return;
+    _leavingMissingFolder = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _leavingMissingFolder = false;
+      if (_pagePublishedSelection || _ownFolderMutations > 0) return;
+      if (!mounted || widget.folder != folder || !_canReadObservedFolder) {
+        return;
+      }
+      if (folder == localAllFolderLabel) return;
+      if (_observedManager.existsFolder(folder)) return;
+      widget.onFolderSelected(false, null);
+    });
+  }
+
   void updateComics() {
     if (!_canReadObservedFolder) return;
     final manager = _observedManager;
@@ -167,6 +197,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
           : manager.folderComics(folder);
       if (!isAllFolder && !manager.existsFolder(folder)) {
         _replaceComics([]);
+        _leaveMissingFolder(folder);
       } else if (count < _asyncDataFetchLimit) {
         _replaceComics(
           isAllFolder
@@ -332,6 +363,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
   void didUpdateWidget(LocalFavoritesPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.folder != widget.folder) {
+      _pagePublishedSelection = false;
       _cancelMetadataUpdates();
       _filterRequest++;
       final linked = isAllFolder || !_canReadObservedFolder
@@ -580,6 +612,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                       icon: Icons.edit_outlined,
                       text: "Rename".tl,
                       onClick: () {
+                        _ownFolderMutations++;
                         renameFavoriteFolder(
                           context,
                           manager: _observedManager,
@@ -592,10 +625,13 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                             if (_canReadObservedFolder &&
                                 _queryOwner?.canPresent == true &&
                                 widget.folder == target.folder) {
+                              _pagePublishedSelection = true;
                               target.onFolderSelected(false, name);
                             }
                           },
-                        );
+                        ).whenComplete(() {
+                          _ownFolderMutations--;
+                        });
                       },
                     ),
                     MenuEntry(
@@ -671,6 +707,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                       color: context.colorScheme.error,
                       onClick: () {
                         if (_queryOwner?.canPresent != true) return;
+                        _ownFolderMutations++;
                         confirmFavoriteMutation(
                           context: context,
                           manager: _observedManager,
@@ -690,10 +727,13 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                             if (_canReadObservedFolder &&
                                 _queryOwner?.canPresent == true &&
                                 widget.folder == target.folder) {
+                              _pagePublishedSelection = true;
                               target.onFolderSelected(false, null);
                             }
                           },
-                        );
+                        ).whenComplete(() {
+                          _ownFolderMutations--;
+                        });
                       },
                     ),
                   ],

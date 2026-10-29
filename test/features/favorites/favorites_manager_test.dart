@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'package:venera_unified/foundation/persistence_failure.dart';
 import 'package:venera_unified/features/local_comics/local_storage_guard.dart';
 import 'package:venera_unified/features/favorites/favorites_repository.dart';
@@ -771,6 +772,48 @@ void main() {
           registerFollowUpdatesChangeListener(null);
           manager.removeListener(changed);
         }
+      });
+    },
+    skip: !_sqliteAvailable(),
+  );
+
+  test(
+    'a rename that only changes letter case keeps the folder and its comics',
+    () async {
+      await _withFavoritesManager((manager) async {
+        await manager.createFolder('ABC');
+        final item = _favorite('case');
+        await manager.addComic('ABC', item);
+
+        await manager.rename('ABC', 'abc');
+
+        expect(manager.existsFolder('ABC'), isFalse);
+        expect(manager.existsFolder('abc'), isTrue);
+        expect(manager.folderNames, contains('abc'));
+        expect(manager.folderNames, isNot(contains('ABC')));
+        expect(manager.folderComics('abc'), 1);
+        expect(manager.isExist(item.id, item.type), isTrue);
+        expect(manager.find(item.id, item.type), ['abc']);
+      });
+    },
+    skip: !_sqliteAvailable(),
+  );
+
+  test(
+    'a rename cannot take another folder differing only by letter case',
+    () async {
+      await _withFavoritesManager((manager) async {
+        await manager.createFolder('ABC');
+        await manager.createFolder('other');
+
+        await expectLater(
+          manager.rename('other', 'aBc'),
+          throwsA(isA<OperationFailure>()),
+        );
+
+        expect(manager.existsFolder('other'), isTrue);
+        expect(manager.existsFolder('ABC'), isTrue);
+        expect(manager.count('other'), 0);
       });
     },
     skip: !_sqliteAvailable(),

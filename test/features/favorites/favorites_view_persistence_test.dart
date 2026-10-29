@@ -249,6 +249,51 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'a folder deleted while it is open falls back to the overview and persists',
+    (tester) async {
+      final root = await _prepare(tester);
+      final manager = _favoritesForView();
+      await tester.pumpWidget(_host(const FavoritesPage()));
+      await _saveFolderSelection(tester, 'B');
+      expect(_saved(root)['favoriteFolder'], {'name': 'B', 'isNetwork': false});
+      expect(
+        tester
+            .widget<LocalFavoritesPage>(find.byType(LocalFavoritesPage))
+            .folder,
+        'B',
+      );
+
+      await tester.runAsync(() => manager.deleteFolder('B'));
+      // The fallback depends on real IO and a post-frame callback, which
+      // pumpAndSettle cannot drive while a progress indicator animates.
+      for (var i = 0; i < 200; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 10)),
+        );
+        await tester.pump();
+        if (find.byType(LocalFavoritesPage).evaluate().isEmpty) break;
+      }
+      await tester.pump();
+
+      // The page leaves through setFolder(false, null), not a private collapse,
+      // so the cleared selection is the one written to storage.
+      expect(find.byType(LocalFavoritesPage), findsNothing);
+      expect(find.text('Unselected'), findsOneWidget);
+      final owner = tester.state<SettingsSaveState>(find.byType(FavoritesPage));
+      await _flush(tester, owner.waitForSettingsSave());
+      expect(_saved(root)['favoriteFolder'], {
+        'name': null,
+        'isNetwork': false,
+      });
+
+      await _reopenSavedView(tester, root);
+      expect(find.byType(LocalFavoritesPage), findsNothing);
+      expect(find.text('Unselected'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('missing saved selection remains unselected', (tester) async {
     await _prepare(tester);
     await tester.pumpWidget(_host(const FavoritesPage()));

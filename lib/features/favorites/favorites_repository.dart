@@ -77,7 +77,17 @@ class FavoritesRepository {
   }
 
   void renameFolder(String before, String after) => _transaction(() {
-    db.execute('ALTER TABLE ${_table(before)} RENAME TO ${_table(after)};');
+    // SQLite compares table names case-insensitively, so renaming "ABC" to
+    // "abc" collides with the source table itself. A case-only rename goes
+    // through a temporary name; the enclosing transaction keeps it invisible,
+    // so a failure cannot leave a half-renamed folder behind.
+    final source = before.toLowerCase() == after.toLowerCase()
+        ? '$before\u0001renaming'
+        : before;
+    if (source != before) {
+      db.execute('ALTER TABLE ${_table(before)} RENAME TO ${_table(source)};');
+    }
+    db.execute('ALTER TABLE ${_table(source)} RENAME TO ${_table(after)};');
     db.execute(
       'UPDATE folder_order SET folder_name = ? WHERE folder_name = ?;',
       [after, before],

@@ -34,6 +34,7 @@ class _Fixture {
   final manager = LocalFavoritesManager.independent();
   final history = HistoryManager.create();
   final navigator = GlobalKey<NavigatorState>();
+  final selections = <(bool, String?)>[];
 
   Widget host({String folder = 'B'}) => FavoritesScope(
     manager: manager,
@@ -45,7 +46,9 @@ class _Fixture {
           body: LocalFavoritesPage(
             folder: folder,
             showFolders: () {},
-            onFolderSelected: (_, _) {},
+            onFolderSelected: (network, folder) {
+              selections.add((network, folder));
+            },
             updateFolderList: () {},
           ),
         ),
@@ -254,6 +257,26 @@ void main() {
     await _settle(tester);
     expect(_tile('from-a'), findsOneWidget);
     expect(_tile('from-b'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a folder deleted behind the page falls back to the overview', (
+    tester,
+  ) async {
+    final fixture = await _prepare(tester, 1);
+    await tester.pumpWidget(fixture.host());
+    await _settle(tester);
+    expect(_tile('seed-0'), findsOneWidget);
+    expect(fixture.selections, isEmpty);
+
+    await tester.runAsync(() => fixture.manager.deleteFolder('B'));
+    await _settle(tester);
+
+    // Releasing the selection goes through the page's onFolderSelected
+    // callback (setFolder in production), so the fallback is persisted instead
+    // of only collapsing the detail pane until the next restart.
+    expect(fixture.selections, [(false, null)]);
+    expect(_tile('seed-0'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

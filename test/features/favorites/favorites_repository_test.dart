@@ -455,6 +455,94 @@ void main() {
     },
   );
 
+  test(
+    'a rename that only changes letter case keeps the folder and its data',
+    () {
+      db.execute("INSERT INTO folder_order VALUES ('first', 8);");
+      repository.linkFolderToNetwork('first', 'source', 'remote');
+
+      repository.renameFolder('first', 'FIRST');
+
+      expect(repository.folderNames(), contains('FIRST'));
+      expect(repository.folderNames(), isNot(contains('first')));
+      // The data is the renamed original table, not a freshly created empty
+      // one: the transaction must have committed instead of rolling back.
+      expect(repository.count('FIRST'), 2);
+      expect(
+        repository.getFolderComics('FIRST').map((comic) => comic.name),
+        unorderedEquals(['First title', 'Other title']),
+      );
+      expect(repository.findLinked('FIRST'), ('source', 'remote'));
+      expect(repository.findLinked('first'), (null, null));
+      expect(
+        db
+            .select(
+              "SELECT order_value FROM folder_order WHERE folder_name = 'FIRST'",
+            )
+            .single['order_value'],
+        8,
+      );
+      expect(db.autocommit, isTrue);
+      expect(
+        db
+            .select(
+              "SELECT name FROM sqlite_master WHERE type = 'table' "
+              "AND name NOT GLOB 'sqlite_*';",
+            )
+            .map((row) => row['name'] as String),
+        unorderedEquals([
+          'folder_order',
+          'folder_sync',
+          'FIRST',
+          'second',
+          'empty',
+          '收藏 "A"',
+        ]),
+      );
+
+      // The reverse direction works too, so the fix is not one-way.
+      repository.renameFolder('FIRST', 'first');
+      expect(repository.count('first'), 2);
+      expect(repository.findLinked('first'), ('source', 'remote'));
+    },
+  );
+
+  test('a failed case-only rename leaves the original folder untouched', () {
+    db.execute("INSERT INTO folder_order VALUES ('first', 8);");
+    repository.linkFolderToNetwork('first', 'source', 'remote');
+    db.execute(
+      "CREATE TRIGGER reject_sync BEFORE UPDATE ON folder_sync "
+      "BEGIN SELECT RAISE(ABORT, 'rejected'); END;",
+    );
+
+    expect(
+      () => repository.renameFolder('first', 'FIRST'),
+      throwsA(isA<SqliteException>()),
+    );
+
+    expect(db.autocommit, isTrue);
+    expect(repository.folderNames(), contains('first'));
+    expect(repository.folderNames(), isNot(contains('FIRST')));
+    expect(repository.count('first'), 2);
+    expect(repository.findLinked('first'), ('source', 'remote'));
+    expect(
+      db
+          .select(
+            "SELECT name FROM sqlite_master WHERE type = 'table' "
+            "AND name NOT GLOB 'sqlite_*';",
+          )
+          .map((row) => row['name'] as String),
+      unorderedEquals([
+        'folder_order',
+        'folder_sync',
+        'first',
+        'second',
+        'empty',
+        '收藏 "A"',
+      ]),
+    );
+  });
+
   for (final deleting in [false, true]) {
     test(
       'network metadata failure rolls back folder changes; delete=$deleting',

@@ -1542,7 +1542,15 @@ class LocalFavoritesManager with ChangeNotifier {
   }
 
   Future<void> _rename(String before, String after) async {
-    if (existsFolder(after)) {
+    if (before == after) return;
+    // Folder tables are matched case-insensitively by SQLite, so the exact
+    // case-sensitive folder list cannot decide collisions on its own. Compare
+    // the way the storage does, ignoring the folder being renamed itself:
+    // "ABC" -> "abc" must stay allowed, "ABC" -> "aBc" of another folder must
+    // not.
+    final renamesOnlyCase = before.toLowerCase() == after.toLowerCase();
+    if (!renamesOnlyCase &&
+        folderNames.any((name) => name.toLowerCase() == after.toLowerCase())) {
       throw OperationFailure.message("Name already exists!");
     }
     if (after.contains('"')) {
