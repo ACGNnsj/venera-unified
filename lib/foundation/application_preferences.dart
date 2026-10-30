@@ -74,6 +74,10 @@ abstract final class NetworkPreferences {
     step: 1,
     integer: true,
   );
+  static const skipUnavailableDownloadImages = BoolPreference(
+    'skipUnavailableDownloadImages',
+    false,
+  );
   static const all = <Preference<Object>>[
     proxy,
     enableDnsOverrides,
@@ -81,6 +85,7 @@ abstract final class NetworkPreferences {
     sni,
     ignoreBadCertificate,
     downloadThreads,
+    skipUnavailableDownloadImages,
   ];
 }
 

@@ -382,5 +382,10 @@ class _TaskStorage implements DownloadTaskStorage {
   }
 
   @override
+  void retainIncompleteTask(DownloadTask task) {
+    completed.add(task);
+  }
+
+  @override
   void removeTask(DownloadTask task) {}
 }

@@ -354,7 +354,8 @@ abstract mixin class ComicPageActions {
         var localComic = library.find(target.id, target.comicType);
         if (localComic != null) {
           for (int i = 0; i < chapterIds.length; i++) {
-            if (localComic.downloadedChapters.contains(chapterIds[i])) {
+            if (localComic.downloadedChapters.contains(chapterIds[i]) &&
+                !localComic.incompleteChapters.containsKey(chapterIds[i])) {
               downloaded.add(i);
             }
           }
@@ -433,100 +434,95 @@ abstract mixin class ComicPageActions {
 
   void showMoreActions() {
     final target = comic;
-    contextMenus.show(
-      context,
-      Offset(context.width - 16, context.padding.top),
-      [
+    contextMenus.show(context, Offset(context.width - 16, context.padding.top), [
+      MenuEntry(
+        icon: Icons.copy,
+        text: "Copy Title".tl,
+        onClick: () {
+          Clipboard.setData(ClipboardData(text: target.title));
+          context.showMessage(message: "Copied".tl);
+        },
+      ),
+      MenuEntry(
+        icon: Icons.copy_rounded,
+        text: "Copy ID".tl,
+        onClick: () {
+          Clipboard.setData(ClipboardData(text: target.id));
+          context.showMessage(message: "Copied".tl);
+        },
+      ),
+      // A collection offers its own editor here; anything else can be filed
+      // into one. The two are mutually exclusive since collections cannot nest.
+      if (_isCollection)
         MenuEntry(
-          icon: Icons.copy,
-          text: "Copy Title".tl,
+          icon: Icons.library_books_outlined,
+          text: 'Edit collection'.tl,
           onClick: () {
-            Clipboard.setData(ClipboardData(text: target.title));
+            final id = comic.id;
+            // Main navigator, not the root one this menu is positioned
+            // against: the editor pushes comic pages, and those must land
+            // above it.
+            final host =
+                appNavigation.mainNavigatorKey?.currentContext ?? context;
+            unawaited(
+              host.to(() => ComicCollectionEditPage(collectionId: id)).then((
+                _,
+              ) async {
+                // The editor writes straight to the store, so returning
+                // is the signal to re-read: name, cover, layout and
+                // member order all change what the source hands back.
+                try {
+                  refreshCollectionSources();
+                } catch (error, stack) {
+                  Log.error(
+                    'Collection',
+                    'Refresh after edit failed: $error',
+                    stack,
+                  );
+                }
+                reloadDetails();
+              }),
+            );
+          },
+        )
+      else
+        MenuEntry(
+          icon: Icons.library_books_outlined,
+          text: 'Add to collection'.tl,
+          onClick: () {
+            showAddToCollectionDialog(context, [
+              Comic(
+                comic.title,
+                comic.cover,
+                comic.id,
+                comic.subTitle,
+                comic.plainTags,
+                comic.description ?? '',
+                comic.sourceKey,
+                comic.maxPage,
+                null,
+              ),
+            ]);
+          },
+        ),
+      if (target.url != null)
+        MenuEntry(
+          icon: Icons.link,
+          text: "Copy URL".tl,
+          onClick: () {
+            Clipboard.setData(ClipboardData(text: target.url!));
             context.showMessage(message: "Copied".tl);
           },
         ),
+      if (target.url != null)
         MenuEntry(
-          icon: Icons.copy_rounded,
-          text: "Copy ID".tl,
+          icon: Icons.open_in_browser,
+          text: "Open in Browser".tl,
           onClick: () {
-            Clipboard.setData(ClipboardData(text: target.id));
-            context.showMessage(message: "Copied".tl);
+            launchUrlString(target.url!);
           },
         ),
-        // A collection offers its own editor here; anything else can be filed
-        // into one. The two are mutually exclusive since collections cannot nest.
-        if (_isCollection)
-          MenuEntry(
-            icon: Icons.library_books_outlined,
-            text: 'Edit collection'.tl,
-            onClick: () {
-              final id = comic.id;
-              // Main navigator, not the root one this menu is positioned
-              // against: the editor pushes comic pages, and those must land
-              // above it.
-              final host =
-                  appNavigation.mainNavigatorKey?.currentContext ?? context;
-              unawaited(
-                host.to(() => ComicCollectionEditPage(collectionId: id)).then((
-                  _,
-                ) async {
-                  // The editor writes straight to the store, so returning
-                  // is the signal to re-read: name, cover, layout and
-                  // member order all change what the source hands back.
-                  try {
-                    refreshCollectionSources();
-                  } catch (error, stack) {
-                    Log.error(
-                      'Collection',
-                      'Refresh after edit failed: $error',
-                      stack,
-                    );
-                  }
-                  reloadDetails();
-                }),
-              );
-            },
-          )
-        else
-          MenuEntry(
-            icon: Icons.library_books_outlined,
-            text: 'Add to collection'.tl,
-            onClick: () {
-              showAddToCollectionDialog(context, [
-                Comic(
-                  comic.title,
-                  comic.cover,
-                  comic.id,
-                  comic.subTitle,
-                  comic.plainTags,
-                  comic.description ?? '',
-                  comic.sourceKey,
-                  comic.maxPage,
-                  null,
-                ),
-              ]);
-            },
-          ),
-        if (target.url != null)
-          MenuEntry(
-            icon: Icons.link,
-            text: "Copy URL".tl,
-            onClick: () {
-              Clipboard.setData(ClipboardData(text: target.url!));
-              context.showMessage(message: "Copied".tl);
-            },
-          ),
-        if (target.url != null)
-          MenuEntry(
-            icon: Icons.open_in_browser,
-            text: "Open in Browser".tl,
-            onClick: () {
-              launchUrlString(target.url!);
-            },
-          ),
-      ],
-      isValid: () => isComicActive(target),
-    );
+    ], isValid: () => isComicActive(target));
   }
 
   void showComments() {

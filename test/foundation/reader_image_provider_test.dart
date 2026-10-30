@@ -1,11 +1,41 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
+import 'package:flutter/painting.dart';
 import 'package:venera_unified/foundation/image_provider/reader_image_processing.dart';
+import 'package:venera_unified/foundation/image_provider/reader_image.dart';
 
 void main() {
+  test(
+    'missing download page is a permanent local placeholder without a request',
+    () async {
+      const provider = ReaderImageProvider(
+        'missing-download://2',
+        null,
+        'comic',
+        'chapter',
+        2,
+      );
+      final chunks = StreamController<ImageChunkEvent>.broadcast();
+      try {
+        await expectLater(
+          provider.load(chunks, () {}),
+          throwsA(
+            isA<FileSystemException>().having(
+              (error) => error.message,
+              'message',
+              contains('missing'),
+            ),
+          ),
+        );
+      } finally {
+        await chunks.close();
+      }
+    },
+  );
   test(
     'cancelled processing frees callbacks in late result exactly once',
     () async {

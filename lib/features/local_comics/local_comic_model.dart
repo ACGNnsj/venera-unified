@@ -1,6 +1,9 @@
 import 'package:venera_unified/features/comic_source/comic_source_api.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
 import 'package:venera_unified/foundation/history_contract.dart';
+import 'incomplete_chapter.dart';
+
+export 'incomplete_chapter.dart';
 
 class LocalComic with HistoryMixin implements Comic {
   @override
@@ -35,6 +38,15 @@ class LocalComic with HistoryMixin implements Comic {
 
   final DateTime createdAt;
 
+  final Map<String, IncompleteChapter> incompleteChapters;
+
+  int get missingImageCount => incompleteChapters.values.fold(
+    0,
+    (count, chapter) => count + chapter.missing.length,
+  );
+
+  bool get isIncomplete => incompleteChapters.isNotEmpty;
+
   const LocalComic({
     required this.id,
     required this.title,
@@ -46,6 +58,7 @@ class LocalComic with HistoryMixin implements Comic {
     required this.comicType,
     required this.downloadedChapters,
     required this.createdAt,
+    this.incompleteChapters = const {},
   });
 
   @override
