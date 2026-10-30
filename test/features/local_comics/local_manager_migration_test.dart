@@ -81,8 +81,11 @@ void main() {
         } else {
           await manager.add(input);
         }
+        // A copy import registers a new entry under a fresh id, so the
+        // fixture seed id is not a lookup key here.
+        final id = manager.search('Book').single.id;
         final cached = <LocalComic>[
-          manager.find('1', ComicType.local)!,
+          manager.find(id, ComicType.local)!,
           manager.getRecent().single,
           manager.search('Book').single,
           manager.findByName('Book 1')!,
@@ -91,7 +94,7 @@ void main() {
         final second = Directory(p.join(root.path, 'second'))..createSync();
         for (final target in [second.path, originalRoot, second.path]) {
           expect(await manager.setNewPath(target), isNull);
-          cached.add(manager.find('1', ComicType.local)!);
+          cached.add(manager.find(id, ComicType.local)!);
           for (final model in cached) {
             expect(p.isWithin(target, model.baseDir), isTrue);
             await readable(model, 'original page');
@@ -102,7 +105,7 @@ void main() {
         LocalManager.current?.dispose();
         await initialize();
         expect(manager.path, second.path);
-        await readable(manager.find('1', ComicType.local)!, 'original page');
+        await readable(manager.find(id, ComicType.local)!, 'original page');
       },
     );
   }
