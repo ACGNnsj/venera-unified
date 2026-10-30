@@ -893,10 +893,16 @@ class ComicImportOperation {
     _checkActive();
     if (folder != null) return _registerWithFavorite(comic, folder);
     late final String id;
-    try {
-      id = _manager.findValidId(comic.comicType);
-    } catch (error, stack) {
-      _registrationFailed(error, stack, PersistenceCommitState.notCommitted);
+    if (_hasAssignedId(comic)) {
+      // Importers allocate the id before registration; reusing it keeps the
+      // comic they return consistent with the persisted row.
+      id = comic.id;
+    } else {
+      try {
+        id = _manager.findValidId(comic.comicType);
+      } catch (error, stack) {
+        _registrationFailed(error, stack, PersistenceCommitState.notCommitted);
+      }
     }
     try {
       await _manager.add(comic, id);
@@ -922,9 +928,15 @@ class ComicImportOperation {
     }
   }
 
+  /// A '0' or empty id means the caller has not reserved one yet (copy
+  /// restores decode to '0'); importers reserve theirs up front.
+  bool _hasAssignedId(LocalComic comic) =>
+      comic.id.isNotEmpty && comic.id != '0';
+
   Future<void> _registerWithFavorite(LocalComic comic, String folder) async {
     // The favorites queue may wait. Detach caller-owned lists and chapter maps
-    // before admission to it, and allocate the ID only when the write executes.
+    // before admission to it, and reserve an ID only when the write executes
+    // unless the importer already assigned one.
     final captured = LocalComic(
       id: comic.id,
       title: comic.title,
@@ -946,7 +958,9 @@ class ComicImportOperation {
         translatedTags,
         append,
       ) {
-        final id = _manager.findValidId(captured.comicType);
+        final id = _hasAssignedId(captured)
+            ? captured.id
+            : _manager.findValidId(captured.comicType);
         final favorite = FavoriteItem(
           id: id,
           name: captured.title,

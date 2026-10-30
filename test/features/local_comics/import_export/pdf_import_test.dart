@@ -124,14 +124,14 @@ void main() {
           expect(manager.path, originalPath);
           expect(destination.listSync(), isEmpty);
           renderGate.complete();
-          await importing;
+          final imported = await importing;
           expect(
-            await manager.getImages('1', ComicType.local, 1),
+            await manager.getImages(imported.id, ComicType.local, 1),
             hasLength(2),
           );
           expect(await manager.setNewPath(destination.path), isNull);
           expect(
-            await manager.getImages('1', ComicType.local, 1),
+            await manager.getImages(imported.id, ComicType.local, 1),
             hasLength(2),
           );
         },
@@ -183,8 +183,9 @@ void main() {
               await importing;
             }
             expect(manager.count, 1);
+            final imported = await importing;
             expect(
-              await manager.getImages('1', ComicType.local, 1),
+              await manager.getImages(imported.id, ComicType.local, 1),
               hasLength(2),
             );
           });
@@ -205,10 +206,15 @@ void main() {
                     service.registerComic(comic, folder: folder),
               );
             }
-            expect(favorites.find('1', ComicType.local), contains(folder));
-            expect(favorites.find('2', ComicType.local), contains(folder));
-            expect(manager.find('1', ComicType.local)?.title, 'Volume 1');
-            expect(manager.find('2', ComicType.local)?.title, 'Volume 2');
+            final first = manager.findByName('Volume 1')!;
+            final second = manager.findByName('Volume 2')!;
+            expect(favorites.find(first.id, ComicType.local), contains(folder));
+            expect(
+              favorites.find(second.id, ComicType.local),
+              contains(folder),
+            );
+            expect(first.title, 'Volume 1');
+            expect(second.title, 'Volume 2');
           });
         },
       );
@@ -278,10 +284,10 @@ void main() {
           );
 
           expect(progress, [(0, 2), (1, 2), (2, 2)]);
-          expect(manager.find('1', ComicType.local)?.title, 'Volume 1');
-          expect(manager.find('2', ComicType.local)?.title, 'Volume 2');
+          expect(manager.find(comic.id, ComicType.local)?.title, 'Volume 1');
+          expect(manager.find(second.id, ComicType.local)?.title, 'Volume 2');
           expect(comic.id, isNot(second.id));
-          final images = await manager.getImages('1', ComicType.local, 1);
+          final images = await manager.getImages(comic.id, ComicType.local, 1);
           expect(images, hasLength(2));
           final bytes = File(
             FilePath.join(comic.baseDir, '0001.jpg'),

@@ -132,8 +132,8 @@ void main() {
         expect(manager.count, 0);
         expect(manager.directory.listSync().whereType<Directory>(), isEmpty);
         execute('local.db', 'DROP TRIGGER reject_insert');
-        await import(format, service.registerComic);
-        expect(manager.findByName('Book')!.id, '1');
+        final imported = await import(format, service.registerComic);
+        expect(manager.findByName('Book')!.id, imported.id);
       },
     );
     for (final committed in [false, true]) {
@@ -364,11 +364,11 @@ void main() {
       expect((await importing).importedCount, 1);
       await replacement;
       final saved = manager.findByName('Detached')!;
-      expect(saved.id, '2');
+      expect(saved.id, isNot('1'));
       expect(saved.tags, ['original']);
       expect(saved.chapters!.ids, ['one']);
       expect(saved.downloadedChapters, ['one']);
-      expect(favorites.getFolderComics('Imports').single.id, '2');
+      expect(favorites.getFolderComics('Imports').single.id, saved.id);
       expect(favorites.getFolderComics('Imports').single.tags, ['original']);
     },
   );

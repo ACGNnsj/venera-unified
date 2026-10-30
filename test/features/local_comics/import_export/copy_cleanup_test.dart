@@ -280,12 +280,13 @@ void main() {
     () async {
       final copy = await copied();
       await service.registerComic(copy.comic);
+      final registeredId = local.search('Saved title').single.id;
       await intercept(
         '${copy.record.directory.path}/${ComicCopyRecord.completionName}',
         scan,
         delete: (_) => throw const FileSystemException('retain receipt'),
       );
-      local.remove('1', ComicType.local);
+      local.remove(registeredId, ComicType.local);
       await local.add(row(copy.comic, id: '2'));
       final result = await scan();
       expect(
@@ -358,12 +359,13 @@ void main() {
   test('a cleanup-only receipt cannot register deleted local data', () async {
     final copy = await copied();
     await service.registerComic(copy.comic);
+    final registeredId = local.search('Saved title').single.id;
     await intercept(
       '${copy.record.directory.path}/${ComicCopyRecord.registrationName}',
       scan,
       delete: (_) => throw const FileSystemException('retain receipt'),
     );
-    local.remove('1', ComicType.local);
+    local.remove(registeredId, ComicType.local);
     final result = await scan();
     expect(result.importedCount, 0);
     expect(local.count, 0);
@@ -381,12 +383,13 @@ void main() {
     () async {
       final copy = await copied();
       await service.registerComic(copy.comic);
+      final registeredId = local.search('Saved title').single.id;
       await intercept(
         '${copy.record.directory.path}/${ComicCopyRecord.completionName}',
         scan,
         delete: (_) => throw const FileSystemException('retain originals'),
       );
-      local.remove('1', ComicType.local);
+      local.remove(registeredId, ComicType.local);
       final result = await scan();
       expect(result.importedCount, 0);
       expect(local.count, 0);
