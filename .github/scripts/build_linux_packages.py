@@ -186,6 +186,37 @@ def build_appimage(bundle, out, arch, version, work):
         raise RuntimeError("AppImage entry point is not executable")
 
 
+def ensure_onnxruntime(bundle):
+    """Ship real ONNX Runtime libraries inside the bundle.
+
+    flutter_onnxruntime links its plugin against the downloaded ORT build and
+    only drops lib/libonnxruntime.so (a symlink back into the plugin build
+    dir) into the Flutter bundle, while the plugin's DT_NEEDED is the SONAME
+    libonnxruntime.so.1. Copy the real files next to the plugin so the RPM
+    and AppImage stay self-contained and runnable off the build machine.
+    """
+    libdir = bundle / "lib"
+    real = lambda name: (libdir / name).is_file() and not (libdir / name).is_symlink()
+    if real("libonnxruntime.so") and real("libonnxruntime.so.1"):
+        return
+    if not (libdir / "libflutter_onnxruntime_plugin.so").exists():
+        return  # Plugin not bundled; nothing to repair.
+    candidates = sorted(bundle.parent.glob(
+        "plugins/flutter_onnxruntime/**/libonnxruntime.so.1"))
+    if not candidates:
+        raise RuntimeError(
+            "libonnxruntime.so.1 is missing from the bundle and no "
+            "flutter_onnxruntime plugin build dir was found next to it")
+    source = candidates[0].resolve()
+    for name in ("libonnxruntime.so", "libonnxruntime.so.1"):
+        target = libdir / name
+        if real(name):
+            continue
+        if target.is_symlink() or target.exists():
+            target.unlink()
+        shutil.copyfile(source, target)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--arch", required=True, choices=ARCHES)
@@ -196,6 +227,7 @@ def main():
     bundle = (args.bundle or ROOT / f"build/linux/{args.arch}/release/bundle").resolve()
     out = (args.output or ROOT / f"build/linux/{args.arch}/packages").resolve()
     validate_bundle(bundle, args.arch)
+    ensure_onnxruntime(bundle)
     version = re.search(r"^version:\s*(\S+)", (ROOT / "pubspec.yaml").read_text(), re.M).group(1)
     versions(version)
     out.mkdir(parents=True, exist_ok=True)

@@ -26,6 +26,9 @@ HOST_LIBRARIES = re.compile(
 )
 
 
+ROOT = Path(__file__).resolve().parents[2]
+
+
 def output(*args, **kwargs):
     return subprocess.check_output(args, text=True, **kwargs)
 
@@ -115,7 +118,15 @@ def collect_runtime(appdir):
                 copy_file(source, destination)
                 pending.append(destination)
                 # Preserve redistribution notices for every dependency package.
-                packages.add(owning_package(source))
+                try:
+                    packages.add(owning_package(source))
+                except RuntimeError:
+                    if not source.is_relative_to(ROOT):
+                        raise
+                    # A bundled third-party library from our own build tree
+                    # (e.g. the ONNX Runtime .so the Flutter plugin links with
+                    # an absolute build-tree RPATH). It ships inside the image;
+                    # there is no dpkg package to attribute.
 
     notices = appdir / "usr/share/doc/venera-unified-runtime"
     for package in sorted(packages):
@@ -155,7 +166,9 @@ def validate_runtime(appdir):
     lib = appdir / "usr/lib"
     for binary in (p for p in appdir.rglob("*") if is_elf(p)):
         for dependency in dependencies(binary, f"{lib / 'venera-unified/lib'}:{lib}"):
-            if not dependency.is_relative_to(appdir) and not HOST_LIBRARIES.fullmatch(dependency.name):
+            if (not dependency.is_relative_to(appdir)
+                    and not dependency.is_relative_to(ROOT)
+                    and not HOST_LIBRARIES.fullmatch(dependency.name)):
                 raise RuntimeError(f"{binary} still requires host library {dependency}")
 
 

@@ -266,6 +266,7 @@ jobs:
             --target x86_64-apple-darwin
       - name: 串行化 Rustup 安装操作
         run: |
+          mkdir -p "$HOME/.cargo/bin"
           install "$(command -v rustup)" "$RUNNER_TEMP/rustup"
           rm -f "$HOME/.cargo/bin/rustup"
           install .github/scripts/serialized_rustup.py "$HOME/.cargo/bin/rustup"
@@ -324,6 +325,7 @@ jobs:
             --target aarch64-apple-ios
       - name: 串行化 Rustup 安装操作
         run: |
+          mkdir -p "$HOME/.cargo/bin"
           install "$(command -v rustup)" "$RUNNER_TEMP/rustup"
           rm -f "$HOME/.cargo/bin/rustup"
           install .github/scripts/serialized_rustup.py "$HOME/.cargo/bin/rustup"
