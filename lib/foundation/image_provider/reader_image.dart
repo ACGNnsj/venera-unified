@@ -1,4 +1,6 @@
 import 'package:venera_next/foundation/operation_failure.dart';
+import 'package:venera_next/foundation/missing_download_page.dart';
+import 'package:venera_next/foundation/translations.dart';
 import 'package:venera_next/foundation/global_preference_store.dart';
 import 'package:venera_next/foundation/application_preferences.dart';
 import 'dart:async' show Future;
@@ -39,11 +41,18 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
   File createLocalFile(String path) => File(path);
 
   @override
-  bool get retryFileSystemErrors => !imageKey.startsWith('file://');
+  bool get retryFileSystemErrors =>
+      !imageKey.startsWith('file://') &&
+      !imageKey.startsWith(missingDownloadPagePrefix);
 
   @override
   Future<Uint8List> load(chunkEvents, checkStop) async {
     checkStop();
+    if (imageKey.startsWith(missingDownloadPagePrefix)) {
+      throw FileSystemException(
+        'This page is missing. Retry missing pages in Downloads.'.tl,
+      );
+    }
     Uint8List? imageBytes;
     if (imageKey.startsWith('file://')) {
       final file = createLocalFile(imageKey.substring(7));

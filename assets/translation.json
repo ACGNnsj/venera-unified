@@ -927,7 +927,18 @@
     "This shortcut is already in use. Choose another one.": "此快捷键已被占用，请更换组合。",
     "Use Ctrl or Alt with a letter, number or F1-F11.": "请用 Ctrl 或 Alt 搭配字母、数字或 F1–F11，可加 Shift。",
     "Could not save the shortcut. Retry before leaving.": "快捷键保存失败，请重试后再离开。",
-    "The global shortcut is unavailable. Re-enable it or choose another shortcut in settings.": "全局快捷键不可用，请在设置中重新启用或更换组合。"
+    "The global shortcut is unavailable. Re-enable it or choose another shortcut in settings.": "全局快捷键不可用，请在设置中重新启用或更换组合。",
+    "Continue past unavailable images by default": "默认继续下载其余可用图片",
+    "Applies only to new image download tasks. Existing tasks keep their own setting.": "仅用于新建的图片下载任务，已有任务保留各自设置。",
+    "Waiting for missing pages": "待补页",
+    "Waiting for missing pages. Downloaded pages are available in the local library.": "待补页。已下载页面可从本地漫画阅读。",
+    "Missing page details": "缺页详情",
+    "Read downloaded pages": "阅读已下载页面",
+    "Retry missing pages": "补下载缺页",
+    "Remove task and keep local pages": "移除任务并保留本地页面",
+    "Incomplete: @a missing pages": "未完整：缺 @a 页",
+    "This page is missing. Retry missing pages in Downloads.": "此页尚未下载，请在下载任务中补下载缺页。",
+    "Complete missing pages before exporting or archiving this comic.": "请先补齐缺页，再导出或归档此漫画。"
   },
   "zh_TW": {
     "Not started": "未執行",
@@ -1856,6 +1867,17 @@
     "This shortcut is already in use. Choose another one.": "此快捷鍵已被佔用，請更換組合。",
     "Use Ctrl or Alt with a letter, number or F1-F11.": "請用 Ctrl 或 Alt 搭配字母、數字或 F1–F11，可加 Shift。",
     "Could not save the shortcut. Retry before leaving.": "快捷鍵儲存失敗，請重試後再離開。",
-    "The global shortcut is unavailable. Re-enable it or choose another shortcut in settings.": "全域快捷鍵無法使用，請在設定中重新啟用或更換組合。"
+    "The global shortcut is unavailable. Re-enable it or choose another shortcut in settings.": "全域快捷鍵無法使用，請在設定中重新啟用或更換組合。",
+    "Continue past unavailable images by default": "預設繼續下載其餘可用圖片",
+    "Applies only to new image download tasks. Existing tasks keep their own setting.": "僅用於新建的圖片下載任務，已有任務保留各自設定。",
+    "Waiting for missing pages": "待補頁",
+    "Waiting for missing pages. Downloaded pages are available in the local library.": "待補頁。已下載頁面可從本機漫畫閱讀。",
+    "Missing page details": "缺頁詳情",
+    "Read downloaded pages": "閱讀已下載頁面",
+    "Retry missing pages": "補下載缺頁",
+    "Remove task and keep local pages": "移除任務並保留本機頁面",
+    "Incomplete: @a missing pages": "未完整：缺 @a 頁",
+    "This page is missing. Retry missing pages in Downloads.": "此頁尚未下載，請在下載任務中補下載缺頁。",
+    "Complete missing pages before exporting or archiving this comic.": "請先補齊缺頁，再匯出或封存此漫畫。"
   }
 }

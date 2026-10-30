@@ -18,10 +18,32 @@ Image tasks offer an opt-in `Continue past unavailable images` menu action.
 After bounded retries, missing HTTP 404/410 responses, unsupported image data
 and exhausted connection failures can be skipped while the remaining pages
 download. Authentication, TLS, cancellation and filesystem failures still stop
-the task. A task with missing pages stays incomplete in the queue, shows their
-chapter/page numbers, and is not registered as a completed local comic. Start
-it again to retry missing pages without redownloading successful pages. The
-option and missing-page positions survive a paused queue snapshot/restore.
+the task. Network settings also offer a default-off policy for **new image
+tasks only**; existing/restored tasks retain their own saved choice.
+
+After all available pages settle, a task with missing pages becomes **waiting
+for missing pages**, not a generic error or a completed download. It remains
+available for explicit retry but is excluded from automatic scheduling, so the
+next waiting task can run. The local library stores incomplete chapter counts
+and zero-based missing positions in an additive `incomplete_pages` column.
+Reading preserves original page positions with local placeholders; it never
+silently fetches missing pages online or compacts subsequent page numbers.
+Library cards show the incomplete status. Export/archival requires repaired
+pages, rather than producing a seemingly complete archive from partial data.
+
+`Retry missing pages` explicitly moves that task to the runnable head, drains
+the previous task's stop work, and retries only its missing pages. User pause,
+cancel, shutdown and newer scheduling decisions can still withdraw that start.
+Removing a retained task preserves its registered local pages; its retry
+checkpoint is removed, so later downloads can be created from comic details.
+The option, missing positions and waiting state survive paused snapshot/restore;
+restoring the application does not resume these tasks automatically. Legacy
+snapshots without a waiting marker remain paused until manually started.
+
+The #107 reporter confirmed screen-off/background download on v1.18.1+236 and
+per-task skipping on v1.18.2-rc.1+237 (2026-10-29). The queue/local-reading
+extension above is not in the released rc.4 and still requires device acceptance;
+the reporter's confirmation must not be extended to these new changes.
 
 - Start a service while the activity is visible, as a consequence of starting a
   download. Advancing the queue in the background reuses the same service.
