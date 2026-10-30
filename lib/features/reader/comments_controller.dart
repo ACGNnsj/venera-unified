@@ -150,7 +150,7 @@ class ReaderChapterCommentsController {
         if (_maxPage == null && result.data.isEmpty) _maxPage = _page;
       }
       _loading = false;
-    } catch (error, _) {
+    } catch (error) {
       if (current()) {
         if (first) {
           _error = error;

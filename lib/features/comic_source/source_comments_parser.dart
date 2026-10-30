@@ -30,7 +30,7 @@ class SourceCommentsParser {
         if (!loggedIn) {
           return const Res.error('Login expired and re-login failed');
         }
-        return action();
+        return await action();
       }
       return result;
     } catch (error, stack) {

@@ -543,7 +543,7 @@ class ComicImportOperation {
             'Copy recovery title is already registered: ${comic.title}',
           );
         }
-        return _registerComics(
+        return await _registerComics(
           {
             folder: [comic],
           },
@@ -575,7 +575,7 @@ class ComicImportOperation {
           'Copy recovery title is already registered: ${saved.comic.title}',
         );
       }
-      return _registerComics(
+      return await _registerComics(
         {
           folder: [saved.comic],
         },

@@ -132,8 +132,11 @@ class Anime4KService {
 
     return _enqueueTask(() async {
       try {
-        Log.info('Anime4K', 'processing image $cacheKey, '
-            'scale: $scaleFactor, push: $pushStrength, grad: $pushGradStrength');
+        Log.info(
+          'Anime4K',
+          'processing image $cacheKey, '
+              'scale: $scaleFactor, push: $pushStrength, grad: $pushGradStrength',
+        );
 
         final params = Anime4KParams(
           imageBytes: imageBytes,
@@ -203,7 +206,7 @@ class Anime4KService {
       if (!await file.exists()) return null;
 
       final imageBytes = await file.readAsBytes();
-      return processImage(
+      return await processImage(
         imageBytes: imageBytes,
         cacheKey: filePath,
         scaleFactor: scaleFactor,

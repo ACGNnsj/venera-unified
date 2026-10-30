@@ -6,8 +6,8 @@ class ComicSourceFixture extends ComicSource {
     String key = 'fixture',
     AccountConfig? account,
     Map<String, Map<String, dynamic>>? settings,
-    Map<String, dynamic> initialData = const {},
-    SourceDataStorage dataStorage = const SourceDataStorage(),
+    super.initialData = const {},
+    super.dataStorage = const SourceDataStorage(),
   }) : super(
          'Fixture source',
          key,
@@ -42,7 +42,5 @@ class ComicSourceFixture extends ComicSource {
          false,
          null,
          null,
-         initialData: initialData,
-         dataStorage: dataStorage,
        );
 }

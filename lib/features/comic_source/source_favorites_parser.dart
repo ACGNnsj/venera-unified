@@ -39,7 +39,7 @@ class SourceFavoritesParser {
           if (!loggedIn) {
             return const Res.error('Login expired and re-login failed');
           }
-          return func();
+          return await func();
         }
         return res;
       } catch (error, stack) {

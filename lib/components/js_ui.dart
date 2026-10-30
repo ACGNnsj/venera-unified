@@ -330,11 +330,13 @@ class JsUiApi implements JsUiMessageHandler {
           },
         ),
       );
-      return presentation.future;
     } catch (_) {
       callbacks.dispose();
       rethrow;
     }
+    // Return after the try: the work handlers above settle the presentation
+    // and already release callbacks; awaiting it here would dispose twice.
+    return presentation.future;
   }
 
   Future<int?> _showSelectDialog(
