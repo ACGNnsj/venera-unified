@@ -39,6 +39,7 @@ import 'source_import_dialog.dart';
 import 'source_update_service.dart';
 import 'source_update_prompt.dart';
 import 'source_mutation_failure.dart';
+import 'diagnosis/source_diagnosis_dialog.dart';
 
 class ComicSourcePage extends StatelessWidget {
   const ComicSourcePage({
@@ -766,6 +767,21 @@ class _SliverComicSourceState extends SettingsSaveState<_SliverComicSource> {
           ),
           SliverToBoxAdapter(
             child: protectSettings(Column(children: _buildAccount().toList())),
+          ),
+          SliverToBoxAdapter(
+            child: ListTile(
+              leading: const Icon(Icons.query_stats),
+              title: Text('Diagnose readability'.tl),
+              subtitle: Text(
+                'Run the source script against a few samples and show which stage fails.'
+                    .tl,
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                if (!_current(source) || widget.manager.isClosing) return;
+                showSourceDiagnosisDialog(context, source: source);
+              },
+            ),
           ),
         ],
         const SliverToBoxAdapter(child: Divider(indent: 16, endIndent: 16)),
