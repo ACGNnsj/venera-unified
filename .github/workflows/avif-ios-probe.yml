@@ -22,10 +22,24 @@ jobs:
           flutter-version-file: pubspec.yaml
           cache: true
       - run: flutter pub get --enforce-lockfile
-      - name: 预装 Rust iOS 目标
-        # rhttp 的 cargokit 会在构建中隐式 rustup target add，runner 上偶发
-        # "could not rename 'downloaded' file ... No such file or directory"；先显式装好。
-        run: rustup target add aarch64-apple-ios-sim aarch64-apple-ios x86_64-apple-ios
+      - name: 准备 Rust 工具链
+        # rhttp 的 cargokit 会在构建中隐式 rustup target add，Xcode 并行构建多个架构时
+        # 会撞 rustup 下载竞态（could not rename 'downloaded' file ...），所以这里按
+        # Build_IOS 的做法先装好目标，并在下一步把 rustup 换成串行化包装。
+        run: |
+          python3 .github/scripts/prepare_rust_toolchain.py \
+            --target aarch64-apple-ios-sim \
+            --target aarch64-apple-ios \
+            --target x86_64-apple-ios
+      - name: 串行化 Rustup 安装操作
+        run: |
+          mkdir -p "$HOME/.cargo/bin"
+          install "$(command -v rustup)" "$RUNNER_TEMP/rustup"
+          rm -f "$HOME/.cargo/bin/rustup"
+          install .github/scripts/serialized_rustup.py "$HOME/.cargo/bin/rustup"
+          chmod +x "$HOME/.cargo/bin/rustup"
+          echo "RUSTUP_REAL_BINARY=$RUNNER_TEMP/rustup" >> "$GITHUB_ENV"
+          echo "RUSTUP_LOCK_FILE=$RUNNER_TEMP/venera-rustup.lock" >> "$GITHUB_ENV"
       - name: 启动 iOS 模拟器
         id: sim
         run: |
