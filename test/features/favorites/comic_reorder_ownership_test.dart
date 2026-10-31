@@ -1,5 +1,6 @@
 import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'package:venera_unified/features/history/history_scope.dart';
+import 'package:venera_unified/features/favorites/favorite_folder.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -52,6 +53,8 @@ class _OtherPopGuard extends PopEntry<Object?> {
 
 class _Manager extends Fake implements LocalFavoritesManager {
   @override
+  FavoriteFolderTree get folderTree => FavoriteFolderTree.flat(folderNames);
+  @override
   int connectionGeneration = 1;
   final contents = {
     'Original': [_comic('A'), _comic('B'), _comic('C')],
@@ -71,8 +74,11 @@ class _Manager extends Fake implements LocalFavoritesManager {
   @override
   bool existsFolder(String name) => contents.containsKey(name);
   @override
-  List<FavoriteItem> getFolderComics(String name, {int? limit, int offset = 0}) =>
-      contents[name]!.map((item) => item.detached()).toList();
+  List<FavoriteItem> getFolderComics(
+    String name, {
+    int? limit,
+    int offset = 0,
+  }) => contents[name]!.map((item) => item.detached()).toList();
   @override
   void addListener(VoidCallback listener) => listeners.add(listener);
   @override
