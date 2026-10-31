@@ -1,7 +1,9 @@
 name: "AVIF iOS 模拟器探测"
 
-# 跑 integration_test/avif_codec_probe_test.dart 在 iOS 模拟器上，输出六个样本的
-# AVIF_PROBE JSON。iOS 只能在 macOS 上跑，本机是 Windows，所以放在 CI。
+# iOS 只能跑在 macOS 上，本机是 Windows，所以放在 CI。
+# 不用 `flutter test -d <simulator>`：Xcode build 完成后它会一直等 VM service 连接，
+# 实测整 25 分钟无新日志（run 41214419620，Xcode build done 827s 之后卡死）。
+# 改为 flutter build --simulator + simctl install/launch + 抓 console，输出六个 AVIF_PROBE 行。
 # 手动 dispatch，不进 analyze 门禁（只 print 不断言）。
 on:
   workflow_dispatch:
@@ -13,8 +15,6 @@ jobs:
   ios-probe:
     name: iOS simulator
     runs-on: macos-15
-    # 模拟器构建（Pods + Rust cargokit 交叉编译 arm64-sim）在 macos-15 上实测 >45 分钟，
-    # 45 分钟会在编译中途被 job timeout 取消（run 41206183720 / 41210701359 都是整 45 分钟被杀）。
     timeout-minutes: 100
     steps:
       - uses: actions/checkout@v7
@@ -46,14 +46,39 @@ jobs:
         id: sim
         run: |
           set -euo pipefail
-          xcrun simctl list devices available | sed -n '1,40p'
           UDID=$(xcrun simctl list devices available -j \
             | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for sims in d.values() for x in sims if x["name"].startswith("iPhone")))')
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID" -b
-      - name: 设备侧 AVIF 探测（iOS 模拟器）
-        run: flutter test integration_test/avif_codec_probe_test.dart -d ${{ steps.sim.outputs.udid }}
+      - name: 构建模拟器包
+        # 入口必须指向 integration_test 文件：这样 App 启动就会跑探针，
+        # 打印走 stdout，由下一步的 simctl launch --console-pty 收回来。
+        run: |
+          flutter build ios --simulator --debug \
+            --target integration_test/avif_codec_probe_test.dart 2>&1 | tee build.log
+      - name: 安装并运行探针
+        run: |
+          set -uo pipefail
+          UDID="${{ steps.sim.outputs.udid }}"
+          APP=build/ios/iphonesimulator/Runner.app
+          xcrun simctl install "$UDID" "$APP"
+          xcrun simctl terminate "$UDID" io.github.venera.unified || true
+          ( xcrun simctl launch --console-pty "$UDID" io.github.venera.unified \
+              > console.log 2>&1 ) &
+          PID=$!
+          for i in $(seq 1 90); do
+            if grep -aq 'AVIF_PROBE' console.log && [ "$(grep -ac 'AVIF_PROBE' console.log)" -ge 6 ]; then
+              echo "已收到 6 个样本结果"
+              break
+            fi
+            sleep 2
+          done
+          sleep 3
+          kill "$PID" 2>/dev/null || true
+          xcrun simctl terminate "$UDID" io.github.venera.unified || true
+          echo '--- console ---'
+          cat console.log || true
       - name: 保存日志
         if: always()
         uses: actions/upload-artifact@v5
