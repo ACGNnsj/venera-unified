@@ -8,7 +8,7 @@ RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d && chmod +x /usr/sbin
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     xvfb xdotool dbus-x11 libgl1-mesa-dri libegl1 libgl1 ca-certificates fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd --create-home --uid 1000 smoke
+    && useradd --create-home smoke
 RUN apt-get -o Acquire::Retries=3 update && apt-get -o Acquire::Retries=3 install -y --no-install-recommends libgles2 \
     && rm -rf /var/lib/apt/lists/*
 USER smoke
