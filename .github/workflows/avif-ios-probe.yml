@@ -53,7 +53,7 @@ jobs:
           # simctl 的 runtimes -j 不保证带 runtimeRoot，实测只能靠 bundlePath 拼
           # Contents/Resources/RuntimeRoot；两条路都试，避免又把候选过滤成空。
           # 诊断与选择结果都打到 stdout：上一版写 stderr + 重定向，失败时日志只剩空错误。
-          python3 - <<'PY'
+          CHOICE=$(python3 - <<'PY'
           import json, os, subprocess, sys, traceback
 
           def simctl(*args):
@@ -98,16 +98,25 @@ jobs:
               if not iphones:
                   raise SystemExit("没有可用的 iPhone 设备类型")
               print("选择", chosen.get("name"), chosen["identifier"], iphones[0])
-              with open("/tmp/sim-choice.txt", "w") as f:
-                  f.write(chosen["identifier"] + "\n" + iphones[0] + "\n" + chosen["name"] + "\n")
+              # 直接打标记行由 bash 抓：上一版写 /tmp 文件再 test -s，失败时日志里连
+              # ::error:: 都留不下（run 41226058893 选了 iOS 26.2 后 8ms 就退出）。
+              print("CHOICE_RUNTIME=" + chosen["identifier"])
+              print("CHOICE_DEVTYPE=" + iphones[0])
+              print("CHOICE_NAME=" + chosen["name"])
           except BaseException:
               traceback.print_exc()
               sys.exit(1)
           PY
-          test -s /tmp/sim-choice.txt || { echo "::error::没能选出带 libswiftWebKit 的 iOS 运行时"; exit 1; }
-          RUNTIME=$(sed -n 1p /tmp/sim-choice.txt)
-          DEVTYPE=$(sed -n 2p /tmp/sim-choice.txt)
-          echo "选中运行时：$(sed -n 3p /tmp/sim-choice.txt)（$RUNTIME）设备类型 $DEVTYPE"
+          )
+          printf '%s\n' "$CHOICE"
+          RUNTIME=$(printf '%s\n' "$CHOICE" | grep '^CHOICE_RUNTIME=' | cut -d= -f2- || true)
+          DEVTYPE=$(printf '%s\n' "$CHOICE" | grep '^CHOICE_DEVTYPE=' | cut -d= -f2- || true)
+          NAME=$(printf '%s\n' "$CHOICE" | grep '^CHOICE_NAME=' | cut -d= -f2- || true)
+          if [ -z "$RUNTIME" ] || [ -z "$DEVTYPE" ]; then
+            echo "::error::没能选出带 libswiftWebKit 的 iOS 运行时"
+            exit 1
+          fi
+          echo "选中运行时：$NAME（$RUNTIME）设备类型 $DEVTYPE"
           UDID=$(xcrun simctl create AVIFProbe "$DEVTYPE" "$RUNTIME")
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$UDID"
