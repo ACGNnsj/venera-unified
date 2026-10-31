@@ -52,8 +52,9 @@ jobs:
           set -euo pipefail
           # simctl 的 runtimes -j 不保证带 runtimeRoot，实测只能靠 bundlePath 拼
           # Contents/Resources/RuntimeRoot；两条路都试，避免又把候选过滤成空。
-          python3 - <<'PY' > /tmp/sim-choice.txt 2>/tmp/sim-choice.err
-          import json, os, subprocess
+          # 诊断与选择结果都打到 stdout：上一版写 stderr + 重定向，失败时日志只剩空错误。
+          python3 - <<'PY'
+          import json, os, subprocess, sys, traceback
 
           def simctl(*args):
               return json.loads(subprocess.check_output(["xcrun", "simctl", *args, "-j"]))
@@ -68,44 +69,50 @@ jobs:
                       return c
               return ""
 
-          runtimes = simctl("list", "runtimes")["runtimes"]
-          def has_dylib(rt):
-              root = runtime_root(rt)
-              return bool(root) and os.path.exists(
-                  os.path.join(root, "usr/lib/swift/libswiftWebKit.dylib"))
 
-          for rt in runtimes:
-              print(rt.get("name"), rt.get("isAvailable"), runtime_root(rt), has_dylib(rt),
-                    file=os.sys.stderr)
+          try:
+              runtimes = simctl("list", "runtimes")["runtimes"]
 
-          usable = [r for r in runtimes
-                    if r.get("isAvailable") and r.get("platform") == "iOS" and has_dylib(r)]
-          if not usable:
-              raise SystemExit("没有自带 libswiftWebKit.dylib 的可用 iOS 运行时")
+              def has_dylib(rt):
+                  root = runtime_root(rt)
+                  return bool(root) and os.path.exists(
+                      os.path.join(root, "usr/lib/swift/libswiftWebKit.dylib"))
 
-          def version_key(rt):
-              return tuple(int(p) for p in rt["version"].split(".") if p.isdigit())
+              for rt in runtimes:
+                  print("候选", rt.get("name"), rt.get("identifier"), rt.get("isAvailable"),
+                        "dylib=%s" % has_dylib(rt), runtime_root(rt))
 
-          chosen = max(usable, key=version_key)
-          devicetypes = simctl("list", "devicetypes")["devicetypes"]
-          device_type = next(d["identifier"] for d in devicetypes if "iPhone" in d["identifier"])
-          print(chosen["identifier"])
-          print(device_type)
-          print(chosen["name"])
+              # platform 字段在部分 simctl 版本缺失，改用 identifier 里的 .iOS- 判族。
+              usable = [r for r in runtimes
+                        if r.get("isAvailable") and ".iOS-" in r.get("identifier", "")
+                        and has_dylib(r)]
+              if not usable:
+                  raise SystemExit("没有自带 libswiftWebKit.dylib 的可用 iOS 运行时")
+
+              def version_key(rt):
+                  return tuple(int(p) for p in rt["version"].replace("-", ".").split(".") if p.isdigit())
+
+              chosen = max(usable, key=version_key)
+              devicetypes = simctl("list", "devicetypes")["devicetypes"]
+              iphones = [d["identifier"] for d in devicetypes if "iPhone" in d["identifier"]]
+              if not iphones:
+                  raise SystemExit("没有可用的 iPhone 设备类型")
+              print("选择", chosen.get("name"), chosen["identifier"], iphones[0])
+              with open("/tmp/sim-choice.txt", "w") as f:
+                  f.write(chosen["identifier"] + "\n" + iphones[0] + "\n" + chosen["name"] + "\n")
+          except BaseException:
+              traceback.print_exc()
+              sys.exit(1)
           PY
-          if [ ! -s /tmp/sim-choice.txt ]; then
-            echo "::error::没能选出带 libswiftWebKit 的 iOS 运行时"
-            cat /tmp/sim-choice.err
-            exit 1
-          fi
-          cat /tmp/sim-choice.err
+          test -s /tmp/sim-choice.txt || { echo "::error::没能选出带 libswiftWebKit 的 iOS 运行时"; exit 1; }
           RUNTIME=$(sed -n 1p /tmp/sim-choice.txt)
           DEVTYPE=$(sed -n 2p /tmp/sim-choice.txt)
-          echo "选中运行时：$(sed -n 3p /tmp/sim-choice.txt)（$RUNTIME）"
+          echo "选中运行时：$(sed -n 3p /tmp/sim-choice.txt)（$RUNTIME）设备类型 $DEVTYPE"
           UDID=$(xcrun simctl create AVIFProbe "$DEVTYPE" "$RUNTIME")
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID" -b
+
       - name: 构建模拟器包
         # 入口必须指向 integration_test 文件：这样 App 启动就会跑探针，
         # 打印走 stdout，由下一步的 simctl launch --console-pty 收回来。
