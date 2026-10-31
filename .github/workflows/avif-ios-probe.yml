@@ -22,6 +22,10 @@ jobs:
           flutter-version-file: pubspec.yaml
           cache: true
       - run: flutter pub get --enforce-lockfile
+      - name: 预装 Rust iOS 目标
+        # rhttp 的 cargokit 会在构建中隐式 rustup target add，runner 上偶发
+        # "could not rename 'downloaded' file ... No such file or directory"；先显式装好。
+        run: rustup target add aarch64-apple-ios-sim aarch64-apple-ios x86_64-apple-ios
       - name: 启动 iOS 模拟器
         id: sim
         run: |
