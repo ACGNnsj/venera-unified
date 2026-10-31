@@ -13,7 +13,9 @@ jobs:
   ios-probe:
     name: iOS simulator
     runs-on: macos-15
-    timeout-minutes: 45
+    # 模拟器构建（Pods + Rust cargokit 交叉编译 arm64-sim）在 macos-15 上实测 >45 分钟，
+    # 45 分钟会在编译中途被 job timeout 取消（run 41206183720 / 41210701359 都是整 45 分钟被杀）。
+    timeout-minutes: 100
     steps:
       - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
