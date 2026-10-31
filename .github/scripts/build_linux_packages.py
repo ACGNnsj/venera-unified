@@ -85,7 +85,7 @@ Release: {build}
 Summary: VeneraUnified comic reader
 License: GPL-3.0-only
 URL: https://github.com/ACGNnsj/venera-unified
-Requires: gtk3, webkit2gtk4.1
+Requires: gtk3, webkit2gtk4.1, libavif
 
 %description
 A cross-platform comic reader with JavaScript source extensions and local reading.

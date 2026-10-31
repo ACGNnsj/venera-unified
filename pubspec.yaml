@@ -143,3 +143,5 @@ flutter_to_arch:
   depends:
     - gtk3
     - webkit2gtk-4.1
+    # Backs the reader's AVIF fallback (the Linux engine has no decoder).
+    - libavif

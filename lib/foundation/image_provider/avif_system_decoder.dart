@@ -7,8 +7,11 @@ import 'package:ffi/ffi.dart';
 /// Minimal libavif binding used as a Linux-only decode fallback.
 ///
 /// The Flutter Linux engine ships no AVIF decoder (the probe reports
-/// `Invalid image data` for every sample), so the reader falls back to the
-/// system libavif that the .deb depends on. Every failure path returns null so
+/// `Invalid image data` for every sample), so the reader falls back to a
+/// system libavif. Packaging declares that dependency: the deb requires
+/// libavif16 (libavif13 on 22.04, where only the older soname exists), the RPM
+/// requires libavif, and the AppImage ships no copy, so a host without any
+/// libavif simply keeps failing to decode. Every failure path returns null so
 /// the caller keeps its existing placeholder/error handling: this decoder must
 /// never crash the app, only decline.
 

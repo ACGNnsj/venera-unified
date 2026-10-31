@@ -19,6 +19,9 @@ RUNTIME_PACKAGES = (
     "gsettings-desktop-schemas", "shared-mime-info", "adwaita-icon-theme",
     "fontconfig-config",
     "bubblewrap", "xdg-dbus-proxy",
+    # The Linux engine cannot decode AVIF; the reader dlopens libavif instead,
+    # so the image must carry it. Its own dependency closure is collected below.
+    "libavif16",
 )
 HOST_LIBRARIES = re.compile(
     r"^(?:ld-linux[^/]*|lib(?:c|m|pthread|dl|rt|resolv|util|anl|nss_[^.]+)\.so\..*|"

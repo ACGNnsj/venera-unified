@@ -28,7 +28,9 @@ def stage_package(bundle, stage, arch, version):
         f"Version: {deb_version}\n"
         f"Architecture: {DEBIAN_ARCHES[arch]}\n"
         "Section: graphics\nPriority: optional\n"
-        "Depends: libwebkit2gtk-4.1-0, libgtk-3-0\n"
+        # libavif backs the reader's AVIF fallback: the Linux engine cannot
+        # decode AVIF itself, so the package must pull in the system decoder.
+        "Depends: libwebkit2gtk-4.1-0, libgtk-3-0, libavif16\n"
         "Maintainer: CyrilPeng <https://github.com/ACGNnsj/venera-unified>\n"
         "Description: Venera Unified comic reader\n",
         encoding="utf-8",
