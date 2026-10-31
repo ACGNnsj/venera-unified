@@ -159,19 +159,19 @@ jobs:
       - run: flutter analyze --fatal-infos --fatal-warnings
 
   flutter-tests:
-    # 分片并行：每个分片只跑 --shard-index 对应的套件，墙钟约为原来的 1/2。
+    # 分片并行：test_core 按套件把用例切成连续切片，每片仍加载全部测试文件。
     # 分片数写死在两处、必须一致：matrix.shard 的列表长度 == TOTAL_SHARDS。
-    name: Flutter 测试与覆盖率（分片 ${{ matrix.shard }}/2）
+    name: Flutter 测试与覆盖率（分片 ${{ matrix.shard }}/3）
     needs: [rhttp-native, analyze]
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
-      TOTAL_SHARDS: "2"
+      TOTAL_SHARDS: "3"
     strategy:
       # 一片红了立刻掐掉另一片，别让人多等半小时。
       fail-fast: true
       matrix:
-        shard: [0, 1]
+        shard: [0, 1, 2]
     steps:
       - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2

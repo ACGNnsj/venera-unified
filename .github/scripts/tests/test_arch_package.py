@@ -41,7 +41,7 @@ class ArchPackageTest(unittest.TestCase):
                 self.assertIn("Exec=/usr/bin/venera-unified_pkg/venera-unified", desktop)
                 self.assertIn("app/icon.png", archive.getnames())
             pkgbuild = (root / "arch/PKGBUILD").read_text(encoding="utf-8")
-            self.assertIn("depends=('gtk3' 'webkit2gtk-4.1')", pkgbuild)
+            self.assertIn("depends=('gtk3' 'webkit2gtk-4.1' 'libavif')", pkgbuild)
             self.assertIn("pkgname=venera-unified", pkgbuild)
             self.assertTrue((root / "arch/Dockerfile").is_file())
             self.assertFalse((root / "app").exists())

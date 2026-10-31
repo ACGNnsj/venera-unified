@@ -84,12 +84,27 @@ def owning_package(source):
     raise RuntimeError(f"Cannot identify dependency package for {source}")
 
 
+def package_files(package):
+    """Return (installed name, file list), tolerating the 24.04 t64 renames.
+
+    Noble renamed several shared-library packages to a t64 suffix; the AppDir
+    must collect whichever name the build host actually provides.
+    """
+    for name in dict.fromkeys((package, package + "t64", package.replace("-0", "-0t64"))):
+        result = subprocess.run(["dpkg-query", "-L", name], text=True, capture_output=True)
+        if result.returncode == 0:
+            return name, result.stdout.splitlines()
+    raise RuntimeError(f"Cannot list files for package {package}")
+
+
 def collect_runtime(appdir):
     appdir = appdir.resolve()
     lib = appdir / "usr/lib"
-    packages = set(RUNTIME_PACKAGES)
+    packages = set()
     for package in RUNTIME_PACKAGES:
-        for name in output("dpkg-query", "-L", package).splitlines():
+        package, files = package_files(package)
+        packages.add(package)
+        for name in files:
             source = Path(name)
             if not source.is_file() or not name.startswith(("/usr/lib/", "/usr/share/", "/etc/fonts/", "/usr/bin/")):
                 continue
