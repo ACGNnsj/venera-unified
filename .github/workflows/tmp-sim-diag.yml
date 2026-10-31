@@ -1,0 +1,22 @@
+name: "TMP sim diag"
+on:
+  workflow_dispatch:
+
+jobs:
+  diag:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - name: runtimes
+        run: |
+          xcrun simctl list runtimes
+          echo '--- dylib per runtime'
+          for R in /Library/Developer/CoreSimulator/Volumes/*/Library/Developer/CoreSimulator/Profiles/Runtimes/*.simruntime /Library/Developer/CoreSimulator/Profiles/Runtimes/*.simruntime; do
+            [ -d "$R" ] || continue
+            echo "RT $R"
+            ls "$R/Contents/Resources/RuntimeRoot/usr/lib/swift/" 2>/dev/null | grep -i webkit || echo "  no webkit swift"
+          done
+          echo '--- sdk search'
+          find /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform -name 'libswiftWebKit*' 2>/dev/null | head
+          echo '--- device support search'
+          find /Library/Developer/CoreSimulator -name 'libswiftWebKit*' 2>/dev/null | head
