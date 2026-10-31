@@ -1,6 +1,6 @@
 name: "集成测试（模拟器）"
 
-# T4 pilot:只跑 integration_test/performance_lists_test.dart 一个 target。
+# 两个 target：performance_lists（T4 pilot）与 avif_codec_probe（设备侧 AVIF 解码探测，只 print 不断言）。
 # 跑法重（emulator 启动 + Rust x86_64 交叉编译），只在相关路径变动时触发。
 # manifest 改动也触发：源码 manifest 决定 tool 能否发现 launch activity，
 # 本 job 尾部断言 release 合并 manifest 单图标。
@@ -77,7 +77,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: 模拟器跑 performance_lists
+      - name: 模拟器跑设备侧集成测试
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -85,7 +85,9 @@ jobs:
           arch: x86_64
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: flutter test integration_test/performance_lists_test.dart
+          script: |
+            flutter test integration_test/performance_lists_test.dart
+            flutter test integration_test/avif_codec_probe_test.dart
       # release 单图标回归保护：源码 manifest 里 MainActivity 的 MAIN/LAUNCHER
       # 只为 tool 发现而存在，必须被 src/release overlay 从 release 合并里摘掉。
       - name: 断言 release 合并 manifest 单图标
