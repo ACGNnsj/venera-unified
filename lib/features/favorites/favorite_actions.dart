@@ -14,7 +14,6 @@ import 'package:flutter/material.dart';
 import 'package:venera_unified/components/async_confirm_dialog.dart';
 import 'package:venera_unified/components/message.dart';
 import 'package:venera_unified/components/pop_up_widget.dart';
-import 'package:venera_unified/components/select.dart';
 import 'package:venera_unified/components/window_selection_task.dart';
 import 'package:venera_unified/features/comic_source/comic_source_api.dart';
 import 'package:venera_unified/network/request_scope.dart';

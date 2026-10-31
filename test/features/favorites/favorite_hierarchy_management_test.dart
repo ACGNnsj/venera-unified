@@ -6,24 +6,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:venera_next/components/button.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/features/favorites/favorite_actions.dart';
-import 'package:venera_next/features/favorites/favorite_folder_browser.dart';
-import 'package:venera_next/features/favorites/favorite_models.dart';
-import 'package:venera_next/features/favorites/favorites_manager.dart';
-import 'package:venera_next/features/favorites/favorites_scope.dart';
-import 'package:venera_next/features/favorites/folder_move_dialog.dart';
-import 'package:venera_next/features/favorites/folder_order_dialog.dart';
-import 'package:venera_next/features/favorites/local_favorites_page.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/foundation/context.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/routing/app_navigation.dart';
+import 'package:venera_unified/components/button.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/features/favorites/favorite_actions.dart';
+import 'package:venera_unified/features/favorites/favorite_folder_browser.dart';
+import 'package:venera_unified/features/favorites/favorite_models.dart';
+import 'package:venera_unified/features/favorites/favorites_manager.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
+import 'package:venera_unified/features/favorites/folder_move_dialog.dart';
+import 'package:venera_unified/features/favorites/folder_order_dialog.dart';
+import 'package:venera_unified/features/favorites/local_favorites_page.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
 
 import '../../components/sidebar_presentation_test.dart'
     show pumpSidebar, settleSidebarWork;
@@ -377,7 +377,7 @@ void main() {
     final rootList = tester.widget<ReorderableListView>(
       find.byType(ReorderableListView),
     );
-    rootList.onReorder(0, roots.length);
+    rootList.onReorderItem!(0, roots.length - 1);
     await tester.pump();
     tester
         .widget<FavoriteFolderSelect>(find.byType(FavoriteFolderSelect))

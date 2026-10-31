@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/select.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/select.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'favorite_folder.dart';
 

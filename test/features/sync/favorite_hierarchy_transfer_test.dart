@@ -4,15 +4,15 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:zip_flutter/zip_flutter.dart';
-import 'package:venera_next/features/favorites/favorites.dart';
-import 'package:venera_next/features/favorites/favorites_repository.dart';
-import 'package:venera_next/features/history/history_manager.dart';
-import 'package:venera_next/features/sync/app_data_transfer.dart';
-import 'package:venera_next/features/sync/data_sync_commit.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/appdata.dart';
-import 'package:venera_next/foundation/comic_type.dart';
-import 'package:venera_next/network/cookie_jar.dart';
+import 'package:venera_unified/features/favorites/favorites.dart';
+import 'package:venera_unified/features/favorites/favorites_repository.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
+import 'package:venera_unified/features/sync/app_data_transfer.dart';
+import 'package:venera_unified/features/sync/data_sync_commit.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/comic_type.dart';
+import 'package:venera_unified/network/cookie_jar.dart';
 
 FavoriteItem _comic(String id) => FavoriteItem.withTime(
   id: id,
@@ -37,7 +37,7 @@ void main() {
     for (final name in ['history.db', 'cookie.db']) {
       final db = sqlite3.open('${App.dataPath}/$name');
       db.execute('CREATE TABLE seed (id INT);');
-      db.dispose();
+      db.close();
     }
     manager = LocalFavoritesManager();
     await manager.init();
@@ -59,7 +59,7 @@ void main() {
       final repository = FavoritesRepository(db)..initializeMetadata();
       seed(repository);
     } finally {
-      db.dispose();
+      db.close();
     }
     final file = File('${root.path}/incoming.venera');
     final zip = ZipFile.open(file.path);

@@ -926,7 +926,7 @@ class CacheAliasSource extends ComicSource {
           // exercise rollback and retain failed restore resources.
           malformed.execute('CREATE TABLE broken (id TEXT);');
         } finally {
-          malformed.dispose();
+          malformed.close();
         }
         final source = archive(8);
         final zip = ZipFile.open(source.path);

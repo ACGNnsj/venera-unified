@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/select.dart';
-import 'package:venera_next/features/favorites/favorite_folder.dart';
-import 'package:venera_next/features/favorites/favorite_folder_browser.dart';
+import 'package:venera_unified/components/select.dart';
+import 'package:venera_unified/features/favorites/favorite_folder.dart';
+import 'package:venera_unified/features/favorites/favorite_folder_browser.dart';
 
 FavoriteFolderTree _tree() => FavoriteFolderTree(const [
   FavoriteFolder(id: 'reading', name: 'Reading', order: 0),

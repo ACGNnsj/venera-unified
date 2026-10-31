@@ -215,7 +215,7 @@ Future<DataSyncCommitState> _importAppData(
         repository.initializeMetadata();
         repository.initializeHierarchy();
       } finally {
-        stagedFavorites.dispose();
+        stagedFavorites.close();
       }
     }
 

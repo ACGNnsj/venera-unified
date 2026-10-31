@@ -569,34 +569,30 @@ void main() {
     skip: !_sqliteAvailable(),
   );
 
-  test(
-    'queued cancelled read does not mark a favorite as read',
-    () async {
-      await _withFavoritesManager((manager) async {
-        const folder = LocalFavoritesManager.trackingFolderName;
-        final item = _favorite('unread');
-        await manager.addComic(folder, item, null, 'old');
-        await manager.updateUpdateTime(folder, item.id, item.type, 'new');
-        final release = Completer<void>();
-        final exclusive = AppDataOperations.instance.run(() => release.future);
-        var cancelled = false;
-        final failure = StateError('cancelled');
-        final result = manager.onRead(
-          item.id,
-          item.type,
-          checkActive: () {
-            if (cancelled) throw failure;
-          },
-        );
-        final expected = expectLater(result, throwsA(same(failure)));
-        cancelled = true;
-        release.complete();
-        await Future.wait([exclusive, expected]);
-        expect(manager.hasNewUpdate(item.id, item.type), isTrue);
-      });
-    },
-    skip: !_sqliteAvailable(),
-  );
+  test('queued cancelled read does not mark a favorite as read', () async {
+    await _withFavoritesManager((manager) async {
+      const folder = LocalFavoritesManager.trackingFolderName;
+      final item = _favorite('unread');
+      await manager.addComic(folder, item, null, 'old');
+      await manager.updateUpdateTime(folder, item.id, item.type, 'new');
+      final release = Completer<void>();
+      final exclusive = AppDataOperations.instance.run(() => release.future);
+      var cancelled = false;
+      final failure = StateError('cancelled');
+      final result = manager.onRead(
+        item.id,
+        item.type,
+        checkActive: () {
+          if (cancelled) throw failure;
+        },
+      );
+      final expected = expectLater(result, throwsA(same(failure)));
+      cancelled = true;
+      release.complete();
+      await Future.wait([exclusive, expected]);
+      expect(manager.hasNewUpdate(item.id, item.type), isTrue);
+    });
+  }, skip: !_sqliteAvailable());
 
   test(
     'multi-folder transfer commits all destinations and source in one transaction',
@@ -1304,48 +1300,40 @@ void main() {
     skip: !_sqliteAvailable(),
   );
 
-  test(
-    'closed initialization cannot dispose a reopened connection',
-    () async {
-      await _withFavoritesManager((manager) async {
-        await manager.debugWaitForHashedIdsRefresh();
-        manager.close();
-        appdata.settings['quickFavorite'] = 'missing-folder';
-        final closing = manager.init();
-        final failure = expectLater(closing, throwsStateError);
-        manager.close();
-        final reopened = manager.init();
-        await failure;
-        await reopened;
-        await manager.createFolder('reopened');
-        expect(manager.folderNames, contains('reopened'));
-        final generation = manager.connectionGeneration;
-        await manager.init();
-        expect(manager.connectionGeneration, generation);
-      });
-    },
-    skip: !_sqliteAvailable(),
-  );
+  test('closed initialization cannot dispose a reopened connection', () async {
+    await _withFavoritesManager((manager) async {
+      await manager.debugWaitForHashedIdsRefresh();
+      manager.close();
+      appdata.settings['quickFavorite'] = 'missing-folder';
+      final closing = manager.init();
+      final failure = expectLater(closing, throwsStateError);
+      manager.close();
+      final reopened = manager.init();
+      await failure;
+      await reopened;
+      await manager.createFolder('reopened');
+      expect(manager.folderNames, contains('reopened'));
+      final generation = manager.connectionGeneration;
+      await manager.init();
+      expect(manager.connectionGeneration, generation);
+    });
+  }, skip: !_sqliteAvailable());
 
-  test(
-    'ready manager rejects implicit data path switching',
-    () async {
-      await _withFavoritesManager((manager) async {
-        final originalPath = App.dataPath;
-        final other = Directory.systemTemp.createTempSync('favorites-other-');
-        try {
-          App.dataPath = other.path;
-          await expectLater(manager.init(), throwsStateError);
-          expect(File('${other.path}/local_favorite.db').existsSync(), isFalse);
-          expect(manager.folderNames, isNotEmpty);
-        } finally {
-          App.dataPath = originalPath;
-          other.deleteSync(recursive: true);
-        }
-      });
-    },
-    skip: !_sqliteAvailable(),
-  );
+  test('ready manager rejects implicit data path switching', () async {
+    await _withFavoritesManager((manager) async {
+      final originalPath = App.dataPath;
+      final other = Directory.systemTemp.createTempSync('favorites-other-');
+      try {
+        App.dataPath = other.path;
+        await expectLater(manager.init(), throwsStateError);
+        expect(File('${other.path}/local_favorite.db').existsSync(), isFalse);
+        expect(manager.folderNames, isNotEmpty);
+      } finally {
+        App.dataPath = originalPath;
+        other.deleteSync(recursive: true);
+      }
+    });
+  }, skip: !_sqliteAvailable());
 
   test(
     'colliding legacy hashes retain independent favorite and update state',
@@ -1403,106 +1391,96 @@ void main() {
     skip: !_sqliteAvailable(),
   );
 
-  test(
-    'batch merge corrects reference counts before notification',
-    () async {
-      await _withFavoritesManager((manager) async {
-        await manager.createFolder('merge-source');
-        await manager.createFolder('merge-target');
-        final item = _favorite('merge-id');
-        await manager.addComic('merge-source', item);
-        await manager.addComic('merge-target', item);
-        await manager.debugWaitForHashedIdsRefresh();
-        manager.refreshHashedIds();
-        await manager.batchMoveFavorites('merge-source', 'merge-target', [
-          item,
-        ]);
-        var notifications = 0;
-        manager.addListener(() {
-          notifications++;
-          expect(manager.isExist(item.id, item.type), isFalse);
-          expect(manager.totalComics, 0);
-        });
-        await manager.deleteComicWithId('merge-target', item.id, item.type);
-        expect(notifications, 1);
-        await manager.debugWaitForHashedIdsRefresh();
+  test('batch merge corrects reference counts before notification', () async {
+    await _withFavoritesManager((manager) async {
+      await manager.createFolder('merge-source');
+      await manager.createFolder('merge-target');
+      final item = _favorite('merge-id');
+      await manager.addComic('merge-source', item);
+      await manager.addComic('merge-target', item);
+      await manager.debugWaitForHashedIdsRefresh();
+      manager.refreshHashedIds();
+      await manager.batchMoveFavorites('merge-source', 'merge-target', [item]);
+      var notifications = 0;
+      manager.addListener(() {
+        notifications++;
+        expect(manager.isExist(item.id, item.type), isFalse);
         expect(manager.totalComics, 0);
       });
-    },
-    skip: !_sqliteAvailable(),
-  );
+      await manager.deleteComicWithId('merge-target', item.id, item.type);
+      expect(notifications, 1);
+      await manager.debugWaitForHashedIdsRefresh();
+      expect(manager.totalComics, 0);
+    });
+  }, skip: !_sqliteAvailable());
 
-  test(
-    'read failure preserves cache and notifications until commit',
-    () async {
-      final oldMovement = appdata.settings['moveFavoriteAfterRead'];
-      final oldReadLater = appdata.settings['readLaterFolder'];
-      try {
-        await _withFavoritesManager((manager) async {
-          await manager.createFolder('tracking-read');
-          await manager.createFolder('read-copy');
-          await manager.createFolder('read-later');
-          appdata.settings['followUpdatesFolder'] = 'tracking-read';
-          appdata.settings['readLaterFolder'] = 'read-later';
-          appdata.settings['moveFavoriteAfterRead'] = 'end';
-          await manager.prepareTableForFollowUpdates('tracking-read');
-          final comic = _favorite('read-id');
-          for (final folder in ['tracking-read', 'read-copy', 'read-later']) {
-            await manager.addComic(folder, comic, -1);
-          }
-          await manager.updateUpdateTime(
-            'tracking-read',
-            comic.id,
-            comic.type,
-            'v1',
+  test('read failure preserves cache and notifications until commit', () async {
+    final oldMovement = appdata.settings['moveFavoriteAfterRead'];
+    final oldReadLater = appdata.settings['readLaterFolder'];
+    try {
+      await _withFavoritesManager((manager) async {
+        await manager.createFolder('tracking-read');
+        await manager.createFolder('read-copy');
+        await manager.createFolder('read-later');
+        appdata.settings['followUpdatesFolder'] = 'tracking-read';
+        appdata.settings['readLaterFolder'] = 'read-later';
+        appdata.settings['moveFavoriteAfterRead'] = 'end';
+        await manager.prepareTableForFollowUpdates('tracking-read');
+        final comic = _favorite('read-id');
+        for (final folder in ['tracking-read', 'read-copy', 'read-later']) {
+          await manager.addComic(folder, comic, -1);
+        }
+        await manager.updateUpdateTime(
+          'tracking-read',
+          comic.id,
+          comic.type,
+          'v1',
+        );
+        await manager.debugWaitForHashedIdsRefresh();
+        var notifications = 0;
+        manager.addListener(() => notifications++);
+        final db = sqlite3.open('${App.dataPath}/local_favorite.db');
+        try {
+          db.execute(
+            """CREATE TRIGGER reject_read BEFORE UPDATE ON "read-copy" BEGIN SELECT RAISE(ABORT, 'blocked'); END;""",
           );
-          await manager.debugWaitForHashedIdsRefresh();
-          var notifications = 0;
-          manager.addListener(() => notifications++);
-          final db = sqlite3.open('${App.dataPath}/local_favorite.db');
-          try {
-            db.execute(
-              """CREATE TRIGGER reject_read BEFORE UPDATE ON "read-copy" BEGIN SELECT RAISE(ABORT, 'blocked'); END;""",
-            );
-            expect(
-              () async => await manager.onRead(comic.id, comic.type),
-              throwsA(isA<SqliteException>()),
-            );
-            expect(manager.hasNewUpdate(comic.id, comic.type), isTrue);
-            expect(notifications, 0);
-            expect(
-              db
-                  .select('SELECT display_order FROM "tracking-read"')
-                  .single['display_order'],
-              -1,
-            );
-            db.execute('DROP TRIGGER reject_read;');
-            await manager.onRead(comic.id, comic.type);
-            expect(manager.hasNewUpdate(comic.id, comic.type), isFalse);
-            expect(notifications, 1);
-            expect(
-              db
-                  .select('SELECT display_order FROM "read-copy"')
-                  .single['display_order'],
-              0,
-            );
-            expect(
-              db
-                  .select('SELECT display_order FROM "read-later"')
-                  .single['display_order'],
-              -1,
-            );
-          } finally {
-            db.close();
-          }
-        });
-      } finally {
-        appdata.settings['moveFavoriteAfterRead'] = oldMovement;
-        appdata.settings['readLaterFolder'] = oldReadLater;
-      }
-    },
-    skip: !_sqliteAvailable(),
-  );
+          expect(
+            () async => await manager.onRead(comic.id, comic.type),
+            throwsA(isA<SqliteException>()),
+          );
+          expect(manager.hasNewUpdate(comic.id, comic.type), isTrue);
+          expect(notifications, 0);
+          expect(
+            db
+                .select('SELECT display_order FROM "tracking-read"')
+                .single['display_order'],
+            -1,
+          );
+          db.execute('DROP TRIGGER reject_read;');
+          await manager.onRead(comic.id, comic.type);
+          expect(manager.hasNewUpdate(comic.id, comic.type), isFalse);
+          expect(notifications, 1);
+          expect(
+            db
+                .select('SELECT display_order FROM "read-copy"')
+                .single['display_order'],
+            0,
+          );
+          expect(
+            db
+                .select('SELECT display_order FROM "read-later"')
+                .single['display_order'],
+            -1,
+          );
+        } finally {
+          db.close();
+        }
+      });
+    } finally {
+      appdata.settings['moveFavoriteAfterRead'] = oldMovement;
+      appdata.settings['readLaterFolder'] = oldReadLater;
+    }
+  }, skip: !_sqliteAvailable());
 
   test(
     'folder notifications see counts and failed rename preserves settings',

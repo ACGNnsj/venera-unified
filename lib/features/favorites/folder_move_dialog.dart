@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:venera_next/components/async_confirm_dialog.dart';
-import 'package:venera_next/components/window_selection_task.dart';
-import 'package:venera_next/foundation/app.dart';
-import 'package:venera_next/foundation/app_data_operations.dart';
-import 'package:venera_next/foundation/log.dart';
-import 'package:venera_next/foundation/selection_operation.dart';
-import 'package:venera_next/foundation/translations.dart';
+import 'package:venera_unified/components/async_confirm_dialog.dart';
+import 'package:venera_unified/components/window_selection_task.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/selection_operation.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 import 'favorite_folder_browser.dart';
 import 'favorites_scope.dart';

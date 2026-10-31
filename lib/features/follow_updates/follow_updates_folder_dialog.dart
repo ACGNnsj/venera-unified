@@ -5,7 +5,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:venera_unified/components/message.dart';
-import 'package:venera_unified/components/select.dart';
 import 'package:venera_unified/components/settings_save_state.dart';
 import 'package:venera_unified/components/window_frame.dart';
 import 'package:venera_unified/features/favorites/favorites.dart';

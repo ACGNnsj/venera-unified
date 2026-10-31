@@ -13,7 +13,7 @@ import 'package:venera_unified/foundation/file_replacement.dart';
 import 'favorites_repository.dart';
 import 'favorite_models.dart';
 import 'favorite_folder.dart';
-import 'package:venera_next/foundation/sqlite_snapshot.dart';
+import 'package:venera_unified/foundation/sqlite_snapshot.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';

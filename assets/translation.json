@@ -1263,9 +1263,7 @@
     "Export this folder only (no subfolders)": "仅导出本夹漫画（不含子目录）",
     "Move subfolders before deleting this folder": "请先移出或处理子目录，再删除此目录。",
     "Only favorite records in this folder are removed; comic files are kept.": "仅移除此目录中的收藏记录，不删除漫画原文件。",
-    "Subfolders are separate. Comics below belong directly to this folder.": "子目录单独管理；下方仅显示直接收藏在本目录的漫画。",
-    "Move up": "上移",
-    "Move down": "下移"
+    "Subfolders are separate. Comics below belong directly to this folder.": "子目录单独管理；下方仅显示直接收藏在本目录的漫画。"
 },
   "zh_TW": {
     "Invalid Windows webview proxy. Use host:port or a supported proxy URL without paths or options.": "Windows 內建網頁的代理位址無效。請使用主機:連接埠，或 http、https、socks4、socks5 代理位址，不要附加路徑或其他參數。",
@@ -2530,8 +2528,6 @@
     "Export this folder only (no subfolders)": "僅匯出本夾漫畫（不含子目錄）",
     "Move subfolders before deleting this folder": "請先移出或處理子目錄，再刪除此目錄。",
     "Only favorite records in this folder are removed; comic files are kept.": "僅移除此目錄中的收藏紀錄，不刪除漫畫原始檔案。",
-    "Subfolders are separate. Comics below belong directly to this folder.": "子目錄獨立管理；下方僅顯示直接收藏在本目錄的漫畫。",
-    "Move up": "上移",
-    "Move down": "下移"
+    "Subfolders are separate. Comics below belong directly to this folder.": "子目錄獨立管理；下方僅顯示直接收藏在本目錄的漫畫。"
 }
 }
