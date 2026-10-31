@@ -35,7 +35,8 @@ typedef _SetDefaultsDart = void Function(Pointer<Uint8>, Pointer<Void>);
 typedef _YuvToRgbNative = Int32 Function(Pointer<Void>, Pointer<Uint8>);
 typedef _YuvToRgbDart = int Function(Pointer<Void>, Pointer<Uint8>);
 
-/// Mirrors `avifRGBImage` (libavif 1.x). Field order matters.
+/// Mirrors `avifRGBImage` (libavif 1.x). Field order and widths matter:
+/// offsets verified with `offsetof` against the system header, sizeof == 64.
 final class _RgbImage extends Struct {
   @Uint32()
   external int width;
@@ -49,13 +50,14 @@ final class _RgbImage extends Struct {
   external int chromaUpsampling;
   @Int32()
   external int chromaDownsampling;
-  @Uint8()
+  // avifBool is a 32-bit int, not a byte: four bools make 16 bytes here.
+  @Int32()
   external int avoidLibYuv;
-  @Uint8()
+  @Int32()
   external int ignoreAlpha;
-  @Uint8()
+  @Int32()
   external int alphaPremultiplied;
-  @Uint8()
+  @Int32()
   external int isFloat;
   @Int32()
   external int maxThreads;
