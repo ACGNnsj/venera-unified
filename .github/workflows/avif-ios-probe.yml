@@ -42,6 +42,7 @@ jobs:
           chmod +x "$HOME/.cargo/bin/rustup"
           echo "RUSTUP_REAL_BINARY=$RUNNER_TEMP/rustup" >> "$GITHUB_ENV"
           echo "RUSTUP_LOCK_FILE=$RUNNER_TEMP/venera-rustup.lock" >> "$GITHUB_ENV"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - name: 启动 iOS 模拟器
         id: sim
         run: |
