@@ -1,4 +1,6 @@
-FROM ubuntu:22.04
+# Match the packaging runner: the image is built on 24.04, so its bundled
+# libraries (and glibc floor) are 24.04-era and cannot run on 22.04.
+FROM ubuntu:24.04
 # Deliberately no GTK or WebKit packages. Only the display/driver host interface.
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     xvfb xdotool dbus-x11 libgl1-mesa-dri libegl1 libgl1 ca-certificates fonts-dejavu-core \
