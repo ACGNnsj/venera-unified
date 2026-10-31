@@ -14,6 +14,12 @@ timeout 120 docker run --rm --network none \
   --mount "type=bind,source=$root/.github/scripts,target=/scripts,readonly" \
   venera-appimage-smoke bash /scripts/smoke_appimage.sh \
   "/packages/$(basename "${images[0]}")" /packages/webkit-probe
+# Ubuntu 24.04 restricts unprivileged user namespaces through AppArmor, which
+# makes bwrap fail with "setting up uid map: Permission denied" inside the
+# container. Lift that for this disposable runner so the sandbox check is real.
+if sysctl -n kernel.apparmor_restrict_unprivileged_userns >/dev/null 2>&1; then
+  sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+fi
 # Allow nested namespaces in Docker, then explicitly enable WebKit's own
 # sandbox. This catches missing bubblewrap/dbus-proxy files and sandbox mounts.
 timeout 120 docker run --rm --network none --security-opt seccomp=unconfined \
