@@ -143,6 +143,10 @@ _Bindings? _load() {
   return null;
 }
 
+/// Whether the system libavif could be bound on this host. Tests use it to
+/// distinguish "libavif missing" from "libavif failed to decode".
+bool get isSystemAvifAvailable => _load() != null;
+
 /// Decodes [bytes] with the system libavif, or returns null when the library is
 /// missing, the payload is not AVIF, or any step fails.
 ({Uint8List rgba, int width, int height})? decodeAvifWithSystemLibrary(

@@ -8,6 +8,24 @@ import 'package:venera_unified/foundation/image_provider/avif_system_decoder.dar
 /// The decoder is compiled on every platform but only binds on Linux; other
 /// hosts skip. `avif-probe.yml` installs the shared library before running this
 /// on ubuntu-24.04, so a skipped run there means the binding or install broke.
+///
+/// The main analyze gate runs every test on a runner without libavif, so a
+/// missing library skips here unless AVIF_REQUIRE_SYSTEM_LIB=1 marks it as a
+/// hard failure (avif-probe.yml sets it after installing libavif16).
+
+bool _canDecodeHere() {
+  if (!Platform.isLinux) {
+    markTestSkipped('libavif fallback only binds on Linux');
+    return false;
+  }
+  if (isSystemAvifAvailable) return true;
+  if (Platform.environment['AVIF_REQUIRE_SYSTEM_LIB'] == '1') {
+    fail('AVIF_REQUIRE_SYSTEM_LIB=1 but the system libavif is not loadable');
+  }
+  markTestSkipped('system libavif is not installed on this host');
+  return false;
+}
+
 void main() {
   const fixtures = [
     'white_1x1.avif',
@@ -17,10 +35,7 @@ void main() {
   ];
 
   test('decodes every AVIF fixture through the system libavif', () {
-    if (!Platform.isLinux) {
-      markTestSkipped('libavif fallback only binds on Linux');
-      return;
-    }
+    if (!_canDecodeHere()) return;
     // Decode twice: a bad ownership transfer (freeing an avifImage with
     // avifDecoderDestroy) only surfaces as heap corruption on a later pass or
     // at process teardown.
@@ -42,10 +57,7 @@ void main() {
   });
 
   test('decodes the 1x1 sample to near-white pixels', () {
-    if (!Platform.isLinux) {
-      markTestSkipped('libavif fallback only binds on Linux');
-      return;
-    }
+    if (!_canDecodeHere()) return;
     final bytes = File('test/fixtures/avif/white_1x1.avif').readAsBytesSync();
     final decoded = decodeAvifWithSystemLibrary(bytes);
     expect(decoded, isNotNull);

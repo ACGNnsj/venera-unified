@@ -35,4 +35,7 @@ jobs:
       - name: 宿主 AVIF 探测
         run: flutter test --no-pub tool/avif_codec_probe.dart
       - name: Linux libavif 兜底解码
+        # 名为 skip 实为安装失败也算红：这个 workflow 已装好 libavif16。
+        env:
+          AVIF_REQUIRE_SYSTEM_LIB: ${{ runner.os == 'Linux' && '1' || '' }}
         run: flutter test --no-pub test/foundation/avif_system_decoder_test.dart
