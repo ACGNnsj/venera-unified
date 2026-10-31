@@ -50,25 +50,55 @@ jobs:
         # runtimeRoot 里真带这个库的运行时，并按版本从高到低挑（实测 18.6 / 26.x 都有）。
         run: |
           set -euo pipefail
-          python3 - <<'PY' > /tmp/sim-choice.txt
+          # simctl 的 runtimes -j 不保证带 runtimeRoot，实测只能靠 bundlePath 拼
+          # Contents/Resources/RuntimeRoot；两条路都试，避免又把候选过滤成空。
+          python3 - <<'PY' > /tmp/sim-choice.txt 2>/tmp/sim-choice.err
           import json, os, subprocess
-          runtimes = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "runtimes", "-j"]))["runtimes"]
+
+          def simctl(*args):
+              return json.loads(subprocess.check_output(["xcrun", "simctl", *args, "-j"]))
+
+          def runtime_root(rt):
+              candidates = [rt.get("runtimeRoot")]
+              bundle = rt.get("bundlePath")
+              if bundle:
+                  candidates.append(os.path.join(bundle, "Contents/Resources/RuntimeRoot"))
+              for c in candidates:
+                  if c and os.path.isdir(c):
+                      return c
+              return ""
+
+          runtimes = simctl("list", "runtimes")["runtimes"]
           def has_dylib(rt):
-              root = rt.get("runtimeRoot") or ""
-              return os.path.exists(os.path.join(root, "usr/lib/swift/libswiftWebKit.dylib"))
-          def key(rt):
-              return tuple(int(p) for p in rt["version"].split(".") if p.isdigit())
+              root = runtime_root(rt)
+              return bool(root) and os.path.exists(
+                  os.path.join(root, "usr/lib/swift/libswiftWebKit.dylib"))
+
+          for rt in runtimes:
+              print(rt.get("name"), rt.get("isAvailable"), runtime_root(rt), has_dylib(rt),
+                    file=os.sys.stderr)
+
           usable = [r for r in runtimes
                     if r.get("isAvailable") and r.get("platform") == "iOS" and has_dylib(r)]
           if not usable:
-              raise SystemExit("no iOS simulator runtime ships libswiftWebKit.dylib")
-          chosen = max(usable, key=key)
-          devices = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devicetypes", "-j"]))
-          device_type = next(d["identifier"] for d in devices["devicetypes"] if "iPhone" in d["identifier"])
+              raise SystemExit("没有自带 libswiftWebKit.dylib 的可用 iOS 运行时")
+
+          def version_key(rt):
+              return tuple(int(p) for p in rt["version"].split(".") if p.isdigit())
+
+          chosen = max(usable, key=version_key)
+          devicetypes = simctl("list", "devicetypes")["devicetypes"]
+          device_type = next(d["identifier"] for d in devicetypes if "iPhone" in d["identifier"])
           print(chosen["identifier"])
           print(device_type)
           print(chosen["name"])
           PY
+          if [ ! -s /tmp/sim-choice.txt ]; then
+            echo "::error::没能选出带 libswiftWebKit 的 iOS 运行时"
+            cat /tmp/sim-choice.err
+            exit 1
+          fi
+          cat /tmp/sim-choice.err
           RUNTIME=$(sed -n 1p /tmp/sim-choice.txt)
           DEVTYPE=$(sed -n 2p /tmp/sim-choice.txt)
           echo "选中运行时：$(sed -n 3p /tmp/sim-choice.txt)（$RUNTIME）"
