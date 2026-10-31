@@ -123,39 +123,26 @@ jobs:
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID" -b
 
-      - name: 构建模拟器包
-        # 入口必须指向 integration_test 文件：这样 App 启动就会跑探针，
-        # 打印走 stdout，由下一步的 simctl launch --console-pty 收回来。
-        run: |
-          flutter build ios --simulator --debug \
-            --target integration_test/avif_codec_probe_test.dart 2>&1 | tee build.log
-      - name: 安装并运行探针
+      - name: 运行探针
+        # 走 flutter test -d：手工 simctl launch 的 debug 包拿不到 Dart 的 print
+        # （run 41227883703 的 console.log 只有两行原生日志），而 flutter test
+        # 会把 integration_test 的 print 直接回流到 job 日志。
         run: |
           set -uo pipefail
           UDID="${{ steps.sim.outputs.udid }}"
-          APP=build/ios/iphonesimulator/Runner.app
-          xcrun simctl install "$UDID" "$APP"
-          xcrun simctl terminate "$UDID" io.github.venera.unified || true
-          ( xcrun simctl launch --console-pty "$UDID" io.github.venera.unified \
-              > console.log 2>&1 ) &
-          PID=$!
-          for i in $(seq 1 90); do
-            if grep -aq 'AVIF_PROBE' console.log && [ "$(grep -ac 'AVIF_PROBE' console.log)" -ge 6 ]; then
-              echo "已收到 6 个样本结果"
-              break
-            fi
-            sleep 2
-          done
-          sleep 3
-          kill "$PID" 2>/dev/null || true
-          xcrun simctl terminate "$UDID" io.github.venera.unified || true
-          echo '--- console ---'
-          cat console.log || true
+          flutter test integration_test/avif_codec_probe_test.dart -d "$UDID" \
+            2>&1 | tee console.log || true
           # 假绿防线：拿不到 6 个样本就让 job 变红，别让崩掉的 app 冒充成功。
-          COUNT=$(grep -ac 'AVIF_PROBE' console.log || true)
-          echo "AVIF_PROBE 行数：$COUNT"
-          if [ "$COUNT" -lt 6 ]; then
-            echo "::error::未收到 6 个 AVIF 样本结果（实际 $COUNT）"
+          COUNT=$(grep -ac 'AVIF_PROBE' console.log 2>/dev/null || true)
+          COUNT=${COUNT:-0}
+          echo "AVIF_PROBE 行数：${COUNT}"
+          if [ "${COUNT}" -lt 6 ]; then
+            echo '--- 进程日志 ---'
+            xcrun simctl spawn "$UDID" log show --last 5m --style compact 2>/dev/null \
+              | grep -a -i -E 'Runner|dyld|libswiftWebKit|AVIF' | tail -60 || true
+            echo '--- 崩溃报告 ---'
+            ls -t ~/Library/Logs/DiagnosticReports 2>/dev/null | head -5 || true
+            echo "::error::未收到 6 个 AVIF 样本结果（实际 ${COUNT}）"
             exit 1
           fi
       - name: 保存日志
