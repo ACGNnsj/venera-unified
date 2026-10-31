@@ -151,10 +151,19 @@ jobs:
       - run: flutter analyze --fatal-infos --fatal-warnings
 
   flutter-tests:
-    name: Flutter 测试与覆盖率
+    # 分片并行：每个分片只跑 --shard-index 对应的套件，墙钟约为原来的 1/2。
+    # 分片数写死在两处、必须一致：matrix.shard 的列表长度 == TOTAL_SHARDS。
+    name: Flutter 测试与覆盖率（分片 ${{ matrix.shard }}/2）
     needs: [rhttp-native, analyze]
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    env:
+      TOTAL_SHARDS: "2"
+    strategy:
+      # 一片红了立刻掐掉另一片，别让人多等半小时。
+      fail-fast: true
+      matrix:
+        shard: [0, 1]
     steps:
       - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
@@ -173,9 +182,39 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y cmake ninja-build g++ libsqlite3-dev
           python3 .github/scripts/prepare_linux_test_libraries.py
-      - run: flutter test --coverage --fail-fast
+      - name: 跑分片测试
+        run: >-
+          flutter test --coverage
+          --coverage-path=coverage/lcov-shard-${{ matrix.shard }}.info
+          --total-shards "$TOTAL_SHARDS"
+          --shard-index ${{ matrix.shard }}
+          --fail-fast
         env:
           LD_LIBRARY_PATH: ${{ github.workspace }}/build/test-native/lib
+      - name: 上传分片覆盖率
+        uses: actions/upload-artifact@v7
+        with:
+          name: dart-coverage-shard-${{ matrix.shard }}
+          path: coverage/lcov-shard-${{ matrix.shard }}.info
+          if-no-files-found: error
+          retention-days: 14
+
+  coverage-summary:
+    # 分片各写一份 lcov，这里按「同一行取较大命中数」合并；
+    # 直接拼接会把两片都覆盖到的行算两次、覆盖率被算高。
+    name: Dart 覆盖率汇总
+    needs: flutter-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: dart-coverage-shard-*
+          path: coverage-shards
+          merge-multiple: true
+      - name: 合并分片覆盖率
+        run: python3 .github/scripts/merge_dart_coverage.py coverage/lcov.info coverage-shards/*.info
       - name: 汇总 Dart 覆盖率
         run: python3 .github/scripts/report_dart_coverage.py coverage/lcov.info --github-summary
       - name: 上传 Dart 覆盖率报告
