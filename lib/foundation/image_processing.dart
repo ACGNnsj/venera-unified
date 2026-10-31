@@ -9,6 +9,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:lodepng_flutter/lodepng_flutter.dart' as lodepng;
 
+import 'image_provider/avif_system_decoder.dart'
+    show decodeAvifWithSystemLibrary;
+
 class Image {
   final Uint32List _data;
 
@@ -59,8 +62,41 @@ class Image {
         _releaseImageResource('image codec', codec.dispose, cleanup);
       }
     }
+    if (result == null) {
+      // The Flutter Linux engine ships no AVIF decoder, so a failed engine
+      // decode gets one last chance through the system libavif. A null result
+      // keeps the original failure and its placeholder handling intact.
+      result = _decodeWithSystemAvif(data);
+      if (result != null) {
+        failure = null;
+        failureStack = null;
+      }
+    }
     _throwImageProcessingFailure(failure, failureStack, cleanup);
     return result!;
+  }
+
+  /// Test seam for the system AVIF fallback: no libavif is present on the
+  /// Windows/macOS test hosts, so tests inject the decoded pixels instead.
+  @visibleForTesting
+  static ({Uint8List rgba, int width, int height})? Function(Uint8List)?
+  systemAvifDecoderForTesting;
+
+  static Image? _decodeWithSystemAvif(Uint8List data) {
+    final decoded =
+        systemAvifDecoderForTesting?.call(data) ??
+        decodeAvifWithSystemLibrary(data);
+    if (decoded == null) return null;
+    final expected = decoded.width * decoded.height * 4;
+    if (decoded.rgba.length != expected) return null;
+    return Image(
+      decoded.rgba.buffer.asUint32List(
+        decoded.rgba.offsetInBytes,
+        decoded.width * decoded.height,
+      ),
+      decoded.width,
+      decoded.height,
+    );
   }
 
   Color getPixelAtIndex(int index) {
