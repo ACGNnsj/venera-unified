@@ -377,7 +377,10 @@ void main() {
     final rootList = tester.widget<ReorderableListView>(
       find.byType(ReorderableListView),
     );
-    rootList.onReorderItem!(0, roots.length - 1);
+    // 本仓 folder_order_dialog.dart 刻意保留旧 onReorder（3.41.4 回退档仍要能编译），
+    // 那里的 newIndex 会自己先减一，所以这里按旧语义传 roots.length。
+    // ignore: deprecated_member_use
+    rootList.onReorder!(0, roots.length);
     await tester.pump();
     tester
         .widget<FavoriteFolderSelect>(find.byType(FavoriteFolderSelect))
