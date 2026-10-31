@@ -23,7 +23,7 @@ English version: [dependencies.en.md](dependencies.en.md)
 
 | 依赖 | 当前 commit | 上游 / 许可证 | 暂时保留定制仓库的直接原因 |
 |---|---|---|---|
-| `flutter_qjs` | `8feae95df7fb00455df129ad7a0dfec1d0e8d8e4` | 未记录 fork 上游 / MIT | 固定版本包含 NDK r28 构建适配；替换前必须验证 JavaScript 运行时和各平台原生构建 |
+| `flutter_qjs` | `295f77421eedff356a02e92987181b525970c780` | 未记录 fork 上游 / MIT | 保留 NDK r28 构建适配，并修复异步图片字节回传时 `TypedData` 被当作普通列表逐字节扫描的引用开销；替换前必须验证 JavaScript 运行时和各平台原生构建 |
 | `scrollable_positioned_list` | `09e756b1f1b04e6298318d99ec20a787fb360f59` | `google/flutter.widgets` / BSD-3-Clause | 固定版本增加 `scrollControllerCallback` 和 `scrollBehavior`，连续阅读定位依赖这些接口 |
 | `desktop_webview_window` | `7801fc582ecf5a7351632887891ecf309a7b2583` | `wgh136/flutter_desktop_webview` / 未声明 | 固定版本包含 Windows ARM64 构建修复，替换前需验证全部桌面平台 |
 | `flutter_inappwebview` | `3ef899b3db57c911b080979f1392253b835f98ab` | `pichillilorenzo/flutter_inappwebview` / Apache-2.0 | 固定版本包含 `GraphicsContext` 释放修复；内嵌 WebView 和 Cloudflare 流程依赖该分支行为 |
@@ -35,6 +35,10 @@ English version: [dependencies.en.md](dependencies.en.md)
 上表依据当前固定 commit 的提交说明记录“为什么现在不能直接切回上游”，不等同于完整差异审计。每次升级 Git 依赖时，应在 PR 中补充上游仓库、对比范围、全部定制修改、上游 PR（如有）、安全影响和回滚方式。
 
 `desktop_webview_window` 未声明许可证，`lodepng_flutter`、`flutter_saf` 和 `flutter_7zip` 的许可证文件仍是占位内容。这些是已知供应链债务：升级前必须向维护方核实许可证，无法确认时应迁移到许可证清晰的上游版本或替代包。
+
+## QuickJS 数值缓冲引用扫描（2026-10-31）
+
+固定 commit 从 `8feae95df7fb00455df129ad7a0dfec1d0e8d8e4` 更新为 `295f77421eedff356a02e92987181b525970c780`，差异仅在 `lib/src/ffi.dart`：`JSRef._callRecursive` 对 `Uint8List` 等纯数值缓冲提前返回，不再复制成普通列表并逐个扫描（包里不可能含 JS 引用）。Promise、普通列表/映射、环、回调引用与异步完成协议不变，包版本仍为 0.3.7，原生代码、NDK/CMake 与平台配置未改。回滚时同一次恢复 `pubspec.yaml`、`pubspec.lock`、`doc/development/git_dependencies.json` 与本表。
 
 ## 本地维护的 PhotoView
 

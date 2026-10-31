@@ -23,7 +23,7 @@ VeneraNext maintainers own patch selection, upstream review, and validation for 
 
 | Dependency | Commit | Upstream / license | Immediate reason for retaining the customized repository |
 |---|---|---|---|
-| `flutter_qjs` | `8feae95df7fb00455df129ad7a0dfec1d0e8d8e4` | Fork upstream not recorded / MIT | The pinned revision includes NDK r28 build support; replacement requires JavaScript runtime and native platform build verification |
+| `flutter_qjs` | `295f77421eedff356a02e92987181b525970c780` | Fork upstream not recorded / MIT | Keeps the NDK r28 build support and stops `TypedData` byte buffers from being copied and walked as generic lists when async image bytes return; replacement requires JavaScript runtime and native platform build verification |
 | `scrollable_positioned_list` | `09e756b1f1b04e6298318d99ec20a787fb360f59` | `google/flutter.widgets` / BSD-3-Clause | The pinned revision adds `scrollControllerCallback` and `scrollBehavior`, used by continuous-reader positioning |
 | `desktop_webview_window` | `7801fc582ecf5a7351632887891ecf309a7b2583` | `wgh136/flutter_desktop_webview` / not declared | The pinned revision fixes Windows ARM64 builds; replacement requires verification on every desktop platform |
 | `flutter_inappwebview` | `3ef899b3db57c911b080979f1392253b835f98ab` | `pichillilorenzo/flutter_inappwebview` / Apache-2.0 | The pinned revision fixes `GraphicsContext` deallocation; embedded WebView and Cloudflare flows rely on this branch behavior |
