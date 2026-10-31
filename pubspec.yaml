@@ -15,7 +15,6 @@ dependencies:
   intl: ^0.20.2
   window_manager: ^0.5.2
   sqlite3: ^3.5.2
-  sqlite3_flutter_libs: ^0.6.0
   flutter_qjs:
     git:
       url: https://github.com/CyrilPeng/flutter_qjs
