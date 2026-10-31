@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -42,8 +42,12 @@ class _App {
 
   Future<void> init() async {
     await _initVersion();
-    cachePath = (await getApplicationCacheDirectory()).path;
-    dataPath = (await getApplicationSupportDirectory()).path;
+    cachePath = await _writablePath(
+      (await getApplicationCacheDirectory()).path,
+    );
+    dataPath = await _writablePath(
+      (await getApplicationSupportDirectory()).path,
+    );
     if (isWindows) {
       await _migrateLegacyWindowsPath(cachePath);
       await _migrateLegacyWindowsPath(dataPath);
@@ -52,6 +56,58 @@ class _App {
       externalStoragePath = (await getExternalStorageDirectory())!.path;
     }
     isInitialized = true;
+  }
+
+  /// Returns [preferred] when the process can write there, otherwise a
+  /// userdata directory next to the executable.
+  ///
+  /// Some Windows hosts deny writes to the roaming/local app data trees even
+  /// though the ACLs look fine (restricted token, machine policy, or endpoint
+  /// protection). Without this probe every cache write fails with
+  /// PathAccessException and images never render, so fall back to a location
+  /// the user can always write next to the app.
+  Future<String> _writablePath(String preferred) async {
+    if (!isDesktop) return preferred;
+    if (await _isWritable(preferred)) return preferred;
+    final fallback = p.join(
+      p.dirname(Platform.resolvedExecutable),
+      'userdata',
+      p.basename(preferred),
+    );
+    if (await _isWritable(fallback)) {
+      _reportPathFallback(
+        'App data path $preferred is not writable; using $fallback',
+      );
+      return fallback;
+    }
+    _reportPathFallback('No writable app data path found; keeping $preferred');
+    return preferred;
+  }
+
+  @visibleForTesting
+  Future<String> writablePathForTesting(String preferred) =>
+      _writablePath(preferred);
+
+  /// Logging must never break startup: packaged builds have no console, and
+  /// writing to the closed stdio handle throws.
+  void _reportPathFallback(String message) {
+    try {
+      debugPrint(message);
+    } catch (_) {
+      // Ignored on purpose.
+    }
+  }
+
+  Future<bool> _isWritable(String directory) async {
+    try {
+      await Directory(directory).create(recursive: true);
+      final probe = File(p.join(directory, '.write-probe'));
+      await probe.writeAsString('probe', flush: true);
+      await probe.delete();
+      return true;
+    } on FileSystemException {
+      return false;
+    }
   }
 
   @visibleForTesting
