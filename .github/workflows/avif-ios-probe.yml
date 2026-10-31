@@ -116,7 +116,8 @@ jobs:
             echo "::error::没能选出带 libswiftWebKit 的 iOS 运行时"
             exit 1
           fi
-          echo "选中运行时：$NAME（$RUNTIME）设备类型 $DEVTYPE"
+          # 全角括号紧跟变量名会被 bash 吞进标识符（line 68: NAME： unbound variable）。
+          echo "选中运行时：${NAME}（${RUNTIME}）设备类型 ${DEVTYPE}"
           UDID=$(xcrun simctl create AVIFProbe "$DEVTYPE" "$RUNTIME")
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$UDID"
