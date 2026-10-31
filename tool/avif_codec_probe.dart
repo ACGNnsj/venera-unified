@@ -13,6 +13,8 @@ void main() {
       'abc_color_irot_alpha_irot.avif',
       'colors-animated-8bpc.avif',
       'colors-animated-8bpc-alpha-exif-xmp.avif',
+      'e_12bit_hdr.avif',
+      'f_large_page.avif',
     ]) {
       ui.Codec? codec;
       final result = <String, Object?>{
