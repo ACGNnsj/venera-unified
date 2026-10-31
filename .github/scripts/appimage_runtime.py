@@ -115,6 +115,16 @@ def collect_runtime(appdir):
             destination = (lib / "fontconfig" / name.removeprefix("/etc/fonts/")) if name.startswith("/etc/fonts/") else appdir / name.lstrip("/")
             copy_file(source, destination)
 
+    # libavif is dlopen'd, never a DT_NEEDED entry, so the dependency walk below
+    # cannot discover it. Runtime-env.sh only searches usr/lib, while dpkg ships
+    # it under usr/lib/<triplet>; place a reachable copy next to the other libs.
+    avif = [p for p in lib.rglob("libavif.so.16*") if p.is_file()]
+    if not avif:
+        raise RuntimeError("libavif.so.16 is missing from the AppDir")
+    for source in avif:
+        if source.parent != lib and not (lib / source.name).exists():
+            copy_file(source, lib / source.name)
+
     subprocess.run([
         "cc", "-O2", "-Wall", "-Wextra", "-Werror",
         str(Path(__file__).with_name("appimage_relocate.c")),
