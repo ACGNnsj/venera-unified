@@ -21,14 +21,39 @@ void main() {
       markTestSkipped('libavif fallback only binds on Linux');
       return;
     }
-    for (final name in fixtures) {
-      final bytes = File('test/fixtures/avif/$name').readAsBytesSync();
-      final decoded = decodeAvifWithSystemLibrary(bytes);
-      expect(decoded, isNotNull, reason: '$name');
-      final rgba = decoded!.rgba;
-      expect(decoded.width, greaterThan(0), reason: '$name');
-      expect(decoded.height, greaterThan(0), reason: '$name');
-      expect(rgba.length, decoded.width * decoded.height * 4, reason: '$name');
+    // Decode twice: a bad ownership transfer (freeing an avifImage with
+    // avifDecoderDestroy) only surfaces as heap corruption on a later pass or
+    // at process teardown.
+    for (var pass = 0; pass < 2; pass++) {
+      for (final name in fixtures) {
+        final bytes = File('test/fixtures/avif/$name').readAsBytesSync();
+        final decoded = decodeAvifWithSystemLibrary(bytes);
+        expect(decoded, isNotNull, reason: '$name pass $pass');
+        final rgba = decoded!.rgba;
+        expect(decoded.width, greaterThan(0), reason: '$name pass $pass');
+        expect(decoded.height, greaterThan(0), reason: '$name pass $pass');
+        expect(
+          rgba.length,
+          decoded.width * decoded.height * 4,
+          reason: '$name pass $pass',
+        );
+      }
     }
+  });
+
+  test('decodes the 1x1 sample to near-white pixels', () {
+    if (!Platform.isLinux) {
+      markTestSkipped('libavif fallback only binds on Linux');
+      return;
+    }
+    final bytes = File('test/fixtures/avif/white_1x1.avif').readAsBytesSync();
+    final decoded = decodeAvifWithSystemLibrary(bytes);
+    expect(decoded, isNotNull);
+    expect(decoded!.width, 1);
+    expect(decoded.height, 1);
+    expect(decoded.rgba[0], greaterThan(200));
+    expect(decoded.rgba[1], greaterThan(200));
+    expect(decoded.rgba[2], greaterThan(200));
+    expect(decoded.rgba[3], 255);
   });
 }

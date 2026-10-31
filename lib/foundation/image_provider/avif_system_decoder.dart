@@ -66,22 +66,27 @@ final class _RgbImage extends Struct {
 
 class _Bindings {
   _Bindings(
-    this._create,
-    this._destroy,
+    this._createDecoder,
+    this._destroyDecoder,
+    this._createImage,
+    this._destroyImage,
     this._readMemory,
     this._setDefaults,
     this._yuvToRgb,
   );
 
-  final _CreateDart _create;
-  final _DestroyDart _destroy;
+  final _CreateDart _createDecoder;
+  final _DestroyDart _destroyDecoder;
+  final _CreateDart _createImage;
+  final _DestroyDart _destroyImage;
   final _ReadMemoryDart _readMemory;
   final _SetDefaultsDart _setDefaults;
   final _YuvToRgbDart _yuvToRgb;
 
-  Pointer<Void> createDecoder() => _create();
-  Pointer<Void> createImage() => _create();
-  void destroy(Pointer<Void> handle) => _destroy(handle);
+  Pointer<Void> createDecoder() => _createDecoder();
+  Pointer<Void> createImage() => _createImage();
+  void destroyDecoder(Pointer<Void> handle) => _destroyDecoder(handle);
+  void destroyImage(Pointer<Void> handle) => _destroyImage(handle);
   int readMemory(
     Pointer<Void> decoder,
     Pointer<Void> image,
@@ -110,6 +115,12 @@ _Bindings? _load() {
         library.lookupFunction<_CreateNative, _CreateDart>('avifDecoderCreate'),
         library.lookupFunction<_DestroyNative, _DestroyDart>(
           'avifDecoderDestroy',
+        ),
+        library.lookupFunction<_CreateNative, _CreateDart>(
+          'avifImageCreateEmpty',
+        ),
+        library.lookupFunction<_DestroyNative, _DestroyDart>(
+          'avifImageDestroy',
         ),
         library.lookupFunction<_ReadMemoryNative, _ReadMemoryDart>(
           'avifDecoderReadMemory',
@@ -187,8 +198,12 @@ _Bindings? _load() {
   } catch (_) {
     return null;
   } finally {
-    if (decoder != null && decoder != nullptr) bindings.destroy(decoder);
-    if (image != null && image != nullptr) bindings.destroy(image);
+    // avifDecoderDestroy on an avifImage would free the wrong object and
+    // corrupt the heap, which surfaced as a segfault at process teardown.
+    if (decoder != null && decoder != nullptr) {
+      bindings.destroyDecoder(decoder);
+    }
+    if (image != null && image != nullptr) bindings.destroyImage(image);
     if (input != null) malloc.free(input);
     if (output != null) malloc.free(output);
   }
