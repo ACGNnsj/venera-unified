@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -51,6 +52,22 @@ class DebianPackageTest(unittest.TestCase):
                 with self.assertRaises(subprocess.CalledProcessError):
                     debian.package_bundle(self.bundle(root, "x64"), root, "x64", "1.16.0")
             self.assertEqual(artifact.read_bytes(), b"previous")
+
+    def test_missing_avif_dependency_fails_the_build(self):
+        package = Path("venera-unified_1.16.0_amd64.deb")
+        with patch.object(
+            debian.subprocess,
+            "run",
+            return_value=SimpleNamespace(stdout="libwebkit2gtk-4.1-0, libgtk-3-0\n"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "libavif16"):
+                debian.verify_avif_dependency(package)
+        with patch.object(
+            debian.subprocess,
+            "run",
+            return_value=SimpleNamespace(stdout="libwebkit2gtk-4.1-0, libgtk-3-0, libavif16\n"),
+        ):
+            debian.verify_avif_dependency(package)
 
     @unittest.skipUnless(shutil.which("dpkg-deb"), "dpkg-deb requires a Linux runner")
     def test_real_deb_roundtrip_for_both_architectures(self):

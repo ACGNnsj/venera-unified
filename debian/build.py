@@ -45,6 +45,18 @@ def stage_package(bundle, stage, arch, version):
     shutil.copyfile(ROOT / "debian/gui/venera-unified.png", icons / "venera-unified.png")
 
 
+def verify_avif_dependency(package):
+    """Fail the build when the shipped control file drops the AVIF decoder."""
+    requires = subprocess.run(
+        ["dpkg-deb", "--field", str(package), "Depends"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    if "libavif16" not in requires:
+        raise RuntimeError(f"{package.name} does not depend on libavif16: {requires.strip()}")
+
+
 def package_bundle(bundle, output, arch, version):
     deb_version, _ = versions(version)
     output.mkdir(parents=True, exist_ok=True)
@@ -59,6 +71,10 @@ def package_bundle(bundle, output, arch, version):
         )
         # Do not replace an existing artifact until dpkg-deb succeeds.
         shutil.copyfile(temporary_package, package)
+    # The reader's Linux AVIF fallback dlopens the system decoder, so a package
+    # that forgets libavif16 installs cleanly and then silently fails to decode
+    # AVIF. Assert the shipped control file rather than trusting the template.
+    verify_avif_dependency(package)
     return package
 
 

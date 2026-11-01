@@ -2,7 +2,9 @@ import importlib.util
 from pathlib import Path
 import re
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / "build_linux_packages.py"
 spec = importlib.util.spec_from_file_location("linux_packages", SCRIPT)
@@ -61,6 +63,22 @@ class LinuxPackagesTest(unittest.TestCase):
         self.assertRegex("libflutter_linux_gtk.so()(64bit)", expression)
         self.assertNotRegex("libgtk-3.so.0()(64bit)", expression)
         self.assertNotRegex("libc.so.6(GLIBC_2.35)(64bit)", expression)
+
+    def test_rpm_requirement_must_include_libavif(self):
+        package = Path("venera-unified-1.16.0-225.x86_64.rpm")
+        with patch.object(
+            packages.subprocess,
+            "run",
+            return_value=SimpleNamespace(stdout="gtk3\nwebkit2gtk4.1\n"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "libavif"):
+                packages.verify_rpm_avif_requirement(package)
+        with patch.object(
+            packages.subprocess,
+            "run",
+            return_value=SimpleNamespace(stdout="gtk3\nwebkit2gtk4.1\nlibavif\n"),
+        ):
+            packages.verify_rpm_avif_requirement(package)
 
     def test_rejects_download_checksum_mismatch(self):
         with tempfile.TemporaryDirectory() as temp:

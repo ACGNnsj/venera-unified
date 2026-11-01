@@ -105,6 +105,18 @@ install -m644 "%{{_sourcedir}}/venera-unified.png" "%{{buildroot}}/usr/share/ico
 """
 
 
+def verify_rpm_avif_requirement(package):
+    """Fail the build when the shipped RPM drops the AVIF decoder requirement."""
+    requires = subprocess.run(
+        ["rpm", "-qp", "--requires", str(package)],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    if not any(line.strip().split("(")[0] == "libavif" for line in requires.splitlines()):
+        raise RuntimeError(f"{package.name} does not require libavif: {requires.strip()}")
+
+
 def build_rpm(bundle, out, arch, version, work):
     top = work / "rpm"
     sources = top / "SOURCES"
@@ -124,6 +136,9 @@ def build_rpm(bundle, out, arch, version, work):
     shutil.copyfile(packages[0], package)
     run("rpm", "-qip", package)
     run("rpm", "-qlp", package)
+    # The reader's Linux AVIF fallback dlopens the system decoder, so a package
+    # that forgets the requirement installs cleanly and then fails at runtime.
+    verify_rpm_avif_requirement(package)
 
 
 def download_verified(url, path, digest):
