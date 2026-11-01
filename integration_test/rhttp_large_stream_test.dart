@@ -207,8 +207,9 @@ void main() {
       var afterCancel = 0;
       final secondSub = second.body.listen((chunk) {
         afterCancel += chunk.length;
-        if (afterCancel >= 1024 * 1024 && !resumed.isCompleted)
+        if (afterCancel >= 1024 * 1024 && !resumed.isCompleted) {
           resumed.complete();
+        }
       });
       await resumed.future.timeout(const Duration(minutes: 2));
       await secondSub.cancel();
