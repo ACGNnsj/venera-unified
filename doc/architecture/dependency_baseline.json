@@ -1123,6 +1123,7 @@
     "foundation/home_layout.dart",
     "foundation/image_processing.dart",
     "foundation/image_provider/avif_system_decoder.dart",
+    "foundation/image_provider/avif_wic_decoder.dart",
     "foundation/image_provider/base_image_provider.dart",
     "foundation/image_provider/cached_image.dart",
     "foundation/image_provider/image_provider_lifecycle.dart",

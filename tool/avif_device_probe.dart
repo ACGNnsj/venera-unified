@@ -93,7 +93,11 @@ class _ProbeAppState extends State<_ProbeApp> {
     ];
   }
 
-  static const String _extraDir =
+  /// Overridable so the same probe also runs on a desktop host:
+  ///   set AVIF_PROBE_DIR=D:\venera\.scratch\tmp\avifbin
+  /// Without the variable (and on Android) the app-private path is used.
+  static final String _extraDir =
+      Platform.environment['AVIF_PROBE_DIR'] ??
       '/data/data/io.github.venera.unified/files/avif-probe';
 
   Future<Map<String, Object?>> _decodeWithEngine(

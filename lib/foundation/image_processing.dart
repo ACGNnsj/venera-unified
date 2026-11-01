@@ -11,6 +11,7 @@ import 'package:lodepng_flutter/lodepng_flutter.dart' as lodepng;
 
 import 'image_provider/avif_system_decoder.dart'
     show decodeAvifWithSystemLibrary;
+import 'image_provider/avif_wic_decoder.dart' show decodeAvifWithWic;
 
 class Image {
   final Uint32List _data;
@@ -63,9 +64,11 @@ class Image {
       }
     }
     if (result == null) {
-      // The Flutter Linux engine ships no AVIF decoder, so a failed engine
-      // decode gets one last chance through the system libavif. A null result
-      // keeps the original failure and its placeholder handling intact.
+      // Neither the Linux engine nor the Windows Impeller engine decodes AVIF,
+      // so a failed engine decode gets one last chance through the platform
+      // decoder: libavif on Linux, WIC (HEIF/AV1 codec extensions) on Windows.
+      // A null result keeps the original failure and its placeholder handling
+      // intact.
       result = _decodeWithSystemAvif(data);
       if (result != null) {
         failure = null;
@@ -76,8 +79,8 @@ class Image {
     return result!;
   }
 
-  /// Test seam for the system AVIF fallback: no libavif is present on the
-  /// Windows/macOS test hosts, so tests inject the decoded pixels instead.
+  /// Test seam for the system AVIF fallback: neither libavif nor the AVIF
+  /// codec extension is guaranteed on test hosts, so tests inject pixels.
   @visibleForTesting
   static ({Uint8List rgba, int width, int height})? Function(Uint8List)?
   systemAvifDecoderForTesting;
@@ -85,6 +88,7 @@ class Image {
   static Image? _decodeWithSystemAvif(Uint8List data) {
     final decoded =
         systemAvifDecoderForTesting?.call(data) ??
+        decodeAvifWithWic(data) ??
         decodeAvifWithSystemLibrary(data);
     if (decoded == null) return null;
     final expected = decoded.width * decoded.height * 4;
