@@ -14,6 +14,7 @@ import 'package:venera_unified/network/image_stream.dart';
 import 'base_image_provider.dart';
 import 'upscale/upscale_gate.dart';
 import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/reader_diagnostics.dart';
 
 class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
   /// Image provider for normal image.
@@ -24,6 +25,7 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
     this.eid,
     this.page, {
     this.enableResize = false,
+    this.diagnostics,
   });
 
   final String imageKey;
@@ -38,6 +40,9 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
 
   @override
   final bool enableResize;
+
+  @override
+  final ReaderDiagnostics? diagnostics;
 
   @protected
   File createLocalFile(String path) => File(path);
@@ -56,6 +61,13 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
       );
     }
     Uint8List? imageBytes;
+    final readDiagnostic = diagnostics?.beginImageSpan(
+      hashCode,
+      imageKey.startsWith('file://')
+          ? ReaderDiagnosticStage.localRead
+          : ReaderDiagnosticStage.sourceRead,
+    );
+    try {
     if (imageKey.startsWith('file://')) {
       final file = createLocalFile(imageKey.substring(7));
       final exists = await file.exists();
@@ -88,6 +100,11 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
       throw OperationFailure.message("Error: Empty response body.");
     }
     checkStop();
+    readDiagnostic?.finish(bytes: imageBytes.length);
+    } catch (_) {
+      readDiagnostic?.finish(success: false);
+      rethrow;
+    }
     if (GlobalPreferenceStore(
       appdata.settings,
     ).read(ImageProcessingPreferences.enabled)) {
@@ -97,16 +114,26 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
       if (!script.contains('function processImage')) {
         return imageBytes;
       }
-      imageBytes = await processReaderImageBytes(
-        imageBytes,
-        script: script,
-        comicId: cid,
-        episodeId: eid,
-        page: page,
-        sourceKey: sourceKey,
-        checkStop: checkStop,
-        cancelSignal: BaseImageProvider.cancelSignalOf(checkStop),
+      final processingDiagnostic = diagnostics?.beginImageSpan(
+        hashCode,
+        ReaderDiagnosticStage.processingWait,
       );
+      try {
+        imageBytes = await processReaderImageBytes(
+          imageBytes,
+          script: script,
+          comicId: cid,
+          episodeId: eid,
+          page: page,
+          sourceKey: sourceKey,
+          checkStop: checkStop,
+          cancelSignal: BaseImageProvider.cancelSignalOf(checkStop),
+        );
+        processingDiagnostic?.finish(bytes: imageBytes.length);
+      } catch (_) {
+        processingDiagnostic?.finish(success: false);
+        rethrow;
+      }
     }
     // 超分（upscaleEnabled 门控，默认关；失败回退原图）。
     imageBytes = await upscaleIfEnabled(
