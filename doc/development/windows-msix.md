@@ -1,7 +1,11 @@
 # Windows MSIX 与微软商店发布
 
-`python windows/build.py` 现在额外产出 `build/windows/VeneraUnified-<版本>-windows.msix`，
-与已有的便携 zip、Inno 安装包并列，三条路互不影响。
+`python windows/build.py` 现在额外产出两个文件，与已有的便携 zip、Inno 安装包并列，
+四条路互不影响：
+
+- `build/windows/VeneraUnified-<版本>-windows.msix`：单包，给侧载与自签名用。
+- `build/windows/VeneraUnified-<版本>-windows.msixupload`：只含上面那个包的
+  bundle，商店提交要的是这个格式。
 
 ## 版本号
 
@@ -31,7 +35,8 @@ Variables 新建 `MSIX_IDENTITY_NAME`、`MSIX_PUBLISHER`、`MSIX_PUBLISHER_DISPL
 1. 注册 Partner Center 账号（个人一次性约 19 美元，公司约 99 美元），完成身份或企业验证。
 2. 在 Partner Center 预留应用名，拿到 Identity Name、Publisher 与 Publisher ID。
 3. 把三个值填进仓库变量（见上），或在本地用环境变量重新跑 `python windows/build.py`。
-4. 上传 `.msix`（或由 Partner Center 打包成 `.msixupload`），商店负责代码签名。
+4. 上传 `.msixupload`（`MakeAppx bundle` 打出的那个），商店负责代码签名。侧载才用
+   同名的 `.msix`。
 5. 补齐商店页素材：截图、商店 logo、隐私政策、年龄分级，然后提交认证。
 
 注意：商店不接收未签名的侧载安装，只有提交后的商店版本才会被签名；本地安装需要下面的自签名。

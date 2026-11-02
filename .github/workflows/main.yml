@@ -119,6 +119,7 @@ jobs:
             outputs/*.zip
             outputs/*.exe
             outputs/*.msix
+            outputs/*.msixupload
             outputs/*.deb
             outputs/*.rpm
             outputs/*.zst

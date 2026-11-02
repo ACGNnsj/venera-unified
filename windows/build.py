@@ -256,6 +256,44 @@ def create_msix(version, arch="x64"):
     return msix_path
 
 
+def create_msixupload(version, arch="x64"):
+    """把 MSIX 包成商店上传用的 .msixupload（本质是只含一个包的 bundle）。"""
+    _, suffix, _ = architecture_paths(arch)
+    msix_path = WINDOWS_BUILD_DIR / f"VeneraUnified-{version}-{suffix}.msix"
+    require_non_empty_file(msix_path)
+    upload_path = WINDOWS_BUILD_DIR / f"VeneraUnified-{version}-{suffix}.msixupload"
+    layout_dir = WINDOWS_BUILD_DIR / f"VeneraUnified-{version}-{suffix}-upload"
+    if upload_path.exists():
+        upload_path.unlink()
+    if layout_dir.exists():
+        remove_build_directory(layout_dir)
+
+    try:
+        layout_dir.mkdir(parents=True)
+        shutil.copyfile(msix_path, layout_dir / msix_path.name)
+        subprocess.run(
+            [
+                find_makeappx(),
+                "bundle",
+                "/o",
+                "/d",
+                str(layout_dir),
+                "/p",
+                str(upload_path),
+                "/bv",
+                read_msix_version(),
+            ],
+            check=True,
+            cwd=ROOT,
+        )
+    finally:
+        if layout_dir.exists():
+            remove_build_directory(layout_dir)
+
+    require_non_empty_file(upload_path)
+    return upload_path
+
+
 def _is_arm64_host():
     if platform.machine().lower() in ("arm64", "aarch64"):
         return True
@@ -284,6 +322,7 @@ def main(arch="x64"):
     create_portable_zip(version, arch)
     build_installer(version, arch)
     create_msix(version, arch)
+    create_msixupload(version, arch)
 
 
 if __name__ == "__main__":

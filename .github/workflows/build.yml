@@ -198,10 +198,12 @@ jobs:
           $zip = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraUnified-*-windows.zip')
           $installer = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraUnified-*-windows-installer.exe')
           $msix = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraUnified-*-windows.msix')
+          $upload = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraUnified-*-windows.msixupload')
           if ($zip.Count -ne 1) { throw "应当恰好生成一个 Windows zip，实际为 $($zip.Count)。" }
           if ($installer.Count -ne 1) { throw "应当恰好生成一个 Windows 安装包，实际为 $($installer.Count)。" }
           if ($msix.Count -ne 1) { throw "应当恰好生成一个 MSIX，实际为 $($msix.Count)。" }
-          $artifacts = @($zip + $installer + $msix)
+          if ($upload.Count -ne 1) { throw "应当恰好生成一个 .msixupload，实际为 $($upload.Count)。" }
+          $artifacts = @($zip + $installer + $msix + $upload)
           $empty = @($artifacts | Where-Object { $_.Length -le 0 })
           if ($empty.Count -gt 0) {
             throw "Windows 构建产物包含空文件：$($empty.Name -join ', ')"
@@ -252,6 +254,18 @@ jobs:
           } finally {
             $msixArchive.Dispose()
           }
+          $uploadArchive = [System.IO.Compression.ZipFile]::OpenRead($upload[0].FullName)
+          try {
+            $uploadEntries = @($uploadArchive.Entries.FullName | ForEach-Object { $_ -replace '\\', '/' })
+            foreach ($required in @('AppxBundleManifest.xml')) {
+              if ($uploadEntries -notcontains $required) { throw ".msixupload 缺少 $required" }
+            }
+            $innerMsix = @($uploadEntries | Where-Object { $_ -like '*.msix' })
+            if ($innerMsix.Count -ne 1) { throw ".msixupload 应当恰好含一个 .msix，实际为 $($innerMsix.Count)。" }
+            ".msixupload 内含：$($innerMsix -join ', ')"
+          } finally {
+            $uploadArchive.Dispose()
+          }
           $artifacts | Sort-Object Name | ForEach-Object { "$($_.Name) $($_.Length) bytes" }
       - name: 编译并运行 Windows 原生启动测试
         shell: pwsh
@@ -282,6 +296,7 @@ jobs:
             build/windows/VeneraUnified-*-windows.zip
             build/windows/VeneraUnified-*-windows-installer.exe
             build/windows/VeneraUnified-*-windows.msix
+            build/windows/VeneraUnified-*-windows.msixupload
           if-no-files-found: error
           retention-days: 7
 
