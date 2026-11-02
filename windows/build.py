@@ -32,7 +32,14 @@ MSIX_PUBLISHER_DISPLAY_NAME = (
 )
 # 清单里的 Package/Properties/DisplayName 与 VisualElements 的 DisplayName 两处都必须
 # 是 Partner Center 里已保留的应用名，否则商店报「使用了你未保留的显示名称」。
-MSIX_DISPLAY_NAME = os.environ.get("MSIX_DISPLAY_NAME") or "Venera Unified"
+# 保留名就是 Identity Name 里点号后面那一段（形如 <发行方>.<应用名>），所以默认从
+# MSIX_IDENTITY_NAME 推导，不写死，也不必再多配一条仓库变量。
+def _default_msix_display_name():
+    _, dot, app_name = MSIX_IDENTITY_NAME.partition(".")
+    return app_name if dot else MSIX_IDENTITY_NAME
+
+
+MSIX_DISPLAY_NAME = os.environ.get("MSIX_DISPLAY_NAME") or _default_msix_display_name()
 APPX_MANIFEST_TEMPLATE = ROOT / "windows" / "appx" / "AppxManifest.xml"
 APPX_LOGO_SOURCE = ROOT / "assets" / "app_icon.png"
 APPX_LOGO_NAMES = ("Square44x44Logo.png", "Square150x150Logo.png", "StoreLogo.png")

@@ -25,7 +25,7 @@ MSIX 只收四段纯数字版本。`pubspec.yaml` 的 `1.19.0+245` 映射为 `1.
 | `MSIX_IDENTITY_NAME` | `ACGNnsj.VeneraUnified` | 保留应用名后由 Partner Center 分配，形如 `12345ACGNnsj.VeneraUnified` |
 | `MSIX_PUBLISHER` | `CN=ACGNnsj` | 形如 `CN=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`，与账号绑定 |
 | `MSIX_PUBLISHER_DISPLAY_NAME` | `ACGNnsj` | 商店页显示的发行方名称 |
-| `MSIX_DISPLAY_NAME` | `Venera Unified` | 应用名，**必须是你已保留的名字**，否则商店报「使用了你未保留的显示名称」 |
+| `MSIX_DISPLAY_NAME` | 从 `MSIX_IDENTITY_NAME` 点号后那段推导（如 `VeneraUnified`） | 应用名，**必须是你已保留的名字**；一般不用设 |
 
 设置环境变量后重新构建即可，`windows/appx/AppxManifest.xml` 不用改。
 
