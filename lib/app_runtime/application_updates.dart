@@ -1,5 +1,6 @@
 import 'package:venera_unified/features/comic_source/comic_source_api.dart';
 import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_profile.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
@@ -13,6 +14,7 @@ ApplicationUpdateService createApplicationUpdates() => ApplicationUpdateService(
   // or an interactive Cloudflare interceptor.
   createClient: () => Dio()..httpClientAdapter = RHttpAdapter(),
   currentVersion: () => App.version,
+  enabled: AppProfile.current.applicationUpdatesEnabled,
 );
 
 StartupUpdateCheck createStartupUpdateCheck({

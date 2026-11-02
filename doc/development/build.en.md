@@ -97,7 +97,7 @@ Build the APK:
 
 ```bash
 flutter pub get --enforce-lockfile
-flutter build apk --release
+flutter build apk --release --flavor mobile
 ```
 
 Artifacts are normally written to `build/app/outputs/apk/release/`.

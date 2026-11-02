@@ -24,6 +24,7 @@ class ReaderGalleryData {
     this.showImageDimensions = false,
     this.observeImageReadiness = false,
     this.pageMargin = EdgeInsets.zero,
+    this.decodePixelBudget,
   });
 
   final ReaderContentState content;
@@ -43,6 +44,7 @@ class ReaderGalleryData {
   final bool showImageDimensions;
   final bool observeImageReadiness;
   final EdgeInsets pageMargin;
+  final int? decodePixelBudget;
 
   List<String> get images => content.images ?? const [];
   int get imagePages => layout.pageCount(images.length);

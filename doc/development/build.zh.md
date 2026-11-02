@@ -97,7 +97,7 @@ storeFile=../keystore.jks
 
 ```bash
 flutter pub get --enforce-lockfile
-flutter build apk --release
+flutter build apk --release --flavor mobile
 ```
 
 构建产物通常位于 `build/app/outputs/apk/release/`。

@@ -5,6 +5,7 @@ import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/reader_preferences.dart';
 import 'dart:async' show Future;
+import 'dart:ui' show TargetImageSize;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:venera_unified/foundation/file_system.dart';
@@ -15,6 +16,7 @@ import 'base_image_provider.dart';
 import 'upscale/upscale_gate.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/reader_diagnostics.dart';
+import 'package:venera_unified/foundation/tv_reader_policy.dart';
 
 class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
   /// Image provider for normal image.
@@ -25,8 +27,9 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
     this.eid,
     this.page, {
     this.enableResize = false,
+    this.decodePixelBudget,
     this.diagnostics,
-  });
+  }) : assert(decodePixelBudget == null || decodePixelBudget > 0);
 
   final String imageKey;
 
@@ -40,6 +43,16 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
 
   @override
   final bool enableResize;
+
+  final int? decodePixelBudget;
+
+  @override
+  TargetImageSize targetSizeForImage(int width, int height) {
+    final budget = decodePixelBudget;
+    if (budget == null) return super.targetSizeForImage(width, height);
+    final size = TvReaderPolicy.decodeSize(width, height, pixelBudget: budget);
+    return TargetImageSize(width: size.width, height: size.height);
+  }
 
   @override
   final ReaderDiagnostics? diagnostics;
@@ -68,39 +81,39 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
           : ReaderDiagnosticStage.sourceRead,
     );
     try {
-    if (imageKey.startsWith('file://')) {
-      final file = createLocalFile(imageKey.substring(7));
-      final exists = await file.exists();
-      checkStop();
-      if (exists) {
-        imageBytes = await readFileBytesChecked(
-          file,
-          requireNonEmpty: true,
-          checkStop: checkStop,
-          cancelSignal: BaseImageProvider.cancelSignalOf(checkStop),
-          canRetry: () => BaseImageProvider.canRetryAfterFailure(checkStop),
-        );
+      if (imageKey.startsWith('file://')) {
+        final file = createLocalFile(imageKey.substring(7));
+        final exists = await file.exists();
+        checkStop();
+        if (exists) {
+          imageBytes = await readFileBytesChecked(
+            file,
+            requireNonEmpty: true,
+            checkStop: checkStop,
+            cancelSignal: BaseImageProvider.cancelSignalOf(checkStop),
+            canRetry: () => BaseImageProvider.canRetryAfterFailure(checkStop),
+          );
+        } else {
+          throw FileSystemException('File not found', file.path);
+        }
       } else {
-        throw FileSystemException('File not found', file.path);
-      }
-    } else {
-      imageBytes = await readImageStream(
-        ImageDownloader.loadComicImage(imageKey, sourceKey, cid, eid),
-        cancelSignal: BaseImageProvider.cancelSignalOf(checkStop),
-        checkStop: checkStop,
-        onProgress: (event) => chunkEvents.add(
-          ImageChunkEvent(
-            cumulativeBytesLoaded: event.currentBytes,
-            expectedTotalBytes: event.totalBytes,
+        imageBytes = await readImageStream(
+          ImageDownloader.loadComicImage(imageKey, sourceKey, cid, eid),
+          cancelSignal: BaseImageProvider.cancelSignalOf(checkStop),
+          checkStop: checkStop,
+          onProgress: (event) => chunkEvents.add(
+            ImageChunkEvent(
+              cumulativeBytesLoaded: event.currentBytes,
+              expectedTotalBytes: event.totalBytes,
+            ),
           ),
-        ),
-      );
-    }
-    if (imageBytes == null) {
-      throw OperationFailure.message("Error: Empty response body.");
-    }
-    checkStop();
-    readDiagnostic?.finish(bytes: imageBytes.length);
+        );
+      }
+      if (imageBytes == null) {
+        throw OperationFailure.message("Error: Empty response body.");
+      }
+      checkStop();
+      readDiagnostic?.finish(bytes: imageBytes.length);
     } catch (_) {
       readDiagnostic?.finish(success: false);
       rethrow;
@@ -152,5 +165,6 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
   }
 
   @override
-  String get key => "$imageKey@$sourceKey@$cid@$eid@$enableResize";
+  String get key =>
+      "$imageKey@$sourceKey@$cid@$eid@$enableResize${decodePixelBudget == null ? '' : '@tv:$decodePixelBudget'}";
 }

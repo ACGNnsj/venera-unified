@@ -47,6 +47,7 @@ Source developers can follow the [authoring guide](api/comic_source.en.md) → [
 
 ## Experiments
 
+- [Android TV Alpha experiment (Chinese)](experiments/android_tv.zh.md)
 - [Source installation task design (Chinese)](experiments/source_installation_tasks.zh.md)
 - [Source repository management design (Chinese)](experiments/source_repositories.zh.md)
 - [图片增强实验](experiments/image_enhancement.zh.md)

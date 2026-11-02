@@ -29,10 +29,12 @@ class ApplicationUpdateService {
   ApplicationUpdateService({
     required this._createClient,
     required this._currentVersion,
+    this.enabled = true,
   });
 
   final Dio Function() _createClient;
   final String Function() _currentVersion;
+  final bool enabled;
   final _pending = <RequestScope, Future<void>>{};
   final _cleanupFailures = <ApplicationUpdateCleanupFailure>[];
   bool _closed = false;
@@ -83,6 +85,7 @@ class ApplicationUpdateService {
 
   Future<String?> _check(RequestScope scope) async {
     scope.check();
+    if (!enabled) return null;
     final version = _currentVersion();
     scope.check();
     final dio = _createClient();

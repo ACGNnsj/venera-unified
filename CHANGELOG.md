@@ -13,6 +13,9 @@
 - 完整应用数据备份与 WebDAV 快照保留两级关系、稳定标识、同级顺序、直接收藏及关联设置；恢复时先在暂存副本迁移旧库、校验新层级，损坏关系或未知版本在替换活动数据库前拒绝。层级元数据使用 SQLite 自动索引，避免内部索引名与原收藏夹名称冲突，不改名或重建漫画表。
 - 单夹 JSON 继续沿用旧格式，只导出本目录直接收藏，导入始终新建一级目录；含子目录的导出入口明确提示不包含子目录。补充完整备份／同步快照的恢复与重启回归及中英文使用说明，提示新旧版本不要交替读写同一收藏库或 WebDAV 数据。
 
+### 新增
+
+- 移植上游 Android TV（Alpha）适配（`CyrilPeng/Venera-Next@a4ba524`，Refs #131）：新增 `tv` Gradle flavor（包名 `io.github.venera.unified.tv`、独立沙盒、与手机版共存）与 `android/app/src/tv/` 的 leanback 启动项、横幅和固定横屏；界面加遥控器焦点导航（`lib/components/tv_navigation.dart`）、阅读器按键分流（`lib/features/reader/tv_input.dart`）与返回收起菜单的退出路径；更新检查在 TV 上关闭，漫画源更新不受影响。附带 TV 低内存模式（单页、1 页预加载、64 MiB 图片缓存、解码上限 1920×1080／最长边 8192），仅存本机、不改写已有阅读配置。TV 包为实验构建，尚未做真机验收，构建与边界见 `doc/experiments/android_tv.zh.md`。
 ### 修复
 
 - Windows 内置网页（WebView2）现在真正跟随应用的代理设置：按环境创建时传入 `--proxy-server` / `--no-proxy-server`，同一 profile 同时只保留一套浏览器选项，切换代理前等待旧浏览器退出；初始化失败时给出可读原因与「重试」按钮，不再只显示空白。含用户名密码的手动代理与带路径的地址会被明确拒绝。

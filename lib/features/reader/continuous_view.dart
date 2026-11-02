@@ -952,6 +952,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
           imageRef.position.chapterId,
           imageRef.position.imageNumber,
           enableResize: true,
+          decodePixelBudget: data.decodePixelBudget,
           diagnostics: this.widget.imageWork.diagnostics,
         );
 
