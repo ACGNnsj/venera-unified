@@ -257,8 +257,11 @@ jobs:
           $uploadArchive = [System.IO.Compression.ZipFile]::OpenRead($upload[0].FullName)
           try {
             $uploadEntries = @($uploadArchive.Entries.FullName | ForEach-Object { $_ -replace '\\', '/' })
-            foreach ($required in @('AppxBundleManifest.xml')) {
-              if ($uploadEntries -notcontains $required) { throw ".msixupload 缺少 $required" }
+            # bundle 清单的位置随 SDK 版本变（老版本在根，新版本在 AppxMetadata/），
+            # 按文件名后缀匹配，别写死目录。
+            $bundleManifest = @($uploadEntries | Where-Object { $_ -like '*AppxBundleManifest.xml' })
+            if ($bundleManifest.Count -ne 1) {
+              throw ".msixupload 应当恰好含一个 AppxBundleManifest.xml，实际为 $($bundleManifest.Count)。条目：$($uploadEntries -join ', ')"
             }
             $innerMsix = @($uploadEntries | Where-Object { $_ -like '*.msix' })
             if ($innerMsix.Count -ne 1) { throw ".msixupload 应当恰好含一个 .msix，实际为 $($innerMsix.Count)。" }
