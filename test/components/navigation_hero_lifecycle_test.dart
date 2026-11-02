@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_next/components/navigation_bar.dart';
-import 'package:venera_next/foundation/app_page_route.dart';
+import 'package:venera_unified/components/navigation_bar.dart';
+import 'package:venera_unified/foundation/app_page_route.dart';
 
 const _flightKey = ValueKey('cover-flight');
 
