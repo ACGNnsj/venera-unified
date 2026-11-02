@@ -80,5 +80,39 @@ class WindowsBuildTest(unittest.TestCase):
             run.assert_called_once_with(['flutter.bat', 'build', 'windows'], check=True, cwd=self.root)
 
 
+    def test_msixupload_is_zip_around_exactly_one_bundle(self):
+        build_dir = self.root / 'build/windows'
+        build_dir.mkdir(parents=True)
+        bundle = build_dir / 'VeneraUnified-1.2.3-windows.msixbundle'
+        bundle.write_bytes(b'bundle')
+        path = build.create_msixupload('1.2.3')
+        with zipfile.ZipFile(path) as archive:
+            self.assertEqual(archive.namelist(), [bundle.name])
+            self.assertEqual(archive.read(bundle.name), b'bundle')
+
+
+    def test_msix_identity_reads_environment_and_falls_back_when_empty(self):
+        def identity(environ):
+            try:
+                with patch.dict(build.os.environ, environ):
+                    spec.loader.exec_module(build)
+                    return build.MSIX_IDENTITY_NAME, build.MSIX_PUBLISHER
+            finally:
+                # 重新执行模块，把测试环境变量从模块全局里摘掉
+                spec.loader.exec_module(build)
+
+        self.assertEqual(
+            identity({
+                'MSIX_IDENTITY_NAME': 'ACGMN.VeneraUnified',
+                'MSIX_PUBLISHER': 'CN=60480894-F47F-462C-A648-F5E1B5D6EB8D',
+            }),
+            ('ACGMN.VeneraUnified', 'CN=60480894-F47F-462C-A648-F5E1B5D6EB8D'),
+        )
+        # 仓库变量没填时 CI 传进来的是空串而不是 None，必须回落到侧载默认身份。
+        self.assertEqual(
+            identity({'MSIX_IDENTITY_NAME': '', 'MSIX_PUBLISHER': ''}),
+            ('ACGNnsj.VeneraUnified', 'CN=ACGNnsj'),
+        )
+
 if __name__ == '__main__':
     unittest.main()
