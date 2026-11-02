@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MSIX 包清单。{{version}} 由 windows/build.py 从 pubspec 的 1.19.0+245 映射成 1.19.0.245，
+     {{identity_name}} 与 {{publisher}} 在提交微软商店时必须换成 Partner Center 分配给
+     「应用名保留」的 Identity Name 与 Publisher（CN=...），否则上传会被拒。 -->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+  <Identity
+    Name="{{identity_name}}"
+    Publisher="{{publisher}}"
+    Version="{{version}}"
+    ProcessorArchitecture="{{processor_architecture}}" />
+  <Properties>
+    <DisplayName>Venera Unified</DisplayName>
+    <PublisherDisplayName>{{publisher_display_name}}</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+  <Resources>
+    <Resource Language="zh-CN" />
+    <Resource Language="en-US" />
+  </Resources>
+  <Applications>
+    <Application Id="App" Executable="VeneraUnified.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        BackgroundColor="transparent"
+        DisplayName="Venera Unified"
+        Description="A comic app."
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png" />
+    </Application>
+  </Applications>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

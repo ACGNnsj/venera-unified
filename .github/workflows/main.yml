@@ -118,6 +118,7 @@ jobs:
             outputs/*.apk
             outputs/*.zip
             outputs/*.exe
+            outputs/*.msix
             outputs/*.deb
             outputs/*.rpm
             outputs/*.zst

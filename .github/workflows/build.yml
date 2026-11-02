@@ -190,9 +190,11 @@ jobs:
         run: |
           $zip = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraUnified-*-windows.zip')
           $installer = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraUnified-*-windows-installer.exe')
+          $msix = @(Get-ChildItem -Path build/windows -File -Filter 'VeneraUnified-*-windows.msix')
           if ($zip.Count -ne 1) { throw "应当恰好生成一个 Windows zip，实际为 $($zip.Count)。" }
           if ($installer.Count -ne 1) { throw "应当恰好生成一个 Windows 安装包，实际为 $($installer.Count)。" }
-          $artifacts = @($zip + $installer)
+          if ($msix.Count -ne 1) { throw "应当恰好生成一个 MSIX，实际为 $($msix.Count)。" }
+          $artifacts = @($zip + $installer + $msix)
           $empty = @($artifacts | Where-Object { $_.Length -le 0 })
           if ($empty.Count -gt 0) {
             throw "Windows 构建产物包含空文件：$($empty.Name -join ', ')"
@@ -213,6 +215,35 @@ jobs:
             }
           } finally {
             $archive.Dispose()
+          }
+          $msixArchive = [System.IO.Compression.ZipFile]::OpenRead($msix[0].FullName)
+          try {
+            # MakeAppx 的分隔符可能是反斜杠，统一成正斜杠再比对
+            $msixEntries = @($msixArchive.Entries.FullName | ForEach-Object { $_ -replace '\\', '/' })
+            foreach ($required in @('AppxManifest.xml', 'VeneraUnified.exe', 'Assets/Square150x150Logo.png', 'Assets/StoreLogo.png')) {
+              if ($msixEntries -notcontains $required) { throw "MSIX 缺少 $required" }
+            }
+            $manifestStream = $msixArchive.GetEntry('AppxManifest.xml').Open()
+            try {
+              $manifestXml = [xml](New-Object System.IO.StreamReader($manifestStream)).ReadToEnd()
+            } finally {
+              $manifestStream.Dispose()
+            }
+            $identity = $manifestXml.Package.Identity
+            if (-not $identity.Name -or -not $identity.Publisher -or -not $identity.Version) {
+              throw 'MSIX 清单 Identity 缺 Name/Publisher/Version。'
+            }
+            if ($identity.Version -notmatch '^\d+\.\d+\.\d+\.\d+$') {
+              throw "MSIX 版本不是四段号：$($identity.Version)"
+            }
+            if ($identity.ProcessorArchitecture -ne 'x64') {
+              throw "MSIX 架构应为 x64，实际为 $($identity.ProcessorArchitecture)。"
+            }
+            $app = $manifestXml.Package.Applications.Application
+            if ($app.Executable -ne 'VeneraUnified.exe') { throw "MSIX 入口可执行名不是 VeneraUnified.exe：$($app.Executable)" }
+            "MSIX 身份：$($identity.Name) / $($identity.Version) / $($identity.ProcessorArchitecture)"
+          } finally {
+            $msixArchive.Dispose()
           }
           $artifacts | Sort-Object Name | ForEach-Object { "$($_.Name) $($_.Length) bytes" }
       - name: 编译并运行 Windows 原生启动测试
@@ -243,6 +274,7 @@ jobs:
           path: |
             build/windows/VeneraUnified-*-windows.zip
             build/windows/VeneraUnified-*-windows-installer.exe
+            build/windows/VeneraUnified-*-windows.msix
           if-no-files-found: error
           retention-days: 7
 
