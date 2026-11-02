@@ -173,6 +173,13 @@ jobs:
           architecture: x64
           cache: true
       - name: 构建 Windows 安装包
+        env:
+          # 仓库变量为空时 build.py 回落到侧载默认身份；提交商店前在仓库
+          # Settings → Secrets and variables → Actions → Variables 里填
+          # Partner Center 分配的值。
+          MSIX_IDENTITY_NAME: ${{ vars.MSIX_IDENTITY_NAME }}
+          MSIX_PUBLISHER: ${{ vars.MSIX_PUBLISHER }}
+          MSIX_PUBLISHER_DISPLAY_NAME: ${{ vars.MSIX_PUBLISHER_DISPLAY_NAME }}
         run: |
           flutter pub get --enforce-lockfile
           python windows/build.py

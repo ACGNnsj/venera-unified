@@ -21,11 +21,16 @@ MSIX 只收四段纯数字版本。`pubspec.yaml` 的 `1.19.0+245` 映射为 `1.
 
 设置环境变量后重新构建即可，`windows/appx/AppxManifest.xml` 不用改。
 
+CI 里走仓库变量，不必改代码：Settings → Secrets and variables → Actions →
+Variables 新建 `MSIX_IDENTITY_NAME`、`MSIX_PUBLISHER`、`MSIX_PUBLISHER_DISPLAY_NAME`
+三条，`build.yml` 的「构建 Windows 安装包」步骤会把它们传进构建环境。变量留空时
+自动回落到上面的侧载默认值，所以填之前 CI 也不会坏。
+
 ## 提交微软商店
 
 1. 注册 Partner Center 账号（个人一次性约 19 美元，公司约 99 美元），完成身份或企业验证。
 2. 在 Partner Center 预留应用名，拿到 Identity Name、Publisher 与 Publisher ID。
-3. 用上面三个环境变量重新跑 `python windows/build.py`。
+3. 把三个值填进仓库变量（见上），或在本地用环境变量重新跑 `python windows/build.py`。
 4. 上传 `.msix`（或由 Partner Center 打包成 `.msixupload`），商店负责代码签名。
 5. 补齐商店页素材：截图、商店 logo、隐私政策、年龄分级，然后提交认证。
 

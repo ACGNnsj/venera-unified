@@ -24,10 +24,10 @@ CHINESE_TRANSLATION_SHA256 = (
 # MSIX 身份默认值只够侧载试用。提交微软商店时必须换成 Partner Center 在
 # 「应用名保留」里分配的 Identity Name 与 Publisher：二者与账号绑定，错一个
 # 字符上传就会被拒。用环境变量覆盖即可，不必改代码。
-MSIX_IDENTITY_NAME = os.environ.get("MSIX_IDENTITY_NAME", "ACGNnsj.VeneraUnified")
-MSIX_PUBLISHER = os.environ.get("MSIX_PUBLISHER", "CN=ACGNnsj")
-MSIX_PUBLISHER_DISPLAY_NAME = os.environ.get(
-    "MSIX_PUBLISHER_DISPLAY_NAME", "ACGNnsj"
+MSIX_IDENTITY_NAME = os.environ.get("MSIX_IDENTITY_NAME") or "ACGNnsj.VeneraUnified"
+MSIX_PUBLISHER = os.environ.get("MSIX_PUBLISHER") or "CN=ACGNnsj"
+MSIX_PUBLISHER_DISPLAY_NAME = (
+    os.environ.get("MSIX_PUBLISHER_DISPLAY_NAME") or "ACGNnsj"
 )
 APPX_MANIFEST_TEMPLATE = ROOT / "windows" / "appx" / "AppxManifest.xml"
 APPX_LOGO_SOURCE = ROOT / "assets" / "app_icon.png"
