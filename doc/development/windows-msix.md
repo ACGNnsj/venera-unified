@@ -25,18 +25,22 @@ MSIX 只收四段纯数字版本。`pubspec.yaml` 的 `1.19.0+245` 映射为 `1.
 | `MSIX_IDENTITY_NAME` | `ACGNnsj.VeneraUnified` | 保留应用名后由 Partner Center 分配，形如 `12345ACGNnsj.VeneraUnified` |
 | `MSIX_PUBLISHER` | `CN=ACGNnsj` | 形如 `CN=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`，与账号绑定 |
 | `MSIX_PUBLISHER_DISPLAY_NAME` | `ACGNnsj` | 商店页显示的发行方名称 |
+| `MSIX_DISPLAY_NAME` | `Venera Unified` | 应用名，**必须是你已保留的名字**，否则商店报「使用了你未保留的显示名称」 |
 
 设置环境变量后重新构建即可，`windows/appx/AppxManifest.xml` 不用改。
 
 CI 里走仓库变量，不必改代码：Settings → Secrets and variables → Actions →
 Variables 新建 `MSIX_IDENTITY_NAME`、`MSIX_PUBLISHER`、`MSIX_PUBLISHER_DISPLAY_NAME`
-三条，`build.yml` 的「构建 Windows 安装包」步骤会把它们传进构建环境。变量留空时
+三条（要改应用名再加 `MSIX_DISPLAY_NAME` 一条），`build.yml` 的「构建 Windows 安装包」步骤会把它们传进构建环境。变量留空时
 自动回落到上面的侧载默认值，所以填之前 CI 也不会坏。
 
 ## 提交微软商店
 
 1. 注册 Partner Center 账号（个人一次性约 19 美元，公司约 99 美元），完成身份或企业验证。
 2. 在 Partner Center 预留应用名，拿到 Identity Name、Publisher 与 Publisher ID。
+   预留的名字就是清单里的 `DisplayName`：名字对不上，上传会报「此软件包的清单
+   （Package/Properties/DisplayName）使用了你未保留的显示名称」。「应用名称管理」里可以
+   再保留一个名字，自服务且免费。
 3. 把三个值填进仓库变量（见上），或在本地用环境变量重新跑 `python windows/build.py`。
 4. 上传 `.msixupload`（zip 里装着 `.msixbundle`），商店负责代码签名。侧载才用同名的 `.msix`。
 5. 为受限功能 `runFullTrust` 申请批准：桌面应用都声明了它，认证页面会提示「需要先请求

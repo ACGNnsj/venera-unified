@@ -30,6 +30,9 @@ MSIX_PUBLISHER = os.environ.get("MSIX_PUBLISHER") or "CN=ACGNnsj"
 MSIX_PUBLISHER_DISPLAY_NAME = (
     os.environ.get("MSIX_PUBLISHER_DISPLAY_NAME") or "ACGNnsj"
 )
+# 清单里的 Package/Properties/DisplayName 与 VisualElements 的 DisplayName 两处都必须
+# 是 Partner Center 里已保留的应用名，否则商店报「使用了你未保留的显示名称」。
+MSIX_DISPLAY_NAME = os.environ.get("MSIX_DISPLAY_NAME") or "Venera Unified"
 APPX_MANIFEST_TEMPLATE = ROOT / "windows" / "appx" / "AppxManifest.xml"
 APPX_LOGO_SOURCE = ROOT / "assets" / "app_icon.png"
 APPX_LOGO_NAMES = ("Square44x44Logo.png", "Square150x150Logo.png", "StoreLogo.png")
@@ -232,6 +235,7 @@ def create_msix(version, arch="x64"):
             "{{identity_name}}": MSIX_IDENTITY_NAME,
             "{{publisher}}": MSIX_PUBLISHER,
             "{{publisher_display_name}}": MSIX_PUBLISHER_DISPLAY_NAME,
+            "{{display_name}}": MSIX_DISPLAY_NAME,
             "{{processor_architecture}}": arch,
         }
         for placeholder, value in substitutions.items():

@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- MSIX 包清单。{{version}} 由 windows/build.py 从 pubspec 的 1.19.0+245 映射成 1.19.0.245，
+<!-- MSIX 包清单。{{version}} 由 windows/build.py 从 pubspec 的版本号映射成四段号，
+     第四段（修订号）固定 0，微软商店硬性要求。
      {{identity_name}} 与 {{publisher}} 在提交微软商店时必须换成 Partner Center 分配给
-     「应用名保留」的 Identity Name 与 Publisher（CN=...），否则上传会被拒。 -->
+     「应用名保留」的 Identity Name 与 Publisher（CN=...），否则上传会被拒。
+     {{display_name}} 同样必须是你已保留的应用名，否则商店报
+     「使用了你未保留的显示名称」；它必须与 Properties 和 VisualElements 两处一致。 -->
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
@@ -13,7 +16,7 @@
     Version="{{version}}"
     ProcessorArchitecture="{{processor_architecture}}" />
   <Properties>
-    <DisplayName>Venera Unified</DisplayName>
+    <DisplayName>{{display_name}}</DisplayName>
     <PublisherDisplayName>{{publisher_display_name}}</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -28,7 +31,7 @@
     <Application Id="App" Executable="VeneraUnified.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         BackgroundColor="transparent"
-        DisplayName="Venera Unified"
+        DisplayName="{{display_name}}"
         Description="A comic app."
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png" />
