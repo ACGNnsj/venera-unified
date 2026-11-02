@@ -15,6 +15,7 @@
 
 ### 新增
 
+- 新增鸿蒙（HarmonyOS）实验管线：`tool/harmonyos/build_blank_hap.py` 可端到端复现未签名空白 HAP 构建，并记录了本机 Windows 必须绕过的路径与符号链接限制；全应用管线当前阻塞于 `TargetPlatform.ohos`，阻塞点、证据与后续关卡见 `doc/distribution/harmonyos.zh.md`。不进 CI，不改变任何现有平台的构建产物。
 - 移植上游 Android TV（Alpha）适配（`CyrilPeng/Venera-Next@a4ba524`，Refs #131）：新增 `tv` Gradle flavor（包名 `io.github.venera.unified.tv`、独立沙盒、与手机版共存）与 `android/app/src/tv/` 的 leanback 启动项、横幅和固定横屏；界面加遥控器焦点导航（`lib/components/tv_navigation.dart`）、阅读器按键分流（`lib/features/reader/tv_input.dart`）与返回收起菜单的退出路径；更新检查在 TV 上关闭，漫画源更新不受影响。附带 TV 低内存模式（单页、1 页预加载、64 MiB 图片缓存、解码上限 1920×1080／最长边 8192），仅存本机、不改写已有阅读配置。TV 包为实验构建，尚未做真机验收，构建与边界见 `doc/experiments/android_tv.zh.md`。
 ### 修复
 
