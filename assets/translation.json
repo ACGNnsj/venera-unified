@@ -1310,6 +1310,7 @@
     "Image dimensions: @width × @height pixels": "圖片尺寸：@width × @height 像素",
     "Keep screen on during automatic reading": "自動閱讀時保持螢幕常亮",
     "Overwrite local data?": "覆寫本機資料？",
+    "Local changes will be overwritten by the downloaded backup. Continue?": "下載備份會覆寫本機修改，是否繼續？",
     "Save is paused after an incomplete source change. Copy your edits before closing.": "上次來源修改未完整完成，已暫停儲存。關閉前請複製保留你的編輯內容。",
     "Wait for local file operations to finish before changing the local library.": "請等待本機檔案操作完成後，再修改漫畫庫位置。",
     "Local library recovery is required. Retry the library move before accessing comics.": "本機漫畫儲存需要復原，請前往應用程式設定重試復原後再存取漫畫。",
