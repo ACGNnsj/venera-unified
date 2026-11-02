@@ -178,7 +178,7 @@ jobs:
       # 21 分钟降到 10 分钟以内；key 不中会退到 restore-keys 拿最近一份，仍能增量。
       # 缓存超过仓库 10 GB 上限时 GitHub 自动淘汰最旧条目。
       - name: 缓存 Windows 增量构建产物
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             build/windows
