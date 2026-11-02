@@ -6,6 +6,7 @@ import platform
 import re
 import shutil
 import subprocess
+import zipfile
 from urllib.request import Request, urlopen
 from xml.sax.saxutils import escape
 
@@ -53,22 +54,23 @@ def read_version():
 
 
 def read_msix_version():
-    """MSIX 只收四段纯数字版本号：pubspec 的 1.19.0+245 映射成 1.19.0.245。"""
+    """MSIX 版本号：pubspec 的 1.19.0+245 映射成 1.19.0.0。
+
+    第四段是「修订号」，微软商店硬性要求为 0（否则上传报「不允许指定版本号
+    不为零的版本」），侧载也一样用这个值。代价是同版本号重装需要先卸载，
+    跨补丁版本（1.19.0 → 1.19.1）仍能正常升级。
+    """
     content = (ROOT / "pubspec.yaml").read_text(encoding="utf-8")
     match = re.search(r"^version:\s*([^\s]+)", content, re.MULTILINE)
     if match is None:
         raise RuntimeError("pubspec.yaml does not contain a version field")
-    base, _, build = match.group(1).partition("+")
+    base, _, _build = match.group(1).partition("+")
     parts = [part for part in base.split(".") if part]
     if not parts or any(not part.isdigit() for part in parts):
         raise ValueError(f"MSIX 需要纯数字版本号，pubspec 是 {base!r}")
     if len(parts) > 3:
         raise ValueError(f"MSIX 版本最多四段，pubspec 是 {base!r}")
-    if not build.isdigit():
-        raise ValueError(
-            f"MSIX 第四段必须是数字 build 号，pubspec 是 {match.group(1)!r}"
-        )
-    fields = (parts + ["0", "0", "0"])[:3] + [build]
+    fields = (parts + ["0", "0", "0"])[:3] + ["0"]
     for field in fields:
         if int(field) > 65535:
             raise ValueError(f"MSIX 版本段超出 65535：{match.group(1)!r}")
@@ -256,15 +258,15 @@ def create_msix(version, arch="x64"):
     return msix_path
 
 
-def create_msixupload(version, arch="x64"):
-    """把 MSIX 包成商店上传用的 .msixupload（本质是只含一个包的 bundle）。"""
+def create_msixbundle(version, arch="x64"):
+    """把 MSIX 打成一个 .msixbundle。"""
     _, suffix, _ = architecture_paths(arch)
     msix_path = WINDOWS_BUILD_DIR / f"VeneraUnified-{version}-{suffix}.msix"
     require_non_empty_file(msix_path)
-    upload_path = WINDOWS_BUILD_DIR / f"VeneraUnified-{version}-{suffix}.msixupload"
-    layout_dir = WINDOWS_BUILD_DIR / f"VeneraUnified-{version}-{suffix}-upload"
-    if upload_path.exists():
-        upload_path.unlink()
+    bundle_path = WINDOWS_BUILD_DIR / f"VeneraUnified-{version}-{suffix}.msixbundle"
+    layout_dir = WINDOWS_BUILD_DIR / f"VeneraUnified-{version}-{suffix}-bundle"
+    if bundle_path.exists():
+        bundle_path.unlink()
     if layout_dir.exists():
         remove_build_directory(layout_dir)
 
@@ -279,7 +281,7 @@ def create_msixupload(version, arch="x64"):
                 "/d",
                 str(layout_dir),
                 "/p",
-                str(upload_path),
+                str(bundle_path),
                 "/bv",
                 read_msix_version(),
             ],
@@ -290,6 +292,25 @@ def create_msixupload(version, arch="x64"):
         if layout_dir.exists():
             remove_build_directory(layout_dir)
 
+    require_non_empty_file(bundle_path)
+    return bundle_path
+
+
+def create_msixupload(version, arch="x64"):
+    """商店上传文件 .msixupload：一个 zip，里面装 .msixbundle（可再加符号包）。
+
+    注意它不是一个 bundle。MakeAppx 只能产出 bundle；上传文件必须自己 zip，
+    把 bundle 的杂项文件（AppxBundleManifest.xml 等）留在最外层会被商店判成
+    「不受支持的文件」而拒收。
+    """
+    _, suffix, _ = architecture_paths(arch)
+    bundle_path = WINDOWS_BUILD_DIR / f"VeneraUnified-{version}-{suffix}.msixbundle"
+    require_non_empty_file(bundle_path)
+    upload_path = WINDOWS_BUILD_DIR / f"VeneraUnified-{version}-{suffix}.msixupload"
+    if upload_path.exists():
+        upload_path.unlink()
+    with zipfile.ZipFile(upload_path, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.write(bundle_path, bundle_path.name)
     require_non_empty_file(upload_path)
     return upload_path
 
@@ -322,6 +343,7 @@ def main(arch="x64"):
     create_portable_zip(version, arch)
     build_installer(version, arch)
     create_msix(version, arch)
+    create_msixbundle(version, arch)
     create_msixupload(version, arch)
 
 

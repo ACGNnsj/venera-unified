@@ -1,17 +1,20 @@
 # Windows MSIX 与微软商店发布
 
-`python windows/build.py` 现在额外产出两个文件，与已有的便携 zip、Inno 安装包并列，
-四条路互不影响：
+`python windows/build.py` 现在额外产出三个文件，与已有的便携 zip、Inno 安装包并列，
+五条路互不影响：
 
 - `build/windows/VeneraUnified-<版本>-windows.msix`：单包，给侧载与自签名用。
-- `build/windows/VeneraUnified-<版本>-windows.msixupload`：只含上面那个包的
-  bundle，商店提交要的是这个格式。
+- `build/windows/VeneraUnified-<版本>-windows.msixbundle`：上面那个包打成的一个 bundle。
+- `build/windows/VeneraUnified-<版本>-windows.msixupload`：一个 zip，里面**只**装这个
+  bundle。商店要的是这个格式；注意它不是 bundle 本身，MakeAppx 也做不出上传文件，
+  必须自己 zip。
 
 ## 版本号
 
-MSIX 只收四段纯数字版本。`pubspec.yaml` 的 `1.19.0+245` 映射为 `1.19.0.245`：
-前三段取版本号，第四段取 `+build`。商店要求每次提交的第四段比上一次大，
-所以发版递增 build 号即可，不需要为大版本单独改代码。
+MSIX 只收四段纯数字版本。`pubspec.yaml` 的 `1.19.0+245` 映射为 `1.19.0.0`：
+前三段取版本号，第四段固定 0。微软商店硬性要求修订号为 0，不为 0 上传会被拒
+（`不允许应用在应用清单中指定版本号不为零的版本`），CI 的产物校验里也有一条同样的断言。
+代价是同版本号重装需要先卸载，跨补丁版本（`1.19.0` → `1.19.1`）仍能正常覆盖升级。
 
 ## 包身份
 
@@ -35,9 +38,10 @@ Variables 新建 `MSIX_IDENTITY_NAME`、`MSIX_PUBLISHER`、`MSIX_PUBLISHER_DISPL
 1. 注册 Partner Center 账号（个人一次性约 19 美元，公司约 99 美元），完成身份或企业验证。
 2. 在 Partner Center 预留应用名，拿到 Identity Name、Publisher 与 Publisher ID。
 3. 把三个值填进仓库变量（见上），或在本地用环境变量重新跑 `python windows/build.py`。
-4. 上传 `.msixupload`（`MakeAppx bundle` 打出的那个），商店负责代码签名。侧载才用
-   同名的 `.msix`。
-5. 补齐商店页素材：截图、商店 logo、隐私政策、年龄分级，然后提交认证。
+4. 上传 `.msixupload`（zip 里装着 `.msixbundle`），商店负责代码签名。侧载才用同名的 `.msix`。
+5. 为受限功能 `runFullTrust` 申请批准：桌面应用都声明了它，认证页面会提示「需要先请求
+   批准」，在提交时一并勾选申请即可，不申请会卡住认证。
+6. 补齐商店页素材：截图、商店 logo、隐私政策、年龄分级，然后提交认证。
 
 注意：商店不接收未签名的侧载安装，只有提交后的商店版本才会被签名；本地安装需要下面的自签名。
 
