@@ -100,7 +100,7 @@ flutter pub get --enforce-lockfile
 flutter build apk --release --flavor mobile
 ```
 
-Artifacts are normally written to `build/app/outputs/apk/release/`.
+Artifacts are normally written to `build/app/outputs/apk/mobile/release/` (TV builds go to `tv/release/`).
 
 Signing files and passwords are sensitive and must not be committed.
 

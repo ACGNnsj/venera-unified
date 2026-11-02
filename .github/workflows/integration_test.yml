@@ -93,6 +93,6 @@ jobs:
       - name: 断言 release 合并 manifest 单图标
         run: |
           if [ -n "$ANDROID_SDK_ROOT" ]; then printf '\nsdk.dir=%s\n' "$ANDROID_SDK_ROOT" >> android/local.properties; fi
-          (cd android && ./gradlew :app:processReleaseMainManifest -q)
+          (cd android && ./gradlew :app:processMobileReleaseMainManifest -q)
           find build/app/intermediates -name 'AndroidManifest.xml' 2>/dev/null || true
           python3 .github/scripts/assert_release_launcher.py

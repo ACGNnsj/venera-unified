@@ -245,7 +245,7 @@ these local results do not replace final-state CI or device acceptance.
   including native-call ordering, close interception disabled, awaited show
   completion, and native initialization failure propagation.
 - Android ARM64 and Windows x64 release builds passed after the final code
-  change. The APK is build/app/outputs/flutter-apk/app-release.apk; use the whole
+  change. The APK is build/app/outputs/flutter-apk/app-mobile-release.apk; use the whole
   build/windows/x64/runner/Release directory for Windows, not the EXE alone.
 - The independent code-audit package passed locked offline dependency resolution,
   its AST self-check, and its own strict analysis.
