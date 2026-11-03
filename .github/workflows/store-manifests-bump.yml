@@ -1,0 +1,68 @@
+name: 商店清单跟版
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: 下载包并重算哈希
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p bump && cd bump
+          gh release download "${{ github.event.release.tag_name }}" --pattern "*-windows.zip" --pattern "*.dmg"
+          ls
+      - name: 更清单
+        run: |
+          python3 - <<'PY'
+          import glob, hashlib, json, os, re
+          tag = os.environ["TAG"]
+          ver = tag.lstrip("v")
+          zips = glob.glob("bump/*-windows.zip")
+          dmgs = glob.glob("bump/*.dmg")
+          assert len(zips) == 1 and len(dmgs) == 1, (zips, dmgs)
+          def sha(p):
+              h = hashlib.sha256()
+              h.update(open(p, "rb").read())
+              return h.hexdigest()
+          base = "https://github.com/ACGNnsj/venera-unified/releases/download/" + tag
+          zipname, dmgname = os.path.basename(zips[0]), os.path.basename(dmgs[0])
+          zipsha, dmgsha = sha(zips[0]), sha(dmgs[0])
+          build = re.search(r"\+(\d+)", dmgname)
+          build = build.group(1) if build else "0"
+          scoop = {"version": ver, "description": "VeneraUnified comic reader",
+                   "homepage": "https://github.com/ACGNnsj/venera-unified",
+                   "license": "GPL-3.0-only",
+                   "architecture": {"64bit": {
+                       "url": base + "/" + zipname, "hash": zipsha,
+                       "bin": "VeneraUnified.exe",
+                       "shortcuts": [["VeneraUnified.exe", "VeneraUnified"]]}}}
+          open("bucket/venera-unified.json", "w").write(json.dumps(scoop, indent=2) + "\n")
+          open("Casks/venera-unified.rb", "w").write(
+              f'cask "venera-unified" do\n  version "{ver},{build}"\n  sha256 "{dmgsha}"\n\n'
+              f'  url "{base}/{dmgname}"\n  name "VeneraUnified"\n'
+              f'  desc "Cross-platform comic reader"\n  homepage "https://github.com/ACGNnsj/venera-unified"\n\n  app "VeneraUnified.app"\nend\n')
+          nus = open("chocolatey/venera-unified.nuspec").read()
+          nus = re.sub(r"<version>[^<]*</version>", f"<version>{ver}</version>", nus, count=1)
+          open("chocolatey/venera-unified.nuspec", "w").write(nus)
+          ps1 = open("chocolatey/tools/chocolateyinstall.ps1").read()
+          ps1 = re.sub(r"url64bit\s*=\s*'[^']*'", f"url64bit       = '{base}/{zipname}'", ps1)
+          ps1 = re.sub(r"checksum64\s*=\s*'[^']*'", f"checksum64     = '{zipsha}'", ps1)
+          open("chocolatey/tools/chocolateyinstall.ps1", "w").write(ps1)
+          print("bumped", ver, build)
+          PY
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+      - name: 提交
+        run: |
+          git add bucket/venera-unified.json Casks/venera-unified.rb chocolatey/venera-unified.nuspec chocolatey/tools/chocolateyinstall.ps1
+          git -c user.name='github-actions[bot]' -c user.email='github-actions[bot]@users.noreply.github.com' commit -m "chore: bump store manifests for ${{ github.event.release.tag_name }}" || exit 0
+          git push origin HEAD:main

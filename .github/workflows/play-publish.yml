@@ -1,0 +1,64 @@
+name: Google Play 发布
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "已发布的标签，例如 v1.20.0"
+        required: true
+        type: string
+      track:
+        description: "轨道"
+        required: false
+        default: "internal"
+        type: string
+
+concurrency:
+  group: play-${{ inputs.tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version-file: pubspec.yaml
+          architecture: x64
+          cache: true
+      - name: 解码并安装 Android 证书
+        env:
+          STORE_FILE: ${{ secrets.ANDROID_KEYSTORE }}
+          PROPERTY_FILE: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+        run: |
+          echo "$STORE_FILE" | base64 --decode > android/keystore.jks
+          echo "$PROPERTY_FILE" > android/key.properties
+      - uses: actions/setup-java@v6
+        with:
+          distribution: 'oracle'
+          java-version: '17'
+          cache: gradle
+      - name: 准备 Rust 工具链
+        run: |
+          python3 .github/scripts/prepare_rust_toolchain.py \
+            --target aarch64-linux-android \
+            --target armv7-linux-androideabi \
+            --target x86_64-linux-android
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter build appbundle --release --flavor mobile
+      - name: 上传 Play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: io.github.venera.unified
+          releaseFiles: build/app/outputs/bundle/mobileRelease/*.aab
+          track: ${{ inputs.track }}
+          status: draft
