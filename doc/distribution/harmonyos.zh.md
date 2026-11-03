@@ -41,7 +41,21 @@
 - pubspec.yaml 的精确 flutter: 3.47.8 会拒绝预发布 SDK，需临时放宽为 '>=3.47.7-0 <3.47.8' 才能解析依赖。
 - 编译期报 168 个 Error: The type 'TargetPlatform' is not exhaustively matched by the switch cases since it doesn't match 'TargetPlatform.ohos'.，分布在本仓依赖里：首例 material_ui-1.2.0/lib/src/about.dart:499:23，同包另有 action_buttons.dart:94/137、adaptive_text_selection_toolbar.dart:208/262/312、app.dart:893/914、app_bar.dart:849/1114、bottom_sheet.dart:719、calendar_date_picker.dart:260/325、checkbox.dart:497 等。
 
-这条错误无法靠改本仓绕过：TargetPlatform 枚举由 SDK 决定，3.47.8 没有 ohos 值，写 case TargetPlatform.ohos: 会让主分支编译失败，只能统一改成 default: 或给每个包打本地分支。
+按来源统计这 168 处：material_ui-1.2.0 占 134 处，cupertino_ui-1.0.2 占 34 处，本仓 lib/ 零处（grep 不到任何 switch/case TargetPlatform）。也就是说卡住的不是本仓代码，而是这条 3.47.7 预览线自己带的 UI 包——它们还没处理 TargetPlatform.ohos。
+
+于是形成一个版本死结：
+
+- 稳定的鸿蒙线 3.41.9+ohos（Dart 3.11.5）框架本身能编，但低于本仓 environment.sdk >=3.12.0。
+- 能配上的 3.47.7+ohos（Dart 3.13.5）自带的 UI 包过不了 ohos 枚举穷尽检查。
+
+这条错误也无法靠改本仓绕过：TargetPlatform 枚举由 SDK 决定，3.47.8 没有 ohos 值，写 case TargetPlatform.ohos: 会让主分支编译失败；只能给这两个包做 dependency_overrides（本地打过补丁的副本）或等鸿蒙线自己更新。
+
+## 2026-11-03 硬啃结果：完整应用 HAP 已出包
+
+- 脚本 tool/harmonyos/patch_ohos_ui_overrides.py：把两包从 PUB_CACHE 拷到 .scratch/harmony/vendor（绝不动 cache 本体），只在 switch 块内把 ohos 并到 android 臂（or=20/fat=1/case=63），app 副本加 dependency_overrides。analyze 复查 TargetPlatform 错误归零。
+- 关键发现：flutter tool 传给第三方 hook 的是 OS.linux 垫片（347 源码 targets.dart 明写），真凭据是 cCompiler 路径里的 openharmony。pdfium_dart 的 hook 按此跳过（PDF 本就是上游不可用项）；sqlite3 的 hook 在 OHOS clang 下直接编过，无需补丁。
+- 产物 build/ohos/hap/entry-default-unsigned.hap 41.3MB：66 成员零重复，libs/arm64-v8a 含 libapp.so（16.7MB）/libflutter.so（18.2MB）/libsqlite3.so（1.7MB），module.json + pack.info 齐。缺 librhttp.so/libqjs（hook 静默无产物，运行时网络/JS 引擎不可用）与 libpdfium（主动跳过）。
+- 结论：P2 编译关已过，版本死结解除；剩下是运行时原生库缺口（rhttp 需 aarch64-unknown-linux-ohos 交叉编译）与签名实测（P3）。
 
 ## 要走通 P2 还需要
 
