@@ -2,15 +2,15 @@
   <a href="README.md">简体中文</a> | <strong>English</strong>
 
   <br>
-  <img src="assets/readme_logo.png" alt="VeneraNext" width="200" />
+  <img src="assets/readme_logo.png" alt="Venera Unified" width="200" />
 
   # VeneraNext
 
-  ![Flutter](https://img.shields.io/badge/Flutter-3.41.4-02569B?logo=flutter&logoColor=white&style=flat-square)
-  [![Release](https://img.shields.io/github/v/release/CyrilPeng/venera-next?label=Release&color=10B981&style=flat-square)](https://github.com/CyrilPeng/venera-next/releases/latest)
+  ![Flutter](https://img.shields.io/badge/Flutter-3.47.8-02569B?logo=flutter&logoColor=white&style=flat-square)
+  [![Release](https://img.shields.io/github/v/release/ACGNnsj/venera-unified?label=Release&color=10B981&style=flat-square)](https://github.com/ACGNnsj/venera-unified/releases/latest)
   ![License](https://img.shields.io/badge/License-GPL--3.0-10B981?style=flat-square)
   <br>
-  [![Downloads](https://img.shields.io/github/downloads/CyrilPeng/venera-next/total?style=flat-square&color=2ea44f&logo=github)](https://tooomm.github.io/github-release-stats/?user=CyrilPeng&repo=venera-next)
+  [![Downloads](https://img.shields.io/github/downloads/ACGNnsj/venera-unified/total?style=flat-square&color=2ea44f&logo=github)](https://tooomm.github.io/github-release-stats/?user=ACGNnsj&repo=venera-unified)
   [![Afdian](https://img.shields.io/badge/Afdian-Sponsor-ff69b4?style=flat-square)](https://ifdian.net/a/cyril)
 
   <a href="https://trendshift.io/repositories/140830?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-140830" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/140830" alt="VeneraNext repository badge on Trendshift" width="250" height="55" /></a>
@@ -122,7 +122,7 @@ See [Windows Distribution](doc/distribution/windows.en.md) for installer, portab
 
 ### Linux
 
-Download the package matching your distribution and architecture from the [latest stable release](https://github.com/CyrilPeng/venera-next/releases/latest):
+Download the package matching your distribution and architecture from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest):
 
 | Distribution / format | Install or run |
 |---|---|
@@ -143,7 +143,7 @@ Download `VeneraNext-xxx.dmg` from the [latest stable release](https://github.co
 
 ## Quick start
 
-1. **Install** the build for your platform from the [latest stable release](https://github.com/CyrilPeng/venera-next/releases/latest).
+1. **Install** the build for your platform from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest).
 2. **Add content** (any one of these is enough to get started): existing comic files → Local → Import; network series → install an extension in Comic Source management; a NAS folder → Settings → APP → WebDAV Comic Library.
 3. **Start reading**: the default Waterfall mode reads across chapters without extra taps; when you find a series to follow, try long-pressing the Favorite button on its details page. Reading mode, split spreads, night dimming, and more can be adjusted anytime in Settings → Reading or inside the reader.
 
