@@ -57,11 +57,22 @@
 - 产物 build/ohos/hap/entry-default-unsigned.hap 41.3MB：66 成员零重复，libs/arm64-v8a 含 libapp.so（16.7MB）/libflutter.so（18.2MB）/libsqlite3.so（1.7MB），module.json + pack.info 齐。缺 librhttp.so/libqjs（hook 静默无产物，运行时网络/JS 引擎不可用）与 libpdfium（主动跳过）。
 - 结论：P2 编译关已过，版本死结解除；剩下是运行时原生库缺口（rhttp 需 aarch64-unknown-linux-ohos 交叉编译）与签名实测（P3）。
 
+## 2026-11-03 原生库交叉编译：rhttp+qjs 全过，新 HAP 69 成员
+
+- 脚本 tool/harmonyos/build_native_ohos.py（照上游 native_build.py 的 rust 配方：OHOS clang 当 CARGO linker/CC/CXX/AR，CARGO_ENCODED_RUSTFLAGS 带 --cfg reqwest_unstable 与 link-arg sysroot/--no-undefined，cargo build --locked --release --lib --target aarch64-unknown-linux-ohos；qjs 用 clang 直编 5 个 C 文件 + cxx/ffi.cpp；最后用 llvm-readelf/llvm-nm 验 AArch64 ELF、NEEDED 白名单与 FFI 导出符号，报告写 .scratch/harmony/native/native-build.json）：
+  - librhttp.so 4163896 字节（sha256 8e2ad946…3649），NEEDED 只有 libc.so，frb_get_rust_content_hash / frb_init_frb_dart_api_dl 导出齐；
+  - libqjs.so 1056056 字节（sha256 6d4e975c…2cd2），NEEDED 只有 libc++_shared.so + libc.so，无 liblog/libandroid；
+  - libc++_shared.so 直接从 DevEco native 拷（1262504 字节）。
+- QJS 源码钉在上游 toolchain.json 同一 rev 8feae95（D:/venera/.scratch/harmony/deps/flutter_qjs）。sqlite 跳过：sqlite3 hook 自编的 libsqlite3.so 已在包内。
+- 三个 .so 拷进 app/ohos/entry/libs/arm64-v8a 后重跑 oh347-hap.bat（HAP_EXIT=0），新包 49739494 字节（约 47.5MB）：69 成员零重复、testzip None，libs/arm64-v8a 六个全齐（libapp/libflutter/libsqlite3/librhttp/libqjs/libc++_shared）。HAP 内 librhttp/libqjs 比 staged 小约 200B/84KB（hvigor 打包 strip）。
+- 工具坑：wsl 后台 job 里写裸 Windows 路径（D:\…\oh347-hap.bat）反斜杠会被吃掉导致 exit 1，改成 cd /d + 正斜杠再调 bat。
+- 结论：原生库缺口补齐；剩下 P3 签名实测与运行时验证。
+
 ## 要走通 P2 还需要
 
 1. 逐处给 switch (platform) 补 default（本仓 lib/ 可改；pub 包只能 dependency_overrides 指向本地打过补丁的副本）。
 2. 换鸿蒙分支依赖：flutter_inappwebview（gitcode 6.1.5-ohos-1.0.1）、code_assets（openharmony-sig fork，需与本机 Flutter 版本对齐）、lodepng_flutter 与 flutter_7zip（venera-app fork）。
-3. 原生产物：rhttp 需 aarch64-unknown-linux-ohos 交叉编译，另有 flutter_qjs、7zip、lodepng、sqlite3（本仓已升到 3.8.0，上游补丁锚定 2.7.4）的 OHOS 产物。
+3. 原生产物：rhttp / flutter_qjs / libc++_shared 已交叉编译进包（见上节）；还差 7zip、lodepng 的 OHOS 产物；sqlite3 由 hook 自编（本仓 3.8.0，无需上游 2.7.4 补丁）。
 4. 签名：本机无华为开发者证书，未签名 HAP 只能靠 DevEco 登录账号自动签名或第三方自签工具。
 
 ## 上游自列的不可用项（移植后依然缺）
