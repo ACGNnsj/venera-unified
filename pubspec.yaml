@@ -108,7 +108,8 @@ dependency_overrides:
   flutter_rust_bridge: 2.11.1
 
 flutter:
-  default-flavor: mobile
+  # 无 default-flavor：它是全局的，会污染 Windows/Linux 产物目录与 iOS/macOS scheme。
+  # Android 构建一律显式 --flavor mobile（见 build.yml / integration_test.yml）。
   uses-material-design: true
   assets:
     - pubspec.yaml

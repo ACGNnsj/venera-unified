@@ -86,8 +86,8 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
-            flutter test integration_test/performance_lists_test.dart
-            flutter test integration_test/avif_codec_probe_test.dart
+            flutter test --flavor mobile integration_test/performance_lists_test.dart
+            flutter test --flavor mobile integration_test/avif_codec_probe_test.dart
       # release 单图标回归保护：源码 manifest 里 MainActivity 的 MAIN/LAUNCHER
       # 只为 tool 发现而存在，必须被 src/release overlay 从 release 合并里摘掉。
       - name: 断言 release 合并 manifest 单图标
