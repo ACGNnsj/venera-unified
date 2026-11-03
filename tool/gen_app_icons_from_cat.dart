@@ -11,8 +11,6 @@ import 'dart:io';
 
 import 'package:image/image.dart';
 
-const _srcDefault = '../dsh-image-gen/image-70c6cf52.png';
-
 /// Per-preset source artwork (args[0] overrides only the default preset).
 const _presetSources = <String, String>{
   '': '../dsh-image-gen/image-70c6cf52.png',
@@ -86,7 +84,7 @@ int _written = 0;
 void _write(String path, List<int> bytes) {
   final f = File(path);
   if (!f.parent.existsSync()) {
-    stdout.writeln('skip (missing dir): ' + path);
+    stdout.writeln('skip (missing dir): $path');
     return;
   }
   f.writeAsBytesSync(bytes);
@@ -120,7 +118,7 @@ void main(List<String> args) {
         : _presetSources[suffix]!;
     final decoded = decodePng(File(srcPath).readAsBytesSync());
     if (decoded == null) {
-      stderr.writeln('cannot decode ' + srcPath);
+      stderr.writeln('cannot decode $srcPath');
       exit(1);
     }
     return decoded;
@@ -139,19 +137,19 @@ void main(List<String> args) {
     // 1. assets preview + in-app logo (512). Default has no suffix on
     // android but uses _default in assets/ (pubspec + launcher_icon.dart).
     final assetName =
-        'assets/launcher_icon' + (suffix == '' ? '_default' : suffix) + '.png';
+        'assets/launcher_icon${suffix == '' ? '_default' : suffix}.png';
     _write(assetName, encodePng(copyResize(art, width: 512, height: 512)));
     // 2. android legacy + adaptive.
     _densities.forEach((d, px) {
       _write(
-        'android/app/src/main/res/mipmap-' + d + '/' + base + '.png',
+        'android/app/src/main/res/mipmap-$d/$base.png',
         encodePng(copyResize(flat, width: px, height: px)),
       );
     });
     _adaptive.forEach((d, px) {
-      final dir = 'android/app/src/main/res/mipmap-' + d + '/';
+      final dir = 'android/app/src/main/res/mipmap-$d/';
       _write(
-        dir + base + '_background.png',
+        '$dir${base}_background.png',
         encodePng(copyResize(flat, width: px, height: px)),
       );
       final fg = Image(width: px, height: px);
@@ -161,7 +159,7 @@ void main(List<String> args) {
         dstX: px ~/ 6,
         dstY: px ~/ 6,
       );
-      _write(dir + base + '_foreground.png', encodePng(fg));
+      _write('$dir${base}_foreground.png', encodePng(fg));
       // themed icon: white fill, alpha = luminance.
       final gray = grayscale(copyResize(art, width: px, height: px));
       final mono = Image(width: px, height: px);
@@ -170,7 +168,7 @@ void main(List<String> args) {
           mono.setPixelRgba(x, y, 255, 255, 255, gray.getPixel(x, y).r.toInt());
         }
       }
-      _write(dir + base + '_monochrome.png', encodePng(mono));
+      _write('$dir${base}_monochrome.png', encodePng(mono));
     });
   }
 
@@ -178,14 +176,14 @@ void main(List<String> args) {
   const iosDir = 'ios/Runner/Assets.xcassets/AppIcon.appiconset/';
   _ios.forEach((name, px) {
     _write(
-      iosDir + name,
+      '$iosDir$name',
       encodePng(copyResize(defaultFlat, width: px, height: px)),
     );
   });
   const macDir = 'macos/Runner/Assets.xcassets/AppIcon.appiconset/';
   _macos.forEach((name, px) {
     _write(
-      macDir + name,
+      '$macDir$name',
       encodePng(copyResize(defaultFlat, width: px, height: px)),
     );
   });
@@ -208,7 +206,7 @@ void main(List<String> args) {
     encodePng(copyResize(defaultArt, width: 512, height: 512)),
   );
 
-  stdout.writeln('done: ' + _written.toString() + ' files');
+  stdout.writeln('done: $_written files');
   stdout.writeln(
     'next: dart run tool/gen_launcher_icos.dart  (rebuilds assets/*.ico)',
   );
