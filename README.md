@@ -95,8 +95,20 @@ Venera Unified 是从 [VeneraNext](https://github.com/CyrilPeng/venera-next) 分
 | `VeneraUnified-xxx-android.apk` | 通用版 | 适用于大多数 Android 设备 |
 | `VeneraUnified-xxx-android-arm64-v8a.apk` | ARM64 版 | 支持 ARM64 应用的 Android 设备 |
 | `VeneraUnified-xxx-android-armeabi-v7a.apk` | ARM32 版 | 较老的 32 位设备 |
+| `VeneraUnified-xxx-android-x86_64.apk` | x86_64 版 | 少数 x86_64 设备与模拟器 |
 
 **推荐**：如果不确定应该下载哪个，选择通用版 `VeneraUnified-xxx-android.apk`。
+
+### Android TV（实验版）
+
+TV 版暂不随稳定版发布，需自行构建后旁加载：
+
+```powershell
+flutter build apk --release --flavor tv
+adb install -r build/app/outputs/apk/tv/release/app-tv-release.apk
+```
+
+包名为 `io.github.venera.unified.tv`，可与手机版共存。TV 版为实验性支持，暂无自动更新，升级需重新旁加载。
 
 ### iOS
 

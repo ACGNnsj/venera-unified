@@ -97,8 +97,20 @@ Download an APK from the [latest stable release](https://github.com/ACGNnsj/vene
 | `VeneraUnified-xxx-android.apk` | Universal build | Most Android devices |
 | `VeneraUnified-xxx-android-arm64-v8a.apk` | ARM64 build | Android devices that support ARM64 apps |
 | `VeneraUnified-xxx-android-armeabi-v7a.apk` | ARM32 build | Older 32-bit devices |
+| `VeneraUnified-xxx-android-x86_64.apk` | x86_64 build | Rare x86_64 devices and emulators |
 
 When in doubt, use the universal `VeneraUnified-xxx-android.apk` package.
+
+### Android TV (experimental)
+
+The TV build does not ship with stable releases yet. Build it yourself and sideload it:
+
+```powershell
+flutter build apk --release --flavor tv
+adb install -r build/app/outputs/apk/tv/release/app-tv-release.apk
+```
+
+The package name is `io.github.venera.unified.tv`, so it coexists with the phone build. TV support is experimental with no auto-update; sideload again to upgrade.
 
 ### iOS
 
