@@ -115,8 +115,9 @@ void main(List<String> args) {
     orElse: () => '',
   );
   Image load(String suffix) {
-    final srcPath =
-        (suffix == '' && override != '') ? override : _presetSources[suffix]!;
+    final srcPath = (suffix == '' && override != '')
+        ? override
+        : _presetSources[suffix]!;
     final decoded = decodePng(File(srcPath).readAsBytesSync());
     if (decoded == null) {
       stderr.writeln('cannot decode ' + srcPath);
@@ -139,20 +140,27 @@ void main(List<String> args) {
     // android but uses _default in assets/ (pubspec + launcher_icon.dart).
     final assetName =
         'assets/launcher_icon' + (suffix == '' ? '_default' : suffix) + '.png';
-    _write(assetName,
-        encodePng(copyResize(art, width: 512, height: 512)));
+    _write(assetName, encodePng(copyResize(art, width: 512, height: 512)));
     // 2. android legacy + adaptive.
     _densities.forEach((d, px) {
-      _write('android/app/src/main/res/mipmap-' + d + '/' + base + '.png',
-          encodePng(copyResize(flat, width: px, height: px)));
+      _write(
+        'android/app/src/main/res/mipmap-' + d + '/' + base + '.png',
+        encodePng(copyResize(flat, width: px, height: px)),
+      );
     });
     _adaptive.forEach((d, px) {
       final dir = 'android/app/src/main/res/mipmap-' + d + '/';
-      _write(dir + base + '_background.png',
-          encodePng(copyResize(flat, width: px, height: px)));
+      _write(
+        dir + base + '_background.png',
+        encodePng(copyResize(flat, width: px, height: px)),
+      );
       final fg = Image(width: px, height: px);
-      compositeImage(fg, copyResize(art, width: px * 2 ~/ 3, height: px * 2 ~/ 3),
-          dstX: px ~/ 6, dstY: px ~/ 6);
+      compositeImage(
+        fg,
+        copyResize(art, width: px * 2 ~/ 3, height: px * 2 ~/ 3),
+        dstX: px ~/ 6,
+        dstY: px ~/ 6,
+      );
       _write(dir + base + '_foreground.png', encodePng(fg));
       // themed icon: white fill, alpha = luminance.
       final gray = grayscale(copyResize(art, width: px, height: px));
@@ -169,28 +177,39 @@ void main(List<String> args) {
   // 3. iOS (opaque) + macOS.
   const iosDir = 'ios/Runner/Assets.xcassets/AppIcon.appiconset/';
   _ios.forEach((name, px) {
-    _write(iosDir + name,
-        encodePng(copyResize(defaultFlat, width: px, height: px)));
+    _write(
+      iosDir + name,
+      encodePng(copyResize(defaultFlat, width: px, height: px)),
+    );
   });
   const macDir = 'macos/Runner/Assets.xcassets/AppIcon.appiconset/';
   _macos.forEach((name, px) {
-    _write(macDir + name,
-        encodePng(copyResize(defaultFlat, width: px, height: px)));
+    _write(
+      macDir + name,
+      encodePng(copyResize(defaultFlat, width: px, height: px)),
+    );
   });
 
   // 4. Windows embedded exe icon.
   const winSizes = [16, 24, 32, 48, 64, 128, 256];
-  final win =
-      copyResize(defaultFlat, width: winSizes.first, height: winSizes.first);
+  final win = copyResize(
+    defaultFlat,
+    width: winSizes.first,
+    height: winSizes.first,
+  );
   for (final s in winSizes.skip(1)) {
     win.addFrame(copyResize(defaultFlat, width: s, height: s));
   }
   _write('windows/runner/resources/app_icon.ico', encodeIco(win));
 
   // 5. README header logo.
-  _write('assets/readme_logo.png',
-      encodePng(copyResize(defaultArt, width: 512, height: 512)));
+  _write(
+    'assets/readme_logo.png',
+    encodePng(copyResize(defaultArt, width: 512, height: 512)),
+  );
 
   stdout.writeln('done: ' + _written.toString() + ' files');
-  stdout.writeln('next: dart run tool/gen_launcher_icos.dart  (rebuilds assets/*.ico)');
+  stdout.writeln(
+    'next: dart run tool/gen_launcher_icos.dart  (rebuilds assets/*.ico)',
+  );
 }
