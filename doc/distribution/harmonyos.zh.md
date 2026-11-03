@@ -63,7 +63,7 @@
   - librhttp.so 4163896 字节（sha256 8e2ad946…3649），NEEDED 只有 libc.so，frb_get_rust_content_hash / frb_init_frb_dart_api_dl 导出齐；
   - libqjs.so 1056056 字节（sha256 6d4e975c…2cd2），NEEDED 只有 libc++_shared.so + libc.so，无 liblog/libandroid；
   - libc++_shared.so 直接从 DevEco native 拷（1262504 字节）。
-- QJS 源码钉在上游 toolchain.json 同一 rev 8feae95（D:/venera/.scratch/harmony/deps/flutter_qjs）。sqlite 跳过：sqlite3 hook 自编的 libsqlite3.so 已在包内。
+- QJS 源码钉 pubspec 同一 pin 295f774（venera-next-pinned 尖；相对 master 8feae95 只改 Dart，cxx/ 逐字节一致，故 .so 与按 8feae95 编的产物等价）。sqlite 跳过：sqlite3 hook 自编的 libsqlite3.so 已在包内。
 - 三个 .so 拷进 app/ohos/entry/libs/arm64-v8a 后重跑 oh347-hap.bat（HAP_EXIT=0），新包 49739494 字节（约 47.5MB）：69 成员零重复、testzip None，libs/arm64-v8a 六个全齐（libapp/libflutter/libsqlite3/librhttp/libqjs/libc++_shared）。HAP 内 librhttp/libqjs 比 staged 小约 200B/84KB（hvigor 打包 strip）。
 - 工具坑：wsl 后台 job 里写裸 Windows 路径（D:\…\oh347-hap.bat）反斜杠会被吃掉导致 exit 1，改成 cd /d + 正斜杠再调 bat。
 - 结论：原生库缺口补齐；剩下 P3 签名实测与运行时验证。

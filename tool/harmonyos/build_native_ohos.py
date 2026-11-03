@@ -9,7 +9,8 @@ REPO = Path("D:/venera/unified")
 NATIVE_DEFAULT = Path("C:/Program Files/Huawei/DevEco Studio/sdk/default/openharmony/native")
 OUT_DEFAULT = Path("D:/venera/.scratch/harmony/native/arm64-v8a")
 QJS_DEFAULT = Path("D:/venera/.scratch/harmony/deps/flutter_qjs")
-QJS_REV = "8feae95df7fb00455df129ad7a0dfec1d0e8d8e4"
+# == pubspec.yaml flutter_qjs pin == venera-next-pinned tip (fix is Dart-only; cxx/ identical to master 8feae95).
+QJS_REV = "295f77421eedff356a02e92987181b525970c780"
 TARGET = "aarch64-unknown-linux-ohos"
 
 
