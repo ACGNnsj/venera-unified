@@ -135,8 +135,11 @@ void main(List<String> args) {
     final base = _variants[suffix]!;
     final art = _square(load(suffix));
     final flat = _flatten(art);
-    // 1. assets preview + in-app logo (512).
-    _write('assets/launcher_icon' + suffix + '.png',
+    // 1. assets preview + in-app logo (512). Default has no suffix on
+    // android but uses _default in assets/ (pubspec + launcher_icon.dart).
+    final assetName =
+        'assets/launcher_icon' + (suffix == '' ? '_default' : suffix) + '.png';
+    _write(assetName,
         encodePng(copyResize(art, width: 512, height: 512)));
     // 2. android legacy + adaptive.
     _densities.forEach((d, px) {
