@@ -4,7 +4,7 @@
   <br>
   <img src="assets/readme_logo.png" alt="Venera Unified" width="200" />
 
-  # VeneraNext
+  # Venera Unified
 
   ![Flutter](https://img.shields.io/badge/Flutter-3.47.8-02569B?logo=flutter&logoColor=white&style=flat-square)
   [![Release](https://img.shields.io/github/v/release/ACGNnsj/venera-unified?label=Release&color=10B981&style=flat-square)](https://github.com/ACGNnsj/venera-unified/releases/latest)
@@ -22,7 +22,7 @@
 
 ## Introduction
 
-[VeneraNext](https://github.com/CyrilPeng/venera-next) continues development of [Venera](https://github.com/venera-app/venera), a Flutter comic reader for **Android, iOS, Windows, Linux, and macOS**.
+Venera Unified is a community fork of [VeneraNext](https://github.com/CyrilPeng/venera-next), maintained in this repository — a Flutter comic reader for **Android, iOS, Windows, Linux, and macOS**. v1.20.0 adds nested favorites while keeping reader and extension compatibility with upstream.
 
 This fork focuses on fewer interruptions and more reading: Waterfall mode scrolls across chapters without leaving the reader, long-pressing Favorite skips the folder picker, and nighttime and E-Ink devices get their own reading adjustments. Local import, offline downloads, reading statistics, and multi-device sync make finding comics, reading them, and following ongoing series easier.
 
@@ -34,11 +34,11 @@ Venera's JavaScript extensions, local reading, search and categories, favorites,
 > This repository maintains the reader and extension runtime. It does not provide, bundle, host, or recommend comic sources. Users must configure legal extensions themselves; content and availability depend on the corresponding extension and service.
 
 <div align="center">
-  <a href="https://github.com/CyrilPeng/Venera-Next">
-    <img alt="GitHub main repository" src="https://img.shields.io/badge/GitHub-Main_repository-181717?style=for-the-badge&logo=github&logoColor=white" />
+  <a href="https://github.com/ACGNnsj/venera-unified">
+    <img alt="GitHub repository" src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white" />
   </a>
-  <a href="https://gitee.com/CyrilPeng/venera-next">
-    <img alt="Gitee China mirror" src="https://img.shields.io/badge/Gitee-China_mirror-C71D23?style=for-the-badge&logo=gitee&logoColor=white" />
+  <a href="https://ifdian.net/a/ACGMN">
+    <img alt="Afdian" src="https://img.shields.io/badge/Afdian-Sponsor-ff69b4?style=for-the-badge" />
   </a>
 </div>
 
@@ -48,7 +48,7 @@ Venera's JavaScript extensions, local reading, search and categories, favorites,
 
 | Home: history, Read Later, and update tracking | Comic details |
 |---|---|
-| <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg" alt="VeneraNext home page with reading history, Read Later, and update tracking" width="100%" /></a> | <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg" alt="VeneraNext comic details page with reading actions, comic information, and chapters" width="100%" /></a> |
+| <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg" alt="Venera Unified home page with reading history, Read Later, and update tracking" width="100%" /></a> | <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg" alt="Venera Unified comic details page with reading actions, comic information, and chapters" width="100%" /></a> |
 
 ---
 
@@ -94,11 +94,11 @@ Download an APK from the [latest stable release](https://github.com/ACGNnsj/vene
 
 | File | Description | Recommended for |
 |---|---|---|
-| `VeneraNext-xxx-android.apk` | Universal build | Most Android devices |
-| `VeneraNext-xxx-android-arm64-v8a.apk` | ARM64 build | Android devices that support ARM64 apps |
-| `VeneraNext-xxx-android-armeabi-v7a.apk` | ARM32 build | Older 32-bit devices |
+| `VeneraUnified-xxx-android.apk` | Universal build | Most Android devices |
+| `VeneraUnified-xxx-android-arm64-v8a.apk` | ARM64 build | Android devices that support ARM64 apps |
+| `VeneraUnified-xxx-android-armeabi-v7a.apk` | ARM32 build | Older 32-bit devices |
 
-When in doubt, use the universal `VeneraNext-xxx-android.apk` package.
+When in doubt, use the universal `VeneraUnified-xxx-android.apk` package.
 
 ### iOS
 
@@ -113,7 +113,7 @@ winget install --id ACGNnsj.VeneraUnified --exact
 winget upgrade --id ACGNnsj.VeneraUnified --exact
 ```
 
-You can also download `VeneraNext-xxx-windows-installer.exe` or the portable ZIP from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest). Portable builds are not managed by winget and must be updated manually. New winget versions may appear later than GitHub Releases because Microsoft reviews manifest updates; run `winget source update` before checking again.
+You can also download `VeneraUnified-xxx-windows-installer.exe` or the portable ZIP from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest). Portable builds are not managed by winget and must be updated manually. New winget versions may appear later than GitHub Releases because Microsoft reviews manifest updates; run `winget source update` before checking again.
 
 See [Windows Distribution](doc/distribution/windows.en.md) for installer, portable build, and winget maintenance details.
 
@@ -123,18 +123,18 @@ Download the package matching your distribution and architecture from the [lates
 
 | Distribution / format | Install or run |
 |---|---|
-| Debian / Ubuntu (DEB) | `sudo apt install ./venera-next_xxx_amd64.deb` (use `arm64` on ARM64) |
-| Fedora and other distributions providing the required dependencies (RPM) | `sudo dnf install ./venera-next-xxx.x86_64.rpm` (use `aarch64` on ARM64) |
-| Arch Linux (x86_64) | `sudo pacman -U ./venera-next-xxx-x86_64.pkg.tar.zst` |
-| AppImage (x86_64 / ARM64) | Run `chmod +x VeneraNext-xxx-x86_64.AppImage`, then `./VeneraNext-xxx-x86_64.AppImage` (use the `aarch64` file on ARM64) |
+| Debian / Ubuntu (DEB) | `sudo apt install ./venera-unified_xxx_amd64.deb` (use `arm64` on ARM64) |
+| Fedora and other distributions providing the required dependencies (RPM) | `sudo dnf install ./venera-unified-xxx.x86_64.rpm` (use `aarch64` on ARM64) |
+| Arch Linux (x86_64) | `sudo pacman -U ./venera-unified-xxx-x86_64.pkg.tar.zst` |
+| AppImage (x86_64 / ARM64) | Run `chmod +x VeneraUnified-xxx-x86_64.AppImage`, then `./VeneraUnified-xxx-x86_64.AppImage` (use the `aarch64` file on ARM64) |
 
-Replace `xxx` with the actual version in the downloaded filename. The v1.18.1 stable release includes RPM and AppImage packages for both x86_64 and ARM64. Use `uname -m` to check your architecture.
+Replace `xxx` with the actual version in the downloaded filename. The v1.20.0 stable release includes RPM and AppImage packages for both x86_64 and ARM64. Use `uname -m` to check your architecture.
 
 Linux packages are built on Ubuntu 22.04 with a glibc 2.35 baseline. The current stable AppImage includes GTK 3 and WebKitGTK 4.1, so no separate GTK/WebKit installation is needed. It still requires host glibc 2.35 or newer and compatible OpenGL/EGL graphics drivers. See [Linux Installation and Distribution](doc/distribution/linux.en.md) for dependencies, FUSE troubleshooting, and distribution compatibility.
 
 ### macOS
 
-Download `VeneraNext-xxx.dmg` from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest).
+Download `VeneraUnified-xxx.dmg` from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest).
 
 ---
 
@@ -204,7 +204,7 @@ These are configured separately:
 | Comic archives | Comic Archive Backup | Upload local comics as CBZ archives or download archives into the local library |
 | Online library | WebDAV Comic Library | Load remote image folders on demand and cache directory information and images |
 
-The online library accepts image folders, chapter subfolders, and extracted CBZ exports from VeneraNext. A `metadata.json` file can add title, author, tags, and chapter information. The shelf shows cached comics first, then checks for new or changed content on the server. You can sync manually or set an automatic update interval.
+The online library accepts image folders, chapter subfolders, and extracted CBZ exports from Venera Unified. A `metadata.json` file can add title, author, tags, and chapter information. The shelf shows cached comics first, then checks for new or changed content on the server. You can sync manually or set an automatic update interval.
 
 Remote CBZ/ZIP/7Z/CB7 archives must be extracted on the server or restored locally before reading. See [folder and metadata rules](doc/user/import_comic.en.md#webdav-online-library).
 
@@ -225,7 +225,7 @@ This fork continues to maintain Venera-compatible extension interfaces. Waterfal
 
 ## FAQ
 
-### Does VeneraNext include comic sources?
+### Does Venera Unified include comic sources?
 
 No source or recommended catalog is bundled. Import local comics or configure a legal compatible extension or WebDAV library.
 
@@ -270,7 +270,7 @@ Run `winget upgrade --id ACGNnsj.VeneraUnified --exact`. Public-source availabil
 
 ## Statement
 
-This repository maintains the VeneraNext comic reader itself. It **does not provide, bundle, host, or recommend any comic source and does not handle source-site content**.
+This repository maintains the Venera Unified comic reader itself. It **does not provide, bundle, host, or recommend any comic source and does not handle source-site content**.
 
 Network reading uses extensions compatible with the JavaScript API. Users are responsible for configuring legal extensions. Search results, chapter loading, image availability, and content copyright depend on the corresponding source site and extension implementation.
 
@@ -280,7 +280,7 @@ Network reading uses extensions compatible with the JavaScript API. Users are re
 
 ## Sponsors
 
-VeneraNext is maintained as a personal-interest project and is not operated for profit. If it helps with your daily reading, you can support ongoing maintenance through [Afdian](https://ifdian.net/a/ACGMN).
+Venera Unified is maintained as a personal-interest project and is not operated for profit. If it helps with your daily reading, you can support ongoing maintenance through [Afdian](https://ifdian.net/a/ACGMN).
 
 Sponsorship status is synchronized periodically through the Afdian API. To request public acknowledgement, put `公开昵称：Your name` in the order remark. Orders without an explicit public name are not displayed.
 

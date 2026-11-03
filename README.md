@@ -4,7 +4,7 @@
   <br>
   <img src="assets/readme_logo.png" alt="Venera Unified" width="200" />
 
-  # VeneraNext
+  # Venera Unified
 
   ![Flutter](https://img.shields.io/badge/Flutter-3.47.8-02569B?logo=flutter&logoColor=white&style=flat-square)
   [![Release](https://img.shields.io/github/v/release/ACGNnsj/venera-unified?label=Release&color=10B981&style=flat-square)](https://github.com/ACGNnsj/venera-unified/releases/latest)
@@ -22,7 +22,7 @@
 
 ## 项目介绍
 
-[VeneraNext](https://github.com/CyrilPeng/venera-next) 是基于 [Venera](https://github.com/venera-app/venera) 持续开发的 Flutter 漫画阅读器，支持 **Android、iOS、Windows、Linux 和 macOS**。
+Venera Unified 是从 [VeneraNext](https://github.com/CyrilPeng/venera-next) 分叉、由本仓库独立维护的 Flutter 漫画阅读器，支持 **Android、iOS、Windows、Linux 和 macOS**。v1.20.0 新增嵌套收藏夹，阅读器本体与扩展接口与上游保持兼容。
 
 本分支围绕“少一点打断，多一点阅读”打磨日常体验：瀑布流跨章连读不用退出，长按收藏省去选择收藏夹的步骤，夜间和墨水屏设备各有阅读设置。本地导入、离线下载、阅读统计与多设备同步，让找书、看漫画和追连载更方便。
 
@@ -34,10 +34,10 @@
 > 本仓库只维护阅读器本体和扩展运行环境，不提供、内置、托管或推荐漫画源。网络漫画源需由用户自行合法配置，具体内容及源站可用性由相应扩展和服务决定。
 
 <div align="center">
-  <a href="https://github.com/CyrilPeng/Venera-Next">
-    <img alt="GitHub 主仓库" src="https://img.shields.io/badge/GitHub-主仓库-181717?style=for-the-badge&logo=github&logoColor=white" /></a>
-  <a href="https://gitee.com/CyrilPeng/venera-next">
-    <img alt="Gitee 国内镜像" src="https://img.shields.io/badge/Gitee-国内镜像-C71D23?style=for-the-badge&logo=gitee&logoColor=white" /></a>
+  <a href="https://github.com/ACGNnsj/venera-unified">
+    <img alt="GitHub 本仓库" src="https://img.shields.io/badge/GitHub-本仓库-181717?style=for-the-badge&logo=github&logoColor=white" /></a>
+  <a href="https://ifdian.net/a/ACGMN">
+    <img alt="爱发电" src="https://img.shields.io/badge/爱发电-支持我-ff69b4?style=for-the-badge" /></a>
 </div>
 
 ---
@@ -46,7 +46,7 @@
 
 | 主页：阅读历史、稍后阅读与追更 | 漫画详情页 |
 |---|---|
-| <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg" alt="VeneraNext 主页，展示阅读历史、稍后阅读和追更" width="100%" /></a> | <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg" alt="VeneraNext 漫画详情页，展示阅读操作、作品信息和章节列表" width="100%" /></a> |
+| <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg" alt="Venera Unified 主页，展示阅读历史、稍后阅读和追更" width="100%" /></a> | <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg" alt="Venera Unified 漫画详情页，展示阅读操作、作品信息和章节列表" width="100%" /></a> |
 
 ---
 
@@ -92,11 +92,11 @@
 
 | 文件名 | 说明 | 适用场景 |
 |---|---|---|
-| `VeneraNext-xxx-android.apk` | 通用版 | 适用于大多数 Android 设备 |
-| `VeneraNext-xxx-android-arm64-v8a.apk` | ARM64 版 | 支持 ARM64 应用的 Android 设备 |
-| `VeneraNext-xxx-android-armeabi-v7a.apk` | ARM32 版 | 较老的 32 位设备 |
+| `VeneraUnified-xxx-android.apk` | 通用版 | 适用于大多数 Android 设备 |
+| `VeneraUnified-xxx-android-arm64-v8a.apk` | ARM64 版 | 支持 ARM64 应用的 Android 设备 |
+| `VeneraUnified-xxx-android-armeabi-v7a.apk` | ARM32 版 | 较老的 32 位设备 |
 
-**推荐**：如果不确定应该下载哪个，选择通用版 `VeneraNext-xxx-android.apk`。
+**推荐**：如果不确定应该下载哪个，选择通用版 `VeneraUnified-xxx-android.apk`。
 
 ### iOS
 
@@ -111,7 +111,7 @@ winget install --id ACGNnsj.VeneraUnified --exact
 winget upgrade --id ACGNnsj.VeneraUnified --exact
 ```
 
-也可以从 [最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest) 下载 `VeneraNext-xxx-windows-installer.exe` 安装包或 zip 便携版。便携版不受 winget 管理，需要手动下载新版本并覆盖更新。新版本发布后，winget 公共源可能需要等待 Microsoft 审核；可先执行 `winget source update` 刷新本地索引。
+也可以从 [最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest) 下载 `VeneraUnified-xxx-windows-installer.exe` 安装包或 zip 便携版。便携版不受 winget 管理，需要手动下载新版本并覆盖更新。新版本发布后，winget 公共源可能需要等待 Microsoft 审核；可先执行 `winget source update` 刷新本地索引。
 
 Windows 安装器、便携包和 winget manifest 维护说明见 [doc/distribution/windows.zh.md](doc/distribution/windows.zh.md)。
 
@@ -121,18 +121,18 @@ Windows 安装器、便携包和 winget manifest 维护说明见 [doc/distributi
 
 | 发行版 / 方式 | 安装或运行 |
 |---|---|
-| Debian / Ubuntu（DEB） | `sudo apt install ./venera-next_xxx_amd64.deb`（ARM64 选择 `arm64` 包） |
-| Fedora 等提供所需依赖的发行版（RPM） | `sudo dnf install ./venera-next-xxx.x86_64.rpm`（ARM64 选择 `aarch64` 包） |
-| Arch Linux（x86_64） | `sudo pacman -U ./venera-next-xxx-x86_64.pkg.tar.zst` |
-| AppImage（x86_64 / ARM64） | `chmod +x VeneraNext-xxx-x86_64.AppImage`，再执行 `./VeneraNext-xxx-x86_64.AppImage`（ARM64 选择 `aarch64` 文件） |
+| Debian / Ubuntu（DEB） | `sudo apt install ./venera-unified_xxx_amd64.deb`（ARM64 选择 `arm64` 包） |
+| Fedora 等提供所需依赖的发行版（RPM） | `sudo dnf install ./venera-unified-xxx.x86_64.rpm`（ARM64 选择 `aarch64` 包） |
+| Arch Linux（x86_64） | `sudo pacman -U ./venera-unified-xxx-x86_64.pkg.tar.zst` |
+| AppImage（x86_64 / ARM64） | `chmod +x VeneraUnified-xxx-x86_64.AppImage`，再执行 `./VeneraUnified-xxx-x86_64.AppImage`（ARM64 选择 `aarch64` 文件） |
 
-`xxx` 请替换为下载文件中的实际版本号。v1.18.1 稳定版提供 x86_64 和 ARM64 的 RPM 与 AppImage；可用 `uname -m` 查看机器架构。
+`xxx` 请替换为下载文件中的实际版本号。v1.20.0 稳定版提供 x86_64 和 ARM64 的 RPM 与 AppImage；可用 `uname -m` 查看机器架构。
 
 Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定版 AppImage 已包含 GTK 3 和 WebKitGTK 4.1，无需额外安装 GTK/WebKit；仍需系统提供 glibc 2.35 或更新版本及兼容的 OpenGL/EGL 显卡驱动。依赖安装、FUSE 问题及发行版兼容范围见 [Linux 安装与分发](doc/distribution/linux.zh.md)。
 
 ### macOS
 
-从 [最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest) 下载 `VeneraNext-xxx.dmg`。
+从 [最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest) 下载 `VeneraUnified-xxx.dmg`。
 
 ---
 
@@ -202,7 +202,7 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 | 漫画归档 | 漫画归档备份 / Comic Archive Backup | 把本地漫画导出为 CBZ 上传，或下载归档恢复到本地库 |
 | 在线漫画库 | WebDAV 漫画库 / WebDAV Comic Library | 按需读取远端图片目录，并缓存目录与图片 |
 
-在线漫画库支持图片目录、章节子目录和 VeneraNext 导出 CBZ 的解压目录。`metadata.json` 可补充标题、作者、标签和章节信息。书架先显示已缓存的漫画，再检查服务端新增或改动的内容；可手动同步，也可设置自动更新周期。
+在线漫画库支持图片目录、章节子目录和 Venera Unified 导出 CBZ 的解压目录。`metadata.json` 可补充标题、作者、标签和章节信息。书架先显示已缓存的漫画，再检查服务端新增或改动的内容；可手动同步，也可设置自动更新周期。
 
 远端 CBZ/ZIP/7Z/CB7 压缩包需要先在服务端解压，或通过归档恢复到本地后再阅读。详见[目录与元数据规则](doc/user/import_comic.zh.md#webdav-在线漫画库)。
 
@@ -223,7 +223,7 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 
 ## FAQ
 
-### VeneraNext 自带漫画源吗？
+### Venera Unified 自带漫画源吗？
 
 不自带，也不提供推荐源列表。可以先导入本地漫画，或自行合法配置兼容扩展、WebDAV 漫画库。
 
@@ -269,7 +269,7 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 ## 声明
 
 
-本仓库只维护 VeneraNext 漫画阅读器本体，**不提供、内置、托管或推荐任何漫画源，也不处理任何源站内容**。
+本仓库只维护 Venera Unified 漫画阅读器本体，**不提供、内置、托管或推荐任何漫画源，也不处理任何源站内容**。
 
 网络阅读能力兼容 JavaScript 扩展 API，需要用户自行配置合法的漫画源扩展；搜索结果、章节加载、图片可用性和内容版权均取决于对应源站与扩展实现。
 
@@ -281,7 +281,7 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 
 [![爱发电](https://img.shields.io/badge/爱发电-支持我-ff69b4?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyMS4zNWwtMS40NS0xLjMyQzUuNCAxNS4zNiAyIDEyLjI4IDIgOC41IDIgNS40MiA0LjQyIDMgNy41IDNjMS43NCAwIDMuNDEuODEgNC41IDIuMDlDMTMuMDkgMy44MSAxNC43NiAzIDE2LjUgMyAxOS41OCAzIDIyIDUuNDIgMjIgOC41YzAgMy43OC0zLjQgNi44Ni04LjU1IDExLjU0TDEyIDIxLjM1eiIvPjwvc3ZnPg==)](https://ifdian.net/a/ACGMN)
 
-本项目为个人兴趣维护，不以盈利为目的。如果 VeneraNext 对你的日常阅读有帮助，欢迎在[爱发电](https://ifdian.net/a/ACGMN)上支持作者的持续维护。
+本项目为个人兴趣维护，不以盈利为目的。如果 Venera Unified 对你的日常阅读有帮助，欢迎在[爱发电](https://ifdian.net/a/ACGMN)上支持作者的持续维护。
 
 赞助状态会通过爱发电 API 定期同步。需要公开鸣谢时，请在订单备注中填写“公开昵称：你的昵称”；未提供公开昵称的订单不会展示。
 
