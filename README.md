@@ -7,10 +7,10 @@
   # VeneraNext
 
   ![Flutter](https://img.shields.io/badge/Flutter-3.47.8-02569B?logo=flutter&logoColor=white&style=flat-square)
-  [![Release](https://img.shields.io/github/v/release/ACGNnsj/venera-unified?label=Release&color=10B981&style=flat-square)](https://github.com/CyrilPeng/venera-next/releases/latest)
+  [![Release](https://img.shields.io/github/v/release/ACGNnsj/venera-unified?label=Release&color=10B981&style=flat-square)](https://github.com/ACGNnsj/venera-unified/releases/latest)
   ![License](https://img.shields.io/badge/License-GPL--3.0-10B981?style=flat-square)
   <br>
-  [![Downloads](https://img.shields.io/github/downloads/CyrilPeng/venera-next/total?style=flat-square&color=2ea44f&logo=github)](https://tooomm.github.io/github-release-stats/?user=ACGNnsj&repo=venera-unified)
+  [![Downloads](https://img.shields.io/github/downloads/ACGNnsj/venera-unified/total?style=flat-square&color=2ea44f&logo=github)](https://tooomm.github.io/github-release-stats/?user=ACGNnsj&repo=venera-unified)
   [![爱发电](https://img.shields.io/badge/爱发电-支持我-ff69b4?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyMS4zNWwtMS40NS0xLjMyQzUuNCAxNS4zNiAyIDEyLjI4IDIgOC41IDIgNS40MiA0LjQyIDMgNy41IDNjMS43NCAwIDMuNDEuODEgNC41IDIuMDlDMTMuMDkgMy44MSAxNC43NiAzIDE2LjUgMyAxOS41OCAzIDIyIDUuNDIgMjIgOC41YzAgMy43OC0zLjQgNi44Ni04LjU1IDExLjU0TDEyIDIxLjM1eiIvPjwvc3ZnPg==)](https://ifdian.net/a/cyril)
 
   <a href="https://trendshift.io/repositories/140830?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-140830" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/140830" alt="VeneraNext 的 Trendshift 项目徽章" width="250" height="55" /></a>
@@ -91,7 +91,7 @@
 
 ### Android
 
-从 [最新稳定版](https://github.com/CyrilPeng/venera-next/releases/latest) 下载 APK 安装包：
+从 [最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest) 下载 APK 安装包：
 
 | 文件名 | 说明 | 适用场景 |
 |---|---|---|
@@ -103,24 +103,24 @@
 
 ### iOS
 
-从 [最新稳定版](https://github.com/CyrilPeng/venera-next/releases/latest) 下载 ipa 安装包，使用 AltStore 旁加载。
+从 [最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest) 下载 ipa 安装包，使用 AltStore 旁加载。
 
 ### Windows
 
 推荐通过 winget 安装，后续可以直接使用同一包 ID 升级：
 
 ```powershell
-winget install --id CyrilPeng.VeneraNext --exact
-winget upgrade --id CyrilPeng.VeneraNext --exact
+winget install --id ACGNnsj.VeneraUnified --exact
+winget upgrade --id ACGNnsj.VeneraUnified --exact
 ```
 
-也可以从 [最新稳定版](https://github.com/CyrilPeng/venera-next/releases/latest) 下载 `VeneraNext-xxx-windows-installer.exe` 安装包或 zip 便携版。便携版不受 winget 管理，需要手动下载新版本并覆盖更新。新版本发布后，winget 公共源可能需要等待 Microsoft 审核；可先执行 `winget source update` 刷新本地索引。
+也可以从 [最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest) 下载 `VeneraNext-xxx-windows-installer.exe` 安装包或 zip 便携版。便携版不受 winget 管理，需要手动下载新版本并覆盖更新。新版本发布后，winget 公共源可能需要等待 Microsoft 审核；可先执行 `winget source update` 刷新本地索引。
 
 Windows 安装器、便携包和 winget manifest 维护说明见 [doc/distribution/windows.zh.md](doc/distribution/windows.zh.md)。
 
 ### Linux
 
-从 [最新稳定版](https://github.com/CyrilPeng/venera-next/releases/latest) 下载对应架构的安装包：
+从 [最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest) 下载对应架构的安装包：
 
 | 发行版 / 方式 | 安装或运行 |
 |---|---|
@@ -135,13 +135,13 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 
 ### macOS
 
-从 [最新稳定版](https://github.com/CyrilPeng/venera-next/releases/latest) 下载 `VeneraNext-xxx.dmg`。
+从 [最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest) 下载 `VeneraNext-xxx.dmg`。
 
 ---
 
 ## 快速上手
 
-1. **安装**：从[最新稳定版](https://github.com/CyrilPeng/venera-next/releases/latest)安装当前平台的版本。
+1. **安装**：从[最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest)安装当前平台的版本。
 2. **添加内容**（三选一即可开始）：已有漫画文件 → “本地 → 导入”；网络连载 → 在漫画源管理页安装扩展；NAS 目录 → “设置 → 应用 → WebDAV 漫画库”。
 3. **开始阅读**：默认的瀑布流模式可以直接跨章连读；遇到想追的连载，试试在详情页长按“收藏”按钮。阅读模式、拆分双页、夜间调光等可在“设置 → 阅读器”或阅读器内随时调整。
 
@@ -246,7 +246,7 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 
 ### Windows 怎样更新？
 
-使用 `winget upgrade --id CyrilPeng.VeneraNext --exact`。公共源收录新版本可能晚于 GitHub Release，可先运行 `winget source update`。便携版需要下载新版本手动覆盖更新。
+使用 `winget upgrade --id ACGNnsj.VeneraUnified --exact`。公共源收录新版本可能晚于 GitHub Release，可先运行 `winget source update`。便携版需要下载新版本手动覆盖更新。
 
 ## 开发者入口
 

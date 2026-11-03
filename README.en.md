@@ -93,7 +93,7 @@ A fresh install creates this folder automatically (named "追更" by default). T
 
 ### Android
 
-Download an APK from the [latest stable release](https://github.com/CyrilPeng/Venera-Next/releases/latest):
+Download an APK from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest):
 
 | File | Description | Recommended for |
 |---|---|---|
@@ -105,18 +105,18 @@ When in doubt, use the universal `VeneraNext-xxx-android.apk` package.
 
 ### iOS
 
-Download the IPA from the [latest stable release](https://github.com/CyrilPeng/Venera-Next/releases/latest) and sideload it with AltStore.
+Download the IPA from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest) and sideload it with AltStore.
 
 ### Windows
 
 winget is recommended because the same package ID can be used for future upgrades:
 
 ```powershell
-winget install --id CyrilPeng.VeneraNext --exact
-winget upgrade --id CyrilPeng.VeneraNext --exact
+winget install --id ACGNnsj.VeneraUnified --exact
+winget upgrade --id ACGNnsj.VeneraUnified --exact
 ```
 
-You can also download `VeneraNext-xxx-windows-installer.exe` or the portable ZIP from the [latest stable release](https://github.com/CyrilPeng/Venera-Next/releases/latest). Portable builds are not managed by winget and must be updated manually. New winget versions may appear later than GitHub Releases because Microsoft reviews manifest updates; run `winget source update` before checking again.
+You can also download `VeneraNext-xxx-windows-installer.exe` or the portable ZIP from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest). Portable builds are not managed by winget and must be updated manually. New winget versions may appear later than GitHub Releases because Microsoft reviews manifest updates; run `winget source update` before checking again.
 
 See [Windows Distribution](doc/distribution/windows.en.md) for installer, portable build, and winget maintenance details.
 
@@ -137,7 +137,7 @@ Linux packages are built on Ubuntu 22.04 with a glibc 2.35 baseline. The current
 
 ### macOS
 
-Download `VeneraNext-xxx.dmg` from the [latest stable release](https://github.com/CyrilPeng/Venera-Next/releases/latest).
+Download `VeneraNext-xxx.dmg` from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest).
 
 ---
 
@@ -248,7 +248,7 @@ Select vertical continuous or waterfall reading in reader settings, then adjust 
 
 ### How do I update on Windows?
 
-Run `winget upgrade --id CyrilPeng.VeneraNext --exact`. Public-source availability may lag behind GitHub Release; try `winget source update` first. Portable installations require downloading and applying an update manually.
+Run `winget upgrade --id ACGNnsj.VeneraUnified --exact`. Public-source availability may lag behind GitHub Release; try `winget source update` first. Portable installations require downloading and applying an update manually.
 
 ## Developer resources
 
