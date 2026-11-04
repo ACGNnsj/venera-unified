@@ -1,6 +1,9 @@
 """Cross-build librhttp/libqjs for OHOS arm64 with the local DevEco native SDK."""
 """Adapted from upstream HarmonyOS tool/harmonyos/native_build.py (rust recipe + qjs recipe).
-SQLite is skipped: the sqlite3 pub hook already emits a working libsqlite3.so into the HAP."""
+SQLite is compiled from the vendored amalgamation: the sqlite3 pub hook sees an
+OS.linux shim on OHOS and would otherwise download a glibc prebuilt (fcntl64
+missing on device) or miscompile with --target=x86_64-linux-gnu. The hook is
+set to source: system and dlopens the .so staged into entry/libs."""
 import argparse, hashlib, json, os, re, shlex, shutil, struct, subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -82,6 +85,53 @@ def build_qjs(native, source, output, arch):
          *compiled, "-pthread", "-lm", "-o", output / "libqjs.so"])
 
 
+SQLITE_DEFINES = ("SQLITE_ENABLE_DBSTAT_VTAB", "SQLITE_ENABLE_FTS5", "SQLITE_ENABLE_RTREE",
+    "SQLITE_ENABLE_MATH_FUNCTIONS", "SQLITE_DQS=0", "SQLITE_DEFAULT_MEMSTATUS=0", "SQLITE_TEMP_STORE=2",
+    "SQLITE_MAX_EXPR_DEPTH=0", "SQLITE_STRICT_SUBTYPE=1", "SQLITE_OMIT_AUTHORIZATION",
+    "SQLITE_OMIT_DECLTYPE", "SQLITE_OMIT_DEPRECATED", "SQLITE_OMIT_PROGRESS_CALLBACK",
+    "SQLITE_OMIT_SHARED_CACHE", "SQLITE_OMIT_TCL_VARIABLE", "SQLITE_OMIT_TRACE", "SQLITE_USE_ALLOCA",
+    "SQLITE_ENABLE_SESSION", "SQLITE_ENABLE_PREUPDATE_HOOK", "SQLITE_UNTESTABLE", "SQLITE_HAVE_ISNAN",
+    "SQLITE_HAVE_LOCALTIME_R", "SQLITE_HAVE_LOCALTIME_S", "SQLITE_HAVE_MALLOC_USABLE_SIZE",
+    "SQLITE_HAVE_STRCHRNUL", "SQLITE_ENABLE_BATCH_ATOMIC_WRITE")
+
+
+def build_sqlite(native, amalgamation, output, arch):
+    gnu = arch["gnu"]
+    sr = str(native / "sysroot")
+    common = [f"--target={gnu}", f"--sysroot={sr}",
+              "-D__MUSL__", "-D_GNU_SOURCE", "-fPIC", "-O2"]
+    run([native / "llvm/bin/clang.exe", *common,
+         *[f"-D{d}" for d in SQLITE_DEFINES],
+         "-shared", "-Wl,--no-undefined", "-Wl,-soname,libsqlite3.so",
+         str(amalgamation), "-lm", "-o", output / "libsqlite3.so"])
+
+
+SEVEN_ZIP_C = ("7zAlloc.c", "7zArcIn.c", "7zBuf.c", "7zBuf2.c", "7zCrc.c",
+    "7zCrcOpt.c", "7zDec.c", "7zFile.c", "7zStream.c", "Bcj2.c", "Bra.c",
+    "Bra86.c", "Delta.c", "LzmaDec.c", "Lzma2Dec.c", "CpuArch.c")
+
+
+def build_7zip(native, source, output, arch):
+    gnu = arch["gnu"]
+    sr = str(native / "sysroot")
+    common = [f"--target={gnu}", f"--sysroot={sr}",
+              "-D__MUSL__", "-D_GNU_SOURCE", "-fPIC", "-O2"]
+    cdir = source / "7zip" / "C"
+    objdir = output.parent / f"7zip-objects-{arch['out']}"
+    objdir.mkdir(exist_ok=True)
+    compiled = []
+    for name in SEVEN_ZIP_C:
+        obj = objdir / (name + ".o")
+        run([native / "llvm/bin/clang.exe", *common,
+             "-I", cdir, "-c", cdir / name, "-o", obj])
+        compiled.append(obj)
+    run([native / "llvm/bin/clang++.exe", *common, "-std=c++20",
+         "-DDART_SHARED_LIB", "-I", source, "-I", cdir,
+         "-shared", "-Wl,--no-undefined", "-Wl,-soname,libflutter_7zip.so",
+         source / "flutter_7zip.cpp", *compiled,
+         "-o", output / "libflutter_7zip.so"])
+
+
 def inspect(native, path, required, machine=183):
     data = Path(path).read_bytes()
     if len(data) < 64 or data[:6] != b"\x7fELF\x02\x01" or struct.unpack_from("<HH", data, 16) != (3, machine):
@@ -108,7 +158,9 @@ def main():
     ap.add_argument("--qjs-source", type=Path, default=QJS_DEFAULT)
     ap.add_argument("--arch", choices=tuple(ARCHES), default="arm64")
     ap.add_argument("--out", type=Path, default=None)
-    ap.add_argument("--component", choices=("all", "rust", "qjs", "inspect"), default="all")
+    ap.add_argument("--component", choices=("all", "rust", "qjs", "sqlite", "7zip", "inspect"), default="all")
+    ap.add_argument("--sqlite-amalgamation", type=Path,
+                    default=Path("D:/venera/.scratch/harmony/vendor/sqlite-amalgamation/sqlite3.c"))
     ap.add_argument("--cargo-target-dir", type=Path,
                     default=Path("D:/venera/.scratch/harmony/cargo"))
     a = ap.parse_args()
@@ -120,6 +172,10 @@ def main():
         build_rust(native, out, a.cargo_target_dir, arch)
     if a.component in ("all", "qjs"):
         build_qjs(native, a.qjs_source.resolve(), out, arch)
+    if a.component in ("all", "7zip"):
+        build_7zip(native, Path("D:/venera/.scratch/harmony/vendor/flutter_7zip-b333447/src").resolve(), out, arch)
+    if a.component in ("all", "sqlite"):
+        build_sqlite(native, a.sqlite_amalgamation.resolve(), out, arch)
     if a.component in ("all", "inspect"):
         runtime = native / f"llvm/lib/{arch['gnu']}/libc++_shared.so"
         if not runtime.is_file():
@@ -133,6 +189,12 @@ def main():
                               arch["machine"]),
                       inspect(native, out / "libqjs.so",
                               ("jsNewRuntime", "jsEval", "jsFreeRuntime"),
+                              arch["machine"]),
+                      inspect(native, out / "libsqlite3.so",
+                              ("sqlite3_libversion", "sqlite3_open", "sqlite3_close"),
+                              arch["machine"]),
+                      inspect(native, out / "libflutter_7zip.so",
+                              ("openArchive", "closeArchive", "freeReadData"),
                               arch["machine"]),
                       inspect(native, out / "libc++_shared.so", (),
                               arch["machine"])]}
