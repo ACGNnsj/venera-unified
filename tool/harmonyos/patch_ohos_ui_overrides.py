@@ -144,6 +144,18 @@ def main() -> int:
         print("pdfium hook 已有 ohos 跳过, 跳过", flush=True)
     SHORT[pdfium_pkg] = "pdfium_dart"
     PKGS2 = PKGS + (pdfium_pkg,)
+    # dev_dependencies 里的 integration_test 会让 flutter tool 为它生成独立
+    # ohos module 并塞进 .hvigor/dependencyMap；ohpm i --all 的解析闭包随之
+    # 爆炸（实测 Node 堆 32GB 也 OOM、跑 6h28m 才挂）。阅读器 HAP 不需要测试
+    # 模块，删掉它能把构建时间压到约 8 分钟。
+    _pubspec = Path(a.app_dir) / "pubspec.yaml"
+    _spec = _pubspec.read_text(encoding="utf-8")
+    _it = "  integration_test:
+    sdk: flutter
+"
+    if _it in _spec:
+        _pubspec.write_text(_spec.replace(_it, "", 1), encoding="utf-8")
+        print("app pubspec 已移除 integration_test（ohpm 闭包爆炸根因）", flush=True)
     pubspec = Path(a.app_dir) / "pubspec.yaml"
     spec = pubspec.read_text(encoding="utf-8")
     block = []

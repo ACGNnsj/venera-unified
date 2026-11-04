@@ -82,3 +82,11 @@ PDF 导入（PDFium）、自定义存储目录与持久化外部目录引用、�
 ## 为什么不在 CI 里跑
 
 上游的 harmonyos-experiment.yml 需要 Ubuntu + gitcode 的 flutter_flutter 与华为 OBS 引擎产物、RUSTUP_TOOLCHAIN=1.92.0 与 aarch64-unknown-linux-ohos 目标，单轮 100 分钟且只产出未签名 HAP。本仓把鸿蒙留在本地实验阶段，CI 不引入第二套工具链。
+
+## 2026-11-04 x64 HAP 出包：ohpm 解析爆炸的根因是 integration_test
+
+- 现象：arm64 能出包，加 `--target-platform ohos-x64` 后卡在 `hvigorw assembleHap` 里的 `ohpm install`，Node 堆涨到上限后 OOM。16GB 堆跑 1 小时挂，32GB 堆跑 6 小时 28 分也挂。把依赖 overrides 逐个摘掉时不是 OOM 而是立刻 404，说明不是内存不够，而是 ohpm 解 `file:` 指向 `.har` 的依赖时闭包无界增长。
+- 根因：app 副本 `pubspec.yaml` 的 `dev_dependencies: integration_test: {sdk: flutter}`。flutter tool 会为它生成一个独立 ohos module 并写进 `.hvigor/dependencyMap`（连带它自己的 `@ohos/flutter_ohos: file:har/flutter.har`），于是 `ohpm i --all --target_path .../dependencyMap` 要把 entry 与 integration_test 两条链一起解。删掉这个 dev_dependency 后，同一命令约 8 分钟通过。
+- 前置条件：先跑 `python tool/harmonyos/patch_ohos_ui_overrides.py`。它现在负责两件事：material_ui/cupertino_ui 的 ohos 臂补齐，以及从 app pubspec 移除 integration_test。
+- 产物 `build/ohos/hap/entry-default-unsigned.hap` 58.8MB：73 个成员零重复、testzip 为 None、含 module.json；`libs/x86_64/` 有 libflutter.so(20,960,376)、libapp.so(17,154,952)、libsqlite3.so、librhttp.so、libqjs.so、libc++_shared.so。
+- 缺口：包里同时残留 `libs/arm64-v8a/` 的 librhttp/libqjs/libsqlite3/libc++_shared，x64 版原生库还没交叉编译。这个 x64 包只证明编译链通，不能当 x64 运行产物；要完整得把 build_native_ohos.py 的 ARCHES 表跑到 x64。

@@ -11,7 +11,13 @@ OUT_DEFAULT = Path("D:/venera/.scratch/harmony/native/arm64-v8a")
 QJS_DEFAULT = Path("D:/venera/.scratch/harmony/deps/flutter_qjs")
 # == pubspec.yaml flutter_qjs pin == venera-next-pinned tip (fix is Dart-only; cxx/ identical to master 8feae95).
 QJS_REV = "295f77421eedff356a02e92987181b525970c780"
-TARGET = "aarch64-unknown-linux-ohos"
+ARCHES = {
+    "arm64": {"target": "aarch64-unknown-linux-ohos", "gnu": "aarch64-linux-ohos",
+                "machine": 183, "out": "arm64-v8a"},
+    "x64": {"target": "x86_64-unknown-linux-ohos", "gnu": "x86_64-linux-ohos",
+              "machine": 62, "out": "x86_64"},
+}
+TARGET = ARCHES["arm64"]["target"]
 
 
 def run(args, env=None, capture=False):
@@ -22,32 +28,36 @@ def run(args, env=None, capture=False):
                           encoding="utf-8", errors="replace").stdout
 
 
-def build_rust(native, output, target_dir):
+def build_rust(native, output, target_dir, arch):
+    target, gnu = arch["target"], arch["gnu"]
+    tu, tl = target.replace("-", "_").upper(), target.replace("-", "_")
+    gu = tl
     env = os.environ.copy()
     env.pop("RUSTFLAGS", None)
     sr = str(native / "sysroot")
     srx = (native / "sysroot").as_posix()
     env["CARGO_ENCODED_RUSTFLAGS"] = "\x1f".join([
-        "--cfg", "reqwest_unstable", "-C", "link-arg=--target=aarch64-linux-ohos",
+        "--cfg", "reqwest_unstable", "-C", f"link-arg=--target={gnu}",
         "-C", f"link-arg=--sysroot={sr}",
         "-C", "link-arg=-Wl,--no-undefined",
     ])
     tools = native / "llvm/bin"
-    env["CARGO_TARGET_AARCH64_UNKNOWN_LINUX_OHOS_LINKER"] = str(tools / "clang.exe")
-    env["CC_aarch64_unknown_linux_ohos"] = str(tools / "clang.exe")
-    env["CXX_aarch64_unknown_linux_ohos"] = str(tools / "clang++.exe")
-    env["AR_aarch64_unknown_linux_ohos"] = str(tools / "llvm-ar.exe")
+    env[f"CARGO_TARGET_{tu}_LINKER"] = str(tools / "clang.exe")
+    env[f"CC_{gu}"] = str(tools / "clang.exe")
+    env[f"CXX_{gu}"] = str(tools / "clang++.exe")
+    env[f"AR_{gu}"] = str(tools / "llvm-ar.exe")
     env["CC_SHELL_ESCAPED_FLAGS"] = "1"
-    flags = shlex.join(["--target=aarch64-linux-ohos", f"--sysroot={srx}", "-D__MUSL__" ])
-    env["CFLAGS_aarch64_unknown_linux_ohos"] = flags
-    env["CXXFLAGS_aarch64_unknown_linux_ohos"] = flags
+    flags = shlex.join([f"--target={gnu}", f"--sysroot={srx}", "-D__MUSL__" ])
+    env[f"CFLAGS_{gu}"] = flags
+    env[f"CXXFLAGS_{gu}"] = flags
     env["CARGO_TARGET_DIR"] = str(target_dir)
     run(["cargo", "build", "--locked", "--release", "--lib", "--jobs", "2",
-         "--target", TARGET, "--manifest-path", "packages/rhttp/rust/Cargo.toml"], env=env)
-    shutil.copy2(target_dir / TARGET / "release/librhttp.so", output / "librhttp.so")
+         "--target", target, "--manifest-path", "packages/rhttp/rust/Cargo.toml"], env=env)
+    shutil.copy2(target_dir / target / "release/librhttp.so", output / "librhttp.so")
 
 
-def build_qjs(native, source, output):
+def build_qjs(native, source, output, arch):
+    gnu = arch["gnu"]
     head = run(["git", "-C", str(source), "rev-parse", "HEAD"], capture=True).strip()
     if head != QJS_REV:
         raise ValueError(f"QuickJS rev {head} != pinned {QJS_REV}")
@@ -56,9 +66,9 @@ def build_qjs(native, source, output):
     if not re.fullmatch(r"[A-Za-z0-9.+-]+", version):
         raise ValueError("Invalid QuickJS version macro")
     sr = str(native / "sysroot")
-    objdir = output.parent / "qjs-objects"
+    objdir = output.parent / f"qjs-objects-{arch['out']}"
     objdir.mkdir(exist_ok=True)
-    common = ["--target=aarch64-linux-ohos", f"--sysroot={sr}",
+    common = [f"--target={gnu}", f"--sysroot={sr}",
               "-D__MUSL__", "-D_GNU_SOURCE", "-fPIC", "-O2"]
     vdef = "-DCONFIG_VERSION=" + chr(34) + version + chr(34)
     compiled = []
@@ -72,10 +82,10 @@ def build_qjs(native, source, output):
          *compiled, "-pthread", "-lm", "-o", output / "libqjs.so"])
 
 
-def inspect(native, path, required):
+def inspect(native, path, required, machine=183):
     data = Path(path).read_bytes()
-    if len(data) < 64 or data[:6] != b"\x7fELF\x02\x01" or struct.unpack_from("<HH", data, 16) != (3, 183):
-        raise ValueError(f"Not an AArch64 .so: {path}")
+    if len(data) < 64 or data[:6] != b"\x7fELF\x02\x01" or struct.unpack_from("<HH", data, 16) != (3, machine):
+        raise ValueError(f"Not an e_machine={machine} .so: {path}")
     info = run([native / "llvm/bin/llvm-readelf.exe", "--dynamic", path], capture=True)
     needed = re.findall(r"\(NEEDED\).*?\[(.*?)\]", info)
     if any(n in needed for n in ("liblog.so", "libandroid.so")):
@@ -96,31 +106,39 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sdk-native", type=Path, default=NATIVE_DEFAULT)
     ap.add_argument("--qjs-source", type=Path, default=QJS_DEFAULT)
-    ap.add_argument("--out", type=Path, default=OUT_DEFAULT)
+    ap.add_argument("--arch", choices=tuple(ARCHES), default="arm64")
+    ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--component", choices=("all", "rust", "qjs", "inspect"), default="all")
     ap.add_argument("--cargo-target-dir", type=Path,
                     default=Path("D:/venera/.scratch/harmony/cargo"))
     a = ap.parse_args()
-    native, out = a.sdk_native.resolve(), a.out
+    arch = ARCHES[a.arch]
+    native = a.sdk_native.resolve()
+    out = a.out or Path(f"D:/venera/.scratch/harmony/native/{arch['out']}")
     out.mkdir(parents=True, exist_ok=True)
     if a.component in ("all", "rust"):
-        build_rust(native, out, a.cargo_target_dir)
+        build_rust(native, out, a.cargo_target_dir, arch)
     if a.component in ("all", "qjs"):
-        build_qjs(native, a.qjs_source.resolve(), out)
+        build_qjs(native, a.qjs_source.resolve(), out, arch)
     if a.component in ("all", "inspect"):
-        runtime = native / "llvm/lib/aarch64-linux-ohos/libc++_shared.so"
+        runtime = native / f"llvm/lib/{arch['gnu']}/libc++_shared.so"
         if not runtime.is_file():
-            runtime = native / "sysroot/usr/lib/aarch64-linux-ohos/libc++_shared.so"
+            runtime = native / f"sysroot/usr/lib/{arch['gnu']}/libc++_shared.so"
         shutil.copy2(runtime, out / "libc++_shared.so")
-        report = {"status": "cross_compile_pass", "target": TARGET,
+        report = {"status": "cross_compile_pass", "target": arch["target"],
                   "finished_at_utc": datetime.now(timezone.utc).isoformat(),
                   "libraries": [
                       inspect(native, out / "librhttp.so",
-                              ("frb_get_rust_content_hash", "frb_init_frb_dart_api_dl")),
+                              ("frb_get_rust_content_hash", "frb_init_frb_dart_api_dl"),
+                              arch["machine"]),
                       inspect(native, out / "libqjs.so",
-                              ("jsNewRuntime", "jsEval", "jsFreeRuntime")),
-                      inspect(native, out / "libc++_shared.so", ())]}
-        (out.parent / "native-build.json").write_text(json.dumps(report, indent=2) + "\n")
+                              ("jsNewRuntime", "jsEval", "jsFreeRuntime"),
+                              arch["machine"]),
+                      inspect(native, out / "libc++_shared.so", (),
+                              arch["machine"])]}
+        (out.parent / f"native-build-{a.arch}.json").write_text(json.dumps(report, indent=2) + "\n")
+        if a.arch == "arm64":
+            (out.parent / "native-build.json").write_text(json.dumps(report, indent=2) + "\n")
         print(json.dumps(report, indent=2))
 
 
