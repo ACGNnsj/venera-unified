@@ -171,6 +171,7 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
     scrollController.addListener(onScroll);
     ComicCollectionStore.changes.addListener(_onCollectionChanged);
     super.initState();
+    _armComments();
   }
 
   @override
@@ -178,6 +179,8 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.id != widget.id || oldWidget.sourceKey != widget.sourceKey) {
       isFirst = true;
+      _recommendVisible = _recommendWindow;
+      _armComments();
       retry();
     }
   }
@@ -256,6 +259,22 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
   }
 
   var isFirst = true;
+
+  /// Related grid shows [_recommendWindow] at a time; the edge sentinel
+  /// ([SliverGridComics.onLastItemBuild]) grows it instead of a size key.
+  static const _recommendWindow = 6;
+  var _recommendVisible = _recommendWindow;
+
+  /// Comments render ~1s after the page so the first batch stays
+  /// details + related only.
+  var _commentsArmed = false;
+
+  void _armComments() {
+    _commentsArmed = false;
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) setState(() => _commentsArmed = true);
+    });
+  }
 
   @override
   Widget buildContent(BuildContext context, ComicDetails data) {
@@ -939,16 +958,33 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
     if (comic.recommend == null || comic.recommend!.isEmpty) {
       return const SliverPadding(padding: EdgeInsets.zero);
     }
+    final total = comic.recommend!;
+    final visible = total.take(_recommendVisible).toList();
     return SliverMainAxisGroup(
       slivers: [
         SliverToBoxAdapter(child: ListTile(title: Text("Related".tl))),
-        SliverGridComics(comics: comic.recommend!),
+        SliverGridComics(
+          comics: visible,
+          onLastItemBuild: _recommendVisible < total.length
+              ? _growRecommendWindow
+              : null,
+        ),
       ],
     );
   }
 
+  void _growRecommendWindow() {
+    if (_recommendVisible >= (comic.recommend?.length ?? 0)) return;
+    // onLastItemBuild fires mid-build; expand on the next frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_recommendVisible >= (comic.recommend?.length ?? 0)) return;
+      setState(() => _recommendVisible += _recommendWindow);
+    });
+  }
+
   Widget buildComments() {
-    if (comic.comments == null || comic.comments!.isEmpty) {
+    if (!_commentsArmed || comic.comments == null || comic.comments!.isEmpty) {
       return const SliverPadding(padding: EdgeInsets.zero);
     }
     return ComicCommentsPreview(
