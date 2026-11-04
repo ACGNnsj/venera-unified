@@ -90,3 +90,11 @@ PDF 导入（PDFium）、自定义存储目录与持久化外部目录引用、�
 - 前置条件：先跑 `python tool/harmonyos/patch_ohos_ui_overrides.py`。它现在负责两件事：material_ui/cupertino_ui 的 ohos 臂补齐，以及从 app pubspec 移除 integration_test。
 - 产物 `build/ohos/hap/entry-default-unsigned.hap` 58.8MB：73 个成员零重复、testzip 为 None、含 module.json；`libs/x86_64/` 有 libflutter.so(20,960,376)、libapp.so(17,154,952)、libsqlite3.so、librhttp.so、libqjs.so、libc++_shared.so。
 - 收口 2026-11-04：`native-build-x64.json` 为 `cross_compile_pass`（x86_64-unknown-linux-ohos，NEEDED 仅 libc/libc++_shared），包内 `libs/x86_64/` 六个 so 齐（libapp/libflutter/libsqlite3/librhttp/libqjs/libc++_shared），包内 librhttp/libqjs 比 staged 小约 240B/80KB（hvigor strip，与 arm64 包规律一致）。`libs/arm64-v8a/` 四个预置库是双 ABI 常态残留，本次为 x64 目标构建故无 arm64 版 libapp；P2 x64 视为通过。
+
+## 2026-11-04 x64 模拟器首跑：四连 crash 全是「Dart 层不认 ohos」
+
+- 通法：git/版本依赖改不了上游，用 `patch_ohos_ui_overrides.py` vendor 到 `.scratch/harmony/vendor/` 后打补丁 + `dependency_overrides` 切 path；原生缺失的 .so 用 `build_native_ohos.py` 以 OHOS clang 直编进 `entry/libs/x86_64/`（flags 与 qjs 同款：`--target=x86_64-linux-ohos --sysroot -D__MUSL__ -D_GNU_SOURCE`）。
+- 第一关 path_provider：加 `path_provider_ohos ^2.2.1`（OpenHarmony federated 实现）即过。
+- 第二关 libsqlite3.so `fcntl64: symbol not found`：hook 传 OS.linux 垫片会下 glibc 预编译版；改 `--component sqlite` 从 amalgamation 直编（NEEDED 仅 libc.so）+ hook `source: system` 即过。
+- 第三关 flutter_rust_bridge `Unknown platform: ohos`：vendor 后把 `Platform.isAndroid` 改为含 ohos（按 soname dlopen 包内 librhttp.so）即过。
+- 第四关 flutter_7zip `_dylib` + flutter_qjs `_qjsLib` 同构 throw：同样 vendor 并 ohos 分支；另 7zip 原生库包内缺失，用 `--component 7zip` 编 `src/`（16 个 7zip C + flutter_7zip.cpp，C++20，DART_SHARED_LIB，NEEDED 仅 libc++/libc）出 libflutter_7zip.so。重出 HAP 59.2MB，模拟器 `aa start` 直达主页，无启动失败。
