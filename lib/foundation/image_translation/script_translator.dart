@@ -6,7 +6,7 @@ import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:venera_unified/network/app_dio.dart';
 import 'package:venera_unified/foundation/translations.dart';
 
-import 'llm_translator.dart';
+import 'translation_types.dart';
 
 /// Each call owns its runtime and requests, separate from comic-source scripts.
 abstract class ScriptTranslator {
@@ -34,7 +34,7 @@ async function translate({texts, sourceLang, targetLang, glossary, provider}) {
     String sourceLang,
     String targetLang, {
     Map<String, String> glossary = const {},
-    Duration timeout = LlmTranslator.requestTimeout,
+    Duration timeout = llmRequestTimeout,
     Dio? client,
   }) async {
     if (texts.isEmpty) return const LlmTranslationResult([], {});
@@ -68,7 +68,7 @@ async function translate({texts, sourceLang, targetLang, glossary, provider}) {
           );
         }
         final url = message['url']?.toString() ?? '';
-        if (!LlmTranslator.isValidBaseUrl(url)) {
+        if (!isValidLlmBaseUrl(url)) {
           throw Exception('Enter a valid API URL'.tl);
         }
         try {
@@ -187,7 +187,7 @@ async function translate({texts, sourceLang, targetLang, glossary, provider}) {
     return LlmTranslationResult(texts.cast<String>(), {
       if (names is Map)
         for (final entry in names.entries)
-          if (LlmTranslator.isValidGlossaryTerm(entry.key, entry.value))
+          if (isValidLlmGlossaryTerm(entry.key, entry.value))
             (entry.key as String).trim(): (entry.value as String).trim(),
     });
   }

@@ -4,123 +4,13 @@ import 'dart:math' as math;
 import 'package:uuid/uuid.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/image_translation/public_translator.dart';
+import 'package:venera_unified/foundation/image_translation/translation_types.dart';
 import 'package:venera_unified/foundation/image_translation/script_translator.dart';
 import 'package:venera_unified/foundation/image_translation/rate_limiter.dart';
 import 'package:venera_unified/foundation/image_translation/translation_performance_config.dart';
 import 'package:venera_unified/foundation/image_translation/translation_targets.dart';
 import 'package:venera_unified/foundation/log.dart';
 import 'package:venera_unified/network/app_dio.dart';
-
-/// One page's translation outcome: the per-bubble texts (aligned with the
-/// input, empty where the model refused/failed) plus any proper-noun
-/// renderings the model reported for this page, which the caller folds back
-/// into the comic's glossary so later pages/chapters stay consistent.
-class LlmTranslationResult {
-  const LlmTranslationResult(this.texts, this.glossary);
-
-  final List<String> texts;
-
-  /// source term -> agreed translation, discovered on this page.
-  final Map<String, String> glossary;
-}
-
-/// Which translation engine a provider entry stands for.
-enum LlmProviderKind {
-  /// A user-supplied OpenAI-compatible chat endpoint. Needs URL + model.
-  openai('openai'),
-
-  /// Google Translate's free endpoint. Needs no configuration at all, so its
-  /// URL/key/model stay empty.
-  publicFree('public'),
-
-  customScript('script');
-
-  const LlmProviderKind(this.token);
-
-  final String token;
-
-  static LlmProviderKind fromToken(dynamic token) {
-    for (var kind in values) {
-      if (kind.token == token) return kind;
-    }
-    // Entries written before this field existed are all OpenAI-compatible.
-    return openai;
-  }
-}
-
-/// One configured translation service: a stable [id], a display [name], and —
-/// for an OpenAI-compatible entry — the endpoint/credential/model triple that
-/// used to be the app's single global config. Users keep several of these and
-/// pick which one is active, so they can switch between vendors (or a paid
-/// account and a LAN gateway) without re-typing settings each time.
-///
-/// A [LlmProviderKind.publicFree] entry is the exception: it carries no
-/// endpoint, key or model, because that service needs none.
-class LlmProvider {
-  LlmProvider({
-    required this.id,
-    required this.name,
-    required this.url,
-    required this.key,
-    required this.model,
-    this.kind = LlmProviderKind.openai,
-    this.script = '',
-  });
-
-  final String id;
-  final String name;
-  final String url;
-  final String key;
-  final String model;
-  final LlmProviderKind kind;
-  // Stored separately by LlmProviderStore; never included in synced metadata.
-  final String script;
-
-  bool get isPublicFree => kind == LlmProviderKind.publicFree;
-  bool get isCustomScript => kind == LlmProviderKind.customScript;
-
-  LlmProvider copyWith({
-    String? name,
-    String? url,
-    String? key,
-    String? model,
-    LlmProviderKind? kind,
-    String? script,
-  }) {
-    return LlmProvider(
-      id: id,
-      name: name ?? this.name,
-      url: url ?? this.url,
-      key: key ?? this.key,
-      model: model ?? this.model,
-      kind: kind ?? this.kind,
-      script: script ?? this.script,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'url': url,
-    'key': key,
-    'model': model,
-    'kind': kind.token,
-  };
-
-  static LlmProvider? fromJson(dynamic json) {
-    if (json is! Map) return null;
-    var id = json['id'];
-    if (id is! String || id.isEmpty) return null;
-    return LlmProvider(
-      id: id,
-      name: (json['name'] as String?)?.trim() ?? '',
-      url: (json['url'] as String?)?.trim() ?? '',
-      key: (json['key'] as String?)?.trim() ?? '',
-      model: (json['model'] as String?)?.trim() ?? '',
-      kind: LlmProviderKind.fromToken(json['kind']),
-    );
-  }
-}
 
 /// Reads and writes the user's list of LLM providers and which one is active.
 ///
@@ -323,7 +213,7 @@ abstract class LlmTranslator {
   /// removes a concurrency slot, and once every slot is held by a stalled request
   /// no further page can start. Background pre-translation, which commits page
   /// counts in strict order, then freezes at zero visible progress (#176).
-  static const requestTimeout = Duration(minutes: 3);
+  static const requestTimeout = llmRequestTimeout;
 
   /// Wall-clock ceiling for one [translateBatch] call including all its retries.
   /// Bounds the total time a single call can occupy a concurrency slot.
@@ -397,12 +287,7 @@ abstract class LlmTranslator {
     return url;
   }
 
-  static bool isValidBaseUrl(String rawUrl) {
-    var uri = Uri.tryParse(rawUrl.trim());
-    return uri != null &&
-        (uri.scheme == 'http' || uri.scheme == 'https') &&
-        uri.host.isNotEmpty;
-  }
+  static bool isValidBaseUrl(String rawUrl) => isValidLlmBaseUrl(rawUrl);
 
   /// Fetches the model id list from the endpoint's `/models` (OpenAI-style).
   /// Returns the ids; throws with a readable message on failure so the UI can
@@ -697,30 +582,8 @@ abstract class LlmTranslator {
   /// so they are rejected here as a backstop to the prompt's own instruction.
   /// Also used by the service to sanitize a glossary loaded from an earlier
   /// version that had no such filtering.
-  static bool isValidGlossaryTerm(String source, String translation) {
-    if (source.isEmpty || translation.isEmpty) return false;
-    // Proper nouns are short. Anything long is almost certainly a sentence.
-    if (source.length > 16 || translation.length > 16) return false;
-    for (var s in [source, translation]) {
-      // URLs / emails / paths — never proper nouns, and long enough to bloat.
-      if (_urlLike.hasMatch(s)) return false;
-      // Sentence-like: contains terminal/comma punctuation or whitespace runs
-      // typical of a clause rather than a single term.
-      if (_sentenceLike.hasMatch(s)) return false;
-    }
-    // Pure numbers (page numbers, counts) carry no naming to keep consistent.
-    if (_numericOnly.hasMatch(source)) return false;
-    return true;
-  }
-
-  static final _urlLike = RegExp(
-    r'https?://|www\.|@|[./\\][a-zA-Z]{2,}|\.(com|net|org|io|cn|jp)\b',
-    caseSensitive: false,
-  );
-
-  static final _sentenceLike = RegExp(r'[。！？.!?、,，；;]|\s{1,}\S+\s');
-
-  static final _numericOnly = RegExp(r'^[0-9\s.,]+$');
+  static bool isValidGlossaryTerm(String source, String translation) =>
+      isValidLlmGlossaryTerm(source, translation);
 
   /// Pulls the first JSON object or array out of [content], tolerating code
   /// fences and surrounding prose. Prefers an object (the requested shape);
