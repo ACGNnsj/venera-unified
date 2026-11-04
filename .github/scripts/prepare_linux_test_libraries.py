@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PACKAGES = ("flutter_qjs", "zip_flutter", "flutter_7zip", "lodepng_flutter")
 # Hand-rolled Rust crates with dart:ffi bindings; their tests assert speedup
 # gates, so CI must build them instead of skipping on missing libraries.
-CRATES = ("native/inpaint", "native/ocr_preprocess")
+CRATES = ("native/inpaint", "native/ocr_preprocess", "native/jpg_encode")
 
 
 def package_paths(config: Path) -> dict[str, Path]:

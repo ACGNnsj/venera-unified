@@ -966,6 +966,7 @@
     "features/local_comics/import_export/pdf_import.dart",
     "features/local_comics/import_export/pdf_import_batch.dart",
     "features/local_comics/import_export/pdf_import_tasks.dart",
+    "features/local_comics/import_export/pdf_jpg_native.dart",
     "features/local_comics/incomplete_chapter.dart",
     "features/local_comics/local.dart",
     "features/local_comics/local_chapter_storage.dart",
