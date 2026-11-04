@@ -184,8 +184,8 @@ jobs:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         run: |
           if [[ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]]; then
-            echo "::error::缺少 SNAPCRAFT_STORE_CREDENTIALS secret，用 snapcraft export-login 生成后配到仓库 Secrets"
-            exit 1
+            echo "::warning::缺少 SNAPCRAFT_STORE_CREDENTIALS secret，跳过上传（prerelease 仅构建验证）"
+            exit 0
           fi
           snapcraft snap
           channel=stable

@@ -9,6 +9,8 @@ permissions:
 
 jobs:
   bump:
+    # 仅稳定版跟版：预发布 tag（含 -，如 v1.21.0-rc.1）直接跳过，不碰 bucket/Casks/chocolatey
+    if: ${{ !contains(github.event.release.tag_name, '-') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
