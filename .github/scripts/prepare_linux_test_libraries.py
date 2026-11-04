@@ -12,6 +12,9 @@ from urllib.request import url2pathname
 
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGES = ("flutter_qjs", "zip_flutter", "flutter_7zip", "lodepng_flutter")
+# Hand-rolled Rust crates with dart:ffi bindings; their tests assert speedup
+# gates, so CI must build them instead of skipping on missing libraries.
+CRATES = ("native/inpaint", "native/ocr_preprocess")
 
 
 def package_paths(config: Path) -> dict[str, Path]:
@@ -62,6 +65,18 @@ def main() -> None:
         path = build / "lib" / f"lib{library}.so"
         ctypes.CDLL(str(path))  # Fail here on unresolved symbols, before tests hang.
         print(f"Ready: {path}", flush=True)
+    libdir = build / "lib"
+    for crate in CRATES:
+        subprocess.run(
+            ["cargo", "build", "--locked", "--release",
+             "--manifest-path", str(ROOT / crate / "Cargo.toml")],
+            check=True,
+        )
+        built = next((ROOT / crate / "target/release").glob("libvenera_*.so"))
+        target = libdir / built.name
+        target.write_bytes(built.read_bytes())
+        ctypes.CDLL(str(target))  # Fail here on unresolved symbols, before tests hang.
+        print(f"Ready: {target}", flush=True)
 
 
 if __name__ == "__main__":
