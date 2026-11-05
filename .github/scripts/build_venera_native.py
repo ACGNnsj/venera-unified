@@ -43,8 +43,19 @@ def cargo_build(crate, target=None):
     run(cmd)
 
 
+def lib_name(crate):
+    # Source of truth is the crate's own [package] name (always the first
+    # `name =` in Cargo.toml); it may differ from the directory name
+    # (e.g. native/image_transpose builds venera_transpose).
+    for line in (ROOT / crate / "Cargo.toml").read_text(encoding="utf-8").splitlines():
+        s = line.strip()
+        if s.startswith("name") and "=" in s:
+            return s.split("=", 1)[1].strip().strip("\"'")
+    return "venera_" + Path(crate).name
+
+
 def artifact(crate, target, ext):
-    name = "venera_" + Path(crate).name
+    name = lib_name(crate)
     stem = name if ext == ".dll" else "lib" + name
     if ext == ".a":
         stem = "lib" + name
