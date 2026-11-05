@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CRATES = ("native/inpaint", "native/ocr_preprocess", "native/jpg_encode")
+CRATES = ("native/inpaint", "native/ocr_preprocess", "native/jpg_encode", "native/image_transpose")
 
 ANDROID_TARGETS = {
     "aarch64-linux-android": "arm64-v8a",

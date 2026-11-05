@@ -149,6 +149,46 @@ void main() {
     );
     expect(OcrPreprocessNative.dedupBoxes([]), isEmpty);
 
+    // 3b) Rotated resample byte equality (vertical-column path).
+    for (final region in [
+      IntRect(w ~/ 6, h ~/ 8, w ~/ 6 + 300, h ~/ 8 + 500),
+      IntRect(7, 11, 403, 777),
+    ]) {
+      const outW = 384, outH = 48;
+      final d = resizeTextLine(tile, region, outW, outH, rotate: true);
+      final n = OcrPreprocessNative.resizeTextLineRotated(
+        tile,
+        region,
+        outW,
+        outH,
+      );
+      expect(n, orderedEquals(d), reason: 'rotated resize bytes');
+    }
+
+    // 3c) detPostprocess box equality (flood fill + score + geometry).
+    for (final dims in [(w: 320, h: 240), (w: 640, h: 480)]) {
+      final probs = Float32List(dims.w * dims.h);
+      _seed = 0x2b77aa;
+      for (var k = 0; k < 6; k++) {
+        final cx = 20 + _nextRand(dims.w - 40);
+        final cy = 20 + _nextRand(dims.h - 40);
+        for (var y = cy - 12; y < cy + 12; y++) {
+          for (var x = cx - 20; x < cx + 20; x++) {
+            probs[y * dims.w + x] = 0.9;
+          }
+        }
+      }
+      final d = detPostprocess(probs, dims.w, dims.h, 320, 320);
+      final n = OcrPreprocessNative.detPostprocess(
+        probs,
+        dims.w,
+        dims.h,
+        320,
+        320,
+      );
+      expect(flat(n), orderedEquals(flat(d)), reason: 'postprocess boxes');
+    }
+
     // 6) Timing double assertion. Preprocess segment gate >=3x (5/5 wins);
     // end-to-end-minus-ORT gate >=1.5x. Fresh copies per iter.
     const iters = 5;

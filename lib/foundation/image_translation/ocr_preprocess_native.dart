@@ -288,4 +288,124 @@ abstract final class OcrPreprocessNative {
       malloc.free(outPtr);
     }
   }
+
+  static int Function(
+    Pointer<Uint8>,
+    int,
+    int,
+    int,
+    int,
+    int,
+    int,
+    Pointer<Uint8>,
+    int,
+    int,
+  )?
+  _rotateFn;
+
+  /// Mirrors resizeTextLine(..., rotate: true): rotated bilinear resample
+  /// for vertical columns. Throws on load failure; callers fall back to Dart.
+  static Uint8List resizeTextLineRotated(
+    RgbaImage image,
+    IntRect region,
+    int outW,
+    int outH,
+  ) {
+    _rotateFn ??= _load()
+        .lookupFunction<
+          Int32 Function(
+            Pointer<Uint8>,
+            Size,
+            Int32,
+            Int32,
+            Int32,
+            Int32,
+            Int32,
+            Pointer<Uint8>,
+            Int32,
+            Int32,
+          ),
+          int Function(
+            Pointer<Uint8>,
+            int,
+            int,
+            int,
+            int,
+            int,
+            int,
+            Pointer<Uint8>,
+            int,
+            int,
+          )
+        >('ocr_resize_text_line_rotated');
+    final pixPtr = malloc<Uint8>(image.pixels.length);
+    final outPtr = malloc<Uint8>(outW * outH * 4);
+    try {
+      pixPtr.asTypedList(image.pixels.length).setAll(0, image.pixels);
+      final rc = _rotateFn!(
+        pixPtr,
+        image.pixels.length,
+        image.width,
+        region.left,
+        region.top,
+        region.right,
+        region.bottom,
+        outPtr,
+        outW,
+        outH,
+      );
+      if (rc != 0) {
+        throw StateError('ocr_resize_text_line_rotated failed');
+      }
+      return Uint8List.fromList(outPtr.asTypedList(outW * outH * 4));
+    } finally {
+      malloc.free(pixPtr);
+      malloc.free(outPtr);
+    }
+  }
+
+  static int Function(Pointer<Float>, int, int, int, int, Pointer<Int32>, int)?
+  _postFn;
+
+  /// Mirrors detPostprocess end to end. Throws on load failure or native
+  /// overflow (-2, more boxes than the w*h/12 cap); both fall back to Dart.
+  static List<IntRect> detPostprocess(
+    Float32List probs,
+    int w,
+    int h,
+    int tileWidth,
+    int tileHeight,
+  ) {
+    _postFn ??= _load()
+        .lookupFunction<
+          Int32 Function(
+            Pointer<Float>,
+            Int32,
+            Int32,
+            Int32,
+            Int32,
+            Pointer<Int32>,
+            Size,
+          ),
+          int Function(Pointer<Float>, int, int, int, int, Pointer<Int32>, int)
+        >('ocr_det_postprocess');
+    final probsPtr = malloc<Float>(probs.length);
+    // Every kept component owns >= 12 px, so w*h/12 quads always suffice;
+    // overflow still falls back to Dart instead of truncating.
+    final cap = probs.length ~/ 12 + 1;
+    final outPtr = malloc<Int32>(cap * 4);
+    try {
+      probsPtr.asTypedList(probs.length).setAll(0, probs);
+      final n = _postFn!(probsPtr, w, h, tileWidth, tileHeight, outPtr, cap);
+      if (n < 0) throw StateError('ocr_det_postprocess failed');
+      final out = outPtr.asTypedList(n * 4);
+      return [
+        for (var k = 0; k < n; k++)
+          IntRect(out[k * 4], out[k * 4 + 1], out[k * 4 + 2], out[k * 4 + 3]),
+      ];
+    } finally {
+      malloc.free(probsPtr);
+      malloc.free(outPtr);
+    }
+  }
 }

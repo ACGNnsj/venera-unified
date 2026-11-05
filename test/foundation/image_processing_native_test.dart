@@ -1,10 +1,12 @@
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:venera_unified/foundation/image_processing.dart' as processing;
+import 'package:venera_unified/foundation/image_transpose_native.dart';
 
 class _TrackedEngine extends FlutterQjs {
   var closes = 0;
@@ -101,49 +103,44 @@ void main() {
     'thrown-reference',
     'async-result',
   ]) {
-    test(
-      'native $failure failure releases runtime before another task',
-      () async {
-        final engine = _TrackedEngine();
-        final script = switch (failure) {
-          'script' =>
-            'function modifyImage(image) { throw new Error("script failed"); }',
-          'bridge' =>
-            'function modifyImage(image) { return image.copyRange(-1, 0, 1, 1); }',
-          'result-reference' =>
-            'function modifyImage(image) { return {key: () => 1}; }',
-          'thrown-reference' =>
-            'function modifyImage(image) { throw {message: "script failed", callback: () => 1}; }',
-          'async-result' =>
-            'async function modifyImage(image) { return image; }',
-          _ => 'function modifyImage(image) { return image; }',
-        };
-        await expectLater(
-          processing.runImageScript(
-            input(),
-            script,
-            initializationScript: failure == 'startup'
-                ? 'throw new Error("startup failed");'
-                : initialization,
-            createEngine: () => engine,
-          ),
-          throwsA(anything),
-        );
-        expect(engine.closes, 1);
-        expect(engine.dispatchFinished, isTrue);
-        final replacement = _TrackedEngine();
-        final bytes = await processing.runImageScript(
+    test('native $failure failure releases runtime before another task', () async {
+      final engine = _TrackedEngine();
+      final script = switch (failure) {
+        'script' =>
+          'function modifyImage(image) { throw new Error("script failed"); }',
+        'bridge' =>
+          'function modifyImage(image) { return image.copyRange(-1, 0, 1, 1); }',
+        'result-reference' =>
+          'function modifyImage(image) { return {key: () => 1}; }',
+        'thrown-reference' =>
+          'function modifyImage(image) { throw {message: "script failed", callback: () => 1}; }',
+        'async-result' => 'async function modifyImage(image) { return image; }',
+        _ => 'function modifyImage(image) { return image; }',
+      };
+      await expectLater(
+        processing.runImageScript(
           input(),
-          'function modifyImage(image) { return image; }',
-          initializationScript: initialization,
-          createEngine: () => replacement,
-        );
-        expect((await processing.Image.decodeImage(bytes)).width, 2);
-        expect(replacement.closes, 1);
-        expect(replacement.dispatchFinished, isTrue);
-      },
-      skip: !Platform.isWindows,
-    );
+          script,
+          initializationScript: failure == 'startup'
+              ? 'throw new Error("startup failed");'
+              : initialization,
+          createEngine: () => engine,
+        ),
+        throwsA(anything),
+      );
+      expect(engine.closes, 1);
+      expect(engine.dispatchFinished, isTrue);
+      final replacement = _TrackedEngine();
+      final bytes = await processing.runImageScript(
+        input(),
+        'function modifyImage(image) { return image; }',
+        initializationScript: initialization,
+        createEngine: () => replacement,
+      );
+      expect((await processing.Image.decodeImage(bytes)).width, 2);
+      expect(replacement.closes, 1);
+      expect(replacement.dispatchFinished, isTrue);
+    }, skip: !Platform.isWindows);
   }
 
   test(
@@ -174,4 +171,34 @@ void main() {
     },
     skip: !Platform.isWindows,
   );
+
+  test('transpose matches the script-bridge rotation pixel for pixel', () {
+    if (!ImageTransposeNative.available) {
+      markTestSkipped('venera_transpose not built for this platform');
+    }
+    expect(ImageTransposeNative.version(), 1);
+    final rand = Random(0x51ab);
+    const w = 37, h = 53;
+    final pixels = Uint32List.fromList(
+      List<int>.generate(w * h, (_) => rand.nextInt(1 << 32)),
+    );
+    // Independent baseline: the same index permutation copyAndRotate90
+    // documents, computed here so the test never compares native to
+    // itself (copyAndRotate90 now prefers the native path when present).
+    final expected = Uint32List(w * h);
+    for (var j = 0; j < h; j++) {
+      for (var i = 0; i < w; i++) {
+        expected[i * h + h - j - 1] = pixels[j * w + i];
+      }
+    }
+    expect(
+      ImageTransposeNative.transpose(pixels, w, h),
+      orderedEquals(expected),
+    );
+    final rotated = processing.Image(pixels, w, h).copyAndRotate90();
+    expect((rotated.width, rotated.height), (h, w));
+    for (var k = 0; k < expected.length; k++) {
+      expect(rotated.getPixelAtIndex(k).value, expected[k]);
+    }
+  });
 }

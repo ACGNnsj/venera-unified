@@ -198,13 +198,25 @@ class _OcrPageWorker {
           })
           .values
           .first;
-      var tileBoxes = detPostprocess(
-        output.data,
-        input.width,
-        input.height,
-        tile.width,
-        tile.height,
-      );
+      List<IntRect> tileBoxes;
+      try {
+        tileBoxes = OcrPreprocessNative.detPostprocess(
+          output.data,
+          input.width,
+          input.height,
+          tile.width,
+          tile.height,
+        );
+      } catch (_) {
+        // Native library missing or overflowed; Dart fallback.
+        tileBoxes = detPostprocess(
+          output.data,
+          input.width,
+          input.height,
+          tile.width,
+          tile.height,
+        );
+      }
       for (var box in tileBoxes) {
         box.top += top;
         box.bottom += top;
@@ -253,8 +265,7 @@ class _OcrPageWorker {
         960,
       );
       outW = (outW / 8).ceil() * 8;
-      // Native covers the horizontal path only; vertical (rotated) lines
-      // stay on Dart until the rotated sampler migrates (Phase 2 G2).
+      // Both paths try native first; missing library falls back to Dart.
       Uint8List resized;
       if (!rotate) {
         try {
@@ -264,7 +275,16 @@ class _OcrPageWorker {
           resized = resizeTextLine(image, rect, outW, height);
         }
       } else {
-        resized = resizeTextLine(image, rect, outW, height, rotate: true);
+        try {
+          resized = OcrPreprocessNative.resizeTextLineRotated(
+            image,
+            rect,
+            outW,
+            height,
+          );
+        } catch (_) {
+          resized = resizeTextLine(image, rect, outW, height, rotate: true);
+        }
       }
       var tensor = _normalize(resized, outW, height);
       var output = session

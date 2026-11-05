@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:lodepng_flutter/lodepng_flutter.dart' as lodepng;
 
+import 'image_transpose_native.dart';
 import 'image_provider/avif_system_decoder.dart'
     show decodeAvifWithSystemLibrary;
 import 'image_provider/avif_wic_decoder.dart' show decodeAvifWithWic;
@@ -208,6 +209,15 @@ class Image {
   }
 
   Image copyAndRotate90() {
+    try {
+      return Image(
+        ImageTransposeNative.transpose(_data, width, height),
+        height,
+        width,
+      );
+    } catch (_) {
+      // Native library not built for this platform; Dart fallback below.
+    }
     var data = Uint32List(width * height);
     for (var j = 0; j < height; j++) {
       for (var i = 0; i < width; i++) {
