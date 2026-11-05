@@ -1280,7 +1280,15 @@
     "Export this folder only (no subfolders)": "仅导出本夹漫画（不含子目录）",
     "Move subfolders before deleting this folder": "请先移出或处理子目录，再删除此目录。",
     "Only favorite records in this folder are removed; comic files are kept.": "仅移除此目录中的收藏记录，不删除漫画原文件。",
-    "Subfolders are separate. Comics below belong directly to this folder.": "子目录单独管理；下方仅显示直接收藏在本目录的漫画。"
+    "Subfolders are separate. Comics below belong directly to this folder.": "子目录单独管理；下方仅显示直接收藏在本目录的漫画。",
+    "Only Network requests are available in translation scripts": "翻译脚本中仅可使用 Network 请求",
+    "Enter a valid API URL": "请输入有效的 API URL",
+    "Translation API request failed": "翻译 API 请求失败",
+    "Define function translate(input)": "定义函数 translate(input)",
+    "Translation script timed out": "翻译脚本执行超时",
+    "Translation script returned an invalid result": "翻译脚本返回了无效结果",
+    "Translation script must return one string per input text": "翻译脚本必须为每段输入文本返回一个字符串",
+    "Translation script returned an invalid glossary": "翻译脚本返回了无效的术语表"
 },
   "zh_TW": {
     "TV low-memory mode": "TV 低記憶體模式",
@@ -2563,6 +2571,14 @@
     "Export this folder only (no subfolders)": "僅匯出本夾漫畫（不含子目錄）",
     "Move subfolders before deleting this folder": "請先移出或處理子目錄，再刪除此目錄。",
     "Only favorite records in this folder are removed; comic files are kept.": "僅移除此目錄中的收藏紀錄，不刪除漫畫原始檔案。",
-    "Subfolders are separate. Comics below belong directly to this folder.": "子目錄獨立管理；下方僅顯示直接收藏在本目錄的漫畫。"
+    "Subfolders are separate. Comics below belong directly to this folder.": "子目錄獨立管理；下方僅顯示直接收藏在本目錄的漫畫。",
+    "Only Network requests are available in translation scripts": "翻譯腳本中僅可使用 Network 請求",
+    "Enter a valid API URL": "請輸入有效的 API URL",
+    "Translation API request failed": "翻譯 API 請求失敗",
+    "Define function translate(input)": "定義函數 translate(input)",
+    "Translation script timed out": "翻譯腳本執行超時",
+    "Translation script returned an invalid result": "翻譯腳本返回了無效結果",
+    "Translation script must return one string per input text": "翻譯腳本必須為每段輸入文本返回一個字串",
+    "Translation script returned an invalid glossary": "翻譯腳本返回了無效的術語表"
 }
 }

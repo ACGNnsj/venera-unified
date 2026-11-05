@@ -6,6 +6,7 @@ import 'package:pdfrx/pdfrx.dart';
 import 'package:venera_unified/features/local_comics/import_export/document_import.dart';
 import 'package:venera_unified/features/local_comics/local.dart';
 import 'package:venera_unified/features/local_comics/local_storage_guard.dart';
+import 'package:venera_unified/features/local_comics/import_export/pdf_jpg_native.dart';
 import 'package:venera_unified/foundation/file_system.dart';
 import 'package:venera_unified/foundation/persistence_failure.dart';
 import 'comic_import_output.dart';
@@ -15,6 +16,16 @@ const int _pdfRenderMaxEdge = 3000;
 
 // Only pixels cross the isolate boundary; native PDF objects stay with pdfrx.
 Uint8List _encodePdfPage(({Uint8List pixels, int width, int height}) page) {
+  try {
+    return JpgEncodeNative.encodeBgra(
+      page.pixels,
+      page.width,
+      page.height,
+      quality: 92,
+    );
+  } catch (_) {
+    // Native library not built for this platform; Dart fallback below.
+  }
   final decoded = image.Image.fromBytes(
     width: page.width,
     height: page.height,

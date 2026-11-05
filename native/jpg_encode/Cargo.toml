@@ -1,0 +1,18 @@
+[package]
+name = "venera_jpg_encode"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+jpeg-encoder = { version = "0.7", features = ["simd"] }
+
+# Keep the per-ABI binary tiny (migration gate: <=1.5MB) and dependency-free.
+[profile.release]
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true
+codegen-units = 1
