@@ -1,0 +1,67 @@
+{
+  "description": "Pinned toolchain for the HarmonyOS experiment. Blank-HAP stage verified with the 3.41.9 line; the full application needs the 3.47.7 preview line, which is where the port is currently blocked (see doc/distribution/harmonyos.zh.md).",
+  "nativeSdk": {
+    "version": "6.0.0.47",
+    "api": 20,
+    "windowsLinuxArchive": "https://repo.huaweicloud.com/openharmony/os/6.0-Release/ohos-sdk-windows_linux-public.tar.gz",
+    "sha256": "a315834ac133625efc912bd078f3e2b2550868d04aef1b5aa4f9679c8b3c9d8e"
+  },
+  "harmonyCiSdk": {
+    "version": "26.0.0.851",
+    "nativeVersion": "26.0.0.105",
+    "api": 26,
+    "targetSdk": "26.0.0",
+    "source": "https://github.com/zhongdaiqi/command-line-tools-for-hmos/releases/tag/clt-26.0.0.851",
+    "reference": "https://github.com/zhongdaiqi/flutter-ohos-builder/blob/57bedeac638fe8b517cfa16dd6b10a1209104f69/Dockerfile",
+    "checksumSource": "GitHub release asset digests; community CI mirror, not Huawei-published checksums",
+    "joinedArchive": "commandline-tools-linux-x64-26.0.0.851.zip",
+    "joinedSha256": "ab604bd92721d5cbcafd154e6461d46b9f1b105e7b89eab04a9d046681198082",
+    "archives": [
+      {
+        "name": "commandline-tools-linux-x64-26.0.0.851.part_aa",
+        "url": "https://github.com/zhongdaiqi/command-line-tools-for-hmos/releases/download/clt-26.0.0.851/commandline-tools-linux-x64-26.0.0.851.part_aa",
+        "bytes": 1610612736,
+        "sha256": "58cf09ea8882785fba6f7156a6be426b27390ad113cc1506c86bd25616fdb805"
+      },
+      {
+        "name": "commandline-tools-linux-x64-26.0.0.851.part_ab",
+        "url": "https://github.com/zhongdaiqi/command-line-tools-for-hmos/releases/download/clt-26.0.0.851/commandline-tools-linux-x64-26.0.0.851.part_ab",
+        "bytes": 737450573,
+        "sha256": "c454ffa7ebb318dbf70dff8b7a1281de565cec3751c5b498f40f7f9500872fe6"
+      }
+    ]
+  },
+  "devEco": {
+    "version": "26.0",
+    "build": "DS-261.23567.138.36.2600865",
+    "sdkApi": 26,
+    "sdkVersion": "26.0.0.105"
+  },
+  "blankStage": {
+    "flutter": {
+      "tag": "3.41.9+ohos-1.0.2",
+      "revision": "62357a93d653bf844f730bb1f4b7cc9e2139d14e",
+      "dart": "3.11.5"
+    },
+    "verifiedHap": {
+      "bytes": 20626990,
+      "members": 19,
+      "note": "produced by tool/harmonyos/build_blank_hap.py from a cold work directory"
+    }
+  },
+  "fullAppStage": {
+    "flutter": {
+      "tag": "3.47.7+ohos-0.0.1-pre",
+      "revision": "650641656f",
+      "dart": "3.13.5"
+    },
+    "pubspecConstraint": "flutter: '>=3.47.7-0 <3.47.8' (the OHOS preview is a pre-release, so the exact pin must be relaxed)",
+    "blocked": "TargetPlatform.ohos is not exhaustively matched by switch statements in pub packages (168 compile errors, starting with material_ui-1.2.0) and in lib/."
+  },
+  "env": {
+    "DEVECO_SDK_HOME": "C:/Program Files/Huawei/DevEco Studio/sdk",
+    "FLUTTER_OHOS_STORAGE_BASE_URL": "https://flutter-ohos.obs.cn-south-1.myhuaweicloud.com",
+    "FLUTTER_STORAGE_BASE_URL": "https://storage.flutter-io.cn",
+    "note": "HVIGOR_USER_HOME and USERPROFILE must point inside the workspace on machines that deny writes under the real user profile."
+  }
+}

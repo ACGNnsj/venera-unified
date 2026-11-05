@@ -1,0 +1,52 @@
+name: venera-unified
+base: core24
+# CI 从 pubspec.yaml 回填，勿手改：
+version: "0.0.0-dev"
+summary: VeneraUnified comic reader
+description: |
+  A cross-platform comic reader with JavaScript source extensions and local reading.
+  Waterfall cross-chapter reading, night and e-ink palettes, favorites, history
+  statistics, offline downloads and optional self-hosted WebDAV sync.
+  No account, no ads, no telemetry.
+grade: stable
+confinement: strict
+platforms:
+  amd64:
+
+apps:
+  venera-unified:
+    command: usr/bin/venera-unified
+    common-id: io.github.venera.unified
+    desktop: usr/share/applications/venera-unified.desktop
+    extensions: [gnome]
+    plugs:
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - opengl
+      - audio-playback
+      - network
+      - home
+      - removable-media
+
+parts:
+  bundle:
+    plugin: dump
+    source: build/linux/x64/release/bundle
+    organize:
+      venera-unified: usr/bin/venera-unified
+      lib: usr/lib/venera-unified/
+      data: usr/share/venera-unified/
+    stage-packages:
+      - libgtk-3-0
+      - libwebkit2gtk-4.1-0
+      - libayatana-appindicator3-1
+      - libavif16
+  meta:
+    plugin: nil
+    override-pull: |
+      mkdir -p $CRAFT_PART_INSTALL/usr/share/applications
+      mkdir -p $CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps
+      python3 -c "import sys; sys.path.insert(0, '$CRAFT_PROJECT_DIR/.github/scripts'); from build_linux_packages import desktop_file; open('$CRAFT_PART_INSTALL/usr/share/applications/venera-unified.desktop', 'w').write(desktop_file('venera-unified'))"
+      cp $CRAFT_PROJECT_DIR/assets/app_icon.png $CRAFT_PART_INSTALL/usr/share/icons/hicolor/256x256/apps/venera-unified.png

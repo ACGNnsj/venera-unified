@@ -54,7 +54,7 @@ merged = glob.glob(
     'build/app/intermediates/merged_manifest*/**/AndroidManifest.xml',
     recursive=True,
 )
-merged = [m for m in merged if '/release/' in m.replace('\\', '/')]
+merged = [m for m in merged if '/mobilerelease/' in m.replace('\\', '/').lower()]
 if not merged:
     fail('找不到 release merged manifest（gradle merge 任务没产出？）')
 root = ET.parse(merged[0]).getroot()

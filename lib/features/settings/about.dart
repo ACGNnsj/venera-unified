@@ -9,6 +9,7 @@ import 'package:venera_unified/components/scroll.dart';
 import 'package:venera_unified/features/settings/setting_components.dart';
 import 'package:venera_unified/features/settings/sponsors.dart';
 import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/app_profile.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
@@ -93,7 +94,11 @@ class _AboutSettingsState extends State<AboutSettings> {
         Column(
           children: [
             const SizedBox(height: 8),
-            Text("V${App.version}", style: const TextStyle(fontSize: 16)),
+            Text(
+              'V${AppProfile.current.displayVersion(App.version)}',
+              style: const TextStyle(fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
             Text(
               "Venera Unified is a free and open-source app for comic reading."
                   .tl,
@@ -101,21 +106,22 @@ class _AboutSettingsState extends State<AboutSettings> {
             const SizedBox(height: 8),
           ],
         ).toSliver(),
-        ListTile(
-          title: Text("Check for updates".tl),
-          trailing: FilledButton(
-            onPressed: _checking == null ? _checkUpdate : null,
-            child: _checkingNetwork
-                ? SizedBox.square(
-                    dimension: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      semanticsLabel: 'Check for updates'.tl,
-                    ),
-                  )
-                : Text('Check'.tl),
-          ),
-        ).toSliver(),
+        if (AppProfile.current.applicationUpdatesEnabled)
+          ListTile(
+            title: Text("Check for updates".tl),
+            trailing: FilledButton(
+              onPressed: _checking == null ? _checkUpdate : null,
+              child: _checkingNetwork
+                  ? SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        semanticsLabel: 'Check for updates'.tl,
+                      ),
+                    )
+                  : Text('Check'.tl),
+            ),
+          ).toSliver(),
         ListTile(
           title: Text("Changelog".tl),
           trailing: const Icon(Icons.keyboard_arrow_right),
@@ -123,10 +129,20 @@ class _AboutSettingsState extends State<AboutSettings> {
             context.to(() => const ChangelogPage());
           },
         ).toSliver(),
-        SwitchSetting.preference(
-          title: "Check for updates on startup".tl,
-          preference: AppPreferences.checkUpdateOnStart,
-        ).toSliver(),
+        if (AppProfile.current.applicationUpdatesEnabled)
+          SwitchSetting.preference(
+            title: "Check for updates on startup".tl,
+            preference: AppPreferences.checkUpdateOnStart,
+          ).toSliver(),
+        if (AppProfile.current.isTv)
+          ListTile(
+            leading: const Icon(Icons.tv),
+            title: const Text('TV Alpha'),
+            subtitle: Text(
+              'Experimental build. Install updates manually from the android-tv branch. Source updates remain available. Real-device compatibility is not yet verified.'
+                  .tl,
+            ),
+          ).toSliver(),
         ListTile(
           title: const Text("Github"),
           trailing: const Icon(Icons.open_in_new),

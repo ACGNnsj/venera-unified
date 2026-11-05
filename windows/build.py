@@ -75,6 +75,7 @@ def read_msix_version():
     if match is None:
         raise RuntimeError("pubspec.yaml does not contain a version field")
     base, _, _build = match.group(1).partition("+")
+    base = base.split("-", 1)[0]  # 预发布后缀（-rc.1）不进 MSIX：它只要纯数字四段
     parts = [part for part in base.split(".") if part]
     if not parts or any(not part.isdigit() for part in parts):
         raise ValueError(f"MSIX 需要纯数字版本号，pubspec 是 {base!r}")

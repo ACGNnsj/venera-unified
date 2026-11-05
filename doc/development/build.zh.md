@@ -97,10 +97,10 @@ storeFile=../keystore.jks
 
 ```bash
 flutter pub get --enforce-lockfile
-flutter build apk --release
+flutter build apk --release --flavor mobile
 ```
 
-构建产物通常位于 `build/app/outputs/apk/release/`。
+构建产物通常位于 `build/app/outputs/apk/mobile/release/`（TV 变体在 `tv/release/`）。
 
 签名文件和密码属于敏感信息，不应提交到仓库。
 

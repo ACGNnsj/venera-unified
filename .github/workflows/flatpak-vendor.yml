@@ -1,0 +1,50 @@
+name: Flatpak 离线依赖归档
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: flatpak-vendor
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  vendor:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version-file: pubspec.yaml
+          architecture: x64
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+        env:
+          PUB_CACHE: ${{ runner.temp }}/pub-cache
+      - name: 打包 pub-cache 与引擎产物
+        run: |
+          FLUTTER_ROOT="$(dirname "$(dirname "$(readlink -f "$(which flutter)")")")"
+          "$FLUTTER_ROOT/bin/flutter" precache --linux
+          tar czf "$RUNNER_TEMP/pub-cache.tar.gz" -C "$RUNNER_TEMP" pub-cache
+          tar czf "$RUNNER_TEMP/engine-artifacts.tar.gz" -C "$FLUTTER_ROOT/bin/cache" artifacts
+          ls -la "$RUNNER_TEMP"/*.tar.gz
+      - name: 准备 Rust 工具链并 vendor
+        run: |
+          python3 .github/scripts/prepare_rust_toolchain.py
+          cd packages/rhttp/rust
+          cargo vendor vendor > "$RUNNER_TEMP/vendor-config.txt"
+          tar czf "$RUNNER_TEMP/cargo-vendor.tar.gz" -C "$RUNNER_TEMP" vendor-config.txt -C "$GITHUB_WORKSPACE/packages/rhttp/rust" vendor
+          ls -la "$RUNNER_TEMP"/*.tar.gz
+      - uses: actions/upload-artifact@v7
+        with:
+          name: flatpak_vendor
+          path: |
+            ${{ runner.temp }}/pub-cache.tar.gz
+            ${{ runner.temp }}/engine-artifacts.tar.gz
+            ${{ runner.temp }}/cargo-vendor.tar.gz
+          if-no-files-found: error
+          retention-days: 14

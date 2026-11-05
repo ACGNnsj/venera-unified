@@ -1,0 +1,53 @@
+name: Microsoft Store 发布
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "稳定版发布标签，例如 v1.20.0（只要 .msixupload，预发布拒绝）"
+        required: true
+        type: string
+
+concurrency:
+  group: msstore-${{ inputs.tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: 校验只要稳定版
+        run: |
+          if [[ "${{ inputs.tag }}" != v* || "${{ inputs.tag }}" == *-* ]]; then
+            echo "::error::只要稳定版 tag（vX.Y.Z），预发布不上商店"
+            exit 1
+          fi
+      - name: 下载 msixupload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p pkg
+          gh release download "${{ inputs.tag }}" --pattern "*.msixupload" --dir pkg
+          ls pkg
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '9.0.x'
+      - name: 安装 msstore CLI
+        run: |
+          curl -sL -o msstore.tar.gz https://github.com/microsoft/msstore-cli/releases/download/v0.4.4/MSStoreCLI-linux-x64.tar.gz
+          curl -sL https://github.com/microsoft/msstore-cli/releases/download/v0.4.4/MSStoreCLI-linux-x64.tar.gz.sha256.txt | sha256sum -c --status
+          mkdir -p msstore && tar xzf msstore.tar.gz -C msstore
+          echo "$PWD/msstore" >> "$GITHUB_PATH"
+      - name: 发布到商店
+        env:
+          MSSTORE_TENANT_ID: ${{ secrets.MSSTORE_TENANT_ID }}
+          MSSTORE_SELLER_ID: ${{ secrets.MSSTORE_SELLER_ID }}
+          MSSTORE_CLIENT_ID: ${{ secrets.MSSTORE_CLIENT_ID }}
+          MSSTORE_CLIENT_SECRET: ${{ secrets.MSSTORE_CLIENT_SECRET }}
+        run: |
+          msstore reconfigure --tenantId "$MSSTORE_TENANT_ID" --sellerId "$MSSTORE_SELLER_ID" --clientId "$MSSTORE_CLIENT_ID" --clientSecret "$MSSTORE_CLIENT_SECRET"
+          msstore publish ./pkg --inputFile pkg/*.msixupload --appId 9PPRKVR6W1W9

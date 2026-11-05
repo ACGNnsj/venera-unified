@@ -8,6 +8,7 @@ import 'package:venera_unified/features/reader/reader_controller.dart';
 import 'package:venera_unified/features/comic_source/comic_source.dart';
 import 'package:venera_unified/features/reader/chapter_comments.dart';
 import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/tv_reader_policy.dart';
 import 'package:venera_unified/foundation/wide_page_split.dart';
 import 'image_read.dart';
 
@@ -160,6 +161,9 @@ class ReaderImagesHost extends StatelessWidget {
           firstChapter: reader.isFirstChapterOfGroup,
           lastChapter: reader.isLastChapterOfGroup,
           preloadCount: appdata.settings.globalReaderSettings.preloadImageCount,
+          decodePixelBudget: appdata.settings.tvLowMemoryEnabled
+              ? TvReaderPolicy.decodePixels
+              : null,
           doubleTapCollect:
               appdata.settings.globalReaderSettings.quickCollectImage ==
               'DoubleTap',
@@ -242,6 +246,9 @@ class ReaderImagesHost extends StatelessWidget {
           lastChapter: reader.isLastChapterOfGroup,
           maxChapter: reader.maxChapter,
           preloadCount: appdata.settings.globalReaderSettings.preloadImageCount,
+          decodePixelBudget: appdata.settings.tvLowMemoryEnabled
+              ? TvReaderPolicy.decodePixels
+              : null,
           splitWideImages: splitWideImages,
           invertSplit: invertSplit,
           scrollSpeed: preferences.readerScrollSpeed,

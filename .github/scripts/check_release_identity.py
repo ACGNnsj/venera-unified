@@ -17,7 +17,8 @@ import re
 import sys
 from pathlib import Path
 
-BUNDLE_ID_RE = re.compile(r'^\s*applicationId\s*=?\s*"?([\w.\-]+)"?', re.MULTILINE)
+# applicationIdSuffix（如 TV flavor 的 ".tv"）是派生后缀，不计入基础身份。
+BUNDLE_ID_RE = re.compile(r'^\s*applicationId(?![\w])\s*=?\s*"?([\w.\-]+)"?', re.MULTILINE)
 NS_BUNDLE_RE = re.compile(
     r"^\s*PRODUCT_BUNDLE_IDENTIFIER\s*=\s*([\w.\-]+);?", re.MULTILINE
 )
