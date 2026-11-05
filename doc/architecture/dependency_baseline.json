@@ -1137,6 +1137,7 @@
     "foundation/image_provider/read_image.dart",
     "foundation/image_provider/reader_image.dart",
     "foundation/image_provider/reader_image_processing.dart",
+    "foundation/image_provider/upscale/anime4k_native.dart",
     "foundation/image_provider/upscale/anime4k_service.dart",
     "foundation/image_provider/upscale/anime4k_upscaler.dart",
     "foundation/image_provider/upscale/anime4k_v4_model_manager.dart",
