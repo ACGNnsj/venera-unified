@@ -1164,6 +1164,7 @@
     "foundation/image_translation/translation_targets.dart",
     "foundation/image_translation/translation_types.dart",
     "foundation/image_translation/worker_pool_selection.dart",
+    "foundation/image_transpose_native.dart",
     "foundation/image_work.dart",
     "foundation/init.dart",
     "foundation/js_engine.dart",
