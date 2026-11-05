@@ -32,6 +32,11 @@ target 'Runner' do
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  # Hand-rolled venera Rust static libraries, built by CI
+  # (.github/scripts/build_venera_native.py ios) into VeneraNativeLibs/.
+  # Local builds need the .a files too: run the same script (requires the
+  # aarch64-apple-ios Rust target) before pod install.
+  pod 'venera_native_libs', :path => 'VeneraNativeLibs'
   #target 'RunnerTests' do
   #  inherit! :search_paths
   #end

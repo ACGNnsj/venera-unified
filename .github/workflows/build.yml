@@ -110,6 +110,8 @@ jobs:
             --target aarch64-linux-android \
             --target armv7-linux-androideabi \
             --target x86_64-linux-android
+      - name: 构建 venera 原生库并装入 jniLibs
+        run: python3 .github/scripts/build_venera_native.py android
       - name: 配置 Gradle 插件仓库
         run: |
           mkdir -p ~/.gradle/init.d
@@ -186,6 +188,8 @@ jobs:
           key: windows-build-${{ runner.os }}-${{ hashFiles('pubspec.lock', 'windows/**', 'packages/**') }}
           restore-keys: |
             windows-build-${{ runner.os }}-
+      - name: 准备 Rust 工具链
+        run: python .github/scripts/prepare_rust_toolchain.py
       - name: 构建 Windows 安装包
         env:
           # 仓库变量为空时 build.py 回落到侧载默认身份；提交商店前在仓库
@@ -395,6 +399,14 @@ jobs:
         run: rustup show
       - name: 构建 Flutter macOS 应用
         run: flutter build macos --release
+      - name: 构建 venera 原生库并装入 Frameworks
+        run: |
+          app_path=$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)
+          if [ -z "$app_path" ]; then
+            echo "::error::未找到 .app 产物"
+            exit 1
+          fi
+          python3 .github/scripts/build_venera_native.py macos --out "$app_path/Contents/Frameworks"
       - name: 创建 DMG
         run: |
           mkdir -p dist
@@ -451,6 +463,8 @@ jobs:
           echo "RUSTUP_LOCK_FILE=$RUNNER_TEMP/venera-rustup.lock" >> "$GITHUB_ENV"
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - run: flutter pub get --enforce-lockfile
+      - name: 构建 venera 静态库
+        run: python3 .github/scripts/build_venera_native.py ios --out ios/VeneraNativeLibs
       - name: 构建 iOS 应用
         run: |
           APP_VERSION=$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | tr -d '\r\n')

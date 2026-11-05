@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 import hashlib
 import os
+import sys
 import platform
 import re
 import shutil
@@ -336,6 +337,20 @@ def _is_arm64_host():
     ).upper() == "ARM64"
 
 
+def build_venera_native(arch="x64"):
+    # Hand-rolled venera_* Rust crates: stage the DLLs next to the exe so
+    # the zip/installer/MSIX pick them up and the dart:ffi binding resolves
+    # them via the exe directory. Runs after `flutter build windows` because
+    # clean_windows_runner_build wipes runner/ before the build.
+    runner, _, _ = architecture_paths(arch)
+    script = ROOT / ".github" / "scripts" / "build_venera_native.py"
+    subprocess.run(
+        [sys.executable, str(script), "windows",
+         "--out", str(runner / "Release")],
+        check=True, cwd=ROOT,
+    )
+
+
 def main(arch="x64"):
     architecture_paths(arch)
     version = read_version()
@@ -352,6 +367,7 @@ def main(arch="x64"):
             f"(this host reports {platform.machine()!r})"
         )
     run(["flutter", "build", "windows"])
+    build_venera_native(arch)
     create_portable_zip(version, arch)
     build_installer(version, arch)
     create_msix(version, arch)

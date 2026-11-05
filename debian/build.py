@@ -78,6 +78,19 @@ def package_bundle(bundle, output, arch, version):
     return package
 
 
+def build_venera_native(arch):
+    # Hand-rolled venera_* Rust crates: stage the .so files into bundle/lib
+    # so the dart:ffi binding resolves them via the exe-relative absolute
+    # path. Runs after `flutter build linux` creates the bundle.
+    release = ROOT / "build/linux" / arch / "release"
+    script = ROOT / ".github/scripts/build_venera_native.py"
+    subprocess.run(
+        [sys.executable, str(script), "linux",
+         "--out", str(release / "bundle/lib")],
+        cwd=ROOT, check=True,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("arch", choices=DEBIAN_ARCHES)
@@ -88,6 +101,7 @@ def main():
         raise ValueError("Missing pubspec version")
     if not args.skip_build:
         subprocess.run(["flutter", "build", "linux", "--release", "--no-pub"], cwd=ROOT, check=True)
+    build_venera_native(args.arch)
     release = ROOT / "build/linux" / args.arch / "release"
     print(package_bundle(release / "bundle", release / "debian", args.arch, match[1]))
 

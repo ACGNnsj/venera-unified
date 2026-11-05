@@ -38,6 +38,10 @@ app.*.symbols
 # 混淆相关
 app.*.map.json
 
+# venera 原生库由 CI 现场构建，不入库。
+/android/app/src/main/jniLibs/
+/ios/VeneraNativeLibs/*.a
+
 # Android Studio 会在这些位置放置构建产物
 /android/.kotlin/
 /android/app/debug
