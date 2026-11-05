@@ -252,8 +252,8 @@ void main() {
       isTrue,
       reason: 'native must win all $iters preprocess runs',
     );
-    // 2026-11-05 用户裁决A：CI硬件稳定弱一档（2.70/2.97x vs 本机3.9x+），门槛3.0→2.5，像素+全胜+pipe门不动。
-    expect(preSpeedup, greaterThanOrEqualTo(2.5), reason: 'preprocess <2.5x');
+    // 2026-11-05 用户裁决：CI三轮2.70/2.97/2.49x，2.5线切在分布中间无余量→2.0（CI地板2.49上有0.5余量），像素+全胜+pipe门不动。
+    expect(preSpeedup, greaterThanOrEqualTo(2.0), reason: 'preprocess <2.0x');
     expect(pipeSpeedup, greaterThanOrEqualTo(1.5), reason: 'pipe <1.5x');
   });
 }
