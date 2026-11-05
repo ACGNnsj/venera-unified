@@ -72,7 +72,7 @@ double _ms(Stopwatch c) => c.elapsedMicroseconds / 1000;
 }
 
 void main() {
-  test('inpaint native matches Dart pixels and is >=3x faster', () {
+  test('inpaint native matches Dart pixels and is >=2x faster', () {
     if (!InpaintNative.available) {
       markTestSkipped('venera_inpaint not built for this platform');
     }
@@ -158,6 +158,7 @@ void main() {
         'speedup': speedup,
       }),
     );
-    expect(speedup, greaterThanOrEqualTo(3.0), reason: 'native <3x Dart');
+    // 2026-11-05 用户裁决（同OCR原则）：CI 2.43x vs 本机3.28x，门槛3.0→2.0，像素一致断言不动。
+    expect(speedup, greaterThanOrEqualTo(2.0), reason: 'native <2x Dart');
   });
 }
