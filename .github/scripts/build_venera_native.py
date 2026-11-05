@@ -59,7 +59,9 @@ def artifact(crate, target, ext):
     stem = name if ext == ".dll" else "lib" + name
     if ext == ".a":
         stem = "lib" + name
-    path = ROOT / crate / "target" / (target or "release") / (stem + ext)
+    # Cross builds land in target/<triple>/release/, host builds in target/release/.
+    sub = (target + "/release") if target else "release"
+    path = ROOT / crate / "target" / sub / (stem + ext)
     if not path.is_file() or path.stat().st_size == 0:
         raise RuntimeError("missing native artifact: " + str(path))
     return path
@@ -131,7 +133,7 @@ def cmd_macos(args):
         for target in ("aarch64-apple-darwin", "x86_64-apple-darwin"):
             cargo_build(crate, target)
             parts.append(str(artifact(crate, target, ".dylib")))
-        name = "libvenera_" + Path(crate).name + ".dylib"
+        name = Path(parts[0]).name
         run(["lipo", "-create"] + parts + ["-output", str(out / name)])
         print("staged: " + str(out / name), flush=True)
 
