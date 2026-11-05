@@ -1,0 +1,57 @@
+name: HarmonyOS 空白包
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: harmonyos-blank-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  blank-hap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      CI: 'true'
+      PYTHONUNBUFFERED: '1'
+      PUB_HOSTED_URL: https://pub.dev
+      FLUTTER_STORAGE_BASE_URL: https://storage.flutter-io.cn
+      FLUTTER_OHOS_STORAGE_BASE_URL: https://flutter-ohos.obs.cn-south-1.myhuaweicloud.com
+      FLUTTER_GIT_URL: https://gitcode.com/CPF-Flutter/flutter_flutter.git
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: 安装 checksum 钉死的鸿蒙命令行 SDK
+        run: |
+          python3 tool/harmonyos/ci_sdk.py \
+            --destination "$RUNNER_TEMP/harmony-sdk" \
+            --downloads "$RUNNER_TEMP/harmony-downloads" \
+            --report build/harmonyos/ci/sdk.json
+      - name: 安装钉版 flutter_ohos
+        run: |
+          sdk="$RUNNER_TEMP/flutter-oh"
+          tag="$(python3 -c 'import json; print(json.load(open("tool/harmonyos/toolchain.json"))["blankStage"]["flutter"]["tag"])')"
+          revision="$(python3 -c 'import json; print(json.load(open("tool/harmonyos/toolchain.json"))["blankStage"]["flutter"]["revision"])')"
+          git clone --filter=blob:none --sparse --depth 1 --branch "$tag" "$FLUTTER_GIT_URL" "$sdk"
+          git -C "$sdk" sparse-checkout set bin packages dev examples
+          test "$(git -C "$sdk" rev-parse HEAD)" = "$revision"
+          echo "$sdk/bin" >> "$GITHUB_PATH"
+          "$sdk/bin/flutter" --version
+          "$sdk/bin/flutter" precache --ohos
+      - name: 构建并审计空白 unsigned HAP
+        run: python3 tool/harmonyos/ci_blank.py --flutter-sdk "$RUNNER_TEMP/flutter-oh" --work build/harmonyos/blank-ci
+      - uses: actions/upload-artifact@v7
+        with:
+          name: blank_unsigned_hap
+          path: build/harmonyos/blank-ci/blank/build/ohos/hap/*-unsigned.hap
+          if-no-files-found: error
+          retention-days: 7

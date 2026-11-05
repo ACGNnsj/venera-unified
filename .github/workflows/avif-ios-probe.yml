@@ -1,0 +1,156 @@
+name: "AVIF iOS 模拟器探测"
+
+# iOS 只能跑在 macOS 上，本机是 Windows，所以放在 CI。
+# 不用 `flutter test -d <simulator>`：Xcode build 完成后它会一直等 VM service 连接，
+# 实测整 25 分钟无新日志（run 41214419620，Xcode build done 827s 之后卡死）。
+# 改为 flutter build --simulator + simctl install/launch + 抓 console，输出六个 AVIF_PROBE 行。
+# 手动 dispatch，不进 analyze 门禁（只 print 不断言）。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-probe:
+    name: iOS simulator
+    runs-on: macos-15
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version-file: pubspec.yaml
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - name: 准备 Rust 工具链
+        # rhttp 的 cargokit 会在构建中隐式 rustup target add，Xcode 并行构建多个架构时
+        # 会撞 rustup 下载竞态（could not rename 'downloaded' file ...），所以这里按
+        # Build_IOS 的做法先装好目标，并在下一步把 rustup 换成串行化包装。
+        run: |
+          python3 .github/scripts/prepare_rust_toolchain.py \
+            --target aarch64-apple-ios-sim \
+            --target aarch64-apple-ios \
+            --target x86_64-apple-ios
+      - name: 串行化 Rustup 安装操作
+        run: |
+          mkdir -p "$HOME/.cargo/bin"
+          install "$(command -v rustup)" "$RUNNER_TEMP/rustup"
+          rm -f "$HOME/.cargo/bin/rustup"
+          install .github/scripts/serialized_rustup.py "$HOME/.cargo/bin/rustup"
+          chmod +x "$HOME/.cargo/bin/rustup"
+          echo "RUSTUP_REAL_BINARY=$RUNNER_TEMP/rustup" >> "$GITHUB_ENV"
+          echo "RUSTUP_LOCK_FILE=$RUNNER_TEMP/venera-rustup.lock" >> "$GITHUB_ENV"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - name: 启动 iOS 模拟器
+        id: sim
+        # 不能随便挑第一台 iPhone：iOS 18.5 运行时缺 /usr/lib/swift/libswiftWebKit.dylib，
+        # flutter_inappwebview_ios 一启动就 dyld 崩（run 41217870742）。这里只选
+        # runtimeRoot 里真带这个库的运行时，并按版本从高到低挑（实测 18.6 / 26.x 都有）。
+        run: |
+          set -euo pipefail
+          # simctl 的 runtimes -j 不保证带 runtimeRoot，实测只能靠 bundlePath 拼
+          # Contents/Resources/RuntimeRoot；两条路都试，避免又把候选过滤成空。
+          # 诊断与选择结果都打到 stdout：上一版写 stderr + 重定向，失败时日志只剩空错误。
+          CHOICE=$(python3 - <<'PY'
+          import json, os, subprocess, sys, traceback
+
+          def simctl(*args):
+              return json.loads(subprocess.check_output(["xcrun", "simctl", *args, "-j"]))
+
+          def runtime_root(rt):
+              candidates = [rt.get("runtimeRoot")]
+              bundle = rt.get("bundlePath")
+              if bundle:
+                  candidates.append(os.path.join(bundle, "Contents/Resources/RuntimeRoot"))
+              for c in candidates:
+                  if c and os.path.isdir(c):
+                      return c
+              return ""
+
+
+          try:
+              runtimes = simctl("list", "runtimes")["runtimes"]
+
+              def has_dylib(rt):
+                  root = runtime_root(rt)
+                  return bool(root) and os.path.exists(
+                      os.path.join(root, "usr/lib/swift/libswiftWebKit.dylib"))
+
+              for rt in runtimes:
+                  print("候选", rt.get("name"), rt.get("identifier"), rt.get("isAvailable"),
+                        "dylib=%s" % has_dylib(rt), runtime_root(rt))
+
+              # platform 字段在部分 simctl 版本缺失，改用 identifier 里的 .iOS- 判族。
+              usable = [r for r in runtimes
+                        if r.get("isAvailable") and ".iOS-" in r.get("identifier", "")
+                        and has_dylib(r)]
+              if not usable:
+                  raise SystemExit("没有自带 libswiftWebKit.dylib 的可用 iOS 运行时")
+
+              def version_key(rt):
+                  return tuple(int(p) for p in rt["version"].replace("-", ".").split(".") if p.isdigit())
+
+              chosen = max(usable, key=version_key)
+              devicetypes = simctl("list", "devicetypes")["devicetypes"]
+              iphones = [d["identifier"] for d in devicetypes if "iPhone" in d["identifier"]]
+              if not iphones:
+                  raise SystemExit("没有可用的 iPhone 设备类型")
+              print("选择", chosen.get("name"), chosen["identifier"], iphones[0])
+              # 直接打标记行由 bash 抓：上一版写 /tmp 文件再 test -s，失败时日志里连
+              # ::error:: 都留不下（run 41226058893 选了 iOS 26.2 后 8ms 就退出）。
+              print("CHOICE_RUNTIME=" + chosen["identifier"])
+              print("CHOICE_DEVTYPE=" + iphones[0])
+              print("CHOICE_NAME=" + chosen["name"])
+          except BaseException:
+              traceback.print_exc()
+              sys.exit(1)
+          PY
+          )
+          printf '%s\n' "$CHOICE"
+          RUNTIME=$(printf '%s\n' "$CHOICE" | grep '^CHOICE_RUNTIME=' | cut -d= -f2- || true)
+          DEVTYPE=$(printf '%s\n' "$CHOICE" | grep '^CHOICE_DEVTYPE=' | cut -d= -f2- || true)
+          NAME=$(printf '%s\n' "$CHOICE" | grep '^CHOICE_NAME=' | cut -d= -f2- || true)
+          if [ -z "$RUNTIME" ] || [ -z "$DEVTYPE" ]; then
+            echo "::error::没能选出带 libswiftWebKit 的 iOS 运行时"
+            exit 1
+          fi
+          # 全角括号紧跟变量名会被 bash 吞进标识符（line 68: NAME： unbound variable）。
+          echo "选中运行时：${NAME}（${RUNTIME}）设备类型 ${DEVTYPE}"
+          UDID=$(xcrun simctl create AVIFProbe "$DEVTYPE" "$RUNTIME")
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: 运行探针
+        # 走 flutter test -d：手工 simctl launch 的 debug 包拿不到 Dart 的 print
+        # （run 41227883703 的 console.log 只有两行原生日志），而 flutter test
+        # 会把 integration_test 的 print 直接回流到 job 日志。
+        run: |
+          set -uo pipefail
+          UDID="${{ steps.sim.outputs.udid }}"
+          flutter test integration_test/avif_codec_probe_test.dart -d "$UDID" \
+            2>&1 | tee console.log || true
+          # 假绿防线：拿不到 6 个样本就让 job 变红，别让崩掉的 app 冒充成功。
+          COUNT=$(grep -ac 'AVIF_PROBE' console.log 2>/dev/null || true)
+          COUNT=${COUNT:-0}
+          echo "AVIF_PROBE 行数：${COUNT}"
+          if [ "${COUNT}" -lt 6 ]; then
+            echo '--- 进程日志 ---'
+            xcrun simctl spawn "$UDID" log show --last 5m --style compact 2>/dev/null \
+              | grep -a -i -E 'Runner|dyld|libswiftWebKit|AVIF' | tail -60 || true
+            echo '--- 崩溃报告 ---'
+            ls -t ~/Library/Logs/DiagnosticReports 2>/dev/null | head -5 || true
+            echo "::error::未收到 6 个 AVIF 样本结果（实际 ${COUNT}）"
+            exit 1
+          fi
+      - name: 保存日志
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: avif-ios-probe-log
+          path: |
+            *.log
+          if-no-files-found: ignore
+          retention-days: 7

@@ -10,6 +10,8 @@ import 'package:photo_view/photo_view.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:venera_unified/components/gesture.dart';
 import 'package:venera_unified/features/reader/image_downloads.dart';
+import 'package:venera_unified/features/reader/image_precache.dart';
+import 'package:venera_unified/foundation/missing_download_page.dart';
 import 'package:venera_unified/foundation/image_work.dart';
 import 'package:venera_unified/features/reader/image_position.dart';
 import 'package:venera_unified/features/reader/comic_image.dart';
@@ -86,6 +88,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
         AutoReadingViewport,
         AutoReadingImageViewport {
   late var _imageDownloads = ReaderImageDownloads(work: widget.imageWork);
+  late var _imagePrecache = ReaderImagePrecache(work: widget.imageWork);
 
   @override
   (int, int)? get currentImageRange => (currentPage - 1, currentPage);
@@ -348,7 +351,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
       if (!isCurrent()) return;
       itemScrollController.jumpTo(index: index);
       _futurePosition = null;
-      cacheImages(index);
+      cacheImages(index, index);
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (isCurrent()) {
           _isNavigatingWaterfallLocation = false;
@@ -368,7 +371,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
     cached = List.filled(maxPage + 2, false);
     _initialCacheTimer = Timer(
       const Duration(milliseconds: 100),
-      () => cacheImages(currentPage),
+      () => cacheImages(currentPage, currentPage),
     );
     super.initState();
   }
@@ -383,7 +386,9 @@ class ContinuousModeState extends State<ReaderContinuousView>
         oldWidget.data.maxChapter != data.maxChapter ||
         oldWidget.data.crossChapter != data.crossChapter) {
       unawaited(_imageDownloads.dispose());
+      unawaited(_imagePrecache.dispose());
       _imageDownloads = ReaderImageDownloads(work: widget.imageWork);
+      _imagePrecache = ReaderImagePrecache(work: widget.imageWork);
       unawaited(_waterfall.dispose());
       _waterfall = _createWaterfall();
       _isRestoringPrependedSegmentPosition = false;
@@ -412,6 +417,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
     _releaseWaterfallLoading?.call(notify: false);
     unawaited(_waterfall.dispose());
     unawaited(_imageDownloads.dispose());
+    unawaited(_imagePrecache.dispose());
     itemPositionsListener.itemPositions.removeListener(onPositionChanged);
     unawaited(_photoPositionSubscription?.cancel());
     photoViewController.dispose();
@@ -551,7 +557,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
       firstVisible = math.min(firstVisible, image.index);
       lastVisible = math.max(lastVisible, image.index);
     }
-    cacheImages(lastVisible);
+    cacheImages(firstVisible, lastVisible);
     if (crossChapter) {
       _ensureWaterfallImagesBefore(firstVisible);
       _ensureWaterfallImagesAfter(lastVisible);
@@ -757,9 +763,80 @@ class ContinuousModeState extends State<ReaderContinuousView>
     );
   }
 
-  void cacheImages(int current) {
+  /// Decoded-image lookahead, decoupled from the encoded prefetch count.
+  /// TV low memory arrives as a decode budget (see images_host) and only
+  /// precaches a single neighbour; regular devices take two. Zero disables
+  /// decoded prefetch while encoded prefetch keeps running.
+  int get _decodedAhead {
+    final cap = data.decodePixelBudget != null ? 1 : 2;
+    if (preCacheCount <= 0) return 0;
+    return preCacheCount < cap ? preCacheCount : cap;
+  }
+
+  void _precacheDecode(WaterfallImageRef image) {
+    final key = image.imageKey;
+    // Error-page gate: placeholders and local files need no decoded prefetch.
+    if (key.startsWith('file://') ||
+        key.startsWith(missingDownloadPagePrefix)) {
+      return;
+    }
+    // Pixel guards live inside the provider (TV decodeSize, maxImagePixel,
+    // 8192 absolute edge); byte-size gating needs decoded dimensions this
+    // view does not hold, so no ImageInfo is retained here by design.
+    final provider = ReaderImageProvider(
+      key,
+      data.sourceKey,
+      data.comicId,
+      image.position.chapterId,
+      image.position.imageNumber,
+      enableResize: true,
+      decodePixelBudget: data.decodePixelBudget,
+      diagnostics: widget.imageWork.diagnostics,
+    );
+    final diagnostics = widget.imageWork.diagnostics;
+    if (diagnostics != null) {
+      final before = PaintingBinding.instance.imageCache.statusForKey(provider);
+      diagnostics.recordCache(
+        provider.hashCode,
+        pending: before.pending,
+        keepAlive: before.keepAlive,
+        live: before.live,
+      );
+    }
+    _imagePrecache.preload(provider, createLocalImageConfiguration(context));
+    if (diagnostics != null) {
+      final after = PaintingBinding.instance.imageCache.statusForKey(provider);
+      diagnostics.recordCache(
+        provider.hashCode,
+        pending: after.pending,
+        keepAlive: after.keepAlive,
+        live: after.live,
+      );
+    }
+  }
+
+  void _precacheNeighbour(int index) {
+    final imageRef = _imageRefAt(index);
+    if (imageRef == null) return;
+    if (!crossChapter && index > maxPage) return;
+    // Decoded entries are deduplicated by ImageCache key and released by the
+    // existing post-frame release + LRU, so segment.cached stays encoded-only.
+    _precacheDecode(imageRef);
+  }
+
+  void cacheImages(int firstVisible, int lastVisible) {
     if (!mounted) return;
-    for (int i = current + 1; i <= current + preCacheCount; i++) {
+    for (int i = firstVisible - _decodedAhead; i < firstVisible; i++) {
+      _precacheNeighbour(i);
+    }
+    for (int i = lastVisible + 1; i <= lastVisible + _decodedAhead; i++) {
+      _precacheNeighbour(i);
+    }
+    for (
+      int i = lastVisible + _decodedAhead + 1;
+      i <= lastVisible + preCacheCount;
+      i++
+    ) {
       if (crossChapter) {
         var imageRef = _imageRefAt(i);
         if (imageRef == null) continue;
@@ -952,6 +1029,8 @@ class ContinuousModeState extends State<ReaderContinuousView>
           imageRef.position.chapterId,
           imageRef.position.imageNumber,
           enableResize: true,
+          decodePixelBudget: data.decodePixelBudget,
+          diagnostics: this.widget.imageWork.diagnostics,
         );
 
         var comicImage = SizeChangedLayoutNotifier(

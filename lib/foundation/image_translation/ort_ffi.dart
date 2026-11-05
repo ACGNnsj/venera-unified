@@ -58,8 +58,10 @@ class OrtRuntime {
     } else if (Platform.isAndroid) {
       candidates.add(() => 'libonnxruntime.so');
     } else if (Platform.isLinux) {
-      candidates.add(() => 'libonnxruntime.so');
+      // Try the soname first: it matches the copy the plugin already loaded,
+      // avoiding a second copy of the runtime in this process (VeneraX@51bbdd4d).
       candidates.add(() => 'libonnxruntime.so.1');
+      candidates.add(() => 'libonnxruntime.so');
     } else {
       candidates.add(() => 'libonnxruntime.dylib');
     }

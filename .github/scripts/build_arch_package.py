@@ -225,6 +225,10 @@ def main() -> None:
     keywords = _required_string(config, "keywords")
     url = _required_string(config, "url")
     depends = _required_list(config, "depends")
+    # The reader's Linux AVIF fallback dlopens the system decoder, so a package
+    # that forgets the dependency installs cleanly and then fails at runtime.
+    if "libavif" not in depends:
+        raise RuntimeError(f"{package_name} package does not depend on libavif: {depends}")
 
     desktop_content = _desktop_file(
         display_name="VeneraUnified",

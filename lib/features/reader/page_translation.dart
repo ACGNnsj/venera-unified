@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:venera_unified/components/appbar.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/image_translation/ocr_engine.dart';
@@ -11,10 +12,21 @@ import 'package:venera_unified/foundation/translations.dart';
 
 /// One recognized block paired with its translation, in reading order.
 class TranslatedBlock {
-  TranslatedBlock({required this.source, required this.translation});
+  TranslatedBlock({
+    required this.source,
+    required this.translation,
+    required this.rect,
+    required this.imageWidth,
+    required this.imageHeight,
+  });
 
   final String source;
   final String translation;
+
+  /// OCR box in source-image pixels; the image is [imageWidth]x[imageHeight].
+  final IntRect rect;
+  final int imageWidth;
+  final int imageHeight;
 }
 
 /// Translates one reader page: OCR the image, then machine-translate the
@@ -94,10 +106,17 @@ class _PageTranslationPageState extends State<PageTranslationPage> {
       return;
     }
     if (!mounted) return;
+    final decoded = img.decodeImage(widget.imageBytes);
     setState(() {
       _blocks = [
         for (var i = 0; i < blocks.length; i++)
-          TranslatedBlock(source: blocks[i].text, translation: translated[i]),
+          TranslatedBlock(
+            source: blocks[i].text,
+            translation: translated[i],
+            rect: blocks[i].rect,
+            imageWidth: decoded?.width ?? 1,
+            imageHeight: decoded?.height ?? 1,
+          ),
       ];
       _stage = _Stage.done;
     });
@@ -161,21 +180,30 @@ class _PageTranslationPageState extends State<PageTranslationPage> {
         final block = _blocks[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  block.source,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: context.colorScheme.onSurfaceVariant,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => context.to(
+              () => _BlockHighlightPage(
+                imageBytes: widget.imageBytes,
+                block: block,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    block.source,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-                const Divider(height: 16),
-                SelectableText(block.translation),
-              ],
+                  const Divider(height: 16),
+                  SelectableText(block.translation),
+                ],
+              ),
             ),
           ),
         );
@@ -200,6 +228,71 @@ class _PageTranslationPageState extends State<PageTranslationPage> {
               label: Text('Retry'.tl),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shows the source image with one recognized block boxed, so a translation
+/// can be matched back to the bubble it came from. Tap anywhere to go back.
+class _BlockHighlightPage extends StatelessWidget {
+  const _BlockHighlightPage({required this.imageBytes, required this.block});
+
+  final Uint8List imageBytes;
+  final TranslatedBlock block;
+
+  @override
+  Widget build(BuildContext context) {
+    double clamp01(double v) => v.clamp(0.0, 1.0);
+    final left = clamp01(block.rect.left / block.imageWidth);
+    final top = clamp01(block.rect.top / block.imageHeight);
+    final right = clamp01(block.rect.right / block.imageWidth);
+    final bottom = clamp01(block.rect.bottom / block.imageHeight);
+    return Scaffold(
+      appBar: Appbar(title: Text('Locate on page'.tl)),
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => context.pop(),
+        child: Center(
+          child: SingleChildScrollView(
+            child: AspectRatio(
+              aspectRatio: block.imageWidth / block.imageHeight,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final w = constraints.maxWidth;
+                  final h = constraints.maxHeight;
+                  return Stack(
+                    children: [
+                      Image.memory(
+                        imageBytes,
+                        width: w,
+                        height: h,
+                        fit: BoxFit.fill,
+                      ),
+                      Positioned(
+                        left: left * w,
+                        top: top * h,
+                        width: (right - left) * w,
+                        height: (bottom - top) * h,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: context.colorScheme.error,
+                              width: 3,
+                            ),
+                            color: context.colorScheme.error.withValues(
+                              alpha: 0.15,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
         ),
       ),
     );

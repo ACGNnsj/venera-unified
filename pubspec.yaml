@@ -2,7 +2,7 @@ name: venera_unified
 description: "A comic app."
 publish_to: 'none'
 homepage: https://github.com/ACGNnsj/venera-unified
-version: 1.19.0+245
+version: 1.20.0-rc.1+246
 
 environment:
   sdk: '>=3.12.0 <4.0.0'
@@ -14,12 +14,12 @@ dependencies:
   path_provider: ^2.1.6
   intl: ^0.20.2
   window_manager: ^0.5.2
-  sqlite3: ^3.5.2
+  sqlite3: ^3.8.0
   flutter_qjs:
     git:
       url: https://github.com/CyrilPeng/flutter_qjs
-      ref: 8feae95df7fb00455df129ad7a0dfec1d0e8d8e4
-  crypto: ^3.0.7
+      ref: 295f77421eedff356a02e92987181b525970c780
+  crypto: ^3.0.8
   dio: ^5.11.1
   html: ^0.15.7
   pointycastle: ^4.0.0
@@ -84,7 +84,7 @@ dependencies:
   enough_convert: ^1.7.1
   display_mode: ^0.0.2
   flutter_staggered_grid_view: ^0.7.0
-  archive: ^4.5.2
+  archive: ^4.6.0
   image: ^4.12.0
   pdfrx: ^2.4.8
   xml: ^6.6.1
@@ -92,6 +92,7 @@ dependencies:
   mobile_scanner: ^7.4.2
   tray_manager: ^0.5.3
   ffi: ^2.2.0
+  unorm_dart: ^0.3.2
   # Native ONNX Runtime bundler for page translation (Dart bypasses its
   # channels via foundation/image_translation/ort_ffi.dart). Exact pin:
   # 1.9.0 ships ORT 1.28.x and requires iOS 16 (see task-41 report).
@@ -108,6 +109,8 @@ dependency_overrides:
   flutter_rust_bridge: 2.11.1
 
 flutter:
+  # 无 default-flavor：它是全局的，会污染 Windows/Linux 产物目录与 iOS/macOS scheme。
+  # Android 构建一律显式 --flavor mobile（见 build.yml / integration_test.yml）。
   uses-material-design: true
   assets:
     - pubspec.yaml
@@ -143,3 +146,5 @@ flutter_to_arch:
   depends:
     - gtk3
     - webkit2gtk-4.1
+    # Backs the reader's AVIF fallback (the Linux engine has no decoder).
+    - libavif

@@ -1,0 +1,60 @@
+# DRAFT — 未验证：flatpak-builder 跑通前不要提交到 Flathub。
+# 离线构建的三份输入缺口：
+#   1. flutter SDK 包的 sha256（填 FLUTTER_SHA256；取法见下）
+#   2. pub-cache 归档（flatpak-vendor.yml 产出，随 release 发布后填 URL+sha256）
+#   3. cargo-vendor + engine-artifacts 归档（同上）
+# FLUTTER_SHA256 取法：curl -sL \
+#   https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.8-stable.tar.xz.sha256
+app-id: io.github.venera.unified
+runtime: org.gnome.Platform
+runtime-version: '48'
+sdk: org.gnome.Sdk
+command: venera-unified
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --share=network
+  - --filesystem=home
+  - --talk-name=org.gtk.vfs.*
+modules:
+  - name: flutter-sdk
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/flutter && cp -r . /app/flutter
+    sources:
+      - type: archive
+        url: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.8-stable.tar.xz
+        sha256: TODO_FILL_FLUTTER_SHA256
+  - name: pub-cache
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /run/build/pub-cache && cp -r . /run/build/pub-cache
+    sources:
+      - type: file
+        url: TODO_RELEASE_URL/pub-cache-1.20.0.tar.gz
+        sha256: TODO_FILL_PUB_CACHE_SHA256
+  - name: cargo-vendor
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /run/build/cargo-vendor && cp -r . /run/build/cargo-vendor
+    sources:
+      - type: file
+        url: TODO_RELEASE_URL/cargo-vendor-1.20.0.tar.gz
+        sha256: TODO_FILL_CARGO_VENDOR_SHA256
+  - name: venera-unified
+    buildsystem: simple
+    build-commands:
+      - export PATH=/app/flutter/bin:$PATH FLUTTER_ROOT=/app/flutter
+      - export PUB_CACHE=/run/build/pub-cache CARGO_NET_OFFLINE=true
+      - flutter config --no-analytics
+      - flutter pub get --offline
+      - flutter build linux --release --no-pub
+      - install -Dm755 build/linux/x64/release/bundle/venera-unified /app/bin/venera-unified
+      - cp -r build/linux/x64/release/bundle/lib /app/lib/venera-unified
+      - cp -r build/linux/x64/release/bundle/data /app/share/venera-unified
+    sources:
+      - type: git
+        url: https://github.com/ACGNnsj/venera-unified.git
+        tag: v1.20.0

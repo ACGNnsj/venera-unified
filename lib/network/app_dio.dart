@@ -14,6 +14,7 @@ import 'package:venera_unified/network/proxy.dart';
 import '../foundation/app.dart';
 import 'cloudflare.dart';
 import 'cookie_jar.dart';
+import 'host_pacing.dart';
 import 'image_http3_fallback.dart';
 import 'rhttp_stream_request.dart';
 
@@ -169,6 +170,7 @@ class AppDio with DioMixin {
         CookieManagerSql.dynamic(() => SingleInstanceCookieJar.instance),
       );
       interceptors.add(CloudflareInterceptor());
+      interceptors.add(HostPacingInterceptor());
       interceptors.add(MyLogInterceptor());
       interceptors.add(cache);
     }

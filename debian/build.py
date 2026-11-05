@@ -28,7 +28,9 @@ def stage_package(bundle, stage, arch, version):
         f"Version: {deb_version}\n"
         f"Architecture: {DEBIAN_ARCHES[arch]}\n"
         "Section: graphics\nPriority: optional\n"
-        "Depends: libwebkit2gtk-4.1-0, libgtk-3-0\n"
+        # libavif backs the reader's AVIF fallback: the Linux engine cannot
+        # decode AVIF itself, so the package must pull in the system decoder.
+        "Depends: libwebkit2gtk-4.1-0, libgtk-3-0, libavif16\n"
         "Maintainer: CyrilPeng <https://github.com/ACGNnsj/venera-unified>\n"
         "Description: Venera Unified comic reader\n",
         encoding="utf-8",
@@ -41,6 +43,18 @@ def stage_package(bundle, stage, arch, version):
     icons = stage / "usr/share/icons/hicolor/256x256/apps"
     icons.mkdir(parents=True)
     shutil.copyfile(ROOT / "debian/gui/venera-unified.png", icons / "venera-unified.png")
+
+
+def verify_avif_dependency(package):
+    """Fail the build when the shipped control file drops the AVIF decoder."""
+    requires = subprocess.run(
+        ["dpkg-deb", "--field", str(package), "Depends"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    if "libavif16" not in requires:
+        raise RuntimeError(f"{package.name} does not depend on libavif16: {requires.strip()}")
 
 
 def package_bundle(bundle, output, arch, version):
@@ -57,6 +71,10 @@ def package_bundle(bundle, output, arch, version):
         )
         # Do not replace an existing artifact until dpkg-deb succeeds.
         shutil.copyfile(temporary_package, package)
+    # The reader's Linux AVIF fallback dlopens the system decoder, so a package
+    # that forgets libavif16 installs cleanly and then silently fails to decode
+    # AVIF. Assert the shipped control file rather than trusting the template.
+    verify_avif_dependency(package)
     return package
 
 

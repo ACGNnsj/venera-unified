@@ -85,7 +85,7 @@ Release: {build}
 Summary: VeneraUnified comic reader
 License: GPL-3.0-only
 URL: https://github.com/ACGNnsj/venera-unified
-Requires: gtk3, webkit2gtk4.1
+Requires: gtk3, webkit2gtk4.1, libavif
 
 %description
 A cross-platform comic reader with JavaScript source extensions and local reading.
@@ -103,6 +103,18 @@ install -m644 "%{{_sourcedir}}/venera-unified.png" "%{{buildroot}}/usr/share/ico
 /usr/share/applications/venera-unified.desktop
 /usr/share/icons/hicolor/256x256/apps/venera-unified.png
 """
+
+
+def verify_rpm_avif_requirement(package):
+    """Fail the build when the shipped RPM drops the AVIF decoder requirement."""
+    requires = subprocess.run(
+        ["rpm", "-qp", "--requires", str(package)],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    if not any(line.strip().split("(")[0] == "libavif" for line in requires.splitlines()):
+        raise RuntimeError(f"{package.name} does not require libavif: {requires.strip()}")
 
 
 def build_rpm(bundle, out, arch, version, work):
@@ -124,6 +136,9 @@ def build_rpm(bundle, out, arch, version, work):
     shutil.copyfile(packages[0], package)
     run("rpm", "-qip", package)
     run("rpm", "-qlp", package)
+    # The reader's Linux AVIF fallback dlopens the system decoder, so a package
+    # that forgets the requirement installs cleanly and then fails at runtime.
+    verify_rpm_avif_requirement(package)
 
 
 def download_verified(url, path, digest):

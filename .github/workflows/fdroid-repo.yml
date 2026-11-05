@@ -1,0 +1,68 @@
+name: F-Droid 自建仓
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "已发布的标签，例如 v1.20.0-rc.1（取其中的 universal APK）"
+        required: true
+        type: string
+
+concurrency:
+  group: fdroid-repo
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: 下载 universal APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p newapk
+          gh release download "${{ inputs.tag }}" --pattern "*-android.apk" --dir newapk
+          ls newapk
+      - name: 取回已发布的仓内容
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git clone --branch gh-pages "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" site 2>/dev/null || mkdir -p site
+          mkdir -p site/fdroid/repo
+      - name: 安装 fdroidserver
+        run: pip install fdroidserver
+      - name: 生成索引
+        env:
+          FDROID_KEYSTORE_B64: ${{ secrets.FDROID_KEYSTORE_B64 }}
+          FDROID_KEYSTORE_PASS: ${{ secrets.FDROID_KEYSTORE_PASS }}
+          FDROID_KEY_ALIAS: ${{ secrets.FDROID_KEY_ALIAS }}
+        run: |
+          cd site/fdroid
+          echo "$FDROID_KEYSTORE_B64" | base64 --decode > fdroid-repo.jks
+          cat > config.py <<EOF
+          repo_url = "https://acgnnsj.github.io/venera-unified/fdroid/repo"
+          repo_name = "VeneraUnified"
+          repo_description = "VeneraUnified comic reader"
+          keystore = "fdroid-repo.jks"
+          keystorepass = "$FDROID_KEYSTORE_PASS"
+          keypass = "$FDROID_KEYSTORE_PASS"
+          keyalias = "$FDROID_KEY_ALIAS"
+          EOF
+          cp ../../newapk/*.apk repo/
+          fdroid update
+          rm -f fdroid-repo.jks config.py
+      - name: 推回 gh-pages
+        run: |
+          cd site
+          git add -A
+          git -c user.name='github-actions[bot]' -c user.email='github-actions[bot]@users.noreply.github.com' commit -m "fdroid repo: ${{ inputs.tag }}" || exit 0
+          git push origin gh-pages

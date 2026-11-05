@@ -5,6 +5,7 @@ import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/reader_preferences.dart';
 import 'package:venera_unified/foundation/image_provider/upscale/upscale_gate.dart';
 import 'dart:async';
+import 'dart:collection';
 import 'package:path/path.dart' as p;
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
@@ -324,6 +325,10 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
   bool _isCurrentRun(int generation) =>
       _isRunning && generation == _runGeneration;
 
+  /// Task-level gate: at most 3 download tasks hold a running [_resume].
+  /// Same [_AsyncSemaphore] pattern as `cached_image.dart`.
+  static final _downloadTaskSlots = _DownloadTaskSemaphore(3);
+
   Future<void>? _resumeFuture;
 
   @visibleForTesting
@@ -397,16 +402,15 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
         if (_isCurrentRun(generation)) notifyListeners();
       },
     );
-    _resumeFuture = _resume(generation).catchError((
-      Object error,
-      StackTrace stack,
-    ) {
-      if (!_isCurrentRun(generation)) return;
-      Log.error('Download', error, stack);
-      // Snapshot/filesystem failures must stop prefetch and timers as well as
-      // the main loop, while leaving the queued task available for retry.
-      _setError('Error: $error');
-    });
+    _resumeFuture = _downloadTaskSlots
+        .withPermit(() => _resume(generation))
+        .catchError((Object error, StackTrace stack) {
+          if (!_isCurrentRun(generation)) return;
+          Log.error('Download', error, stack);
+          // Snapshot/filesystem failures must stop prefetch and timers as well as
+          // the main loop, while leaving the queued task available for retry.
+          _setError('Error: $error');
+        });
   }
 
   Future<void> _resume(int generation) async {
@@ -975,6 +979,31 @@ class _ImageDownloadWrapper {
       }
     }
     completers.clear();
+  }
+}
+
+/// Copy of the [_AsyncSemaphore] pattern in `cached_image.dart`:
+/// at most [maxConcurrent] holders run [task] concurrently.
+class _DownloadTaskSemaphore {
+  _DownloadTaskSemaphore(this.maxConcurrent);
+
+  final int maxConcurrent;
+  int _active = 0;
+  final _waiters = Queue<Completer<void>>();
+
+  Future<T> withPermit<T>(Future<T> Function() task) async {
+    if (_active >= maxConcurrent) {
+      final waiter = Completer<void>();
+      _waiters.add(waiter);
+      await waiter.future;
+    }
+    _active++;
+    try {
+      return await task();
+    } finally {
+      _active--;
+      if (_waiters.isNotEmpty) _waiters.removeFirst().complete();
+    }
   }
 }
 

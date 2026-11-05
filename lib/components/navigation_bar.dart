@@ -16,6 +16,7 @@ import 'consts.dart';
 import 'layout.dart'
     show wideScreenExpandedSideBarWidth, wideScreenFoldedSideBarWidth;
 import 'gesture.dart';
+import 'tv_navigation.dart';
 
 class PaneItemEntry {
   String label;
@@ -254,6 +255,7 @@ class NaviPaneState extends State<NaviPane>
 
   double targetFormContext(BuildContext context) {
     var width = MediaQuery.of(context).size.width;
+    if (TvNavigation.enabledOf(context)) return width >= 960 ? 3 : 2;
     double target = 0;
     if (width > changePoint) {
       target = 2;
@@ -331,8 +333,8 @@ class NaviPaneState extends State<NaviPane>
   }
 
   Widget buildMainView() {
-    return HeroControllerScope(
-      controller: MaterialApp.createMaterialHeroController(),
+    return _NaviHeroScope(
+      key: ValueKey(widget.navigatorKey),
       child: PopScope(
         canPop: _canPop,
         onPopInvokedWithResult: (didPop, result) {
@@ -475,6 +477,7 @@ class NaviPaneState extends State<NaviPane>
                   ...List<Widget>.generate(
                     widget.paneItems.length,
                     (index) => _SideNaviWidget(
+                      autofocus: TvNavigation.enabledOf(context) && index == 0,
                       enabled: currentPage == index,
                       entry: widget.paneItems[index],
                       showTitle: value == 3,
@@ -519,6 +522,7 @@ class _SideNaviWidget extends StatelessWidget {
     required this.entry,
     required this.onTap,
     required this.showTitle,
+    this.autofocus = false,
     super.key,
   });
 
@@ -529,18 +533,20 @@ class _SideNaviWidget extends StatelessWidget {
   final VoidCallback onTap;
 
   final bool showTitle;
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final icon = Icon(enabled ? entry.activeIcon : entry.icon);
     return ClickInkWell(
+      autofocus: autofocus,
       borderRadius: BorderRadius.circular(12),
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        height: 38,
+        height: TvNavigation.enabledOf(context) ? 48 : 38,
         decoration: BoxDecoration(
           color: enabled ? colorScheme.primaryContainer : null,
           borderRadius: BorderRadius.circular(12),
@@ -575,7 +581,7 @@ class _PaneActionWidget extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        height: 38,
+        height: TvNavigation.enabledOf(context) ? 48 : 38,
         child: showTitle
             ? Row(
                 children: [icon, const SizedBox(width: 12), Text(entry.label)],
@@ -990,6 +996,30 @@ class _NaviPopScopeState extends State<_NaviPopScope> {
       child: widget.child,
     );
   }
+}
+
+class _NaviHeroScope extends StatefulWidget {
+  const _NaviHeroScope({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  State<_NaviHeroScope> createState() => _NaviHeroScopeState();
+}
+
+class _NaviHeroScopeState extends State<_NaviHeroScope> {
+  // A flight must keep its observer through rebuilds and finish with its navigator.
+  late final _controller = MaterialApp.createMaterialHeroController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      HeroControllerScope(controller: _controller, child: widget.child);
 }
 
 class _NaviMainView extends StatefulWidget {

@@ -72,6 +72,18 @@ Future<void> _frame() async {
   await pumpEventQueue();
 }
 
+/// 图片解码跑在引擎线程上，单次 [_frame] 只保证事件队列空过一次，
+/// 机器一忙（CI 上 -j 6 并发）解码回调可能还没回来，断言就会看到 0 帧。
+/// 这里按条件反复抽帧，只有一直不满足才让调用方的 expect 失败并打出实际值。
+Future<void> _pumpUntil(bool Function() condition) async {
+  for (var attempt = 0; attempt < 200; attempt++) {
+    if (condition()) {
+      return;
+    }
+    await _frame();
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   var nextKey = 0;
@@ -187,8 +199,7 @@ void main() {
       expect(source.loads, 1);
       expect(frames, 0);
       release();
-      await pumpEventQueue();
-      await _frame();
+      await _pumpUntil(() => frames >= 2);
       expect(source.loads, 2);
       expect(frames, 2);
       expect(errors, isEmpty);

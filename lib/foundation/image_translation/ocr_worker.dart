@@ -200,7 +200,7 @@ class _OcrPageWorker {
       for (var box in tileBoxes) {
         box.top += top;
         box.bottom += top;
-        if (!boxes.any((b) => _iou(b, box) > 0.5)) {
+        if (keepBoxForTest(boxes, box)) {
           boxes.add(box);
         }
       }
@@ -269,27 +269,8 @@ class _OcrPageWorker {
     return parts.join(' ');
   }
 
-  String _ctcDecode(Float32List probs, int classes, List<String> charset) {
-    var steps = probs.length ~/ classes;
-    var buffer = StringBuffer();
-    var prev = 0;
-    for (var t = 0; t < steps; t++) {
-      var best = 0;
-      var bestScore = probs[t * classes];
-      for (var c = 1; c < classes; c++) {
-        var score = probs[t * classes + c];
-        if (score > bestScore) {
-          bestScore = score;
-          best = c;
-        }
-      }
-      if (best != 0 && best != prev && best < charset.length) {
-        buffer.write(charset[best]);
-      }
-      prev = best;
-    }
-    return buffer.toString().trim();
-  }
+  String _ctcDecode(Float32List probs, int classes, List<String> charset) =>
+      ctcDecodeForTest(probs, classes, charset);
 }
 
 // ===========================================================================
@@ -859,4 +840,64 @@ double _iou(IntRect a, IntRect b) {
   if (left >= right || top >= bottom) return 0;
   var inter = (right - left) * (bottom - top);
   return inter / (a.area + b.area - inter);
+}
+
+// ---- Rust C-ABI migration bridges (native/ocr_preprocess) ----
+// Each bridge below is the single source of truth for its hot loop:
+// the worker delegates to it, and the native test pins it against Rust.
+// Zero behavior change; ORT inference untouched.
+@visibleForTesting
+Uint8List resizeRegionForTest(
+  RgbaImage src,
+  IntRect region,
+  int outW,
+  int outH,
+) => _resizeRegion(src, region, outW, outH);
+
+@visibleForTesting
+({Float32List tensor, int width, int height}) detPreprocessForTest(
+  RgbaImage tile,
+) {
+  final d = _detPreprocess(tile);
+  return (tensor: d.tensor, width: d.width, height: d.height);
+}
+
+@visibleForTesting
+Float32List normalizeForTest(Uint8List resized, int outW, int outH) =>
+    _normalize(resized, outW, outH);
+
+@visibleForTesting
+String ctcDecodeForTest(Float32List probs, int classes, List<String> charset) {
+  var steps = probs.length ~/ classes;
+  var buffer = StringBuffer();
+  var prev = 0;
+  for (var t = 0; t < steps; t++) {
+    var best = 0;
+    var bestScore = probs[t * classes];
+    for (var c = 1; c < classes; c++) {
+      var score = probs[t * classes + c];
+      if (score > bestScore) {
+        bestScore = score;
+        best = c;
+      }
+    }
+    if (best != 0 && best != prev && best < charset.length) {
+      buffer.write(charset[best]);
+    }
+    prev = best;
+  }
+  return buffer.toString().trim();
+}
+
+@visibleForTesting
+bool keepBoxForTest(List<IntRect> kept, IntRect box) =>
+    !kept.any((b) => _iou(b, box) > 0.5);
+
+@visibleForTesting
+List<IntRect> dedupBoxesForTest(List<IntRect> boxes) {
+  final kept = <IntRect>[];
+  for (final box in boxes) {
+    if (keepBoxForTest(kept, box)) kept.add(box);
+  }
+  return kept;
 }

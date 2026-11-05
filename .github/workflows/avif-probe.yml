@@ -1,0 +1,41 @@
+name: "AVIF 宿主探测（Linux / macOS）"
+
+# 跑 tool/avif_codec_probe.dart（宿主引擎，只 print 不断言）与
+# test/foundation/avif_system_decoder_test.dart（Linux 的 libavif 兜底，断言非空）。
+# 手动 dispatch，不进 analyze 门禁；Windows 与 Android 模拟器的数据分别来自本机与 integration_test.yml。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-probe:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version-file: pubspec.yaml
+          architecture: x64
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - name: 安装系统 libavif（Linux 兜底依赖）
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libavif16
+      - name: 宿主 AVIF 探测
+        run: flutter test --no-pub tool/avif_codec_probe.dart
+      - name: Linux libavif 兜底解码
+        # 名为 skip 实为安装失败也算红：这个 workflow 已装好 libavif16。
+        env:
+          AVIF_REQUIRE_SYSTEM_LIB: ${{ runner.os == 'Linux' && '1' || '' }}
+        run: flutter test --no-pub test/foundation/avif_system_decoder_test.dart

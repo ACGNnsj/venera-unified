@@ -82,6 +82,17 @@ android {
         versionName = flutterVersionName
     }
 
+    flavorDimensions += "device"
+    productFlavors {
+        mobile {
+            dimension "device"
+        }
+        tv {
+            dimension "device"
+            applicationIdSuffix ".tv"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
@@ -102,15 +113,16 @@ android {
     applicationVariants.all { variant ->
         variant.outputs.all { output ->
             def abi = output.getFilter(com.android.build.OutputFile.ABI)
+            def platform = variant.flavorName == "tv" ? "android-tv" : "android"
             if (variant.buildType.name == "release") {
                 if (abi != null) {
-                    outputFileName = "VeneraUnified-${variant.versionName}-android-${abi}.apk"
+                    outputFileName = "VeneraUnified-${variant.versionName}-${platform}-${abi}.apk"
                     def abiVersionCode = project.ext.abiCodes.get(abi)
                     if (abiVersionCode != null) {
                         versionCodeOverride = variant.versionCode * 10 + abiVersionCode
                     }
                 } else {
-                    outputFileName = "VeneraUnified-${variant.versionName}-android.apk"
+                    outputFileName = "VeneraUnified-${variant.versionName}-${platform}.apk"
                     versionCodeOverride = variant.versionCode * 10
                 }
             } else if (variant.buildType.name == "debug") {
@@ -129,6 +141,64 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// ---------------------------------------------------------------------------
+// 16 KB page sizes (required for Android 15+/16 and Play uploads).
+// Every other native library we ship is already 16 KB aligned; the one that is
+// not comes from org.opencv:opencv:4.11.0, whose AAR bundles a 4 KB-aligned
+// libc++_shared.so. Drop that copy and ship the NDK r28 one instead, which is
+// built with 16 KB ELF page alignment.
+// ---------------------------------------------------------------------------
+def ndkSysrootAbi = [
+        'arm64-v8a'  : 'aarch64-linux-android',
+        'armeabi-v7a': 'arm-linux-androideabi',
+        'x86_64'     : 'x86_64-linux-android',
+        'x86'        : 'i686-linux-android',
+]
+def ndkLibcxxRoot = new File(buildDir, 'ndk-libcxx')
+
+def prepareNdkLibcxx = tasks.register('prepareNdkLibcxx') {
+    outputs.dir(ndkLibcxxRoot)
+    doLast {
+        def prebuiltDir = new File(android.ndkDirectory, 'toolchains/llvm/prebuilt')
+                .listFiles()
+                .find { it.isDirectory() }
+        if (prebuiltDir == null) {
+            throw new GradleException("Cannot locate the NDK prebuilt toolchain under $android.ndkDirectory")
+        }
+        ndkSysrootAbi.each { abi, sysrootTriple ->
+            def source = new File(prebuiltDir,
+                    "sysroot/usr/lib/$sysrootTriple/libc++_shared.so")
+            if (!source.isFile()) {
+                throw new GradleException("Missing NDK libc++_shared.so for $abi at $source")
+            }
+            def target = new File(ndkLibcxxRoot, "$abi/libc++_shared.so")
+            target.parentFile.mkdirs()
+            target.bytes = source.bytes
+        }
+    }
+}
+
+android {
+    sourceSets {
+        main {
+            jniLibs.srcDir ndkLibcxxRoot
+        }
+    }
+    packaging {
+        jniLibs {
+            // Replaced by the NDK copy produced above.
+            pickFirsts += '**/libc++_shared.so'
+        }
+    }
+}
+
+tasks.configureEach { task ->
+    if (task.name.startsWith('merge') &&
+            (task.name.endsWith('NativeLibs') || task.name.endsWith('JniLibFolders'))) {
+        task.dependsOn prepareNdkLibcxx
+    }
 }
 
 dependencies {

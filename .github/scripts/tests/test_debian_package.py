@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -34,7 +35,10 @@ class DebianPackageTest(unittest.TestCase):
                 control = (stage / "DEBIAN/control").read_text()
                 self.assertIn(f"Architecture: {expected}\n", control)
                 self.assertIn("Version: 1.16.0~rc.1\n", control)
-                self.assertIn("Depends: libwebkit2gtk-4.1-0, libgtk-3-0\n", control)
+                self.assertIn(
+                    "Depends: libwebkit2gtk-4.1-0, libgtk-3-0, libavif16\n",
+                    control,
+                )
                 self.assertTrue((stage / debian.INSTALL_PATH / "LICENSE").is_file())
                 self.assertIn(f"Exec=/{debian.INSTALL_PATH}/venera-unified %U",
                               (stage / "usr/share/applications/venera-unified.desktop").read_text())
@@ -49,6 +53,22 @@ class DebianPackageTest(unittest.TestCase):
                     debian.package_bundle(self.bundle(root, "x64"), root, "x64", "1.16.0")
             self.assertEqual(artifact.read_bytes(), b"previous")
 
+    def test_missing_avif_dependency_fails_the_build(self):
+        package = Path("venera-unified_1.16.0_amd64.deb")
+        with patch.object(
+            debian.subprocess,
+            "run",
+            return_value=SimpleNamespace(stdout="libwebkit2gtk-4.1-0, libgtk-3-0\n"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "libavif16"):
+                debian.verify_avif_dependency(package)
+        with patch.object(
+            debian.subprocess,
+            "run",
+            return_value=SimpleNamespace(stdout="libwebkit2gtk-4.1-0, libgtk-3-0, libavif16\n"),
+        ):
+            debian.verify_avif_dependency(package)
+
     @unittest.skipUnless(shutil.which("dpkg-deb"), "dpkg-deb requires a Linux runner")
     def test_real_deb_roundtrip_for_both_architectures(self):
         for arch, expected in debian.DEBIAN_ARCHES.items():
@@ -57,6 +77,6 @@ class DebianPackageTest(unittest.TestCase):
                 package = debian.package_bundle(self.bundle(root, arch), root / "out", arch, "1.16.0+225")
                 control = subprocess.check_output(["dpkg-deb", "--field", str(package)], text=True)
                 self.assertIn(f"Architecture: {expected}", control)
-                self.assertIn("Depends: libwebkit2gtk-4.1-0, libgtk-3-0", control)
+                self.assertIn("Depends: libwebkit2gtk-4.1-0, libgtk-3-0, libavif16", control)
                 subprocess.run(["dpkg-deb", "--extract", str(package), str(root / "unpacked")], check=True)
                 debian.validate_bundle(root / "unpacked" / debian.INSTALL_PATH, arch)
