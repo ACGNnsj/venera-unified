@@ -41,10 +41,19 @@ class HfTokenizer {
 
   static const _metaspace = '▁';
 
+  /// Path-keyed cache: tokenizer.json is ~17MB and re-parsing it per
+  /// translation session freezes the worker. Callers may pass
+  /// `useCache: false` in tests that need a pristine instance.
+  static final _cache = <String, HfTokenizer>{};
+
+  static void clearCache() => _cache.clear();
+
   /// Synchronous load, meant to run inside a background isolate (the
   /// translator's tokenizer.json is ~17MB; parsing it on the UI isolate
   /// would freeze the app for a second or more).
-  static HfTokenizer loadSync(String path) {
+  static HfTokenizer loadSync(String path, {bool useCache = true}) {
+    final hit = useCache ? _cache[path] : null;
+    if (hit != null) return hit;
     var json = jsonDecode(File(path).readAsStringSync());
     var model = json['model'] as Map<String, dynamic>;
     var type = model['type'] as String? ?? 'BPE';
@@ -91,7 +100,7 @@ class HfTokenizer {
         addedTokens['<unk>'] ??
         0;
 
-    return HfTokenizer._(
+    final tokenizer = HfTokenizer._(
       vocab: vocab,
       mergeRanks: mergeRanks,
       scores: scores,
@@ -100,6 +109,8 @@ class HfTokenizer {
       unkId: unkId,
       isUnigram: isUnigram,
     );
+    if (useCache) _cache[path] = tokenizer;
+    return tokenizer;
   }
 
   /// Id of an added/special token such as `__zh__` or `</s>`.
@@ -127,24 +138,39 @@ class HfTokenizer {
   }
 
   List<int> _encodeBpe(String word) {
-    var chars = word.runes.map(String.fromCharCode).toList();
-    if (chars.isEmpty) return const [];
-    // Repeatedly apply the lowest-ranked merge until none applies.
-    while (chars.length > 1) {
+    var parts = word.runes.map(String.fromCharCode).toList();
+    if (parts.isEmpty) return const [];
+    // Intrusive next-indices over the parts array: a merge only relinks
+    // neighbours in O(1) instead of removeAt-shifting the whole tail.
+    // `parts.length` doubles as the end sentinel.
+    final link = List<int>.generate(parts.length, (i) => i + 1);
+    var head = 0;
+    var count = parts.length;
+    while (count > 1) {
       var bestRank = -1;
-      var bestIndex = -1;
-      for (var i = 0; i < chars.length - 1; i++) {
-        var rank = _mergeRanks['${chars[i]} ${chars[i + 1]}'];
+      var best = -1;
+      var i = head;
+      while (link[i] < parts.length) {
+        var rank = _mergeRanks['${parts[i]} ${parts[link[i]]}'];
         if (rank != null && (bestRank == -1 || rank < bestRank)) {
           bestRank = rank;
-          bestIndex = i;
+          best = i;
         }
+        i = link[i];
       }
-      if (bestIndex == -1) break;
-      chars[bestIndex] = chars[bestIndex] + chars[bestIndex + 1];
-      chars.removeAt(bestIndex + 1);
+      if (best == -1) break;
+      final next = link[best];
+      parts[best] = parts[best] + parts[next];
+      link[best] = link[next];
+      count--;
     }
-    return [for (var token in chars) _vocab[token] ?? unkId];
+    var ids = <int>[];
+    var i = head;
+    while (i < parts.length) {
+      ids.add(_vocab[parts[i]] ?? unkId);
+      i = link[i];
+    }
+    return ids;
   }
 
   List<int> _encodeUnigram(String word) {

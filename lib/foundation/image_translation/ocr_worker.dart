@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
 
+import 'ocr_preprocess_native.dart';
 import 'ocr_types.dart';
 import 'ort_ffi.dart';
 
@@ -178,7 +179,14 @@ class _OcrPageWorker {
           bottom * image.width * 4,
         ),
       );
-      var input = _detPreprocess(tile);
+      _DetInput input;
+      try {
+        final d = OcrPreprocessNative.detPreprocess(tile);
+        input = _DetInput(d.tensor, d.width, d.height);
+      } catch (_) {
+        // Native library not built for this platform; Dart fallback.
+        input = _detPreprocess(tile);
+      }
       var output = session
           .run({
             session.inputNames.first: OrtInput.float32(input.tensor, [
@@ -245,11 +253,20 @@ class _OcrPageWorker {
         960,
       );
       outW = (outW / 8).ceil() * 8;
-      var tensor = _normalize(
-        resizeTextLine(image, rect, outW, height, rotate: rotate),
-        outW,
-        height,
-      );
+      // Native covers the horizontal path only; vertical (rotated) lines
+      // stay on Dart until the rotated sampler migrates (Phase 2 G2).
+      Uint8List resized;
+      if (!rotate) {
+        try {
+          resized = OcrPreprocessNative.resizeRegion(image, rect, outW, height);
+        } catch (_) {
+          // Native library not built for this platform; Dart fallback.
+          resized = resizeTextLine(image, rect, outW, height);
+        }
+      } else {
+        resized = resizeTextLine(image, rect, outW, height, rotate: true);
+      }
+      var tensor = _normalize(resized, outW, height);
       var output = session
           .run({
             session.inputNames.first: OrtInput.float32(tensor, [
@@ -269,8 +286,14 @@ class _OcrPageWorker {
     return parts.join(' ');
   }
 
-  String _ctcDecode(Float32List probs, int classes, List<String> charset) =>
-      ctcDecodeForTest(probs, classes, charset);
+  String _ctcDecode(Float32List probs, int classes, List<String> charset) {
+    try {
+      return OcrPreprocessNative.ctcDecode(probs, classes, charset);
+    } catch (_) {
+      // Native library not built for this platform; Dart fallback.
+      return ctcDecodeForTest(probs, classes, charset);
+    }
+  }
 }
 
 // ===========================================================================

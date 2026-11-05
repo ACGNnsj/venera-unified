@@ -29,6 +29,13 @@ abstract final class InpaintNative {
       if (Platform.isAndroid) 'libvenera_inpaint.so',
       if (Platform.isLinux) 'libvenera_inpaint.so',
       if (Platform.isMacOS) 'libvenera_inpaint.dylib',
+      // Release bundles: Linux ships the .so in bundle/lib, macOS in
+      // Frameworks; a bare soname won't resolve there, so add the
+      // exe-relative absolute path (missing files just fail this candidate).
+      if (Platform.isLinux)
+        '${File(Platform.resolvedExecutable).parent.path}/lib/libvenera_inpaint.so',
+      if (Platform.isMacOS)
+        '${File(Platform.resolvedExecutable).parent.path}/../Frameworks/libvenera_inpaint.dylib',
       if (Platform.isWindows) 'venera_inpaint.dll',
     ];
     Object? lastError;

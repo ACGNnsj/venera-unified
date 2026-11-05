@@ -32,6 +32,13 @@ abstract final class OcrPreprocessNative {
       if (Platform.isAndroid) 'libvenera_ocr_preprocess.so',
       if (Platform.isLinux) 'libvenera_ocr_preprocess.so',
       if (Platform.isMacOS) 'libvenera_ocr_preprocess.dylib',
+      // Release bundles: Linux ships the .so in bundle/lib, macOS in
+      // Frameworks; a bare soname won't resolve there, so add the
+      // exe-relative absolute path (missing files just fail this candidate).
+      if (Platform.isLinux)
+        '${File(Platform.resolvedExecutable).parent.path}/lib/libvenera_ocr_preprocess.so',
+      if (Platform.isMacOS)
+        '${File(Platform.resolvedExecutable).parent.path}/../Frameworks/libvenera_ocr_preprocess.dylib',
       if (Platform.isWindows) 'venera_ocr_preprocess.dll',
     ];
     Object? lastError;

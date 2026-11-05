@@ -27,6 +27,13 @@ abstract final class JpgEncodeNative {
       if (Platform.isAndroid) 'libvenera_jpg_encode.so',
       if (Platform.isLinux) 'libvenera_jpg_encode.so',
       if (Platform.isMacOS) 'libvenera_jpg_encode.dylib',
+      // Release bundles: Linux ships the .so in bundle/lib, macOS in
+      // Frameworks; a bare soname won't resolve there, so add the
+      // exe-relative absolute path (missing files just fail this candidate).
+      if (Platform.isLinux)
+        '${File(Platform.resolvedExecutable).parent.path}/lib/libvenera_jpg_encode.so',
+      if (Platform.isMacOS)
+        '${File(Platform.resolvedExecutable).parent.path}/../Frameworks/libvenera_jpg_encode.dylib',
       if (Platform.isWindows) 'venera_jpg_encode.dll',
     ];
     Object? lastError;
