@@ -92,7 +92,7 @@ def cmd_android(_args):
     toolchain = ndk / "toolchains/llvm/prebuilt/linux-x86_64/bin"
     linkers = {
         "aarch64-linux-android": toolchain / "aarch64-linux-android21-clang",
-        "armv7-linux-androideabi": toolchain / "arm-linux-androideabi21-clang",
+        "armv7-linux-androideabi": toolchain / "armv7a-linux-androideabi21-clang",
         "x86_64-linux-android": toolchain / "x86_64-linux-android21-clang",
     }
     saved = os.environ.copy()
