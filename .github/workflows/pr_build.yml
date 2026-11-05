@@ -114,7 +114,7 @@ jobs:
       - name: 验证 Windows 首次启动、重复启动和失败诊断
         shell: pwsh
         timeout-minutes: 5
-        run: ./.github/scripts/test_windows_startup.ps1 -Application build/windows/x64/runner/Debug/VeneraNext.exe
+        run: ./.github/scripts/test_windows_startup.ps1 -Application build/windows/x64/runner/Debug/VeneraUnified.exe
       - name: 上传 Windows 启动诊断
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
