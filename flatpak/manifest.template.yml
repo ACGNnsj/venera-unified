@@ -72,8 +72,15 @@ modules:
       - test -d hosted && test -d git || { echo '::error::pub cache 没解到构建目录'; exit 1; }
       - test -d vendor && test -f vendor-config.toml || { echo '::error::cargo vendor 没解到构建目录'; exit 1; }
       - mkdir -p .cargo-home && cp vendor-config.toml .cargo-home/config.toml && sed -i 's#^directory = .*#directory = "/run/build/venera-unified/vendor"#' .cargo-home/config.toml
+      # 诊断：SDK 自带的工具快照/版本戳若与 git 修订对不上，flutter 会在无网沙箱里自举
+      # （bin/internal/shared.sh 跑一次不带 --offline 的 dart pub get），报错会伪装成应用依赖失败。
+      - test -f /app/flutter/bin/cache/flutter_tools.snapshot && echo sdk-snapshot-present || echo sdk-snapshot-MISSING
+      - cat /app/flutter/bin/cache/flutter_tools.stamp || echo sdk-stamp-missing
+      - git -C /app/flutter rev-parse HEAD || echo sdk-git-revision-unavailable
+      - flutter --version || true
       - flutter config --no-analytics
-      - flutter pub get --offline --enforce-lockfile
+      # 用 SDK 自带的 dart 直接跑 pub：flutter 的包装器会在离线沙箱里额外拉起一次联网解析。
+      - dart pub get --offline --enforce-lockfile
       - flutter build linux --release --no-pub
       - install -Dm755 build/linux/x64/release/bundle/venera-unified /app/bin/venera-unified
       - cp -a build/linux/x64/release/bundle/lib/. /app/lib/venera-unified/

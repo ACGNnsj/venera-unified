@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       ref:
-        description: "构建取用的分支或提交，留空用 tag 本身（试跑管线时填 main）"
+        description: "取脚本与模板的分支或提交，留空用 main；依赖树一律按 tag 取"
         required: false
         default: ""
         type: string
@@ -36,23 +36,31 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.ref || inputs.tag }}
+          ref: ${{ inputs.ref || 'main' }}
       - name: 校验渲染脚本存在
         run: |
           test -f .github/scripts/render_flatpak_manifest.py || {
-            echo "::error::${{ inputs.tag }} 里没有 .github/scripts/render_flatpak_manifest.py，换用包含它的标签"
+            echo "::error::取脚本的提交里没有 .github/scripts/render_flatpak_manifest.py"
             exit 1
           }
+      # 依赖树必须来自发布标签本身：pub 缓存与 cargo vendor 只装被解析到的那几个版本，
+      # 拿 main 的缓存去装旧标签会在离线沙箱里解析出别的版本。
+      - name: 取发布标签的源码树
+        run: |
+          git fetch --depth=1 origin "refs/tags/${{ inputs.tag }}:refs/tags/${{ inputs.tag }}"
+          git worktree add --detach "$RUNNER_TEMP/app" "refs/tags/${{ inputs.tag }}"
+          echo "APP_DIR=$RUNNER_TEMP/app" >> "$GITHUB_ENV"
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version-file: pubspec.yaml
+          flutter-version-file: ${{ runner.temp }}/app/pubspec.yaml
           architecture: x64
           cache: true
       - name: 取 pub 依赖并 precache 引擎产物
         env:
           PUB_CACHE: ${{ runner.temp }}/pub-cache
         run: |
+          cd "$APP_DIR"
           flutter pub get --enforce-lockfile
           FLUTTER_ROOT=$(dirname "$(dirname "$(readlink -f "$(which flutter)")")")
           echo "FLUTTER_ROOT=$FLUTTER_ROOT" >> "$GITHUB_ENV"
@@ -61,8 +69,8 @@ jobs:
           tar czf "$RUNNER_TEMP/engine-artifacts.tar.gz" -C "$FLUTTER_ROOT/bin/cache" artifacts
       - name: 准备 Rust 工具链并 vendor
         run: |
-          python3 .github/scripts/prepare_rust_toolchain.py
-          cd packages/rhttp/rust
+          python3 "$GITHUB_WORKSPACE/.github/scripts/prepare_rust_toolchain.py"
+          cd "$APP_DIR/packages/rhttp/rust"
           cargo vendor vendor > "$RUNNER_TEMP/vendor-config.txt"
           sed -i 's#^directory = .*#directory = "/run/build/venera-unified/vendor"#' "$RUNNER_TEMP/vendor-config.txt"
           STAGE="$RUNNER_TEMP/cargo-stage"
