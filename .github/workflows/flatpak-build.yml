@@ -93,7 +93,7 @@ jobs:
           # 一次拉 2GB 时单个对象卡住很常见，而 flatpak 会把已下载的对象留在缓存里。
           # 所以用短超时多轮重试：卡住就放弃这一轮，下一轮从已下好的部分继续，整体仍在前进。
           for i in 1 2 3 4 5 6; do
-            if timeout 420 flatpak install --user -y --noninteractive --no-static-deltas flathub $refs; then
+            if timeout -k 30 420 flatpak install --user -y --noninteractive --no-static-deltas flathub $refs; then
               break
             fi
             echo "::warning::flatpak install 第 $i 轮没跑完，接着重试"
