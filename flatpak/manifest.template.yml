@@ -124,6 +124,8 @@ modules:
       # 放进插件期望的 CMAKE_CURRENT_BINARY_DIR/onnxruntime 下，命中它的存在性检查就跳过下载。
       - mkdir -p build/linux/x64/release/plugins/flutter_onnxruntime/onnxruntime
       - cp -a /app/onnxruntime/. build/linux/x64/release/plugins/flutter_onnxruntime/onnxruntime/
+      # 发布标签里的 rhttp cargokit 还不认识 CARGOKIT_PUB_OFFLINE，这里就地补成 --offline。
+      - sed -i 's|pub get --no-precompile|pub get --no-precompile --offline|' packages/rhttp/cargokit/run_build_tool.sh && grep -c 'no-precompile --offline' packages/rhttp/cargokit/run_build_tool.sh
       - flutter build linux --release --no-pub -v
       - rm -rf /app/pub-cache
       - install -Dm755 build/linux/x64/release/bundle/venera-unified /app/bin/venera-unified

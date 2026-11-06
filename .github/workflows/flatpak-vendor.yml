@@ -70,6 +70,29 @@ jobs:
             --directory "$FLUTTER_ROOT/packages/flutter_tools" --example
           # cargokit 的 build_tool 在构建期会现写一个 runner 包再 pub get，同样要有缓存。
           ( cd "$APP_DIR/packages/rhttp/cargokit/build_tool" && dart pub get )
+          # 每个第三方插件都自带一份 cargokit，构建期会现跑 `dart pub get`。
+          # 发布标签里的那份还不认识 CARGOKIT_PUB_OFFLINE，沙箱无网就会 socket 报错，
+          # 所以先把缓存里的脚本改成 --offline，再把各 build_tool 的依赖（有网时）灌进缓存。
+          CARGOKIT_SCRIPTS=$(find "$PUB_CACHE" -name run_build_tool.sh -path '*cargokit*')
+          test -n "$CARGOKIT_SCRIPTS" || { echo "::error::缓存里找不到 cargokit 的 run_build_tool.sh"; exit 1; }
+          python3 "$GITHUB_WORKSPACE/.github/scripts/patch_cargokit_offline.py" $CARGOKIT_SCRIPTS
+          for tool_dir in $(find "$PUB_CACHE" -type d -name build_tool -path '*cargokit*'); do
+            warm="$RUNNER_TEMP/cargokit-warm"
+            rm -rf "$warm"
+            mkdir -p "$warm/bin"
+            {
+              echo "name: build_tool_runner"
+              echo "version: 1.0.0"
+              echo "publish_to: none"
+              echo "environment:"
+              echo "  sdk: '>=3.0.0 <4.0.0'"
+              echo "dependencies:"
+              echo "  build_tool:"
+              echo "    path: \"$tool_dir\""
+            } > "$warm/pubspec.yaml"
+            echo "void main() {}" > "$warm/bin/build_tool_runner.dart"
+            ( cd "$warm" && dart pub get --no-precompile )
+          done
           "$FLUTTER_ROOT/bin/flutter" precache --linux
           # flutter_onnxruntime 的 linux 插件在 CMake 配置期直接 file(DOWNLOAD) 拉 ONNX Runtime，
           # 离线沙箱里既下不动也不会报错，最后只留一句“解压目录不存在”。这里按插件自己的默认版本
