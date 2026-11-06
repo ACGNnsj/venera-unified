@@ -748,6 +748,7 @@
     "features/settings/debug.dart",
     "features/settings/explore_settings.dart",
     "features/settings/home_layout.dart",
+    "features/settings/image_translation.dart",
     "features/settings/keyboard_shortcuts_settings.dart",
     "features/settings/keyword_blocking.dart",
     "features/settings/launcher_icon_settings.dart",

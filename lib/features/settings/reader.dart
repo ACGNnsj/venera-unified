@@ -13,6 +13,7 @@ import 'package:venera_unified/features/settings/setting_components.dart';
 import 'package:venera_unified/features/settings/reader_mode.dart';
 import 'package:venera_unified/features/settings/reader_brightness.dart';
 import 'package:venera_unified/features/settings/upscale.dart';
+import 'package:venera_unified/features/settings/image_translation.dart';
 import 'package:venera_unified/components/settings_save_state.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/app_profile.dart';
@@ -792,6 +793,11 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
           CallbackSetting(
             title: "Custom Image Processing".tl,
             callback: () => context.to(() => _CustomImageProcessing()),
+            actionTitle: "Edit".tl,
+          ).toSliver(),
+          CallbackSetting(
+            title: "Image Translation".tl,
+            callback: () => context.to(() => const ImageTranslationSettings()),
             actionTitle: "Edit".tl,
           ).toSliver(),
           if (App.isAndroid)

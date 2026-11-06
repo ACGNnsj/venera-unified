@@ -245,6 +245,10 @@ final settingsSearchIndex = <SettingsSearchEntry>[
     keywords: const ['upscale'],
     visible: () => App.isAndroid,
   ),
+  const SettingsSearchEntry('Image Translation', 1, keywords: ['translation']),
+  const SettingsSearchEntry('Translation providers', 1, keywords: ['translation', 'llm']),
+  const SettingsSearchEntry('Translation glossary', 1, keywords: ['translation', 'glossary']),
+  const SettingsSearchEntry('Translation models', 1, keywords: ['translation', 'model', 'ocr']),
   const SettingsSearchEntry(
     'Number of images preloaded',
     1,
