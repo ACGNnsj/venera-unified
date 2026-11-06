@@ -108,6 +108,21 @@ class OpenCCTable {
 
   bool hasTraditional(String text) => text.runes.any(_traditional.containsKey);
 
+  /// Whether [text] has more Traditional-only than Simplified-only characters.
+  /// Characters both scripts share count for neither, so a tie (including
+  /// text with no such characters) reads as Simplified. Used by the image
+  /// translation pipeline to tell Traditional pages apart from Simplified ones.
+  bool isMostlyTraditional(String text) {
+    var traditional = 0, simplified = 0;
+    for (var rune in text.runes) {
+      var toSimplified = _traditional[rune];
+      var toTraditional = _simplified[rune];
+      if (toSimplified != null && toSimplified != rune) traditional++;
+      if (toTraditional != null && toTraditional != rune) simplified++;
+    }
+    return traditional > simplified;
+  }
+
   String toTraditional(String text) =>
       _convert(text, _simplified, _simplifiedPhrases, _simplifiedPhraseLen);
 

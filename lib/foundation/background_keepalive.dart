@@ -49,6 +49,7 @@ class BackgroundKeepAlive {
   static const tagImport = 'import';
   static const tagSync = 'sync';
   static const tagSourceUpdate = 'source_update';
+  static const tagPreTranslate = 'pre_translate';
 
   bool get _supported => _debugSupported ?? App.isAndroid;
 

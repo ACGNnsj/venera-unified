@@ -1,11 +1,10 @@
-// B-batch port of VeneraX translation_sources.dart.
-// Model wiring (ModelComponent/TranslationModelStore/TranslationModels)
-// is deferred to phase C with translation_models.dart; data classes, JSON,
-// validation and detector get/set are complete. Search 'ponytail:' for stubs.
+// Port of VeneraX translation_sources.dart (phase C: model wiring live
+// via translation_models.dart).
 import 'dart:convert';
 
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/image_translation/translation_targets.dart';
+import 'package:venera_unified/foundation/image_translation/translation_types.dart';
 
 /// A source language the user added, recognized by a PP-OCR recognition model
 /// (ONNX + character dictionary) they supplied.
@@ -36,6 +35,16 @@ class CustomSourceLanguage {
   /// editing a URL never reuses the files downloaded for the old one.
   String get engine =>
       'custom_${modelHash('$modelUrl\n$dictUrl\n$inputHeight')}';
+
+  ModelComponent get component => ModelComponent(
+    id: engine,
+    approxSizeBytes: sizeBytes,
+    marker: true,
+    files: [
+      ModelFile('rec.onnx', [modelUrl]),
+      ModelFile('dict.txt', [dictUrl]),
+    ],
+  );
 
   Map<String, dynamic> toJson() => {
     'code': code,
@@ -76,6 +85,15 @@ class CustomDetectorModel {
   final String url;
   final int sizeBytes;
 
+  ModelComponent get component => ModelComponent(
+    id: 'detector_${modelHash(url)}',
+    approxSizeBytes: sizeBytes,
+    marker: true,
+    files: [
+      ModelFile('det.onnx', [url]),
+    ],
+  );
+
   Map<String, dynamic> toJson() => {'url': url, 'size': sizeBytes};
 }
 
@@ -83,6 +101,14 @@ class CustomDetectorModel {
 abstract class TranslationSources {
   static const settingKey = 'imageTranslationCustomSources';
   static const detectorKey = 'imageTranslationCustomDetector';
+
+  /// Store side-effects for custom-source changes, set by the model store
+  /// (translation_models.dart). The registry itself stays store-free so the
+  /// lane's business graph stays acyclic (the pair is bidirectional
+  /// upstream); until the store wires these, settings persist but orphan
+  /// model files are left on disk and the ready cache is not invalidated.
+  static void Function(ModelComponent component)? onDeleteComponent;
+  static void Function()? onInvalidateReadyCache;
 
   /// code -> English UI label. Codes are part of stored translation keys and
   /// of the per-comic language locks, so they must never change.
@@ -156,13 +182,15 @@ abstract class TranslationSources {
     _deleteIfUnused(removed);
   }
 
-  // ponytail: model-file deletion deferred to phase C (translation_models.dart
-  // port); re-enable TranslationModelStore.delete here when models land.
-  static void _deleteIfUnused(CustomSourceLanguage language) {}
+  static void _deleteIfUnused(CustomSourceLanguage language) {
+    if (custom.any((e) => e.engine == language.engine)) return;
+    onDeleteComponent?.call(language.component);
+  }
 
   static void _persist(List<CustomSourceLanguage> list) {
     appdata.settings[settingKey] = [for (var e in list) e.toJson()];
     appdata.saveData();
+    onInvalidateReadyCache?.call();
   }
 
   static CustomDetectorModel? get detector {
@@ -176,9 +204,13 @@ abstract class TranslationSources {
 
   /// Sets or clears (null) the custom detector, deleting the old one's files.
   static void setDetector(CustomDetectorModel? model) {
+    var old = detector;
     appdata.settings[detectorKey] = model?.toJson() ?? <String, dynamic>{};
     appdata.saveData();
-    // ponytail: detector model-file deletion deferred to phase C (see above).
+    onInvalidateReadyCache?.call();
+    if (old != null && old.url != model?.url) {
+      onDeleteComponent?.call(old.component);
+    }
   }
 }
 

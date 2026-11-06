@@ -1,4 +1,5 @@
-import 'dart:typed_data';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/file_system.dart';
 
 /// Raw RGBA bitmap that can cross isolate boundaries.
 class RgbaImage {
@@ -396,4 +397,61 @@ bool isValidLlmGlossaryTerm(String source, String translation) {
   // Pure numbers (page numbers, counts) carry no naming to keep consistent.
   if (_llmNumericOnly.hasMatch(source)) return false;
   return true;
+}
+
+/// A single downloadable file of a model component. [urls] is a fallback
+/// chain: mirrors are tried in order, so a blocked host does not make the
+/// component impossible to install.
+///
+/// Lives in the shared types (not translation_models.dart) so the custom
+/// source registry (translation_sources.dart) can describe its components
+/// without importing the whole model store: the lane's dependency gate
+/// requires an acyclic business graph, and the registry/store pair is
+/// inherently bidirectional upstream.
+class ModelFile {
+  const ModelFile(this.name, this.urls);
+
+  /// File name inside the component directory.
+  final String name;
+
+  /// Candidate URLs. `{hf}` is replaced with the configured HuggingFace
+  /// endpoint (official or mirror) at download time.
+  final List<String> urls;
+}
+
+/// A downloadable model component (detector / OCR / translator).
+class ModelComponent {
+  const ModelComponent({
+    required this.id,
+    required this.files,
+    required this.approxSizeBytes,
+    this.marker = false,
+  });
+
+  final String id;
+  final List<ModelFile> files;
+
+  /// Rough total download size, for display before downloading.
+  final int approxSizeBytes;
+
+  /// User-supplied models count as installed only after a check run wrote
+  /// [markerName], so a file that downloaded but cannot be used never does.
+  final bool marker;
+
+  static const markerName = 'verified';
+
+  String get directory =>
+      FilePath.join(App.dataPath, 'translation_models', id);
+
+  bool get isInstalled {
+    for (var file in files) {
+      var f = File(FilePath.join(directory, file.name));
+      if (!f.existsSync() || f.lengthSync() == 0) {
+        return false;
+      }
+    }
+    return !marker || File(FilePath.join(directory, markerName)).existsSync();
+  }
+
+  String filePath(String name) => FilePath.join(directory, name);
 }

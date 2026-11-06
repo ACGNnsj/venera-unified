@@ -54,6 +54,14 @@ abstract class OpenCC {
   static String traditionalToSimplified(String text) =>
       _ready.toSimplified(text);
 
+  /// Whether [text] has more Traditional-only than Simplified-only characters.
+  /// Characters both scripts share count for neither, so a tie (including
+  /// text with no such characters) reads as Simplified. Required by the image
+  /// translation pipeline (translation_pipeline.dart); semantics mirror the
+  /// former implementation.
+  static bool isMostlyTraditional(String text) =>
+      _ready.isMostlyTraditional(text);
+
   /// Display-layer conversion (prime #6): returns the simplified form when the
   /// appearance switch is on, otherwise the input unchanged. The switch is
   /// checked before touching the table so builds with the switch off never
