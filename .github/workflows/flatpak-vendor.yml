@@ -64,6 +64,12 @@ jobs:
           flutter pub get --enforce-lockfile
           FLUTTER_ROOT=$(dirname "$(dirname "$(readlink -f "$(which flutter)")")")
           echo "FLUTTER_ROOT=$FLUTTER_ROOT" >> "$GITHUB_ENV"
+          # 沙箱里的 flutter build 会给 SDK 自己的 tools 树跑一次 pub get --example，
+          # 所以现在（有网）就把那棵树的依赖灌进缓存，离线解析才有料可用。
+          "$FLUTTER_ROOT/bin/cache/dart-sdk/bin/dart" pub get \
+            --directory "$FLUTTER_ROOT/packages/flutter_tools" --example
+          # cargokit 的 build_tool 在构建期会现写一个 runner 包再 pub get，同样要有缓存。
+          ( cd "$APP_DIR/packages/rhttp/cargokit/build_tool" && dart pub get )
           "$FLUTTER_ROOT/bin/flutter" precache --linux
           tar czf "$RUNNER_TEMP/pub-cache.tar.gz" -C "$RUNNER_TEMP" pub-cache
           tar czf "$RUNNER_TEMP/engine-artifacts.tar.gz" -C "$FLUTTER_ROOT/bin/cache" artifacts

@@ -70,9 +70,15 @@ if [ -f "$PACKAGE_HASH_FILE" ]; then
     fi
 fi
 
+# 离线打包（Flatpak 等无网沙箱）里 pub get 不能联网，置 CARGOKIT_PUB_OFFLINE=1 走缓存。
+PUB_OFFLINE_FLAG=""
+if [ "$CARGOKIT_PUB_OFFLINE" = "1" ]; then
+    PUB_OFFLINE_FLAG="--offline"
+fi
+
 # Run pub get if needed.
 if [ ! -f "$PACKAGE_HASH_FILE" ]; then
-    "$DART" pub get --no-precompile
+    "$DART" pub get --no-precompile $PUB_OFFLINE_FLAG
     "$DART" compile kernel bin/build_tool_runner.dart
     echo "$PACKAGE_HASH" > "$PACKAGE_HASH_FILE"
 fi
@@ -85,7 +91,7 @@ exit_code=$?
 
 # 253 means invalid snapshot version.
 if [ $exit_code == 253 ]; then
-  "$DART" pub get --no-precompile
+  "$DART" pub get --no-precompile $PUB_OFFLINE_FLAG
   "$DART" compile kernel bin/build_tool_runner.dart
   "$DART" bin/build_tool_runner.dill "$@"
   exit_code=$?

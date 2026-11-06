@@ -68,6 +68,8 @@ modules:
         PUB_CACHE: /run/build/venera-unified
         CARGO_HOME: /run/build/venera-unified/.cargo-home
         CARGO_NET_OFFLINE: 'true'
+        # cargokit 的 build_tool 运行器也会跑 pub get；离线沙箱里让它读缓存而不是联网。
+        CARGOKIT_PUB_OFFLINE: '1'
     build-commands:
       - test -d hosted && test -d git || { echo '::error::pub cache 没解到构建目录'; exit 1; }
       - test -d vendor && test -f vendor-config.toml || { echo '::error::cargo vendor 没解到构建目录'; exit 1; }
@@ -81,6 +83,9 @@ modules:
       - flutter config --no-analytics
       # 用 SDK 自带的 dart 直接跑 pub：flutter 的包装器会在离线沙箱里额外拉起一次联网解析。
       - dart pub get --offline --enforce-lockfile
+      # flutter build 会先给 SDK 自己的 packages/flutter_tools 跑一次 `pub get --example`（不带 --offline）。
+      # 官方彩色 tar.xz 里没有这棵工具树的 .dart_tool，所以必须先在这里用缓存把它自举出来，否则沙箱里必然联网失败。
+      - cd /app/flutter/packages/flutter_tools && dart pub get --offline --example
       - flutter build linux --release --no-pub
       - install -Dm755 build/linux/x64/release/bundle/venera-unified /app/bin/venera-unified
       - cp -a build/linux/x64/release/bundle/lib/. /app/lib/venera-unified/
