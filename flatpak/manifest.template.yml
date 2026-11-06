@@ -85,8 +85,10 @@ modules:
       - command -v clang++ || echo clang-missing
       - command -v cmake && command -v ninja || true
       - flutter config --no-analytics
-      # 用 SDK 自带的 dart 直接跑 pub：flutter 的包装器会在离线沙箱里额外拉起一次联网解析。
-      - dart pub get --offline --enforce-lockfile
+      # 必须走 flutter 包装器而不是裸 dart：`flutter pub get` 顺带生成 linux/flutter/generated_plugins.cmake，
+      # 而 `flutter build --no-pub` 明确跳过这一步（flutter_command.dart 里 shouldRunPub 为假就 return）。
+      # 工具树已在上一行离线自举过，所以这里再加 --offline 不会联网。
+      - flutter pub get --offline --enforce-lockfile
       # flutter build 会先给 SDK 自己的 packages/flutter_tools 跑一次 `pub get --example`（不带 --offline）。
       # 官方彩色 tar.xz 里没有这棵工具树的 .dart_tool，所以必须先在这里用缓存把它自举出来，否则沙箱里必然联网失败。
       - cd /app/flutter/packages/flutter_tools && dart pub get --offline --example
