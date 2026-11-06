@@ -58,8 +58,11 @@ jobs:
           run-id: ${{ inputs.run_id }}
           github-token: ${{ github.token }}
           path: dist
-      - name: 核对拿到的文件
-        run: ls -la dist
+      - name: 摊平并核对拿到的文件
+        run: |
+          find dist -mindepth 2 -type f -exec cp -f {} dist/ \;
+          find dist -mindepth 1 -type d | sort -r | xargs -r rm -rf
+          ls -la dist
           test -f dist/io.github.venera.unified.yml || {
             echo "::error::Release ${{ inputs.tag }} 上没有 io.github.venera.unified.yml，先跑 Flatpak 离线依赖归档"
             exit 1

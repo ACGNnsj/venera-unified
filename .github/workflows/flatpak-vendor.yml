@@ -85,15 +85,17 @@ jobs:
             --pub-cache "$RUNNER_TEMP/pub-cache-${{ inputs.tag }}.tar.gz" \
             --engine-artifacts "$RUNNER_TEMP/engine-artifacts-${{ inputs.tag }}.tar.gz" \
             --cargo-vendor "$RUNNER_TEMP/cargo-vendor-${{ inputs.tag }}.tar.gz"
+      - name: 收进同一个目录再上传
+        # 五个文件散在两个根下，upload-artifact 会按最小公共父目录保留路径；
+        # 先摊平到一个目录，消费方拿到的就是干净的一层。
+        run: |
+          mkdir -p "$RUNNER_TEMP/flatpak"
+          cp "$RUNNER_TEMP"/*.tar.gz flatpak/io.github.venera.unified.yml flatpak/flutter-sha256.json "$RUNNER_TEMP/flatpak/"
+          ls -la "$RUNNER_TEMP/flatpak"
       - uses: actions/upload-artifact@v7
         with:
           name: flatpak_vendor
-          path: |
-            ${{ runner.temp }}/pub-cache-${{ inputs.tag }}.tar.gz
-            ${{ runner.temp }}/engine-artifacts-${{ inputs.tag }}.tar.gz
-            ${{ runner.temp }}/cargo-vendor-${{ inputs.tag }}.tar.gz
-            flatpak/io.github.venera.unified.yml
-            flatpak/flutter-sha256.json
+          path: ${{ runner.temp }}/flatpak
           if-no-files-found: error
           retention-days: 14
       - name: 传上 Release
