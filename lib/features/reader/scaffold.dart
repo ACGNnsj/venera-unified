@@ -4,6 +4,8 @@ import 'package:venera_unified/components/tv_navigation.dart';
 import 'tv_input.dart';
 
 import 'package:venera_unified/features/reader/status_info.dart';
+import 'package:venera_unified/foundation/image_translation/translation_config.dart';
+import 'package:venera_unified/foundation/image_translation/translation_service.dart';
 import 'package:flutter/material.dart';
 import 'package:venera_unified/features/reader/progress_bar.dart';
 import 'package:venera_unified/features/reader/bottom_actions.dart';
@@ -409,6 +411,7 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
             onPressed: openChapterComments,
           ),
         ),
+      _TranslationToggle(data: widget.data, update: update),
       if (widget.onTranslatePage != null)
         Tooltip(
           message: "Translate page".tl,
@@ -728,5 +731,55 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
   Future<Offset?> _showSelectImageOverlay() {
     if (_isOpen) openOrClose();
     return _selectionOverlay.show(context);
+  }
+}
+
+/// Per-comic image-translation switch, next to the page-translation action.
+///
+/// Turning it on swaps the reader to stored translations (providers pick the
+/// key up on rebuild) and schedules background translation for displayed
+/// pages; turning it off falls back to the originals. Failures retry with
+/// backoff on rebuild, so no manual retry is exposed. The icon is tinted
+/// while on, and the tooltip warns when the source-language OCR models are
+/// not downloaded yet.
+class _TranslationToggle extends StatelessWidget {
+  const _TranslationToggle({required this.data, required this.update});
+
+  final ReaderShellData data;
+  final VoidCallback update;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = ImageTranslationService.isEnabledForComic(
+      data.comicId,
+      data.sourceKey,
+    );
+    var ready = true;
+    if (enabled) {
+      final config = TranslationConfig.of(data.comicId, data.sourceKey);
+      ready = ImageTranslationService.isReadyForLang(config.sourceLang);
+    }
+    final scheme = context.colorScheme;
+    return Tooltip(
+      message: !enabled
+          ? "Image translation off".tl
+          : ready
+              ? "Image translation on".tl
+              : "Translation models missing".tl,
+      child: IconButton(
+        icon: Icon(
+          Icons.translate,
+          color: !enabled ? null : ready ? scheme.primary : scheme.error,
+        ),
+        onPressed: () {
+          ImageTranslationService.setEnabledForComic(
+            data.comicId,
+            data.sourceKey,
+            !enabled,
+          );
+          update();
+        },
+      ),
+    );
   }
 }

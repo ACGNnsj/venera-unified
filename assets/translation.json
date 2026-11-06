@@ -1333,7 +1333,9 @@
     "No glossaries yet": "暂无术语表",
     "No models found": "未找到模型",
     "OpenAI compatible": "OpenAI 兼容",
-    "Public free (no setup)": "公共免费（免配置）"
+    "Public free (no setup)": "公共免费（免配置）",
+    "Image translation off": "图片翻译已关闭",
+    "Image translation on": "图片翻译已开启"
 },
   "zh_TW": {
     "TV low-memory mode": "TV 低記憶體模式",
@@ -2669,6 +2671,8 @@
     "No glossaries yet": "尚無術語表",
     "No models found": "找不到模型",
     "OpenAI compatible": "OpenAI 相容",
-    "Public free (no setup)": "公共免費（免設定）"
+    "Public free (no setup)": "公共免費（免設定）",
+    "Image translation off": "圖片翻譯已關閉",
+    "Image translation on": "圖片翻譯已開啟"
 }
 }
