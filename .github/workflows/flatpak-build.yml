@@ -11,6 +11,19 @@ on:
         description: "已跑过 Flatpak 离线依赖归档的标签，例如 v1.20.0"
         required: true
         type: string
+      source:
+        description: "从 Release 取，还是从某次归档工作流运行的产物取"
+        required: false
+        default: release
+        type: choice
+        options:
+          - release
+          - artifact
+      run_id:
+        description: "source=artifact 时填归档工作流的 run id"
+        required: false
+        default: ""
+        type: string
 
 concurrency:
   group: flatpak-build-${{ inputs.tag }}
@@ -18,6 +31,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   build:
@@ -26,6 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: 取 Release 上的归档与 manifest
+        if: ${{ inputs.source == 'release' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -35,6 +50,16 @@ jobs:
             --pattern 'io.github.venera.unified.yml' \
             --dir dist
           ls -la dist
+      - name: 取归档工作流的产物
+        if: ${{ inputs.source == 'artifact' }}
+        uses: actions/download-artifact@v8
+        with:
+          name: flatpak_vendor
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          path: dist
+      - name: 核对拿到的文件
+        run: ls -la dist
           test -f dist/io.github.venera.unified.yml || {
             echo "::error::Release ${{ inputs.tag }} 上没有 io.github.venera.unified.yml，先跑 Flatpak 离线依赖归档"
             exit 1

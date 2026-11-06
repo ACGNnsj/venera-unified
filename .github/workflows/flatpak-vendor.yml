@@ -11,6 +11,11 @@ on:
         description: "已发布的标签，例如 v1.20.0"
         required: true
         type: string
+      ref:
+        description: "构建取用的分支或提交，留空用 tag 本身（试跑管线时填 main）"
+        required: false
+        default: ""
+        type: string
       upload_to_release:
         description: "把归档与 manifest 传到该 Release"
         required: false
@@ -31,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ inputs.ref || inputs.tag }}
       - name: 校验渲染脚本存在
         run: |
           test -f .github/scripts/render_flatpak_manifest.py || {
