@@ -85,7 +85,7 @@ modules:
       env:
         PATH: /app/flutter/bin:/usr/lib/sdk/llvm18/bin:/usr/lib/sdk/rust-stable/bin:/usr/bin:/bin
         FLUTTER_ROOT: /app/flutter
-        PUB_CACHE: /run/build/venera-unified
+        PUB_CACHE: /app/pub-cache
         CARGO_HOME: /run/build/venera-unified/.cargo-home
         CARGO_NET_OFFLINE: 'true'
         # cargokit 的 build_tool 运行器也会跑 pub get；离线沙箱里让它读缓存而不是联网。
@@ -94,12 +94,15 @@ modules:
         PDFIUM_PREBUILT: /app/pdfium/lib/libpdfium.so
     build-commands:
       - test -d hosted && test -d git || { echo '::error::pub cache 没解到构建目录'; exit 1; }
+      # pub 拒绝任何位于缓存根之下的目录当项目根。缓存若留在构建目录里，插件的 cargokit
+      # 临时目录就落在缓存内，super_native_extensions 会报 Cannot operate on packages inside the cache。
+      - mkdir -p /app/pub-cache && mv hosted git /app/pub-cache/ && test -d /app/pub-cache/hosted || { echo '::error::pub cache 没搬到 /app/pub-cache'; exit 1; }
       - test -d vendor && test -f vendor-config.toml || { echo '::error::cargo vendor 没解到构建目录'; exit 1; }
       # 诊断：pdfium 的预置库与打补丁后的 hook 都要在场，否则 hook 会退回联网下载。
       - test -f /app/pdfium/lib/libpdfium.so && echo pdfium-library-present || echo pdfium-library-MISSING
-      - grep -l PDFIUM_PREBUILT hosted/pub.dev/pdfium_dart-*/hook/build.dart || echo pdfium-hook-unpatched
+      - grep -l PDFIUM_PREBUILT /app/pub-cache/hosted/pub.dev/pdfium_dart-*/hook/build.dart || echo pdfium-hook-unpatched
       - ls /app/sqlite3/*/libsqlite3.x64.linux.so || echo sqlite3-library-MISSING
-      - grep -l SQLITE3_PREBUILT_LOCAL hosted/pub.dev/sqlite3-*/lib/src/hook/compile/description.dart || echo sqlite3-hook-unpatched
+      - grep -l 'sqlite3 hook: prebuilt' /app/pub-cache/hosted/pub.dev/sqlite3-*/lib/src/hook/compile/description.dart || echo sqlite3-hook-unpatched
       - mkdir -p .cargo-home && cp vendor-config.toml .cargo-home/config.toml && sed -i 's#^directory = .*#directory = "/run/build/venera-unified/vendor"#' .cargo-home/config.toml
       # 先把 SDK 自己的工具树离线自举：官方 tar.xz 里没有 packages/flutter_tools/.dart_tool，
       # 任何 flutter 命令（含 flutter pub get）首次运行都会现跑一次不带 --offline 的 pub get --example。
@@ -121,7 +124,8 @@ modules:
       # 放进插件期望的 CMAKE_CURRENT_BINARY_DIR/onnxruntime 下，命中它的存在性检查就跳过下载。
       - mkdir -p build/linux/x64/release/plugins/flutter_onnxruntime/onnxruntime
       - cp -a /app/onnxruntime/. build/linux/x64/release/plugins/flutter_onnxruntime/onnxruntime/
-      - flutter build linux --release --no-pub
+      - flutter build linux --release --no-pub -v
+      - rm -rf /app/pub-cache
       - install -Dm755 build/linux/x64/release/bundle/venera-unified /app/bin/venera-unified
       - cp -a build/linux/x64/release/bundle/lib/. /app/lib/venera-unified/
       - cp -a build/linux/x64/release/bundle/data/. /app/share/venera-unified/
