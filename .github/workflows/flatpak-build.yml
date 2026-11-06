@@ -1,7 +1,7 @@
 name: Flatpak 离线构建验证
 
 # 手工档：拿 flatpak-vendor.yml 挂到 Release 上的三份归档与渲染后的 manifest，
-# 在真实 flatpak-builder 里做一次联网预热 + 一次 --offline 复建，再 --offline 起窗口做烟测。
+# 在真实 flatpak-builder 里做一次联网预热 + 一次 --disable-download 复建，再用 xvfb 起窗口做烟测。
 # 结论只影响本 job，不参与发版门控。
 
 on:
@@ -70,10 +70,34 @@ jobs:
       - name: 安装 flatpak-builder 与运行时
         run: |
           sudo apt-get update
-          sudo apt-get install -y flatpak flatpak-builder xvfb
+          sudo apt-get install -y flatpak flatpak-builder xvfb python3-yaml
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak install --user -y --noninteractive flathub org.gnome.Sdk//48 org.gnome.Platform//48 org.freedesktop.Sdk.Extension.rust-stable//24.08
           flatpak --version && flatpak-builder --version
+      # artifact 演练时归档就在 dist/ 里，把 manifest 的三份 URL 源改成同目录相对路径，
+      # 这样不往 Release 传 1GB 归档也能真跑一遍；source=release 则保持 URL 源，验线上接线。
+      - name: 演练时把归档源改成本地路径
+        if: ${{ inputs.source == 'artifact' }}
+        run: |
+          python3 - <<'PY'
+          import pathlib, yaml
+          p = pathlib.Path('dist/io.github.venera.unified.yml')
+          m = yaml.safe_load(p.read_text(encoding='utf-8'))
+          names = ('pub-cache', 'cargo-vendor', 'engine-artifacts')
+          hits = 0
+          for mod in m.get('modules', []):
+              for src in mod.get('sources', []) or []:
+                  if src.get('type') == 'archive' and 'url' in src:
+                      base = src['url'].rsplit('/', 1)[-1]
+                      if any(n in base for n in names):
+                          src.pop('url')
+                          src['path'] = base
+                          hits += 1
+          p.write_text(yaml.safe_dump(m, allow_unicode=True, sort_keys=False), encoding='utf-8')
+          print('rewrote', hits, 'archive sources')
+          assert hits == 3, 'expected three archive sources'
+          PY
+          ls -la dist/*.tar.gz
       # flatpak-builder 没有 --offline：联网预热那次把源都下进缓存，
       # 第二次用 --disable-download 复用缓存、不许再下载，等价于离线复建。
       - name: 联网预热构建
