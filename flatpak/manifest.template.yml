@@ -81,10 +81,15 @@ modules:
         sha256: @@CARGO_VENDOR_SHA256@@
   - name: venera-unified
     buildsystem: simple
+    # build-commands 每条都是独立的 `sh -c`，export 不会带到下一条，必须走 build-options.env。
+    build-options:
+      env:
+        PATH: /app/flutter/bin:/usr/lib/sdk/rust-stable/bin:/usr/bin:/bin
+        FLUTTER_ROOT: /app/flutter
+        PUB_CACHE: /run/build/pub-cache
+        CARGO_HOME: /run/build/cargo-home
+        CARGO_NET_OFFLINE: 'true'
     build-commands:
-      - export PATH=/app/flutter/bin:$PATH FLUTTER_ROOT=/app/flutter
-      - export PUB_CACHE=/run/build/pub-cache
-      - export CARGO_HOME=/run/build/cargo-home CARGO_NET_OFFLINE=true
       - flutter config --no-analytics
       - flutter pub get --offline --enforce-lockfile
       - flutter build linux --release --no-pub
