@@ -5,7 +5,6 @@ import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/image_provider/reader_image.dart';
 import 'package:venera_unified/foundation/image_translation/translation_service.dart';
-import 'package:venera_unified/foundation/image_translation/translation_types.dart';
 
 void main() {
   group('ReaderImageProvider.translationFor', () {
