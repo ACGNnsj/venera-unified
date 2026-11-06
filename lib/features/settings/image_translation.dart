@@ -111,10 +111,7 @@ class _ImageTranslationSettingsState
   }
 
   Future<void> _addProvider() async {
-    await showDialog(
-      context: context,
-      builder: (_) => const _ProviderDialog(),
-    );
+    await showDialog(context: context, builder: (_) => const _ProviderDialog());
     if (mounted) setState(() {});
   }
 
@@ -179,8 +176,7 @@ class _ImageTranslationSettingsState
     final comicKeys = <String>{
       ...ImageTranslationService.enabledComicKeys,
       ..._extraComicKeys,
-    }.toList()
-      ..sort();
+    }.toList()..sort();
     return protectSettings(
       SmoothCustomScrollView(
         slivers: [
@@ -211,16 +207,19 @@ class _ImageTranslationSettingsState
             title: 'Source language'.tl,
             settingKey: TranslationConfig.sourceKeyName,
             optionTranslation: _sourceOptions(),
+            defaultValue: TranslationConfig.global.sourceLang,
           ).toSliver(),
           SelectSetting(
             title: 'Target language'.tl,
             settingKey: TranslationConfig.targetKeyName,
             optionTranslation: _targetOptions(),
+            defaultValue: TranslationConfig.global.targetLang,
           ).toSliver(),
           SelectSetting(
             title: 'Text removal'.tl,
             settingKey: TranslationConfig.inpaintKeyName,
             optionTranslation: _inpaintOptions(),
+            defaultValue: TranslationConfig.global.mode.name,
           ).toSliver(),
           SettingPartTitle(
             title: 'Translation providers'.tl,
@@ -238,9 +237,7 @@ class _ImageTranslationSettingsState
             ListTile(
               key: ValueKey('provider-${provider.id}'),
               title: Text(
-                provider.name.isEmpty
-                    ? 'Unnamed provider'.tl
-                    : provider.name,
+                provider.name.isEmpty ? 'Unnamed provider'.tl : provider.name,
               ),
               subtitle: Text(_describeProvider(provider)),
               leading: Icon(
@@ -294,9 +291,7 @@ class _ImageTranslationSettingsState
                       Expanded(
                         child: TextField(
                           controller: _cidController,
-                          decoration: InputDecoration(
-                            labelText: 'Comic ID'.tl,
-                          ),
+                          decoration: InputDecoration(labelText: 'Comic ID'.tl),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -335,10 +330,7 @@ class _ImageTranslationSettingsState
               ),
             ).toSliver(),
           for (final key in comicKeys) _GlossaryCard(comicKey: key).toSliver(),
-          SettingPartTitle(
-            title: 'Translation models'.tl,
-            icon: Icons.memory,
-          ),
+          SettingPartTitle(title: 'Translation models'.tl, icon: Icons.memory),
           for (final component in TranslationModels.all)
             _ModelTile(
               component: component,
@@ -441,8 +433,7 @@ class _ProviderDialogState extends State<_ProviderDialog> {
       setState(() => _error = 'URL is required'.tl);
       return;
     }
-    if (_kind == LlmProviderKind.customScript &&
-        _script.text.trim().isEmpty) {
+    if (_kind == LlmProviderKind.customScript && _script.text.trim().isEmpty) {
       setState(() => _error = 'Script is required'.tl);
       return;
     }
@@ -524,9 +515,7 @@ class _ProviderDialogState extends State<_ProviderDialog> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   _fetchError!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
             if (_fetched != null && _fetched!.isNotEmpty)
@@ -555,9 +544,7 @@ class _ProviderDialogState extends State<_ProviderDialog> {
               alignment: Alignment.centerLeft,
               child: Text(
                 _error!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                ),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
         ],
@@ -627,9 +614,7 @@ class _GlossaryCardState extends State<_GlossaryCard> {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: ExpansionTile(
         title: Text(widget.comicKey),
-        subtitle: Text(
-          entries.length.toString() + ' terms'.tl,
-        ),
+        subtitle: Text(entries.length.toString() + ' terms'.tl),
         children: [
           for (final entry in entries.entries)
             ListTile(
@@ -651,11 +636,8 @@ class _GlossaryCardState extends State<_GlossaryCard> {
                   IconButton(
                     icon: const Icon(Icons.delete),
                     tooltip: 'Delete'.tl,
-                    onPressed: () => service.removeGlossaryEntry(
-                      cid,
-                      sourceKey,
-                      entry.key,
-                    ),
+                    onPressed: () =>
+                        service.removeGlossaryEntry(cid, sourceKey, entry.key),
                   ),
                 ],
               ),
@@ -667,18 +649,14 @@ class _GlossaryCardState extends State<_GlossaryCard> {
                 Expanded(
                   child: TextField(
                     controller: _source,
-                    decoration: InputDecoration(
-                      hintText: 'Source term'.tl,
-                    ),
+                    decoration: InputDecoration(hintText: 'Source term'.tl),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _translation,
-                    decoration: InputDecoration(
-                      hintText: 'Translation'.tl,
-                    ),
+                    decoration: InputDecoration(hintText: 'Translation'.tl),
                   ),
                 ),
                 IconButton(
@@ -698,10 +676,7 @@ class _GlossaryCardState extends State<_GlossaryCard> {
               ),
             ),
           if (blocked.isNotEmpty)
-            ListTile(
-              dense: true,
-              title: Text('Blocked terms'.tl),
-            ),
+            ListTile(dense: true, title: Text('Blocked terms'.tl)),
           for (final term in blocked)
             ListTile(
               dense: true,
@@ -756,16 +731,16 @@ class _ModelTile extends StatelessWidget {
                   onPressed: () => store.cancelDownload(component),
                 )
               : installed
-                  ? IconButton(
-                      icon: const Icon(Icons.delete),
-                      tooltip: 'Delete'.tl,
-                      onPressed: () => store.delete(component),
-                    )
-                  : IconButton(
-                      icon: const Icon(Icons.download),
-                      tooltip: 'Download'.tl,
-                      onPressed: () => store.download(component),
-                    ),
+              ? IconButton(
+                  icon: const Icon(Icons.delete),
+                  tooltip: 'Delete'.tl,
+                  onPressed: () => store.delete(component),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.download),
+                  tooltip: 'Download'.tl,
+                  onPressed: () => store.download(component),
+                ),
         ),
         if (state.downloading)
           Padding(

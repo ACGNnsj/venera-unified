@@ -188,6 +188,7 @@ class SelectSetting extends StatelessWidget {
     this.comicSource,
     this.useDeviceSettings = false,
     this.selectorBuilder,
+    this.defaultValue,
   });
 
   factory SelectSetting.preference({
@@ -257,6 +258,14 @@ class SelectSetting extends StatelessWidget {
   final Widget Function(BuildContext, String?, ValueChanged<String?>?)?
   selectorBuilder;
 
+  /// Value shown when nothing is stored yet.
+  ///
+  /// The owner of the setting owns the effective default (for image
+  /// translation that is [TranslationConfig.global]); without this the
+  /// selector renders blank on a fresh install even though the runtime
+  /// already behaves as if [defaultValue] were stored.
+  final String? defaultValue;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -272,6 +281,7 @@ class SelectSetting extends StatelessWidget {
               onChanged: onChanged,
               help: help,
               selectorBuilder: selectorBuilder,
+              defaultValue: defaultValue,
               comicId: comicId,
               comicSource: comicSource,
               useDeviceSettings: useDeviceSettings,
@@ -285,6 +295,7 @@ class SelectSetting extends StatelessWidget {
               onChanged: onChanged,
               help: help,
               selectorBuilder: selectorBuilder,
+              defaultValue: defaultValue,
               comicId: comicId,
               comicSource: comicSource,
               useDeviceSettings: useDeviceSettings,
@@ -308,6 +319,7 @@ class _DoubleLineSelectSettings extends StatefulWidget {
     this.comicSource,
     this.useDeviceSettings = false,
     this.selectorBuilder,
+    this.defaultValue,
   });
 
   final Preference<String?>? preference;
@@ -330,6 +342,9 @@ class _DoubleLineSelectSettings extends StatefulWidget {
 
   final Widget Function(BuildContext, String?, ValueChanged<String?>?)?
   selectorBuilder;
+
+  /// Display-only fallback for a setting that has no stored value yet.
+  final String? defaultValue;
 
   @override
   State<_DoubleLineSelectSettings> createState() =>
@@ -400,7 +415,11 @@ class _DoubleLineSelectSettingsState
                       }
                     },
             ) ??
-            Text(widget.optionTranslation[value] ?? "None"),
+            Text(
+              widget.optionTranslation[value] ??
+                  widget.optionTranslation[widget.defaultValue] ??
+                  "None",
+            ),
         trailing: saving
             ? _savingIndicator
             : widget.selectorBuilder == null
@@ -459,6 +478,7 @@ class _EndSelectorSelectSetting extends StatefulWidget {
     this.comicSource,
     this.useDeviceSettings = false,
     this.selectorBuilder,
+    this.defaultValue,
   });
 
   final Preference<String?>? preference;
@@ -481,6 +501,9 @@ class _EndSelectorSelectSetting extends StatefulWidget {
 
   final Widget Function(BuildContext, String?, ValueChanged<String?>?)?
   selectorBuilder;
+
+  /// Display-only fallback for a setting that has no stored value yet.
+  final String? defaultValue;
 
   @override
   State<_EndSelectorSelectSetting> createState() =>
@@ -548,7 +571,7 @@ class _EndSelectorSelectSettingState
                     }
                   }) ??
                   Select(
-                    current: options[value],
+                    current: options[value] ?? options[widget.defaultValue],
                     values: options.values.toList(),
                     minWidth: 64,
                     onTap: (index) {
