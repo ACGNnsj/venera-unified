@@ -71,8 +71,23 @@ jobs:
           # cargokit 的 build_tool 在构建期会现写一个 runner 包再 pub get，同样要有缓存。
           ( cd "$APP_DIR/packages/rhttp/cargokit/build_tool" && dart pub get )
           "$FLUTTER_ROOT/bin/flutter" precache --linux
+          # flutter_onnxruntime 的 linux 插件在 CMake 配置期直接 file(DOWNLOAD) 拉 ONNX Runtime，
+          # 离线沙箱里既下不动也不会报错，最后只留一句“解压目录不存在”。这里按插件自己的默认版本
+          # 预先下好并解压，一起塞进 engine-artifacts 归档，沙箱里再把它放回插件期望的位置。
+          ORT_PLUGIN_FILE=$(ls -d "$PUB_CACHE"/hosted/*/flutter_onnxruntime-*/linux/CMakeLists.txt | head -1)
+          test -n "$ORT_PLUGIN_FILE" || { echo "::error::找不到 flutter_onnxruntime 的 linux/CMakeLists.txt"; exit 1; }
+          ORT_VERSION=$(sed -n 's/.*set(ONNXRUNTIME_VERSION "\([0-9.]*\)").*/\1/p' "$ORT_PLUGIN_FILE" | head -1)
+          echo "ONNX Runtime version: ${ORT_VERSION}"
+          test -n "$ORT_VERSION" || { echo "::error::解析不出 ONNXRUNTIME_VERSION"; exit 1; }
+          ORT_STAGE="$RUNNER_TEMP/ort-stage"
+          mkdir -p "$ORT_STAGE/onnxruntime"
+          curl -fsSL "https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/onnxruntime-linux-x64-${ORT_VERSION}.tgz" \
+            | tar xz -C "$ORT_STAGE/onnxruntime"
+          test -f "$ORT_STAGE/onnxruntime/onnxruntime-linux-x64-${ORT_VERSION}/include/onnxruntime_cxx_api.h" || {
+            echo "::error::ONNX Runtime 解压后没有头文件"; exit 1;
+          }
           tar czf "$RUNNER_TEMP/pub-cache.tar.gz" -C "$RUNNER_TEMP" pub-cache
-          tar czf "$RUNNER_TEMP/engine-artifacts.tar.gz" -C "$FLUTTER_ROOT/bin/cache" artifacts
+          tar czf "$RUNNER_TEMP/engine-artifacts.tar.gz" -C "$FLUTTER_ROOT/bin/cache" artifacts -C "$ORT_STAGE" onnxruntime
       - name: 准备 Rust 工具链并 vendor
         run: |
           python3 "$GITHUB_WORKSPACE/.github/scripts/prepare_rust_toolchain.py"

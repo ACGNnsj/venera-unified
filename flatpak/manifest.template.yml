@@ -53,6 +53,9 @@ modules:
     build-commands:
       - mkdir -p /app/flutter/bin/cache
       - cp -a artifacts /app/flutter/bin/cache/
+      # ONNX Runtime 单独放在 /app 下，等应用模块构建前再摆到插件期望的位置。
+      - mkdir -p /app/onnxruntime
+      - cp -a onnxruntime/. /app/onnxruntime/
     sources:
       - type: archive
         url: @@RELEASE_BASE@@/@@ENGINE_ARTIFACTS_ASSET@@
@@ -91,6 +94,11 @@ modules:
       # 必须走 flutter 包装器而不是裸 dart：`flutter pub get` 顺带生成 linux/flutter/generated_plugins.cmake，
       # 而 `flutter build --no-pub` 明确跳过这一步（shouldRunPub 为假就 return）。
       - flutter pub get --offline --enforce-lockfile
+      # flutter_onnxruntime 的 linux 插件在 CMake 配置期会去 file(DOWNLOAD) 拉 ONNX Runtime；
+      # 沙箱无网时它不报下载错误、只在最后说“解压目录不存在”。把 vendor 阶段预下的那份
+      # 放进插件期望的 CMAKE_CURRENT_BINARY_DIR/onnxruntime 下，命中它的存在性检查就跳过下载。
+      - mkdir -p build/linux/x64/release/plugins/flutter_onnxruntime/onnxruntime
+      - cp -a /app/onnxruntime/. build/linux/x64/release/plugins/flutter_onnxruntime/onnxruntime/
       - flutter build linux --release --no-pub
       - install -Dm755 build/linux/x64/release/bundle/venera-unified /app/bin/venera-unified
       - cp -a build/linux/x64/release/bundle/lib/. /app/lib/venera-unified/
