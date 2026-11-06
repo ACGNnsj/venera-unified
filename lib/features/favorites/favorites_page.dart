@@ -57,6 +57,32 @@ class _FavoritesPageState extends SettingsSaveState<FavoritesPage> {
   }
 
   @override
+  Future<void> leaveSettings([ModalRoute<dynamic>? destination]) async {
+    final route = ModalRoute.of(context);
+    if (destination != null &&
+        identical(destination, route) &&
+        route?.isCurrent == true &&
+        !isNetwork &&
+        folder != null &&
+        folder != localAllFolderLabel) {
+      try {
+        if (FavoritesScope.read(context).folderTree.named(folder!)?.parentId !=
+            null) {
+          // LocalFavoritesPage consumes this page-internal back. Replaying it
+          // after saving would consume a second mode/level; entering the base
+          // leaving phase would reject its new parent-folder assignment.
+          await waitForSettingsSave();
+          return;
+        }
+      } catch (error) {
+        if (mounted) context.showMessage(message: error.toString());
+        return;
+      }
+    }
+    await super.leaveSettings(destination);
+  }
+
+  @override
   void initState() {
     var data = appdata.implicitData['favoriteFolder'];
     if (data != null) {
@@ -74,41 +100,21 @@ class _FavoritesPageState extends SettingsSaveState<FavoritesPage> {
     super.initState();
   }
 
-  /// 收栏（宽档返回键）：只清内存，不写回 favoriteFolder 偏好。
-  ///
-  /// 收栏是临时导航动作（对标 miuix detailKey 的 session 态），下次进页仍按
-  /// 用户上次选中的文件夹打开。
-  void _collapseDetailPane() {
-    if (folder == null) return;
-    setState(() {
-      folder = null;
-    });
-    folderList?.update();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final split = favoritesUsesSplitPane(context.width);
     return protectSettings(
-      PopScope(
-        canPop: !(split && folder != null),
-        onPopInvokedWithResult: (didPop, result) {
-          if (didPop) return;
-          _collapseDetailPane();
-        },
-        child: Column(
-          children: [
-            if (savingSettings || hasSettingsSaveError) settingsSaveStatus,
-            Expanded(
-              child: IconTheme(
-                data: IconThemeData(
-                  color: Theme.of(context).colorScheme.secondary,
-                ),
-                child: _buildPaneLayout(),
+      Column(
+        children: [
+          if (savingSettings || hasSettingsSaveError) settingsSaveStatus,
+          Expanded(
+            child: IconTheme(
+              data: IconThemeData(
+                color: Theme.of(context).colorScheme.secondary,
               ),
+              child: _buildPaneLayout(),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -159,7 +165,10 @@ class _FavoritesPageState extends SettingsSaveState<FavoritesPage> {
             duration: const Duration(milliseconds: 200),
             builder: (context, listWidth, _) {
               final sidebarWidth = listWidth.clamp(0.0, totalWidth).toDouble();
-              final bodyLeft = split ? sidebarWidth : 0.0;
+              // Split layouts keep the detail pane at its final width so the
+              // content is laid out on the same frame a folder is picked; only
+              // the sidebar animates over it.
+              final bodyLeft = split ? listTarget : 0.0;
               return Stack(
                 children: [
                   Positioned(
