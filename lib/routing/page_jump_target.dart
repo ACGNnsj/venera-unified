@@ -17,14 +17,24 @@ extension PageJumpTargetNavigation on PageJumpTarget {
       );
     } else if (page == "category") {
       var key = ComicSource.find(sourceKey)!.categoryData!.key;
+      final category =
+          attributes?["category"] ??
+          (throw ArgumentError("Category name is required"));
+      final param = attributes?["param"];
       context.to(
         () => CategoryComicsPage(
           categoryKey: key,
-          category:
-              attributes?["category"] ??
-              (throw ArgumentError("Category name is required")),
+          category: category,
           options: List.from(attributes?["options"] ?? []),
-          param: attributes?["param"],
+          param: param,
+          extraActions: [
+            CategoryShortcutPinButton(
+              sourceKey: sourceKey,
+              categoryKey: key,
+              category: category,
+              param: param,
+            ),
+          ],
         ),
       );
     } else {

@@ -735,6 +735,7 @@
     "features/reader/status_info.dart",
     "features/reader/top_bar.dart",
     "features/search/aggregated_search_page.dart",
+    "features/search/category_shortcut_pin.dart",
     "features/search/search.dart",
     "features/search/search_entry.dart",
     "features/search/search_page.dart",

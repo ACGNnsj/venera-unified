@@ -1,4 +1,5 @@
 export 'aggregated_search_page.dart';
+export 'category_shortcut_pin.dart';
 export 'search_entry.dart';
 export 'search_filter.dart';
 export 'search_page.dart';

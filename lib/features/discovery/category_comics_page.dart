@@ -5,8 +5,6 @@ import "package:venera_unified/components/loading.dart";
 import "package:venera_unified/components/select.dart";
 import "package:venera_unified/features/comic_widgets/comic_widgets.dart";
 import "package:venera_unified/features/comic_source/comic_source.dart";
-import "package:venera_unified/features/search/search_shortcut.dart";
-import "package:venera_unified/features/search/search_shortcut_manager.dart";
 import "package:venera_unified/foundation/context.dart";
 import "package:venera_unified/foundation/translations.dart";
 import "package:venera_unified/foundation/widget_utils.dart";
@@ -17,6 +15,7 @@ class CategoryComicsPage extends StatefulWidget {
     this.param,
     required this.categoryKey,
     this.options,
+    this.extraActions,
     super.key,
   });
 
@@ -27,6 +26,11 @@ class CategoryComicsPage extends StatefulWidget {
   final String categoryKey;
 
   final List<String>? options;
+
+  /// Extra appbar actions injected by the caller (e.g. a shortcut pin from
+  /// the search feature). Kept as plain widgets so discovery does not
+  /// depend on the search feature.
+  final List<Widget>? extraActions;
 
   @override
   State<CategoryComicsPage> createState() => _CategoryComicsPageState();
@@ -147,7 +151,9 @@ class _CategoryComicsPageState extends State<CategoryComicsPage> {
       extendBodyBehindAppBar: true,
       appBar: Appbar(
         title: Text(widget.category),
-        actions: [if (error == null) _PinCategoryButton(page: widget)],
+        actions: [
+          if (error == null) ...(widget.extraActions ?? const []),
+        ],
       ),
       body: body,
     );
@@ -223,66 +229,5 @@ class _CategoryComicsPageState extends State<CategoryComicsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [...children, const Divider()],
     ).paddingLeft(8).paddingRight(8);
-  }
-}
-
-/// Pin toggle for the currently viewed category. Stored as a
-/// [SearchShortcut] of kind category; the optional page param is encoded in
-/// the namespace as `key@param` and restored on jump.
-class _PinCategoryButton extends StatelessWidget {
-  const _PinCategoryButton({required this.page});
-
-  final CategoryComicsPage page;
-
-  @override
-  Widget build(BuildContext context) {
-    var sourceKey = '';
-    for (final source in ComicSource.all()) {
-      if (source.categoryData?.key == page.categoryKey) {
-        sourceKey = source.key;
-        break;
-      }
-    }
-    if (sourceKey.isEmpty) return const SizedBox.shrink();
-    final shortcut = SearchShortcut(
-      kind: SearchShortcutKind.category,
-      sourceKey: sourceKey,
-      namespace: page.param == null
-          ? page.categoryKey
-          : '${page.categoryKey}@${page.param}',
-      value: page.category,
-    );
-    return ListenableBuilder(
-      listenable: SearchShortcutManager.instance,
-      builder: (context, _) {
-        final saved = SearchShortcutManager.instance.contains(shortcut);
-        return IconButton(
-          icon: Icon(saved ? Icons.bookmark : Icons.bookmark_add_outlined),
-          tooltip: (saved
-                  ? 'Remove category shortcut'
-                  : 'Save category shortcut')
-              .tl,
-          onPressed: () async {
-            try {
-              if (saved) {
-                await SearchShortcutManager.instance.remove(shortcut);
-              } else {
-                await SearchShortcutManager.instance.add(shortcut);
-              }
-              if (context.mounted) {
-                context.showMessage(
-                  message: (saved
-                          ? 'Search shortcut removed'
-                          : 'Search shortcut saved')
-                      .tl,
-                );
-              }
-            } catch (e) {
-              if (context.mounted) context.showMessage(message: e.toString());
-            }
-          },
-        );
-      },
-    );
   }
 }
