@@ -25,6 +25,9 @@ build-options:
   env:
     CARGO_HOME: /run/build/cargo-home
     CARGO_NET_OFFLINE: 'true'
+    # 我们在应用里自带 libayatana-appindicator 这条链；它的 pkg-config 文件装在 /app/lib/pkgconfig，
+    # 后面的模块（libayatana-indicator、应用模块里的 tray_manager）要能找到它。
+    PKG_CONFIG_PATH: /app/lib/pkgconfig:/app/share/pkgconfig
 finish-args:
   - --share=ipc
   # 托盘：linux 上 tray_manager 通过 StatusNotifier 注册图标。
