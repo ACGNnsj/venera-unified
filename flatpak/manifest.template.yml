@@ -126,6 +126,11 @@ modules:
       - cp -a /app/onnxruntime/. build/linux/x64/release/plugins/flutter_onnxruntime/onnxruntime/
       # 发布标签里的 rhttp cargokit 还不认识 CARGOKIT_PUB_OFFLINE，这里就地补成 --offline。
       - sed -i 's|pub get --no-precompile|pub get --no-precompile --offline|' packages/rhttp/cargokit/run_build_tool.sh && grep -c 'no-precompile --offline' packages/rhttp/cargokit/run_build_tool.sh
+      # cargokit 在找不到 rustup 时默认去 GitHub Releases 拉预编译产物（super_native_extensions
+      # 就是这么失败的）。沙箱没有 rustup，必须显式要求它从源码编，crates 已经在 vendor 里。
+      - |
+        printf 'use_precompiled_binaries: false\nverbose_logging: true\n' > cargokit_options.yaml
+      - test -f cargokit_options.yaml && cat cargokit_options.yaml
       - flutter build linux --release --no-pub -v
       - rm -rf /app/pub-cache
       - install -Dm755 build/linux/x64/release/bundle/venera-unified /app/bin/venera-unified
