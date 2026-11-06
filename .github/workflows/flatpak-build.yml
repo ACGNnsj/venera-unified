@@ -90,11 +90,13 @@ jobs:
           # 这一拉就是 2GB 上下，flathub 的静态增量偶尔会卡住整步不动；拆成多次、加超时与重试，
           # 失败时才有明确报错而不是一直挂到 job 超时。
           refs="org.gnome.Sdk//48 org.gnome.Platform//48 org.freedesktop.Sdk.Extension.rust-stable//24.08 org.freedesktop.Sdk.Extension.llvm18//24.08"
-          for i in 1 2 3; do
-            if timeout 900 flatpak install --user -y --noninteractive --no-static-deltas flathub $refs; then
+          # 一次拉 2GB 时单个对象卡住很常见，而 flatpak 会把已下载的对象留在缓存里。
+          # 所以用短超时多轮重试：卡住就放弃这一轮，下一轮从已下好的部分继续，整体仍在前进。
+          for i in 1 2 3 4 5 6; do
+            if timeout 420 flatpak install --user -y --noninteractive --no-static-deltas flathub $refs; then
               break
             fi
-            echo "::warning::flatpak install 第 $i 次失败，重试"
+            echo "::warning::flatpak install 第 $i 轮没跑完，接着重试"
           done
           flatpak info --user org.gnome.Sdk//48 > /dev/null
           flatpak info --user org.freedesktop.Sdk.Extension.llvm18//24.08 > /dev/null
