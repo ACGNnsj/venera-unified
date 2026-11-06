@@ -98,9 +98,12 @@ jobs:
           cp "$RUNNER_TEMP/pdfium-extract/lib/libpdfium.so" "$PDFIUM_STAGE/pdfium/lib/libpdfium.so"
           test -f "$PDFIUM_STAGE/pdfium/lib/libpdfium.so" || { echo "::error::pdfium 解压后没有库文件"; exit 1; }
           # sqlite3 的 hook 同样会去 GitHub Releases 拉预编译库：改成优先用 SQLITE3_PREBUILT。
-          SQLITE3_HOOK=$(ls -d "$PUB_CACHE"/hosted/*/sqlite3-*/lib/src/hook/compile/description.dart | head -1)
-          test -n "$SQLITE3_HOOK" || { echo "::error::找不到 sqlite3 的 hook/compile/description.dart"; exit 1; }
-          python3 "$GITHUB_WORKSPACE/.github/scripts/patch_sqlite3_hook.py" "$SQLITE3_HOOK"
+          SQLITE3_HOOKS=$(ls -d "$PUB_CACHE"/hosted/*/sqlite3-*/lib/src/hook/compile/description.dart)
+          test -n "$SQLITE3_HOOKS" || { echo "::error::找不到 sqlite3 的 hook/compile/description.dart"; exit 1; }
+          # 缓存里可能同时有几个 sqlite3 版本，离线解析出哪个都要能命中，所以逐个打。
+          for hook in $SQLITE3_HOOKS; do
+            python3 "$GITHUB_WORKSPACE/.github/scripts/patch_sqlite3_hook.py" "$hook" /app/sqlite3
+          done
           SQLITE3_STAGE="$RUNNER_TEMP/sqlite3-stage"
           python3 "$GITHUB_WORKSPACE/.github/scripts/stage_sqlite3_asset.py" "$PUB_CACHE" "$SQLITE3_STAGE"
           tar czf "$RUNNER_TEMP/pub-cache.tar.gz" -C "$RUNNER_TEMP" pub-cache

@@ -92,16 +92,14 @@ modules:
         CARGOKIT_PUB_OFFLINE: '1'
         # pdfium_dart 的 hook 默认用 HTTP 拉 pdfium；给它本地库，见 patch_pdfium_hook.py。
         PDFIUM_PREBUILT: /app/pdfium/lib/libpdfium.so
-        # 同理，sqlite3 的 hook 默认从 GitHub Releases 拉预编译库。
-        SQLITE3_PREBUILT: /app/sqlite3/lib/libsqlite3.so
     build-commands:
       - test -d hosted && test -d git || { echo '::error::pub cache 没解到构建目录'; exit 1; }
       - test -d vendor && test -f vendor-config.toml || { echo '::error::cargo vendor 没解到构建目录'; exit 1; }
       # 诊断：pdfium 的预置库与打补丁后的 hook 都要在场，否则 hook 会退回联网下载。
       - test -f /app/pdfium/lib/libpdfium.so && echo pdfium-library-present || echo pdfium-library-MISSING
       - grep -l PDFIUM_PREBUILT hosted/pub.dev/pdfium_dart-*/hook/build.dart || echo pdfium-hook-unpatched
-      - test -f /app/sqlite3/lib/libsqlite3.so && echo sqlite3-library-present || echo sqlite3-library-MISSING
-      - grep -l SQLITE3_PREBUILT hosted/pub.dev/sqlite3-*/lib/src/hook/compile/description.dart || echo sqlite3-hook-unpatched
+      - ls /app/sqlite3/*/libsqlite3.x64.linux.so || echo sqlite3-library-MISSING
+      - grep -l SQLITE3_PREBUILT_LOCAL hosted/pub.dev/sqlite3-*/lib/src/hook/compile/description.dart || echo sqlite3-hook-unpatched
       - mkdir -p .cargo-home && cp vendor-config.toml .cargo-home/config.toml && sed -i 's#^directory = .*#directory = "/run/build/venera-unified/vendor"#' .cargo-home/config.toml
       # 先把 SDK 自己的工具树离线自举：官方 tar.xz 里没有 packages/flutter_tools/.dart_tool，
       # 任何 flutter 命令（含 flutter pub get）首次运行都会现跑一次不带 --offline 的 pub get --example。
