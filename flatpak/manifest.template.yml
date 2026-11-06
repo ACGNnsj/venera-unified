@@ -27,6 +27,8 @@ build-options:
     CARGO_NET_OFFLINE: 'true'
 finish-args:
   - --share=ipc
+  # 托盘：linux 上 tray_manager 通过 StatusNotifier 注册图标。
+  - --talk-name=org.kde.StatusNotifierWatcher
   - --socket=fallback-x11
   - --socket=wayland
   - --device=dri
@@ -64,6 +66,10 @@ modules:
         url: @@RELEASE_BASE@@/@@ENGINE_ARTIFACTS_ASSET@@
         sha256: @@ENGINE_ARTIFACTS_SHA256@@
         strip-components: 0
+  # 托盘图标：tray_manager 的 linux 端要用 pkg-config 找 ayatana-appindicator3-0.1，
+  # GNOME SDK 不自带这套库。用 Flathub shared-modules 的 canonical 模块（我们这份去掉了
+  # cleanup，好让应用模块构建时还能拿到头文件和 .pc）。
+  - path: shared-modules/libayatana-appindicator/libayatana-appindicator-gtk3.json
   # pub 缓存与 cargo vendor 直接解进应用模块自己的构建目录。
   # 关键约束：flatpak-builder 的每条 build-command 都是独立的 sandbox，跨命令、跨模块只有
   # /app 和「当前模块的构建目录」可见；把缓存放到别的模块的 /run/build/<name> 里，下一条命令就看不见了。

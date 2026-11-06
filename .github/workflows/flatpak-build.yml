@@ -67,6 +67,19 @@ jobs:
             echo "::error::Release ${{ inputs.tag }} 上没有 io.github.venera.unified.yml，先跑 Flatpak 离线依赖归档"
             exit 1
           }
+      - name: 放置 shared-modules
+        run: |
+          # manifest 里用相对路径引用 shared-modules（托盘要的 libayatana-appindicator），
+          # 路径相对 manifest 所在目录，所以直接摆在 dist/ 边上。
+          cp -a "$GITHUB_WORKSPACE/flatpak/shared-modules" dist/
+          test -f dist/shared-modules/libayatana-appindicator/libayatana-appindicator-gtk3.json
+      - name: 缓存 flatpak 运行时
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.local/share/flatpak
+            ~/.cache/flatpak
+          key: flatpak-gnome48-${{ runner.os }}-v1
       - name: 安装 flatpak-builder 与运行时
         run: |
           sudo apt-get update
