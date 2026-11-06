@@ -97,9 +97,15 @@ jobs:
             | tar xz -C "$RUNNER_TEMP/pdfium-extract" lib/libpdfium.so
           cp "$RUNNER_TEMP/pdfium-extract/lib/libpdfium.so" "$PDFIUM_STAGE/pdfium/lib/libpdfium.so"
           test -f "$PDFIUM_STAGE/pdfium/lib/libpdfium.so" || { echo "::error::pdfium 解压后没有库文件"; exit 1; }
+          # sqlite3 的 hook 同样会去 GitHub Releases 拉预编译库：改成优先用 SQLITE3_PREBUILT。
+          SQLITE3_HOOK=$(ls -d "$PUB_CACHE"/hosted/*/sqlite3-*/lib/src/hook/compile/description.dart | head -1)
+          test -n "$SQLITE3_HOOK" || { echo "::error::找不到 sqlite3 的 hook/compile/description.dart"; exit 1; }
+          python3 "$GITHUB_WORKSPACE/.github/scripts/patch_sqlite3_hook.py" "$SQLITE3_HOOK"
+          SQLITE3_STAGE="$RUNNER_TEMP/sqlite3-stage"
+          python3 "$GITHUB_WORKSPACE/.github/scripts/stage_sqlite3_asset.py" "$PUB_CACHE" "$SQLITE3_STAGE"
           tar czf "$RUNNER_TEMP/pub-cache.tar.gz" -C "$RUNNER_TEMP" pub-cache
           tar czf "$RUNNER_TEMP/engine-artifacts.tar.gz" -C "$FLUTTER_ROOT/bin/cache" artifacts \
-            -C "$ORT_STAGE" onnxruntime -C "$PDFIUM_STAGE" pdfium
+            -C "$ORT_STAGE" onnxruntime -C "$PDFIUM_STAGE" pdfium -C "$SQLITE3_STAGE" sqlite3
       - name: 准备 Rust 工具链并 vendor
         run: |
           python3 "$GITHUB_WORKSPACE/.github/scripts/prepare_rust_toolchain.py"
