@@ -86,8 +86,20 @@ jobs:
           test -f "$ORT_STAGE/onnxruntime/onnxruntime-linux-x64-${ORT_VERSION}/include/onnxruntime_cxx_api.h" || {
             echo "::error::ONNX Runtime 解压后没有头文件"; exit 1;
           }
+          # pdfium_dart 的 linux hook 在构建期直接用 HTTP 拉 pdfium 归档，离线沙箱里同样没有救。
+          # 这里把它改成优先使用 PDFIUM_PREBUILT 指向的本地库（幂等），再把库一起塞进归档。
+          PDFIUM_HOOK=$(ls -d "$PUB_CACHE"/hosted/*/pdfium_dart-*/hook/build.dart | head -1)
+          test -n "$PDFIUM_HOOK" || { echo "::error::找不到 pdfium_dart 的 hook/build.dart"; exit 1; }
+          python3 "$GITHUB_WORKSPACE/.github/scripts/patch_pdfium_hook.py" "$PDFIUM_HOOK"
+          PDFIUM_STAGE="$RUNNER_TEMP/pdfium-stage"
+          mkdir -p "$PDFIUM_STAGE/pdfium/lib" "$RUNNER_TEMP/pdfium-extract"
+          curl -fsSL "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7811/pdfium-linux-x64.tgz" \
+            | tar xz -C "$RUNNER_TEMP/pdfium-extract" lib/libpdfium.so
+          cp "$RUNNER_TEMP/pdfium-extract/lib/libpdfium.so" "$PDFIUM_STAGE/pdfium/lib/libpdfium.so"
+          test -f "$PDFIUM_STAGE/pdfium/lib/libpdfium.so" || { echo "::error::pdfium 解压后没有库文件"; exit 1; }
           tar czf "$RUNNER_TEMP/pub-cache.tar.gz" -C "$RUNNER_TEMP" pub-cache
-          tar czf "$RUNNER_TEMP/engine-artifacts.tar.gz" -C "$FLUTTER_ROOT/bin/cache" artifacts -C "$ORT_STAGE" onnxruntime
+          tar czf "$RUNNER_TEMP/engine-artifacts.tar.gz" -C "$FLUTTER_ROOT/bin/cache" artifacts \
+            -C "$ORT_STAGE" onnxruntime -C "$PDFIUM_STAGE" pdfium
       - name: 准备 Rust 工具链并 vendor
         run: |
           python3 "$GITHUB_WORKSPACE/.github/scripts/prepare_rust_toolchain.py"

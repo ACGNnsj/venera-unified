@@ -56,6 +56,9 @@ modules:
       # ONNX Runtime 单独放在 /app 下，等应用模块构建前再摆到插件期望的位置。
       - mkdir -p /app/onnxruntime
       - cp -a onnxruntime/. /app/onnxruntime/
+      # pdfium 也放 /app：应用模块会给 pdfium_dart 的 hook 传 PDFIUM_PREBUILT。
+      - mkdir -p /app/pdfium
+      - cp -a pdfium/. /app/pdfium/
     sources:
       - type: archive
         url: @@RELEASE_BASE@@/@@ENGINE_ARTIFACTS_ASSET@@
@@ -75,6 +78,8 @@ modules:
         CARGO_NET_OFFLINE: 'true'
         # cargokit 的 build_tool 运行器也会跑 pub get；离线沙箱里让它读缓存而不是联网。
         CARGOKIT_PUB_OFFLINE: '1'
+        # pdfium_dart 的 hook 默认用 HTTP 拉 pdfium；给它本地库，见 patch_pdfium_hook.py。
+        PDFIUM_PREBUILT: /app/pdfium/lib/libpdfium.so
     build-commands:
       - test -d hosted && test -d git || { echo '::error::pub cache 没解到构建目录'; exit 1; }
       - test -d vendor && test -f vendor-config.toml || { echo '::error::cargo vendor 没解到构建目录'; exit 1; }
