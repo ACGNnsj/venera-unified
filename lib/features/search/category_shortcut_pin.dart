@@ -36,10 +36,9 @@ class CategoryShortcutPinButton extends StatelessWidget {
         final saved = SearchShortcutManager.instance.contains(shortcut);
         return IconButton(
           icon: Icon(saved ? Icons.bookmark : Icons.bookmark_add_outlined),
-          tooltip: (saved
-                  ? 'Remove category shortcut'
-                  : 'Save category shortcut')
-              .tl,
+          tooltip:
+              (saved ? 'Remove category shortcut' : 'Save category shortcut')
+                  .tl,
           onPressed: () async {
             try {
               if (saved) {
@@ -49,10 +48,11 @@ class CategoryShortcutPinButton extends StatelessWidget {
               }
               if (context.mounted) {
                 context.showMessage(
-                  message: (saved
-                          ? 'Search shortcut removed'
-                          : 'Search shortcut saved')
-                      .tl,
+                  message:
+                      (saved
+                              ? 'Search shortcut removed'
+                              : 'Search shortcut saved')
+                          .tl,
                 );
               }
             } catch (e) {

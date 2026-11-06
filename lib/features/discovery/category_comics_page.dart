@@ -151,9 +151,7 @@ class _CategoryComicsPageState extends State<CategoryComicsPage> {
       extendBodyBehindAppBar: true,
       appBar: Appbar(
         title: Text(widget.category),
-        actions: [
-          if (error == null) ...(widget.extraActions ?? const []),
-        ],
+        actions: [if (error == null) ...(widget.extraActions ?? const [])],
       ),
       body: body,
     );
