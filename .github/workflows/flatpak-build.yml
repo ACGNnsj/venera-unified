@@ -73,8 +73,10 @@ jobs:
           # 路径相对 manifest 所在目录，所以直接摆在 dist/ 边上。
           cp -a "$GITHUB_WORKSPACE/flatpak/shared-modules" dist/
           test -f dist/shared-modules/libayatana-appindicator/libayatana-appindicator-gtk3.json
-      - name: 缓存 flatpak 运行时
-        uses: actions/cache@v6
+      # 运行时将近 2GB、flathub 又时不时卡住；显式 restore/save，失败的那轮也把缓存留下来。
+      - name: 还原 flatpak 运行时缓存
+        id: flatpak-cache
+        uses: actions/cache/restore@v6
         with:
           path: |
             ~/.local/share/flatpak
@@ -97,6 +99,14 @@ jobs:
           flatpak info --user org.gnome.Sdk//48 > /dev/null
           flatpak info --user org.freedesktop.Sdk.Extension.llvm18//24.08 > /dev/null
           flatpak --version && flatpak-builder --version
+      - name: 保存 flatpak 运行时缓存
+        if: always() && steps.flatpak-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ~/.local/share/flatpak
+            ~/.cache/flatpak
+          key: flatpak-gnome48-${{ runner.os }}-v1
       # artifact 演练时归档就在 dist/ 里，把 manifest 的三份 URL 源改成同目录相对路径，
       # 这样不往 Release 传 1GB 归档也能真跑一遍；source=release 则保持 URL 源，验线上接线。
       - name: 演练时把归档源改成本地路径
