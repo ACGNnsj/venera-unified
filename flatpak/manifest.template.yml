@@ -56,39 +56,22 @@ modules:
         url: @@RELEASE_BASE@@/@@ENGINE_ARTIFACTS_ASSET@@
         sha256: @@ENGINE_ARTIFACTS_SHA256@@
         strip-components: 0
-  # pub 依赖缓存，flutter pub get --offline 从这里取。
-  # 模块构建目录本身就是 /run/build/pub-cache，用默认 strip-components=1 解开就位，不再自复制。
-  - name: pub-cache
-    buildsystem: simple
-    build-commands:
-      - test -d hosted && test -d git || { echo '::error::pub-cache 解包后没有 hosted/git'; exit 1; }
-    sources:
-      - type: archive
-        url: @@RELEASE_BASE@@/@@PUB_CACHE_ASSET@@
-        sha256: @@PUB_CACHE_SHA256@@
-  # cargo vendor 产出：cargokit 编 rhttp 时走这里的 source replacement。
-  - name: cargo-vendor
-    buildsystem: simple
-    # 模块构建目录就是 /run/build/cargo-vendor，默认 strip-components=1 后 vendor/ 已经就位，别再自复制。
-    build-commands:
-      - test -d vendor && test -f vendor-config.toml || { echo '::error::cargo-vendor 解包后缺 vendor/ 或 vendor-config.toml'; exit 1; }
-      - mkdir -p /run/build/cargo-home
-      - cp vendor-config.toml /run/build/cargo-home/config.toml
-    sources:
-      - type: archive
-        url: @@RELEASE_BASE@@/@@CARGO_VENDOR_ASSET@@
-        sha256: @@CARGO_VENDOR_SHA256@@
+  # pub 缓存与 cargo vendor 直接解进应用模块自己的构建目录。
+  # 关键约束：flatpak-builder 的每条 build-command 都是独立的 sandbox，跨命令、跨模块只有
+  # /app 和「当前模块的构建目录」可见；把缓存放到别的模块的 /run/build/<name> 里，下一条命令就看不见了。
   - name: venera-unified
     buildsystem: simple
-    # build-commands 每条都是独立的 `sh -c`，export 不会带到下一条，必须走 build-options.env。
     build-options:
       env:
         PATH: /app/flutter/bin:/usr/lib/sdk/rust-stable/bin:/usr/bin:/bin
         FLUTTER_ROOT: /app/flutter
-        PUB_CACHE: /run/build/pub-cache
-        CARGO_HOME: /run/build/cargo-home
+        PUB_CACHE: /run/build/venera-unified
+        CARGO_HOME: /run/build/venera-unified/.cargo-home
         CARGO_NET_OFFLINE: 'true'
     build-commands:
+      - test -d hosted && test -d git || { echo '::error::pub cache 没解到构建目录'; exit 1; }
+      - test -d vendor && test -f vendor-config.toml || { echo '::error::cargo vendor 没解到构建目录'; exit 1; }
+      - mkdir -p .cargo-home && cp vendor-config.toml .cargo-home/config.toml && sed -i 's#^directory = .*#directory = "/run/build/venera-unified/vendor"#' .cargo-home/config.toml
       - flutter config --no-analytics
       - flutter pub get --offline --enforce-lockfile
       - flutter build linux --release --no-pub
@@ -99,3 +82,9 @@ modules:
       - type: git
         url: https://github.com/ACGNnsj/venera-unified.git
         tag: @@SOURCE_TAG@@
+      - type: archive
+        url: @@RELEASE_BASE@@/@@PUB_CACHE_ASSET@@
+        sha256: @@PUB_CACHE_SHA256@@
+      - type: archive
+        url: @@RELEASE_BASE@@/@@CARGO_VENDOR_ASSET@@
+        sha256: @@CARGO_VENDOR_SHA256@@

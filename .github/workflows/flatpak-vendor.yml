@@ -64,7 +64,7 @@ jobs:
           python3 .github/scripts/prepare_rust_toolchain.py
           cd packages/rhttp/rust
           cargo vendor vendor > "$RUNNER_TEMP/vendor-config.txt"
-          sed -i 's#^directory = .*#directory = "/run/build/cargo-vendor/vendor"#' "$RUNNER_TEMP/vendor-config.txt"
+          sed -i 's#^directory = .*#directory = "/run/build/venera-unified/vendor"#' "$RUNNER_TEMP/vendor-config.txt"
           STAGE="$RUNNER_TEMP/cargo-stage"
           mkdir -p "$STAGE"
           mv vendor "$STAGE/vendor"
