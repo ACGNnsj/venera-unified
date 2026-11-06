@@ -9,7 +9,14 @@ void main() {
   );
 
   test('all literal translation keys used by Dart code are defined', () {
-    final literalPattern = RegExp(r'''(["'])([^"']+)\1\.(?:tl|tlParams)\b''');
+    // A literal may be split from its .tl suffix across lines (the formatter
+    // does that for long strings), so the gap between the closing quote and
+    // the suffix is whitespace, not nothing. Triple-quoted strings are
+    // removed first because they would otherwise capture a quote pair.
+    final literalPattern = RegExp(
+      r'''(["'])((?:(?!\1)[^\\]|\\.)*)\1\s*\.(?:tl|tlParams)\b''',
+    );
+    final tripleQuoted = RegExp(r'''\'\'\'[\s\S]*?\'\'\'|"""[:\s\S]*?"""''');
     final keys = <String>{};
     final sourceFiles = Directory('lib')
         .listSync(recursive: true)
@@ -17,7 +24,8 @@ void main() {
         .where((file) => file.path.endsWith('.dart'));
 
     for (final file in sourceFiles) {
-      for (final match in literalPattern.allMatches(file.readAsStringSync())) {
+      final source = file.readAsStringSync().replaceAll(tripleQuoted, "''");
+      for (final match in literalPattern.allMatches(source)) {
         keys.add(match.group(2)!);
       }
     }
