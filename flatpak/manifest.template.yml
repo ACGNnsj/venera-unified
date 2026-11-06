@@ -76,22 +76,21 @@ modules:
       - test -d hosted && test -d git || { echo '::error::pub cache 没解到构建目录'; exit 1; }
       - test -d vendor && test -f vendor-config.toml || { echo '::error::cargo vendor 没解到构建目录'; exit 1; }
       - mkdir -p .cargo-home && cp vendor-config.toml .cargo-home/config.toml && sed -i 's#^directory = .*#directory = "/run/build/venera-unified/vendor"#' .cargo-home/config.toml
-      # 诊断：SDK 自带的工具快照/版本戳若与 git 修订对不上，flutter 会在无网沙箱里自举
-      # （bin/internal/shared.sh 跑一次不带 --offline 的 dart pub get），报错会伪装成应用依赖失败。
+      # 先把 SDK 自己的工具树离线自举：官方 tar.xz 里没有 packages/flutter_tools/.dart_tool，
+      # 任何 flutter 命令（含 flutter pub get）首次运行都会现跑一次不带 --offline 的 pub get --example。
+      # 这一步只用 dart，所以不受该自举逻辑影响。
+      - cd /app/flutter/packages/flutter_tools && dart pub get --offline --example
+      # 诊断：SDK 自带的工具快照/版本戳若与 git 修订对不上，flutter 会在无网沙箱里重新自举。
       - test -f /app/flutter/bin/cache/flutter_tools.snapshot && echo sdk-snapshot-present || echo sdk-snapshot-MISSING
       - cat /app/flutter/bin/cache/flutter_tools.stamp || echo sdk-stamp-missing
       - git -C /app/flutter rev-parse HEAD || echo sdk-git-revision-unavailable
-      - flutter --version || true
       - command -v clang++ || echo clang-missing
       - command -v cmake && command -v ninja || true
+      - flutter --version || true
       - flutter config --no-analytics
       # 必须走 flutter 包装器而不是裸 dart：`flutter pub get` 顺带生成 linux/flutter/generated_plugins.cmake，
-      # 而 `flutter build --no-pub` 明确跳过这一步（flutter_command.dart 里 shouldRunPub 为假就 return）。
-      # 工具树已在上一行离线自举过，所以这里再加 --offline 不会联网。
+      # 而 `flutter build --no-pub` 明确跳过这一步（shouldRunPub 为假就 return）。
       - flutter pub get --offline --enforce-lockfile
-      # flutter build 会先给 SDK 自己的 packages/flutter_tools 跑一次 `pub get --example`（不带 --offline）。
-      # 官方彩色 tar.xz 里没有这棵工具树的 .dart_tool，所以必须先在这里用缓存把它自举出来，否则沙箱里必然联网失败。
-      - cd /app/flutter/packages/flutter_tools && dart pub get --offline --example
       - flutter build linux --release --no-pub
       - install -Dm755 build/linux/x64/release/bundle/venera-unified /app/bin/venera-unified
       - cp -a build/linux/x64/release/bundle/lib/. /app/lib/venera-unified/
