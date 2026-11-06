@@ -17,6 +17,8 @@ runtime-version: '48'
 sdk: org.gnome.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
+  # Flutter 的 Linux 构建要求 clang++；GNOME SDK 自己不带编译器，靠这个扩展提供。
+  - org.freedesktop.Sdk.Extension.llvm18
 command: venera-unified
 build-options:
   prepend-path: /usr/lib/sdk/rust-stable/bin
@@ -63,7 +65,7 @@ modules:
     buildsystem: simple
     build-options:
       env:
-        PATH: /app/flutter/bin:/usr/lib/sdk/rust-stable/bin:/usr/bin:/bin
+        PATH: /app/flutter/bin:/usr/lib/sdk/llvm18/bin:/usr/lib/sdk/rust-stable/bin:/usr/bin:/bin
         FLUTTER_ROOT: /app/flutter
         PUB_CACHE: /run/build/venera-unified
         CARGO_HOME: /run/build/venera-unified/.cargo-home
@@ -80,6 +82,8 @@ modules:
       - cat /app/flutter/bin/cache/flutter_tools.stamp || echo sdk-stamp-missing
       - git -C /app/flutter rev-parse HEAD || echo sdk-git-revision-unavailable
       - flutter --version || true
+      - command -v clang++ || echo clang-missing
+      - command -v cmake && command -v ninja || true
       - flutter config --no-analytics
       # 用 SDK 自带的 dart 直接跑 pub：flutter 的包装器会在离线沙箱里额外拉起一次联网解析。
       - dart pub get --offline --enforce-lockfile

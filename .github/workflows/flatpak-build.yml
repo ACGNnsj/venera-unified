@@ -72,7 +72,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder xvfb python3-yaml
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y --noninteractive flathub org.gnome.Sdk//48 org.gnome.Platform//48 org.freedesktop.Sdk.Extension.rust-stable//24.08
+          flatpak install --user -y --noninteractive flathub org.gnome.Sdk//48 org.gnome.Platform//48 org.freedesktop.Sdk.Extension.rust-stable//24.08 org.freedesktop.Sdk.Extension.llvm18//24.08
           flatpak --version && flatpak-builder --version
       # artifact 演练时归档就在 dist/ 里，把 manifest 的三份 URL 源改成同目录相对路径，
       # 这样不往 Release 传 1GB 归档也能真跑一遍；source=release 则保持 URL 源，验线上接线。
