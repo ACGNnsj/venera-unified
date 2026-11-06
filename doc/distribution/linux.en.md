@@ -2,56 +2,62 @@
 
 [简体中文](linux.zh.md) · [README](../../README.en.md#linux)
 
-Choose an asset from the [latest stable release](https://github.com/CyrilPeng/Venera-Next/releases/latest) matching `uname -m`: `x86_64` corresponds to x64 / amd64; `aarch64` corresponds to ARM64 / arm64. The current stable release, [v1.18.1](https://github.com/CyrilPeng/Venera-Next/releases/tag/v1.18.1), includes DEB, RPM and AppImage packages for both architectures, plus an x86_64 Arch package. Development builds are available as artifacts of the **构建** (Build) Actions workflow.
+Pick the asset matching `uname -m` from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest): `x86_64` maps to x64 / amd64 / x86_64, `aarch64` maps to ARM64 / arm64 / aarch64. The current stable release, [v1.20.0](https://github.com/ACGNnsj/venera-unified/releases/tag/v1.20.0), ships DEB, RPM and AppImage for both architectures plus an x86_64 Arch package. Development builds are artifacts of the **构建** (Build) workflow.
 
 ## Installation
 
-DEB builds use `python3 debian/build.py x64` or `python3 debian/build.py arm64` and the system `dpkg-deb`, without installing `flutter_to_debian`. First run `flutter pub get --enforce-lockfile`. Add `--skip-build` to package an existing release bundle. Output is `build/linux/<arch>/release/debian/`. The script owns dependencies, desktop entries, and the existing `/usr/local/lib/venera-next` installation path; it does not modify repository templates. Quality checks build and extract DEBs with ELF fixtures for both architectures; these checks do not replace real platform compilation or runtime tests.
-
-Replace `xxx` with the version in the downloaded filename.
+The filenames below are the real v1.20.0 assets. RPM and Arch filenames carry the build number (the `246` in `1.20.0-246`); yours may differ, the rest is stable.
 
 ```bash
 # Debian / Ubuntu
-sudo apt install ./venera-next_xxx_amd64.deb
+sudo apt install ./venera-unified_1.20.0_amd64.deb
+
 # Fedora and compatible RPM distributions
-sudo dnf install ./venera-next-xxx.x86_64.rpm
+sudo dnf install ./venera-unified-1.20.0-246.x86_64.rpm
+
 # Arch Linux (x86_64 only)
-sudo pacman -U ./venera-next-xxx-x86_64.pkg.tar.zst
+sudo pacman -U venera-unified-1.20.0-246-x86_64.pkg.tar.zst
 ```
 
-Start the RPM installation from the application menu or `venera-next`. Install a newer RPM using the same command; uninstall with `sudo dnf remove venera-next`. These packages do not configure an update repository.
+All three place a `/usr/bin/venera-unified` entry point, usable from the application menu or a terminal. Re-run the same install command to upgrade; remove with `sudo apt remove venera-unified` or `sudo dnf remove venera-unified`. These packages do not configure an update repository.
+
+| Format | Installed under |
+| --- | --- |
+| DEB | `/usr/local/lib/venera-unified` (binary plus `lib`/`data`) |
+| RPM | `/opt/venera-unified`, symlinked to `/usr/bin/venera-unified` |
+| Arch | `/usr/bin/venera-unified_pkg`, symlinked to `/usr/bin/venera-unified` |
 
 ## AppImage
 
 ```bash
-chmod +x VeneraNext-xxx-x86_64.AppImage
-./VeneraNext-xxx-x86_64.AppImage
+chmod +x VeneraUnified-1.20.0+246-x86_64.AppImage
+./VeneraUnified-1.20.0+246-x86_64.AppImage
 # Run without FUSE when mounting is unavailable:
-./VeneraNext-xxx-x86_64.AppImage --appimage-extract-and-run
+./VeneraUnified-1.20.0+246-x86_64.AppImage --appimage-extract-and-run
 ```
 
-Use the `aarch64` asset for ARM64. No administrator permission is needed. Menu integration is not installed automatically. Replace the file to upgrade; application data remains in your system user data directory.
+Use the `aarch64` asset for ARM64. The filename carries the full pubspec version (`1.20.0+246`), and together with the `usr/lib/venera-unified` layout inside it forms the relocatable structure. No administrator rights or menu entries are involved; replace the file to upgrade, and application data stays in your user data directory.
 
 ## Compatibility and dependencies
 
-Linux packages share a binary compiled on Ubuntu 22.04 with a glibc 2.35 baseline. DEB/RPM use the package manager to install system dependencies such as libstdc++, GTK 3 and WebKitGTK 4.1. RPM records system ELF symbol requirements automatically, and the package manager rejects installation when dependencies are missing.
+Linux binaries are built on Ubuntu 24.04, so the glibc baseline is **2.39**. Older distributions (including RHEL / Rocky / AlmaLinux 9 at glibc 2.34) are not supported, and AppImage cannot bypass that. 24.04 rather than 22.04 is used because the reader's Linux AVIF fallback `dlopen`s the system `libavif16` and the AppImage bundles it; on 22.04 libavif would have to be built from source.
 
-The current v1.18.1 stable AppImage includes Flutter, GTK 3, WebKitGTK 4.1, its helper processes, image loaders and runtime resources, so no separate GTK/WebKit installation is needed. It still requires host glibc 2.35 or newer and compatible OpenGL/EGL graphics drivers. Filenames are `VeneraNext-<version>-x86_64.AppImage` or `VeneraNext-<version>-aarch64.AppImage`, without `linux`. These bundled libraries and filename changes were introduced in v1.17.0-rc.2.
+DEB / RPM / Arch get GTK 3, WebKitGTK 4.1, libavif and friends from the package manager; RPM records ELF symbol requirements, so missing dependencies reject the install. The AppImage bundles Flutter, GTK 3, WebKitGTK 4.1, its helper processes, image loaders and runtime resources, but still needs host glibc 2.39+ and a working OpenGL/EGL driver.
 
-The already published **v1.17.0-rc.1 AppImage does not bundle GTK/WebKit** and uses filenames containing linux. That release still needs the following host packages; DEB/RPM continue to use system dependencies:
+The already published **v1.17.0-rc.1 AppImage** is a different story: its filename still contains `linux` and it does not bundle GTK/WebKit, so that release needs the host packages; DEB/RPM have always used system dependencies:
 
 ```bash
 sudo apt install libgtk-3-0 libwebkit2gtk-4.1-0  # Ubuntu / Debian
 sudo dnf install gtk3 webkit2gtk4.1             # Fedora
 ```
 
-RPM does not imply compatibility with every Red Hat family distribution. RHEL / Rocky / AlmaLinux 9 use glibc 2.34, below this baseline; AppImage cannot bypass this requirement either. Use a newer distribution with the required libraries, or compile on the target system.
-
 ## GitHub Actions and packaging
 
-The Linux x64 / ARM64 switches in **构建** build DEB, RPM and AppImage for the selected architecture; x64 also builds Arch packages. The release workflow collects these assets. The additional workflow artifacts are named `linux_extra_x64` and `linux_extra_arm64`.
+DEB builds use `python3 debian/build.py x64` or `python3 debian/build.py arm64` and the system `dpkg-deb`, without installing `flutter_to_debian`. Run `flutter pub get --enforce-lockfile` first; add `--skip-build` to package an existing bundle. Output goes to `build/linux/<arch>/release/debian/`. The script owns dependencies, desktop entries and the `/usr/local/lib/venera-unified` install path; it never rewrites repository templates. Quality checks build and extract DEBs from ELF fixtures for both architectures, which does not replace a real install and launch test.
 
-After building the Flutter bundle on a Linux runner:
+The Linux x64 / ARM64 switches in **构建** build DEB, RPM and AppImage for that architecture, and x64 additionally builds the Arch package. The release workflow collects every asset; the extra workflow artifacts are named `linux_extra_x64`, `linux_extra_arm64` and `arch_build`.
+
+Packaging from an existing Flutter bundle on a runner:
 
 ```bash
 sudo apt install rpm squashfs-tools desktop-file-utils file
@@ -59,10 +65,20 @@ python3 .github/scripts/build_linux_packages.py --arch x64
 # Use --arch arm64 on an ARM64 runner.
 ```
 
-The script checks ELF architecture and Flutter resources, builds and inspects the RPM, recursively collects AppImage ELF dependencies and verifies the dependency closure again after extraction. WebKit helpers and relocatable resource paths are required. Only glibc and graphics drivers remain host interfaces; missing other libraries fail packaging. Dependency versions and copyright notices are included under `usr/share/doc/venera-next-runtime/`.
+The script validates ELF architecture and Flutter resources, builds and inspects the RPM, then recursively collects AppImage ELF dependencies and re-verifies the closure after extraction, including WebKit helpers and relocatable resource paths. Only glibc and graphics drivers stay host interfaces; any other missing library fails packaging. Dependency versions and copyright notices land in `usr/share/doc/venera-unified-runtime/`.
 
-See the Linux installation steps in `.github/workflows/build.yml` for GTK/WebKit development and runtime build packages. After packaging, run `bash .github/scripts/test_appimage.sh x64` (or `arm64`), using a C compiler, pkg-config and Docker. CI runs this before uploading either architecture: an Ubuntu 22.04 container without GTK/WebKit must display the application window and load HTML in a WebKit helper process. The container-only WebKit sandbox override is never included in the distributed launcher.
+See the Linux install steps in `.github/workflows/build.yml` for the GTK/WebKit build packages. Afterwards run `bash .github/scripts/test_appimage.sh x64` (or `arm64`) with a C compiler, pkg-config and Docker: it boots an Ubuntu 24.04 container without GTK/WebKit, and the real application window plus a WebKit helper loading HTML must come up. CI runs it for both architectures before uploading; the container-only WebKit sandbox override is never shipped in the launcher.
 
-A second pass relaxes Docker's outer seccomp/AppArmor policies and masked system paths and explicitly enables WebKit's own sandbox. Ubuntu release builds ignore `WEBKIT_EXEC_PATH`, so the launcher relocates compiled-in helper paths in a private library copy under a mode-0700 `/tmp` directory, cleaned up on exit. It never modifies the system or original AppImage. `/tmp` must be writable and executable, with approximately 100 MB available for this copy; unsupported WebKit path layouts fail explicitly.
+A second pass relaxes Docker's outer seccomp/AppArmor policies and masked system paths, then explicitly enables WebKit's own sandbox. Ubuntu release builds ignore `WEBKIT_EXEC_PATH`, so the launcher relocates compiled-in helper paths in a private library copy under a mode-0700 `/tmp` directory, cleaned up on exit, never touching the system or the original AppImage. `/tmp` must be writable and executable with roughly 100 MB free; unsupported WebKit path layouts fail explicitly.
 
-Both architectures use SHA-256-verified appimagetool 1.9.1 and type2-runtime 20251108. Packaging does not require FUSE. Outputs are in `build/linux/<architecture>/packages/`. To roll back, restore the previous packaging scripts and workflow and rebuild; those images require host GTK/WebKit again. Application data formats are unchanged.
+Packaging pins appimagetool 1.9.1 and type2-runtime 20251108 with per-architecture SHA-256 checks and needs no FUSE. Outputs are in `build/linux/<architecture>/packages/`. To roll back, restore the previous packaging scripts and workflow and rebuild; those images require host GTK/WebKit again. Application data formats are unchanged.
+
+## Flatpak
+
+Flatpak is **still being verified**. It is not release-gated and no Flatpak asset is offered to end users yet. The current skeleton:
+
+- `flatpak/manifest.template.yml` is the single hand-written manifest; `flatpak/flutter-sha256.json` caches the official Flutter tarball hashes.
+- After a release, run the **Flatpak 离线依赖归档** workflow by hand: it hashes the pub-cache, engine-artifact and cargo-vendor archives, renders `io.github.venera.unified.yml` from the template, and uploads all of it to that tag's release.
+- Then run **Flatpak 离线构建验证**: one networked prewarm build, one `--offline` rebuild, and an xvfb launch smoke. Do not submit to Flathub before that job is green.
+
+The manifest takes Flutter from the official tarball (sha256-pinned), pub dependencies from an `--offline` `PUB_CACHE`, and Rust from `cargo vendor` source replacement plus `org.freedesktop.Sdk.Extension.rust-stable`, so the build needs no network.

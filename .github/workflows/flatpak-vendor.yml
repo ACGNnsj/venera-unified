@@ -1,50 +1,116 @@
 name: Flatpak 离线依赖归档
 
+# 发版后跑一次：把 pub-cache / 引擎产物 / cargo vendor 三份归档算好 sha256、
+# 渲染出可用的 Flatpak manifest，并把它们挂到对应 Release 资产上。
+# 产物是 flatpak-build.yml 的输入。
+
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "已发布的标签，例如 v1.20.0"
+        required: true
+        type: string
+      upload_to_release:
+        description: "把归档与 manifest 传到该 Release"
+        required: false
+        default: true
+        type: boolean
 
 concurrency:
   group: flatpak-vendor
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   vendor:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+      - name: 校验渲染脚本存在
+        run: |
+          test -f .github/scripts/render_flatpak_manifest.py || {
+            echo "::error::${{ inputs.tag }} 里没有 .github/scripts/render_flatpak_manifest.py，换用包含它的标签"
+            exit 1
+          }
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           flutter-version-file: pubspec.yaml
           architecture: x64
           cache: true
-      - run: flutter pub get --enforce-lockfile
+      - name: 取 pub 依赖并 precache 引擎产物
         env:
           PUB_CACHE: ${{ runner.temp }}/pub-cache
-      - name: 打包 pub-cache 与引擎产物
         run: |
-          FLUTTER_ROOT="$(dirname "$(dirname "$(readlink -f "$(which flutter)")")")"
+          flutter pub get --enforce-lockfile
+          FLUTTER_ROOT=$(dirname "$(dirname "$(readlink -f "$(which flutter)")")")
+          echo "FLUTTER_ROOT=$FLUTTER_ROOT" >> "$GITHUB_ENV"
           "$FLUTTER_ROOT/bin/flutter" precache --linux
           tar czf "$RUNNER_TEMP/pub-cache.tar.gz" -C "$RUNNER_TEMP" pub-cache
           tar czf "$RUNNER_TEMP/engine-artifacts.tar.gz" -C "$FLUTTER_ROOT/bin/cache" artifacts
-          ls -la "$RUNNER_TEMP"/*.tar.gz
       - name: 准备 Rust 工具链并 vendor
         run: |
           python3 .github/scripts/prepare_rust_toolchain.py
           cd packages/rhttp/rust
           cargo vendor vendor > "$RUNNER_TEMP/vendor-config.txt"
-          tar czf "$RUNNER_TEMP/cargo-vendor.tar.gz" -C "$RUNNER_TEMP" vendor-config.txt -C "$GITHUB_WORKSPACE/packages/rhttp/rust" vendor
-          ls -la "$RUNNER_TEMP"/*.tar.gz
+          sed -i 's#^directory = .*#directory = "/run/build/cargo-vendor/vendor"#' "$RUNNER_TEMP/vendor-config.txt"
+          STAGE="$RUNNER_TEMP/cargo-stage"
+          mkdir -p "$STAGE"
+          mv vendor "$STAGE/vendor"
+          cp "$RUNNER_TEMP/vendor-config.txt" "$STAGE/vendor-config.toml"
+          tar czf "$RUNNER_TEMP/cargo-vendor.tar.gz" -C "$STAGE" .
+      - name: 归一到带版本的归档名
+        run: |
+          cd "$RUNNER_TEMP"
+          for name in pub-cache engine-artifacts cargo-vendor; do
+            mv "$name.tar.gz" "$name-${{ inputs.tag }}.tar.gz"
+          done
+          ls -la ./*.tar.gz
+      - name: 渲染 manifest
+        run: |
+          python3 .github/scripts/render_flatpak_manifest.py \
+            --tag "${{ inputs.tag }}" \
+            --release-base "https://github.com/${{ github.repository }}/releases/download/${{ inputs.tag }}" \
+            --pub-cache "$RUNNER_TEMP/pub-cache-${{ inputs.tag }}.tar.gz" \
+            --engine-artifacts "$RUNNER_TEMP/engine-artifacts-${{ inputs.tag }}.tar.gz" \
+            --cargo-vendor "$RUNNER_TEMP/cargo-vendor-${{ inputs.tag }}.tar.gz"
       - uses: actions/upload-artifact@v7
         with:
           name: flatpak_vendor
           path: |
-            ${{ runner.temp }}/pub-cache.tar.gz
-            ${{ runner.temp }}/engine-artifacts.tar.gz
-            ${{ runner.temp }}/cargo-vendor.tar.gz
+            ${{ runner.temp }}/pub-cache-${{ inputs.tag }}.tar.gz
+            ${{ runner.temp }}/engine-artifacts-${{ inputs.tag }}.tar.gz
+            ${{ runner.temp }}/cargo-vendor-${{ inputs.tag }}.tar.gz
+            flatpak/io.github.venera.unified.yml
+            flatpak/flutter-sha256.json
           if-no-files-found: error
           retention-days: 14
+      - name: 传上 Release
+        if: ${{ inputs.upload_to_release }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ inputs.tag }}" \
+            "$RUNNER_TEMP/pub-cache-${{ inputs.tag }}.tar.gz" \
+            "$RUNNER_TEMP/engine-artifacts-${{ inputs.tag }}.tar.gz" \
+            "$RUNNER_TEMP/cargo-vendor-${{ inputs.tag }}.tar.gz" \
+            flatpak/io.github.venera.unified.yml \
+            --clobber
+      - name: 小结
+        run: |
+          {
+            echo "### Flatpak 离线依赖归档"
+            echo
+            echo "- 标签：\`${{ inputs.tag }}\`"
+            echo "- manifest：\`flatpak/io.github.venera.unified.yml\`（已渲染，可直接 flatpak-builder）"
+            echo
+            echo '```'
+            sha256sum "$RUNNER_TEMP"/*.tar.gz
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

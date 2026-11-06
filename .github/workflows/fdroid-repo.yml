@@ -21,6 +21,23 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+      - name: 校验仓库签名 secrets
+        env:
+          FDROID_KEYSTORE_B64: ${{ secrets.FDROID_KEYSTORE_B64 }}
+          FDROID_KEYSTORE_PASS: ${{ secrets.FDROID_KEYSTORE_PASS }}
+          FDROID_KEY_ALIAS: ${{ secrets.FDROID_KEY_ALIAS }}
+        run: |
+          missing=""
+          [ -n "$FDROID_KEYSTORE_B64" ] || missing="$missing FDROID_KEYSTORE_B64"
+          [ -n "$FDROID_KEYSTORE_PASS" ] || missing="$missing FDROID_KEYSTORE_PASS"
+          [ -n "$FDROID_KEY_ALIAS" ] || missing="$missing FDROID_KEY_ALIAS"
+          if [ -n "$missing" ]; then
+            echo "::error::缺少 secrets:$missing"
+            echo "F-Droid 自建仓用一套独立的仓库签名密钥，不是 Android 应用的签名证书；"
+            echo "缺这三个 secret 时 base64 --decode 只会产出空 jks，要到 fdroid update 才报错，"
+            echo "所以这里提前拦下：先按 doc/distribution/fdroid.zh.md 生成仓库签名密钥并配好 secrets。"
+            exit 1
+          fi
       - uses: actions/setup-java@v6
         with:
           distribution: temurin

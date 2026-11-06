@@ -1,0 +1,92 @@
+# Flatpak manifest template。
+# 不要直接改 io.github.venera.unified.yml（它是本文件经
+# .github/scripts/render_flatpak_manifest.py 渲染出来的产物）。
+#
+# 占位符由 flatpak-vendor.yml 在发版时填实：
+#   FLUTTER_VERSION        取 pubspec.yaml 的 environment.flutter
+#   FLUTTER_SHA256         官方 flutter_linux_<ver>-stable.tar.xz 的 sha256
+#   RELEASE_BASE           Release 资产基址，形如 .../releases/download/v1.20.0
+#   PUB_CACHE_ASSET / PUB_CACHE_SHA256
+#   ENGINE_ARTIFACTS_ASSET / ENGINE_ARTIFACTS_SHA256
+#   CARGO_VENDOR_ASSET / CARGO_VENDOR_SHA256
+#   SOURCE_TAG             构建取用的 git 标签
+# 上面每个名字两侧都带两枚 @ 号，就是模板里的占位符写法。
+app-id: io.github.venera.unified
+runtime: org.gnome.Platform
+runtime-version: '48'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: venera-unified
+build-options:
+  prepend-path: /usr/lib/sdk/rust-stable/bin
+  env:
+    CARGO_HOME: /run/build/cargo-home
+    CARGO_NET_OFFLINE: 'true'
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --share=network
+  - --filesystem=home
+  - --talk-name=org.gtk.vfs.*
+modules:
+  # Flutter SDK：构建期不需要联网，引擎产物由下面的 module 补进 bin/cache。
+  - name: flutter-sdk
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/flutter
+      - cp -a flutter/. /app/flutter/
+    sources:
+      - type: archive
+        url: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_@@FLUTTER_VERSION@@-stable.tar.xz
+        sha256: @@FLUTTER_SHA256@@
+  # flutter precache 下载的引擎产物（含 fonts/icu）。
+  - name: flutter-engine-artifacts
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/flutter/bin/cache
+      - cp -a artifacts /app/flutter/bin/cache/
+    sources:
+      - type: archive
+        url: @@RELEASE_BASE@@/@@ENGINE_ARTIFACTS_ASSET@@
+        sha256: @@ENGINE_ARTIFACTS_SHA256@@
+  # pub 依赖缓存，flutter pub get --offline 从这里取。
+  - name: pub-cache
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /run/build/pub-cache
+      - cp -a pub-cache/. /run/build/pub-cache/
+    sources:
+      - type: archive
+        url: @@RELEASE_BASE@@/@@PUB_CACHE_ASSET@@
+        sha256: @@PUB_CACHE_SHA256@@
+  # cargo vendor 产出：cargokit 编 rhttp 时走这里的 source replacement。
+  - name: cargo-vendor
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /run/build/cargo-vendor
+      - cp -a vendor/. /run/build/cargo-vendor/vendor/
+      - mkdir -p /run/build/cargo-home
+      - cp vendor-config.toml /run/build/cargo-home/config.toml
+    sources:
+      - type: archive
+        url: @@RELEASE_BASE@@/@@CARGO_VENDOR_ASSET@@
+        sha256: @@CARGO_VENDOR_SHA256@@
+  - name: venera-unified
+    buildsystem: simple
+    build-commands:
+      - export PATH=/app/flutter/bin:$PATH FLUTTER_ROOT=/app/flutter
+      - export PUB_CACHE=/run/build/pub-cache
+      - export CARGO_HOME=/run/build/cargo-home CARGO_NET_OFFLINE=true
+      - flutter config --no-analytics
+      - flutter pub get --offline --enforce-lockfile
+      - flutter build linux --release --no-pub
+      - install -Dm755 build/linux/x64/release/bundle/venera-unified /app/bin/venera-unified
+      - cp -a build/linux/x64/release/bundle/lib/. /app/lib/venera-unified/
+      - cp -a build/linux/x64/release/bundle/data/. /app/share/venera-unified/
+    sources:
+      - type: git
+        url: https://github.com/ACGNnsj/venera-unified.git
+        tag: @@SOURCE_TAG@@

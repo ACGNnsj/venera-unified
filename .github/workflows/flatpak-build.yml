@@ -1,0 +1,93 @@
+name: Flatpak 离线构建验证
+
+# 手工档：拿 flatpak-vendor.yml 挂到 Release 上的三份归档与渲染后的 manifest，
+# 在真实 flatpak-builder 里做一次联网预热 + 一次 --offline 复建，再 --offline 起窗口做烟测。
+# 结论只影响本 job，不参与发版门控。
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "已跑过 Flatpak 离线依赖归档的标签，例如 v1.20.0"
+        required: true
+        type: string
+
+concurrency:
+  group: flatpak-build-${{ inputs.tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - name: 取 Release 上的归档与 manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          gh release download "${{ inputs.tag }}" \
+            --pattern '*.tar.gz' \
+            --pattern 'io.github.venera.unified.yml' \
+            --dir dist
+          ls -la dist
+          test -f dist/io.github.venera.unified.yml || {
+            echo "::error::Release ${{ inputs.tag }} 上没有 io.github.venera.unified.yml，先跑 Flatpak 离线依赖归档"
+            exit 1
+          }
+      - name: 安装 flatpak-builder 与运行时
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder xvfb
+          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y --noninteractive flathub org.gnome.Sdk//48 org.gnome.Platform//48 org.freedesktop.Sdk.Extension.rust-stable//24.08
+          flatpak --version && flatpak-builder --version
+      - name: 联网预热构建
+        run: |
+          flatpak-builder --user --force-clean --disable-rofiles-fuse --repo=repo builddir dist/io.github.venera.unified.yml 2>&1 | tee prewarm.log
+      - name: 离线复建（--offline）
+        run: |
+          flatpak-builder --user --install --force-clean --disable-rofiles-fuse --offline --repo=repo builddir dist/io.github.venera.unified.yml 2>&1 | tee offline.log
+      - name: 启动烟测
+        run: |
+          set +e
+          xvfb-run -a timeout 60 flatpak run io.github.venera.unified > smoke.log 2>&1
+          code=$?
+          echo "exit=$code"
+          if [ $code -eq 124 ]; then
+            echo "::notice::应用在 60 秒内保持运行，未立即崩溃"
+          fi
+          if grep -qE 'error while loading shared libraries|Failed to load|cannot open shared object' smoke.log; then
+            echo "::error::启动时缺共享库"
+            exit 1
+          fi
+          if [ $code -ne 124 ] && [ $code -ne 0 ]; then
+            echo "::error::应用提前退出，退出码 $code"
+            cat smoke.log
+            exit 1
+          fi
+          tail -50 smoke.log
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: flatpak_build_logs
+          path: |
+            prewarm.log
+            offline.log
+            smoke.log
+          if-no-files-found: warn
+          retention-days: 14
+      - name: 小结
+        if: always()
+        run: |
+          {
+            echo "### Flatpak 构建验证（${{ inputs.tag }}）"
+            echo
+            echo "- 联网预热：$(grep -c 'Building' prewarm.log 2>/dev/null || echo 0) 个模块步骤"
+            echo "- 离线复建：$(test -f offline.log && echo 已执行 || echo 未执行)"
+            echo "- 烟测：$(tail -1 smoke.log 2>/dev/null | cut -c1-200)"
+          } >> "$GITHUB_STEP_SUMMARY"
