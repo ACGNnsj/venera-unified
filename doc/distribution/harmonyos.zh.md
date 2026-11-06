@@ -98,3 +98,23 @@ PDF 导入（PDFium）、自定义存储目录与持久化外部目录引用、�
 - 第二关 libsqlite3.so `fcntl64: symbol not found`：hook 传 OS.linux 垫片会下 glibc 预编译版；改 `--component sqlite` 从 amalgamation 直编（NEEDED 仅 libc.so）+ hook `source: system` 即过。
 - 第三关 flutter_rust_bridge `Unknown platform: ohos`：vendor 后把 `Platform.isAndroid` 改为含 ohos（按 soname dlopen 包内 librhttp.so）即过。
 - 第四关 flutter_7zip `_dylib` + flutter_qjs `_qjsLib` 同构 throw：同样 vendor 并 ohos 分支；另 7zip 原生库包内缺失，用 `--component 7zip` 编 `src/`（16 个 7zip C + flutter_7zip.cpp，C++20，DART_SHARED_LIB，NEEDED 仅 libc++/libc）出 libflutter_7zip.so。重出 HAP 59.2MB，模拟器 `aa start` 直达主页，无启动失败。
+
+## 2026-11-06 运行期兜底：ohos 不再直接抛 MissingPluginException
+
+进主页只说明启动链通了；真正的阅读闭环还会撞上四个「插件没有 ohos 实现」的坑。本次全部改成显式分支，不再靠异常冒泡：
+
+| 位置 | 现象 | 处理 |
+| --- | --- | --- |
+| `lib/foundation/app.dart:24` | Dart 层没有任何 ohos 判断 | 新增 `App.isOhos`（`Platform.operatingSystem == 'ohos'`；flutter_ohos 只经 operatingSystem 上报，`Platform.is*` 全不匹配） |
+| `lib/network/proxy.dart:30` | `getProxy` 直调 `venera/method_channel`，ohos 上抛 MissingPluginException，等于断网 | ohos 直接返回 `No Proxy`，走直连 |
+| `lib/foundation/image_processing.dart` | `encodePng` 走 lodepng 原生库，本仓无 ohos .so | ohos 走纯 Dart 的 `package:image` 编码（`image ^4.12.0` 已在依赖里，不必补编原生库） |
+| `lib/foundation/file_interaction.dart` | `file_selector` 无 ohos 实现，选目录/选文件/另存为全部不可用 | 四个入口改为弹输入框要绝对路径（默认 `/data/storage/el2/base/haps/entry/files`） |
+| `lib/routing/webview.dart` | `flutter_inappwebview` 无 ohos 实现 | `AppWebview` 渲染占位页 + 「用系统浏览器打开」 |
+| `lib/routing/cloudflare.dart:65` | 过验证依赖内置网页的 UA/Cookie | ohos 直接跳过并提示，不静默假成功 |
+
+两个实现细节值得留档：
+
+1. 路径输入框放在 `lib/routing/ohos_path_prompt.dart`（UI 文件），`foundation/file_interaction.dart` 只调用 `lib/foundation/path_prompt.dart` 里可注入的 handler，handler 在 `lib/main.dart` 启动时注册。原因：`foundation/` 一旦 import `components/` 或 `routing/`，`.github/scripts/check_architecture_dependencies.py` 会报 `Business file reaches UI`（`file_interaction.dart` 是 business 文件，bootstrap 会经它摸到整张 UI 图），而 `.github/scripts/check_structure_imports.py` 也禁止 foundation→components。新增文件必须同时登记进 `doc/architecture/dependency_baseline.json` 的 `business_files`/`ui_files`，否则报 `Unclassified library file`。
+2. Cloudflare 的跳过是「诚实失败」而不是降级：没有内置网页就拿不到 `cf_clearance`，假装验证通过只会让后续请求 403。
+
+仍未接的还有：图像翻译的 ONNX 推理（`foundation/image_translation/ort_ffi.dart` 无 ohos 候选，必须短路）、PDF 导入、系统分享、生物识别应用锁。

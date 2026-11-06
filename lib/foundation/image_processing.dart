@@ -7,7 +7,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
+import 'package:image/image.dart' as img;
 import 'package:lodepng_flutter/lodepng_flutter.dart' as lodepng;
+import 'package:venera_unified/foundation/app.dart';
 
 import 'image_transpose_native.dart';
 import 'image_provider/avif_system_decoder.dart'
@@ -265,6 +267,9 @@ class Image {
   }
 
   Uint8List encodePng() {
+    // HarmonyOS ships no lodepng native library, so the experimental build
+    // encodes PNG in pure Dart instead of failing the export path outright.
+    if (App.isOhos) return _encodePngWithDart();
     final data = lodepng.encodePngToPointer(
       lodepng.Image(
         _data.buffer.asUint8List(_data.offsetInBytes, _data.lengthInBytes),
@@ -280,6 +285,20 @@ class Image {
         pointer.cast(),
       );
     }
+  }
+
+  Uint8List _encodePngWithDart() {
+    final rgba = _data.buffer.asUint8List(
+      _data.offsetInBytes,
+      _data.lengthInBytes,
+    );
+    final decoded = img.Image.fromBytes(
+      width: width,
+      height: height,
+      bytes: rgba.buffer,
+      order: img.ChannelOrder.rgba,
+    );
+    return Uint8List.fromList(img.encodePng(decoded));
   }
 }
 

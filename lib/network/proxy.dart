@@ -27,7 +27,12 @@ Future<String?> _getProxy() async {
   if (configured != "system") return configured;
 
   String res;
-  if (!App.isLinux) {
+  // HarmonyOS has no native partner for the proxy channel yet: reading the
+  // system proxy would throw MissingPluginException and cut every request, so
+  // the experimental build connects directly.
+  if (App.isOhos) {
+    res = "No Proxy";
+  } else if (!App.isLinux) {
     const channel = MethodChannel("venera/method_channel");
     try {
       res = await channel.invokeMethod("getProxy");

@@ -166,6 +166,9 @@ class _AppWebviewState extends State<AppWebview> with ContextMenuOwner {
 
   @override
   Widget build(BuildContext context) {
+    if (App.isOhos) {
+      return _buildOhosFallback();
+    }
     final actions = [
       Tooltip(
         message: "more".tl,
@@ -274,6 +277,49 @@ class _AppWebviewState extends State<AppWebview> with ContextMenuOwner {
         actions: actions,
       ),
       body: body,
+    );
+  }
+
+  /// HarmonyOS has no `flutter_inappwebview` implementation yet. Instead of
+  /// failing on a missing platform view, hand the URL to the system browser so
+  /// the page can still be opened. Cookie/UA based flows (Cloudflare, logins)
+  /// cannot complete this way and say so at their call sites.
+  Widget _buildOhosFallback() {
+    return Scaffold(
+      appBar: Appbar(
+        title: Text(
+          title == "Webview" ? title.tl : title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'This HarmonyOS build cannot show a web page inside the app yet. Open it in the system browser instead.'
+                    .tl,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              SelectableText(
+                widget.initialUrl,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () => launchUrlString(widget.initialUrl),
+                icon: const Icon(Icons.open_in_browser),
+                label: Text('Open in Browser'.tl),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

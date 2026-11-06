@@ -799,6 +799,7 @@
     "routing/cloudflare.dart",
     "routing/handle_text_share.dart",
     "routing/local_reading.dart",
+    "routing/ohos_path_prompt.dart",
     "routing/page_jump_target.dart",
     "routing/page_replacement.dart",
     "routing/settings.dart",
@@ -824,6 +825,7 @@
     "features/local_comics/archive_download_task.dart"
   ],
   "business_files": [
+    "foundation/path_prompt.dart",
     "foundation/tv_reader_policy.dart",
     "app_runtime/application_host.dart",
     "app_runtime/application_updates.dart",

@@ -10,6 +10,7 @@ import 'package:venera_unified/network/cloudflare.dart';
 import 'package:venera_unified/network/cookie_jar.dart';
 import 'package:venera_unified/routing/webview.dart';
 import 'package:venera_unified/foundation/extensions.dart';
+import 'package:venera_unified/foundation/translations.dart';
 
 void passCloudflare(CloudflareException e, void Function() onFinished) async {
   final rootContext = appNavigation.rootContext;
@@ -59,6 +60,22 @@ void passCloudflare(CloudflareException e, void Function() onFinished) async {
         return cookie;
       }),
     );
+  }
+
+  // HarmonyOS has no embedded webview yet, so the challenge page cannot be
+  // solved and no clearance cookie can be captured.
+  if (App.isOhos) {
+    Log.info(
+      'Cloudflare',
+      'Cloudflare verification is unavailable on HarmonyOS, skipping.',
+    );
+    rootContext.showMessage(
+      message:
+          'Cloudflare verification needs an embedded webview, which this HarmonyOS build does not provide yet.'
+              .tl,
+    );
+    onFinished();
+    return;
   }
 
   // Linux uses the separate desktop WebView host and its cookie adapter.

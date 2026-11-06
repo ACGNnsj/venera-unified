@@ -59,6 +59,7 @@ import 'features/comic_source/comic_source_api.dart';
 import 'features/comic_source/comic_source_ui.dart';
 import 'features/comic_source/source_repositories.dart';
 import 'network/app_dio.dart';
+import 'routing/ohos_path_prompt.dart';
 
 void main(List<String> args) {
   if (args.contains('--headless')) {
@@ -88,6 +89,9 @@ void main(List<String> args) {
           registerShowMessageHandler((context, message) {
             showToast(message: message, context: context);
           });
+          // HarmonyOS has no platform file picker; the experimental build asks
+          // for an absolute path instead.
+          registerOhosPathPrompt();
           JsEngine().bindUiMessageHandler(JsUiApi());
           final sync = createApplicationDataSync();
           final core = createCoreBootstrap(

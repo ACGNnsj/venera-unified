@@ -20,6 +20,10 @@ class _App {
 
   bool get isMacOS => Platform.isMacOS;
 
+  /// HarmonyOS NEXT (OpenHarmony). The Flutter OHOS fork reports it through
+  /// [Platform.operatingSystem]; none of the `Platform.is*` getters match.
+  bool get isOhos => Platform.operatingSystem == 'ohos';
+
   bool get isDesktop =>
       Platform.isWindows || Platform.isLinux || Platform.isMacOS;
 
