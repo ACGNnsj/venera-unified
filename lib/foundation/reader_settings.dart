@@ -93,6 +93,8 @@ class ReaderSettings {
   double get autoPageTurningInterval =>
       _values['autoPageTurningInterval'] as double;
   double get autoScrollSpeed => _values['autoScrollSpeed'] as double;
+  bool get autoScrollSpeedPersist =>
+      _values['autoScrollSpeedPersist'] as bool;
   double get autoScrollFrequency => _values['autoScrollFrequency'] as double;
   double get autoScrollDistance => _values['autoScrollDistance'] as double;
   double get readerScrollSpeed => _values['readerScrollSpeed'] as double;

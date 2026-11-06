@@ -42,6 +42,21 @@ void main() {
     expect({author.identity, tag.identity, otherSource.identity}, hasLength(3));
   });
 
+  test('search shortcuts round-trip category metadata', () {
+    const shortcut = SearchShortcut(
+      kind: SearchShortcutKind.category,
+      sourceKey: 'example',
+      namespace: 'ranking',
+      value: 'Completed',
+    );
+
+    final restored = SearchShortcut.fromJson(shortcut.toJson());
+
+    expect(restored?.kind, SearchShortcutKind.category);
+    expect(restored?.isCategory, isTrue);
+    expect(restored?.identity, shortcut.identity);
+  });
+
   test('invalid search shortcut data is ignored', () {
     expect(SearchShortcut.fromJson(null), isNull);
     expect(SearchShortcut.fromJson({'kind': 'unknown'}), isNull);

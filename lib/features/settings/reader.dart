@@ -409,7 +409,9 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
             comicSource: isEnabledSpecificSettings ? widget.comicSource : null,
             useDeviceSettings: useDeviceSpecificSettings,
           ).toSliver(),
-          if (_value(ReaderPreferences.autoScrollStyle) == 'smooth')
+          if (_value(ReaderPreferences.autoScrollStyle) == 'smooth' &&
+              (_value(ReaderPreferences.autoScrollSpeedPersist) ||
+                  isEnabledSpecificSettings))
             SliderSetting.reader(
               title: "Automatic scroll speed".tl,
               preference: ReaderPreferences.autoScrollSpeed,
@@ -420,6 +422,24 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
                   ? widget.comicSource
                   : null,
               useDeviceSettings: useDeviceSpecificSettings,
+            ).toSliver(),
+          if (_value(ReaderPreferences.autoScrollStyle) == 'smooth' &&
+              !_value(ReaderPreferences.autoScrollSpeedPersist) &&
+              !isEnabledSpecificSettings)
+            _SessionAutoScrollSpeedSlider(
+              onChanged: widget.onChanged,
+            ).toSliver(),
+          if (_value(ReaderPreferences.autoScrollStyle) == 'smooth' &&
+              !isEnabledSpecificSettings)
+            SwitchSetting.reader(
+              title: 'Remember scroll speed'.tl,
+              subtitle: 'Off keeps adjustments for this session only'.tl,
+              preference: ReaderPreferences.autoScrollSpeedPersist,
+              onChanged: () {
+                if (!mounted) return;
+                setState(() {});
+                widget.onChanged?.call('autoScrollSpeedPersist');
+              },
             ).toSliver(),
           if (_value(ReaderPreferences.autoScrollStyle) == 'stepped') ...[
             SliderSetting.reader(
@@ -938,6 +958,51 @@ class __CustomImageProcessingState
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Session-only auto-scroll speed slider. Visible when the global
+/// [ReaderPreferences.autoScrollSpeedPersist] switch is off; writes to
+/// [AutoScrollSession] only and never touches the stored preference.
+class _SessionAutoScrollSpeedSlider extends StatefulWidget {
+  const _SessionAutoScrollSpeedSlider({this.onChanged});
+
+  final void Function(String key)? onChanged;
+
+  @override
+  State<_SessionAutoScrollSpeedSlider> createState() =>
+      _SessionAutoScrollSpeedSliderState();
+}
+
+class _SessionAutoScrollSpeedSliderState
+    extends State<_SessionAutoScrollSpeedSlider> {
+  @override
+  Widget build(BuildContext context) {
+    final preference = ReaderPreferences.autoScrollSpeed;
+    final stored = ReaderPreferenceStore(
+      settings: appdata.settings,
+    ).read(preference).toDouble();
+    final value = (AutoScrollSession.speedPx ?? stored).clamp(
+      preference.min,
+      preference.max,
+    );
+    return ListTile(
+      title: Text("Automatic scroll speed".tl, softWrap: true, maxLines: 2),
+      trailing: Text('${value.toInt()} px/s'),
+      subtitle: Slider(
+        value: value,
+        min: preference.min,
+        max: preference.max,
+        divisions: ((preference.max - preference.min) / preference.step)
+            .toInt(),
+        onChanged: (next) {
+          setState(() {
+            AutoScrollSession.speedPx = next;
+          });
+          widget.onChanged?.call('autoScrollSpeed');
+        },
       ),
     );
   }

@@ -13,6 +13,15 @@ import 'search_shortcut.dart';
 import 'search_shortcut_manager.dart';
 
 PageJumpTarget? resolveSearchShortcut(SearchShortcut shortcut) {
+  if (shortcut.isCategory) {
+    final source = ComicSource.find(shortcut.sourceKey);
+    if (source?.categoryData == null) return null;
+    final parts = shortcut.namespace.split('@');
+    return PageJumpTarget(shortcut.sourceKey, 'category', {
+      'category': shortcut.value,
+      if (parts.length > 1) 'param': parts.sublist(1).join('@'),
+    });
+  }
   return ComicSource.find(
     shortcut.sourceKey,
   )?.handleClickTagEvent?.call(shortcut.namespace, shortcut.value);
@@ -54,10 +63,14 @@ void showSearchShortcutMenu({
         text: saved
             ? (shortcut.isAuthor
                   ? 'Unfavorite author'.tl
-                  : 'Remove tag shortcut'.tl)
+                  : (shortcut.isCategory
+                        ? 'Remove category shortcut'.tl
+                        : 'Remove tag shortcut'.tl))
             : (shortcut.isAuthor
                   ? 'Favorite author'.tl
-                  : 'Save tag shortcut'.tl),
+                  : (shortcut.isCategory
+                        ? 'Save category shortcut'.tl
+                        : 'Save tag shortcut'.tl)),
         onClick: () async {
           try {
             await (saved ? manager.remove(shortcut) : manager.add(shortcut));
@@ -116,7 +129,12 @@ class _SearchShortcutsSliverState extends State<SearchShortcutsSliver> {
         .where((shortcut) => shortcut.isAuthor)
         .toList(growable: false);
     final tags = shortcuts
-        .where((shortcut) => !shortcut.isAuthor)
+        .where(
+          (shortcut) => !shortcut.isAuthor && !shortcut.isCategory,
+        )
+        .toList(growable: false);
+    final categories = shortcuts
+        .where((shortcut) => shortcut.isCategory)
         .toList(growable: false);
     final children = <Widget>[
       const SizedBox(height: 16),
@@ -132,6 +150,10 @@ class _SearchShortcutsSliverState extends State<SearchShortcutsSliver> {
       if (tags.isNotEmpty) ...[
         _buildSectionTitle('Saved tag searches'.tl),
         for (final shortcut in tags) _buildItem(context, shortcut),
+      ],
+      if (categories.isNotEmpty) ...[
+        _buildSectionTitle('Saved categories'.tl),
+        for (final shortcut in categories) _buildItem(context, shortcut),
       ],
     ];
     return SliverList(
@@ -183,7 +205,11 @@ class _SearchShortcutsSliverState extends State<SearchShortcutsSliver> {
           child: ListTile(
             contentPadding: EdgeInsets.zero,
             leading: Icon(
-              shortcut.isAuthor ? Icons.person_outline : Icons.label_outline,
+              shortcut.isAuthor
+                  ? Icons.person_outline
+                  : (shortcut.isCategory
+                        ? Icons.category_outlined
+                        : Icons.label_outline),
             ),
             title: Text(
               shortcut.value,

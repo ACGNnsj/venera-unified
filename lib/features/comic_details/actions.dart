@@ -373,15 +373,43 @@ abstract mixin class ComicPageActions {
           return;
         }
         if (library.isDownloading(target.id, target.comicType)) return;
+        final pending = <String>[];
+        var skipped = 0;
+        for (final i in selected) {
+          final chapterId = chapterIds[i];
+          if (localComic != null &&
+              localComic.downloadedChapters.contains(chapterId) &&
+              !localComic.incompleteChapters.containsKey(chapterId)) {
+            skipped++;
+          } else {
+            pending.add(chapterId);
+          }
+        }
+        if (pending.isEmpty) {
+          owner.showMessage(
+            message: "Selected chapters are already downloaded".tl,
+          );
+          return;
+        }
         library.addTask(
           ImagesDownloadTask(
             storage: library,
             source: source,
             comicId: target.id,
             comic: target,
-            chapters: selected.map((i) => chapterIds[i]).toList(),
+            chapters: pending,
           ),
         );
+        if (skipped > 0) {
+          owner.showMessage(
+            message: "Download started (@a new, @b skipped)".tlParams({
+              'a': pending.length,
+              'b': skipped,
+            }),
+          );
+          update();
+          return;
+        }
       }
       owner.showMessage(message: "Download started".tl);
       update();

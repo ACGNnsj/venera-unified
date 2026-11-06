@@ -66,6 +66,10 @@ abstract final class ReaderPreferences {
     step: 10,
     integer: false,
   );
+  static const autoScrollSpeedPersist = BoolPreference(
+    'autoScrollSpeedPersist',
+    true,
+  );
   static const autoScrollFrequency = NumericPreference(
     'autoScrollFrequency',
     2,
@@ -277,6 +281,7 @@ abstract final class ReaderPreferences {
     eInkRefreshStyle,
     autoPageTurningInterval,
     autoScrollSpeed,
+    autoScrollSpeedPersist,
     autoScrollFrequency,
     autoScrollDistance,
     readerScrollSpeed,
@@ -322,4 +327,11 @@ abstract final class ReaderPreferences {
   static Map<String, Object?> get storageDefaults => {
     for (final preference in all) preference.key: preference.storageDefault,
   };
+}
+
+/// Session-only auto-scroll speed used when [ReaderPreferences.autoScrollSpeedPersist]
+/// is off. Never persisted; the next reader session falls back to the stored
+/// preference value.
+class AutoScrollSession {
+  static double? speedPx;
 }

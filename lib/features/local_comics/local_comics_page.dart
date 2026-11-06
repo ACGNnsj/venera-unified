@@ -471,6 +471,20 @@ class _LocalComicsPageState extends State<LocalComicsPage> {
                   },
                 ),
                 MenuEntry(
+                  icon: Icons.open_in_new,
+                  text: 'View source details'.tl,
+                  onClick: () {
+                    context.to(
+                      () => ComicPage(
+                        id: c.id,
+                        sourceKey: c.sourceKey,
+                        cover: c.cover,
+                        title: c.title,
+                      ),
+                    );
+                  },
+                ),
+                MenuEntry(
                   icon: Icons.delete,
                   text: "Delete".tl,
                   onClick: () {

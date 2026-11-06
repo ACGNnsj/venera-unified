@@ -1,4 +1,4 @@
-enum SearchShortcutKind { author, tag }
+enum SearchShortcutKind { author, tag, category }
 
 class SearchShortcut {
   const SearchShortcut({
@@ -14,6 +14,8 @@ class SearchShortcut {
   final String value;
 
   bool get isAuthor => kind == SearchShortcutKind.author;
+
+  bool get isCategory => kind == SearchShortcutKind.category;
 
   String get identity =>
       '$sourceKey\u0000${kind.name}\u0000$namespace\u0000$value';
@@ -46,6 +48,7 @@ class SearchShortcut {
     final kind = switch (kindValue) {
       'author' => SearchShortcutKind.author,
       'tag' => SearchShortcutKind.tag,
+      'category' => SearchShortcutKind.category,
       _ => null,
     };
     if (kind == null) return null;

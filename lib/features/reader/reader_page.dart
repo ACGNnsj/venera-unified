@@ -1149,7 +1149,9 @@ class ReaderState extends State<Reader>
       return AutoReadingSettings(
         gallery: mode.isGallery,
         pageInterval: current.autoPageTurningInterval,
-        pixelsPerSecond: current.autoScrollSpeed,
+        pixelsPerSecond: current.autoScrollSpeedPersist
+            ? current.autoScrollSpeed
+            : (AutoScrollSession.speedPx ?? current.autoScrollSpeed),
         stepped: current.autoScrollStyle == 'stepped',
         stepsPerSecond: current.autoScrollFrequency,
         pixelsPerStep: current.autoScrollDistance,
