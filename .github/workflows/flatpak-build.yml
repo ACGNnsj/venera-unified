@@ -83,7 +83,9 @@ jobs:
       - name: 启动烟测
         run: |
           set +e
-          xvfb-run -a timeout 60 flatpak run io.github.venera.unified > smoke.log 2>&1
+          flatpak list --user --app --columns=application,version
+          # flatpak-builder 用 --user 装,flatpak run 也必须带 --user,否则去系统安装里找
+          xvfb-run -a timeout 60 flatpak run --user io.github.venera.unified > smoke.log 2>&1
           code=$?
           echo "exit=$code"
           if [ $code -eq 124 ]; then
