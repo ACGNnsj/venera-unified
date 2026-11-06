@@ -100,15 +100,26 @@ class GalleryModeState extends State<ReaderGalleryView>
 
   // Preserve the legacy gallery contract: image processing receives the current
   // display page, including for prefetch, rather than the source image index.
-  ReaderImageProvider _imageProvider(String key) => ReaderImageProvider(
-    key,
-    data.sourceKey,
-    data.comicId,
-    data.chapterId,
-    page,
-    decodePixelBudget: data.decodePixelBudget,
-    diagnostics: widget.imageWork.diagnostics,
-  );
+  ReaderImageProvider _imageProvider(String key) {
+    final translation = ReaderImageProvider.translationFor(
+      sourceKey: data.sourceKey,
+      cid: data.comicId,
+      eid: data.chapterId,
+      page: page,
+    );
+    return ReaderImageProvider(
+      key,
+      data.sourceKey,
+      data.comicId,
+      data.chapterId,
+      page,
+      decodePixelBudget: data.decodePixelBudget,
+      diagnostics: widget.imageWork.diagnostics,
+      translationKey: translation.key,
+      translationConfig: translation.config,
+      translated: translation.translated,
+    );
+  }
 
   ReaderDisplayImageProvider _displayImage(String key) =>
       ReaderDisplayImageProvider(_imageProvider(key), widget.imageWork);

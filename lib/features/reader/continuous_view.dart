@@ -783,6 +783,12 @@ class ContinuousModeState extends State<ReaderContinuousView>
     // Pixel guards live inside the provider (TV decodeSize, maxImagePixel,
     // 8192 absolute edge); byte-size gating needs decoded dimensions this
     // view does not hold, so no ImageInfo is retained here by design.
+    final translation = ReaderImageProvider.translationFor(
+      sourceKey: data.sourceKey,
+      cid: data.comicId,
+      eid: image.position.chapterId,
+      page: image.position.imageNumber,
+    );
     final provider = ReaderImageProvider(
       key,
       data.sourceKey,
@@ -792,6 +798,9 @@ class ContinuousModeState extends State<ReaderContinuousView>
       enableResize: true,
       decodePixelBudget: data.decodePixelBudget,
       diagnostics: widget.imageWork.diagnostics,
+      translationKey: translation.key,
+      translationConfig: translation.config,
+      translated: translation.translated,
     );
     final diagnostics = widget.imageWork.diagnostics;
     if (diagnostics != null) {
@@ -1022,6 +1031,12 @@ class ContinuousModeState extends State<ReaderContinuousView>
           width = double.infinity;
         }
 
+        final translation = ReaderImageProvider.translationFor(
+          sourceKey: data.sourceKey,
+          cid: data.comicId,
+          eid: imageRef.position.chapterId,
+          page: imageRef.position.imageNumber,
+        );
         final image = ReaderImageProvider(
           imageRef.imageKey,
           data.sourceKey,
@@ -1031,6 +1046,9 @@ class ContinuousModeState extends State<ReaderContinuousView>
           enableResize: true,
           decodePixelBudget: data.decodePixelBudget,
           diagnostics: this.widget.imageWork.diagnostics,
+          translationKey: translation.key,
+          translationConfig: translation.config,
+          translated: translation.translated,
         );
 
         var comicImage = SizeChangedLayoutNotifier(

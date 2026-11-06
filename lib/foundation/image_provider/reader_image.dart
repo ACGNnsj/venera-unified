@@ -15,6 +15,8 @@ import 'package:venera_unified/network/image_stream.dart';
 import 'base_image_provider.dart';
 import 'upscale/upscale_gate.dart';
 import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/image_translation/translation_config.dart';
+import 'package:venera_unified/foundation/image_translation/translation_service.dart';
 import 'package:venera_unified/foundation/reader_diagnostics.dart';
 import 'package:venera_unified/foundation/tv_reader_policy.dart';
 
@@ -29,6 +31,13 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
     this.enableResize = false,
     this.decodePixelBudget,
     this.diagnostics,
+    this.translationKey,
+    this.legacyTranslationKey,
+    this.translationConfig,
+    this.translated = false,
+    this.comicTitle = '',
+    this.comicCover = '',
+    this.chapterTitle = '',
   }) : assert(decodePixelBudget == null || decodePixelBudget > 0);
 
   final String imageKey;
@@ -45,6 +54,62 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
   final bool enableResize;
 
   final int? decodePixelBudget;
+
+  /// Cache key of the offline-translated variant of this page, or null when
+  /// translation is off. When set, a cached or synced stored translation is
+  /// shown before falling back to the original and background translation.
+  final String? translationKey;
+
+  /// The key this page's translation was stored under before [translationKey]
+  /// switched to the page ordinal. Non-null only while [imageKey] is the one
+  /// that wrote it.
+  final String? legacyTranslationKey;
+
+  /// This comic's own language pair + text-removal mode. Non-null exactly when
+  /// [translationKey] is.
+  final TranslationConfig? translationConfig;
+
+  /// Whether the translated page is already known to exist. Only used to
+  /// change the provider identity so the reader can swap the image in place
+  /// once a background translation completes.
+  final bool translated;
+
+  final String comicTitle;
+  final String comicCover;
+  final String chapterTitle;
+
+  /// Computes the translation constructor arguments for one page. Returns an
+  /// all-empty triple when the comic's translation switch is off, so call
+  /// sites can spread the result straight into the constructor without their
+  /// own gating. Legacy image-key lookups are intentionally left null: the
+  /// pipeline migrates those copies to the ordinal key on sync.
+  static ({String? key, TranslationConfig? config, bool translated})
+      translationFor({
+    required String? sourceKey,
+    required String cid,
+    required String? eid,
+    required int page,
+  }) {
+    final scopeKey = sourceKey ?? 'local';
+    if (!ImageTranslationService.isEnabledForComic(cid, scopeKey)) {
+      return (key: null, config: null, translated: false);
+    }
+    final config = TranslationConfig.of(cid, sourceKey);
+    final key = ImageTranslationService.cacheKeyFor(
+      scopeKey,
+      cid,
+      eid ?? '',
+      page,
+    );
+    return (
+      key: key,
+      config: config,
+      translated: ImageTranslationService.instance.isTranslated(
+        key,
+        config.mode,
+      ),
+    );
+  }
 
   @override
   TargetImageSize targetSizeForImage(int width, int height) {
@@ -118,6 +183,52 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
       readDiagnostic?.finish(success: false);
       rethrow;
     }
+    if (translationKey != null) {
+      final translationConfig = this.translationConfig ??
+          TranslationConfig.of(cid, sourceKey);
+      final chapter = ImageTranslationService.chapterIdentity(
+        cid: cid,
+        sourceKey: sourceKey,
+        eid: eid,
+        config: translationConfig,
+        comicTitle: comicTitle,
+        comicCover: comicCover,
+        chapterTitle: chapterTitle,
+      );
+      final service = ImageTranslationService.instance;
+      final stored = await service.findTranslated(
+        translationKey!,
+        translationConfig.mode,
+      );
+      if (stored != null) {
+        service.markTranslated(translationKey!, translationConfig.mode);
+        return stored.readAsBytes();
+      }
+      final rendered = await service.renderStoredPage(
+        translationKey!,
+        imageBytes,
+        translationConfig.mode,
+        chapter: chapter,
+        legacyCacheKey: legacyTranslationKey,
+      );
+      if (rendered != null) {
+        return rendered;
+      }
+      if (ImageTranslationService.isReadyForLang(
+        translationConfig.sourceLang,
+      )) {
+        service.schedule(
+          translationKey!,
+          cid,
+          sourceKey,
+          imageBytes,
+          translationConfig,
+          () => ImageTranslationService.evictImage(this),
+          chapter: chapter,
+          legacyCacheKey: legacyTranslationKey,
+        );
+      }
+    }
     if (GlobalPreferenceStore(
       appdata.settings,
     ).read(ImageProcessingPreferences.enabled)) {
@@ -166,5 +277,5 @@ class ReaderImageProvider extends BaseImageProvider<ReaderImageProvider> {
 
   @override
   String get key =>
-      "$imageKey@$sourceKey@$cid@$eid@$enableResize${decodePixelBudget == null ? '' : '@tv:$decodePixelBudget'}";
+      "$imageKey@$sourceKey@$cid@$eid@$enableResize${decodePixelBudget == null ? '' : '@tv:$decodePixelBudget'}${translationKey == null ? '' : '@tr:$translated'}";
 }
