@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
-import 'package:venera_unified/foundation/image_translation/pre_translation_tasks.dart';
+import 'package:venera_unified/features/reader/pre_translation_tasks.dart';
 import 'package:venera_unified/foundation/image_translation/translation_types.dart';
 
 PreTranslationTask _task(List<PreTranslationChapter> chapters) {
