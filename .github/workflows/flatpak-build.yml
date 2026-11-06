@@ -74,12 +74,16 @@ jobs:
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak install --user -y --noninteractive flathub org.gnome.Sdk//48 org.gnome.Platform//48 org.freedesktop.Sdk.Extension.rust-stable//24.08
           flatpak --version && flatpak-builder --version
+      # flatpak-builder 没有 --offline：联网预热那次把源都下进缓存，
+      # 第二次用 --disable-download 复用缓存、不许再下载，等价于离线复建。
       - name: 联网预热构建
         run: |
+          set -o pipefail
           flatpak-builder --user --force-clean --disable-rofiles-fuse --repo=repo builddir dist/io.github.venera.unified.yml 2>&1 | tee prewarm.log
-      - name: 离线复建（--offline）
+      - name: 无下载复建（--disable-download）
         run: |
-          flatpak-builder --user --install --force-clean --disable-rofiles-fuse --offline --repo=repo builddir dist/io.github.venera.unified.yml 2>&1 | tee offline.log
+          set -o pipefail
+          flatpak-builder --user --install --force-clean --disable-rofiles-fuse --disable-download --repo=repo builddir dist/io.github.venera.unified.yml 2>&1 | tee offline.log
       - name: 启动烟测
         run: |
           set +e

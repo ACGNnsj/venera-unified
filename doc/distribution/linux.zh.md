@@ -86,6 +86,6 @@ Flatpak 还是**验证中**的状态，不在发布门控里，也不出现在 R
 
 - `flatpak/manifest.template.yml` 是唯一手写的清单，`flatpak/flutter-sha256.json` 缓存各 Flutter 版本的官方 sha256。
 - 发版后手动跑「Flatpak 离线依赖归档」工作流：它把 pub-cache、引擎产物、cargo vendor 三份归档算好 sha256，渲染出 `io.github.venera.unified.yml`，并挂到该标签的 Release 上。
-- 再手动跑「Flatpak 离线构建验证」：联网预热一次、`--offline` 复建一次、再用 xvfb 起窗口做烟测。这一条跑绿之前不要往 Flathub 提交。
+- 再手动跑「Flatpak 离线构建验证」：联网预热一次，再用 `--disable-download` 复建一次（flatpak-builder 没有 `--offline` 开关，靠预热那次把源留在缓存里实现等价离线），最后用 xvfb 起窗口做烟测。这一条跑绿之前不要往 Flathub 提交。
 
 清单里 Flutter 走官方 tarball（校验 sha256），pub 依赖走 `--offline` 的 `PUB_CACHE`，Rust 走 `cargo vendor` 的 source replacement 加 `org.freedesktop.Sdk.Extension.rust-stable`，全程不需要构建期联网。

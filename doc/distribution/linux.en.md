@@ -79,6 +79,6 @@ Flatpak is **still being verified**. It is not release-gated and no Flatpak asse
 
 - `flatpak/manifest.template.yml` is the single hand-written manifest; `flatpak/flutter-sha256.json` caches the official Flutter tarball hashes.
 - After a release, run the **Flatpak 离线依赖归档** workflow by hand: it hashes the pub-cache, engine-artifact and cargo-vendor archives, renders `io.github.venera.unified.yml` from the template, and uploads all of it to that tag's release.
-- Then run **Flatpak 离线构建验证**: one networked prewarm build, one `--offline` rebuild, and an xvfb launch smoke. Do not submit to Flathub before that job is green.
+- Then run **Flatpak 离线构建验证**: one networked prewarm build, one `--disable-download` rebuild (flatpak-builder has no `--offline` switch; the prewarm leaves every source in cache, which makes that rebuild an equivalent offline pass), and an xvfb launch smoke. Do not submit to Flathub before that job is green.
 
 The manifest takes Flutter from the official tarball (sha256-pinned), pub dependencies from an `--offline` `PUB_CACHE`, and Rust from `cargo vendor` source replacement plus `org.freedesktop.Sdk.Extension.rust-stable`, so the build needs no network.
