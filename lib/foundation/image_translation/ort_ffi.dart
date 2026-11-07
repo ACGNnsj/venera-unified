@@ -19,17 +19,16 @@ import 'ort_runtime_choice.dart';
 /// indices below were extracted from onnxruntime_c_api.h and are valid for
 /// every 1.x release.
 class OrtRuntime {
-  OrtRuntime._(this._api, this.defaultExecutionProvider);
+  OrtRuntime._(this._api, this.defaultExecutionProviders);
 
   static OrtRuntime? _instance;
 
   final Pointer<Pointer<Void>> _api;
 
-  /// 当前运行库默认要挂的 EP：Windows ML 那份运行时是 'DML'；随包分发的
-  /// CPU 版是 null（与历史行为一致）。
-  final String? defaultExecutionProvider;
-
-  bool get usesWindowsMl => defaultExecutionProvider != null;
+  /// 会话默认按这个顺序尝试挂 EP（见 [executionProvidersForPlatform]）：
+  /// Windows ML 运行时是 ['DML']，Android 是 ['NNAPI', 'XNNPACK']，
+  /// 其它平台（含随包分发的纯 CPU 运行库）为空，表示直接用默认 CPU EP。
+  final List<String> defaultExecutionProviders;
 
   static const _ortApiVersion = 16;
 
@@ -58,20 +57,16 @@ class OrtRuntime {
     if (api == nullptr) {
       throw Exception('ONNX Runtime API version $_ortApiVersion unavailable');
     }
-    return _instance = OrtRuntime._(
-      api,
-      opened.windowsMl ? choice.executionProvider : null,
-    );
+    return _instance = OrtRuntime._(api, opened.executionProviders);
   }
 
-  static ({DynamicLibrary library, bool windowsMl}) _openLibrary(
-    OrtRuntimeChoice choice,
-  ) {
+  static ({DynamicLibrary library, List<String> executionProviders})
+  _openLibrary(OrtRuntimeChoice choice) {
     if (choice.isWindowsMl) {
       try {
         return (
           library: DynamicLibrary.open(choice.windowsMlDllPath!),
-          windowsMl: true,
+          executionProviders: choice.executionProviders,
         );
       } catch (_) {
         // 框架包里的 DLL 载入失败（权限、版本、依赖缺失）就当没有它，
@@ -91,17 +86,25 @@ class OrtRuntime {
     } else {
       candidates.add(() => 'libonnxruntime.dylib');
     }
+    // 选了 Windows ML 却没能载入它的运行时：此时手里这份是纯 CPU 的，
+    // 别再拿 DML 去试。其余情况沿用平台候选（Android 的 NNAPI/XNNPACK）。
+    var fallbackProviders = choice.isWindowsMl
+        ? const <String>[]
+        : choice.executionProviders;
     Object? lastError;
     // On iOS/macOS the runtime may be statically linked into the process.
     try {
       var process = DynamicLibrary.process();
       if (process.providesSymbol('OrtGetApiBase')) {
-        return (library: process, windowsMl: false);
+        return (library: process, executionProviders: fallbackProviders);
       }
     } catch (_) {}
     for (var candidate in candidates) {
       try {
-        return (library: DynamicLibrary.open(candidate()), windowsMl: false);
+        return (
+          library: DynamicLibrary.open(candidate()),
+          executionProviders: fallbackProviders,
+        );
       } catch (e) {
         lastError = e;
       }
@@ -261,33 +264,45 @@ class OrtOutput {
 
 /// Synchronous inference session. Only use inside a worker isolate.
 class OrtFfiSession {
-  OrtFfiSession._(this._rt, this._session, this.inputNames, this.outputNames);
+  OrtFfiSession._(
+    this._rt,
+    this._session,
+    this.inputNames,
+    this.outputNames,
+    this.executionProvider,
+  );
 
   final OrtRuntime _rt;
   final Pointer<Void> _session;
   final List<String> inputNames;
   final List<String> outputNames;
 
-  /// [executionProvider] 目前只支持 'DML'（只有带 DirectML 的运行库才认）。
-  /// 传 null 时跟随运行库默认值：Windows ML 那份走 DML，随包分发的 CPU 版
-  /// 保持纯 CPU（与历史行为一致）。
+  /// 实际生效的执行提供者；null 表示默认的 CPU EP。
+  ///
+  /// 'DML' 需要带 DirectML 的运行库，'NNAPI' / 'XNNPACK' 需要 Android 版；
+  /// 运行库里没编进对应 EP 时就挂不上，[open] 会继续试下一个。
+  final String? executionProvider;
+
+  /// 建会话。[executionProvider] 明确指定时只要它，失败直接抛错（便于诊断）；
+  /// 传 null 时按运行库的候选顺序逐个尝试，最后落到 CPU：GPU/NPU 会话建不起来
+  /// （驱动、显存、算子不支持）时功能本身照旧可用，而不是把整页翻译报错。
   static OrtFfiSession open(
     String modelPath, {
     int? intraOpThreads,
     String? executionProvider,
   }) {
     var rt = OrtRuntime.open();
-    var requested = executionProvider ?? rt.defaultExecutionProvider;
-    try {
-      return _open(rt, modelPath, intraOpThreads, requested);
-    } on Exception {
-      if (executionProvider == null && requested != null) {
-        // GPU 会话建不起来（驱动、显存、算子不支持）：退回 CPU，
-        // 让功能本身照旧可用，而不是把整页翻译报错。
-        return _open(rt, modelPath, intraOpThreads, null);
-      }
-      rethrow;
+    if (executionProvider != null) {
+      return _open(rt, modelPath, intraOpThreads, executionProvider);
     }
+    for (var candidate in rt.defaultExecutionProviders) {
+      try {
+        return _open(rt, modelPath, intraOpThreads, candidate);
+      } on Exception {
+        // 这台设备上建不起来，换下一个候选。
+      }
+    }
+    return _open(rt, modelPath, intraOpThreads, null);
   }
 
   static OrtFfiSession _open(
@@ -397,7 +412,13 @@ class OrtFfiSession {
         OrtRuntime._iSessionGetOutputCount,
         OrtRuntime._iSessionGetOutputName,
       );
-      return OrtFfiSession._(rt, session, inputNames, outputNames);
+      return OrtFfiSession._(
+        rt,
+        session,
+        inputNames,
+        outputNames,
+        executionProvider,
+      );
     } finally {
       if (options != null) {
         rt._releaser(OrtRuntime._iReleaseSessionOptions)(options);

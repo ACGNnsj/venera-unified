@@ -70,11 +70,22 @@ void main() {
   });
 
   test('only the Windows ML runtime asks for the DML provider', () {
-    expect(const OrtRuntimeChoice.bundled().executionProvider, isNull);
+    // 单测跑在 Windows 上，随包分发的运行库是纯 CPU，没有候选 EP。
+    expect(const OrtRuntimeChoice.bundled().executionProviders, isEmpty);
     var windowsMl = const OrtRuntimeChoice.windowsMl(
       r'C:\Program Files\WindowsApps\pkg\onnxruntime.dll',
     );
     expect(windowsMl.isWindowsMl, isTrue);
-    expect(windowsMl.executionProvider, 'DML');
+    expect(windowsMl.executionProviders, ['DML']);
+  });
+
+  test('Android tries NNAPI before XNNPACK', () {
+    expect(executionProvidersForPlatform('android'), ['NNAPI', 'XNNPACK']);
+  });
+
+  test('other platforms stay on the default CPU provider', () {
+    for (var platform in ['windows', 'linux', 'macos', 'ios', 'ohos']) {
+      expect(executionProvidersForPlatform(platform), isEmpty);
+    }
   });
 }

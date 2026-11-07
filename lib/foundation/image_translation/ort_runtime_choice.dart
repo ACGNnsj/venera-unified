@@ -21,8 +21,30 @@ class OrtRuntimeChoice {
 
   bool get isWindowsMl => windowsMlDllPath != null;
 
-  /// Windows ML 自带 DirectML（legacy）EP；随包分发的那份是纯 CPU。
-  String? get executionProvider => isWindowsMl ? 'DML' : null;
+  /// 会话默认要挂的执行提供者，按尝试顺序排列；空表示不挂、走纯 CPU。
+  ///
+  /// Windows ML 那份运行时内置 DirectML（legacy）；Android 的 AAR 同时编进了
+  /// NNAPI 与 XNNPACK（实测 arm64 的 libonnxruntime.so 里两个 provider 符号都在）。
+  /// 两者都不保证每台设备都能建起来，由 [OrtFfiSession.open] 逐个尝试并在失败时
+  /// 退到下一个，最后落到 CPU。
+  List<String> get executionProviders {
+    if (isWindowsMl) {
+      return const ['DML'];
+    }
+    return executionProvidersForPlatform(Platform.operatingSystem);
+  }
+}
+
+/// 各平台随包 ONNX Runtime 里可用的执行提供者（按尝试顺序）。
+///
+/// 只有真正编进了该 EP 的构建才挂得上；不支持时 ORT 会明确报错，由调用方回退。
+/// Android 先试 NNAPI（NPU/GPU），不可用时退到 XNNPACK（CPU 侧的加速内核，
+/// 数值行为与默认 CPU EP 一致）。其它平台目前都只有默认 CPU EP。
+List<String> executionProvidersForPlatform(String platform) {
+  if (platform == 'android') {
+    return const ['NNAPI', 'XNNPACK'];
+  }
+  return const [];
 }
 
 /// 框架包的安装根目录。

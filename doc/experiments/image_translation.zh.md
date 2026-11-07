@@ -68,11 +68,11 @@ Dart 侧绑定分别是 `ocr_preprocess_native.dart`、`image_transpose_native.d
 
 ## 执行后端
 
-推理走 ONNX Runtime，默认是 CPU：
+推理走 ONNX Runtime，按平台挑能用的加速，拿不到就退回默认 CPU：
 
 | 平台 | 后端 | 选择方式 |
 |---|---|---|
-| Android | CPU 或 NNAPI | 动漫超分按通道数判断（单通道强制 CPU），带偏色/全黑自检，异常整图重跑 |
+| Android | 图片翻译：NNAPI → XNNPACK → CPU；动漫超分：按通道数判断 | 前者由 `ort_runtime_choice.dart` 给出候选、会话逐个尝试；后者单通道强制 CPU，带偏色/全黑自检，异常整图重跑 |
 | Windows 11 24H2+ | 系统 Windows ML（ORT + DirectML）优先，缺失则回退随包 CPU | `ort_runtime_choice.dart` 在 `C:\Program Files\WindowsApps` 里挑版本最高的 `Microsoft.WindowsAppRuntime.*` 框架包 |
 | 其它桌面/移动 | 随包 CPU | — |
 
@@ -86,9 +86,11 @@ RTX 4080 Laptop 实测（单线程、warmup 2 次取中位数）：
 
 Windows ML 的厂商 EP（TensorRT RTX、OpenVINO、QNN 等）走 EP catalog 按需下载，未打包进程里枚举为空，需要 MSIX 或 WinAppSdk bootstrapper 才有包依赖图，暂未接入。
 
+Android 随包的 `libonnxruntime.so`（onnxruntime-android 1.28.0）同时编进了 NNAPI 与 XNNPACK：前者走 NPU/GPU，后者是 CPU 侧的卷积/矩阵加速内核。两者都在建会话时按 provider 名字挂载，运行库不认这个名字或这台设备建不起来就依次退到下一个，最后是默认 CPU——候选顺序由单测固定，设备上的实际加速比待真机实测（本机当前未连接设备）。NNAPI 从 Android 15 起被 Google 弃用，但仍是覆盖面最广的加速通道。iOS/macOS 的 pod 里带了 CoreML EP，Linux/鸿蒙的随包运行库只有 CPU，暂未接。
+
 ## 验证
 
-- `test/foundation/image_translation/` 覆盖类型、抹字、渲染、服务层、worker、缓存、模型注册表，以及各原生 crate 的像素等价与加速比门禁。
+- `test/foundation/image_translation/` 覆盖类型、抹字、渲染、服务层、worker、缓存、模型注册表、运行时与执行提供者选择，以及各原生 crate 的像素等价与加速比门禁。
 - `test/features/reader/pre_translation_tasks_test.dart`（10 个用例）覆盖队列的续跑、逐页失败重试与单章取消。
 - `test/features/settings/` 覆盖设置页取值、保存时序与继承规则。
 - 真机（Windows Release）已走通：主页/详情/阅读器正常，顶栏开关开→关颜色切换正常，设置页四节与模型下载行正常渲染。
