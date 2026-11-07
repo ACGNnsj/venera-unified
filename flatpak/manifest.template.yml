@@ -162,12 +162,26 @@ modules:
         chmod +x .rustup-shim/rustup
         PATH="$PWD/.rustup-shim:$PATH" flutter build linux --release --no-pub -v
       - rm -rf /app/pub-cache
+      # flutter 只按 bundled_libraries 复制一个文件；ONNX Runtime 的 soname 是 libonnxruntime.so.1，
+      # 少了这条符号链接，插件 dlopen 失败、应用启动直接 127（libonnxruntime.so.1: cannot open）。
+      - |
+        cd build/linux/x64/release/bundle/lib
+        real=$(ls -1 libonnxruntime.so* 2>/dev/null | grep -v -e '^libonnxruntime\.so$' -e '^libonnxruntime\.so\.1$' | head -1 || true)
+        echo "onnx-real=${real:-none}"
+        if [ -z "$real" ]; then
+          ort=$(find /app/onnxruntime -name 'libonnxruntime.so.*' -type f 2>/dev/null | head -1 || true)
+          if [ -n "$ort" ]; then cp -a "$ort" .; real=$(basename "$ort"); fi
+        fi
+        if [ -n "$real" ]; then ln -sf "$real" libonnxruntime.so.1; ln -sf "$real" libonnxruntime.so; fi
+        ls -l libonnxruntime.so* 2>/dev/null || echo no-onnx-in-bundle
       # Flutter 的 linux 产物按 $ORIGIN/lib 找插件库、按 $ORIGIN/data 找资源（flutter_assets），
       # 所以整份 bundle 必须原样落在同一目录；/app/bin 只放一个转发脚本，否则启动即 127。
       - cp -a build/linux/x64/release/bundle/. /app/lib/venera-unified/
       - |
         mkdir -p /app/bin
-        printf '#!/bin/sh\nexec /app/lib/venera-unified/venera-unified "$@"\n' > /app/bin/venera-unified
+        # 插件的 DT_NEEDED（如 libonnxruntime.so.1）没有 $ORIGIN rpath，dlopen 时只认 LD_LIBRARY_PATH；
+        # 启动脚本把自己那份 lib 目录拼到前面，同时保留 flatpak 自己注入的路径。
+        printf '#!/bin/sh\nexport LD_LIBRARY_PATH="/app/lib/venera-unified/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\nexec /app/lib/venera-unified/venera-unified "$@"\n' > /app/bin/venera-unified
         chmod +x /app/bin/venera-unified
     sources:
       - type: git
