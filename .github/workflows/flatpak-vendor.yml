@@ -143,7 +143,7 @@ jobs:
           # 一个 git 源分支上的 mime_guess，沙箱离线时 cargo 没地方 clone，插件编译就断在那里。
           VENDOR_DIR="$APP_DIR/packages/rhttp/rust/vendor"
           : > "$RUNNER_TEMP/plugin-vendor-config.txt"
-          PLUGIN_CRATES=$(find "$PUB_CACHE" -maxdepth 4 -name Cargo.toml -path '*/rust/Cargo.toml' -not -path '*/target/*')
+          PLUGIN_CRATES=$(find "$PUB_CACHE" -maxdepth 6 -name Cargo.toml -path '*/rust/Cargo.toml' -not -path '*/target/*')
           test -n "$PLUGIN_CRATES" || { echo "::error::缓存里找不到插件的 rust/Cargo.toml"; exit 1; }
           for manifest in $PLUGIN_CRATES; do
             crate_dir=$(dirname "$manifest")
