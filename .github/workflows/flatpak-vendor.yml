@@ -133,15 +133,30 @@ jobs:
           tar czf "$RUNNER_TEMP/engine-artifacts.tar.gz" -C "$FLUTTER_ROOT/bin/cache" artifacts \
             -C "$ORT_STAGE" onnxruntime -C "$PDFIUM_STAGE" pdfium -C "$SQLITE3_STAGE" sqlite3
       - name: 准备 Rust 工具链并 vendor
+        env:
+          PUB_CACHE: ${{ runner.temp }}/pub-cache
         run: |
           python3 "$GITHUB_WORKSPACE/.github/scripts/prepare_rust_toolchain.py"
           cd "$APP_DIR/packages/rhttp/rust"
           cargo vendor vendor > "$RUNNER_TEMP/vendor-config.txt"
-          sed -i 's#^directory = .*#directory = "/run/build/venera-unified/vendor"#' "$RUNNER_TEMP/vendor-config.txt"
+          # 插件自带的 Rust crate 也要一起 vendor：super_native_extensions 的 Cargo.lock 钉了
+          # 一个 git 源分支上的 mime_guess，沙箱离线时 cargo 没地方 clone，插件编译就断在那里。
+          VENDOR_DIR="$APP_DIR/packages/rhttp/rust/vendor"
+          : > "$RUNNER_TEMP/plugin-vendor-config.txt"
+          PLUGIN_CRATES=$(find "$PUB_CACHE" -maxdepth 4 -name Cargo.toml -path '*/rust/Cargo.toml' -not -path '*/target/*')
+          test -n "$PLUGIN_CRATES" || { echo "::error::缓存里找不到插件的 rust/Cargo.toml"; exit 1; }
+          for manifest in $PLUGIN_CRATES; do
+            crate_dir=$(dirname "$manifest")
+            echo "vendoring plugin crate: $crate_dir"
+            ( cd "$crate_dir" && cargo vendor --no-delete "$VENDOR_DIR" ) >> "$RUNNER_TEMP/plugin-vendor-config.txt"
+          done
+          python3 "$GITHUB_WORKSPACE/.github/scripts/merge_vendor_config.py" \
+            "$RUNNER_TEMP/vendor-config-merged.txt" \
+            "$RUNNER_TEMP/vendor-config.txt" "$RUNNER_TEMP/plugin-vendor-config.txt"
           STAGE="$RUNNER_TEMP/cargo-stage"
           mkdir -p "$STAGE"
           mv vendor "$STAGE/vendor"
-          cp "$RUNNER_TEMP/vendor-config.txt" "$STAGE/vendor-config.toml"
+          cp "$RUNNER_TEMP/vendor-config-merged.txt" "$STAGE/vendor-config.toml"
           tar czf "$RUNNER_TEMP/cargo-vendor.tar.gz" -C "$STAGE" .
       - name: 归一到带版本的归档名
         run: |
