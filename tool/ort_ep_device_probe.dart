@@ -5,8 +5,9 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show MethodChannel, rootBundle;
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:path_provider/path_provider.dart';
+import 'package:venera_unified/foundation/image_provider/upscale/nnapi_devices.dart';
 import 'package:venera_unified/foundation/image_translation/ort_backend_check.dart';
 import 'package:venera_unified/foundation/image_translation/ort_ffi.dart';
 
@@ -145,13 +146,19 @@ class _ProbeAppState extends State<_ProbeApp> {
       _json('startup-log', {'ok': false, 'error': _err(e)});
     }
 
-    // 原生桥自检：Kotlin 侧的 NNAPI 运行时探测是否真的接上了。
+    // NNAPI 真实设备清单：只有枚举到 GPU/NPU 才值得请求 NNAPI。
     try {
-      var channel = MethodChannel('venera/upscale');
-      var available = await channel.invokeMethod<bool>('nnapiAvailable');
-      _json('nnapi-channel', {'ok': true, 'available': available});
+      var inventory = NnapiDevices.inventory;
+      _json('nnapi-inventory', {
+        'loadable': inventory.loadable,
+        'hardware': inventory.hasHardwareAccelerator,
+        'devices': inventory.devices
+            .map((device) => device.toString())
+            .toList(),
+        'error': inventory.error,
+      });
     } catch (e) {
-      _json('nnapi-channel', {'ok': false, 'error': _err(e)});
+      _json('nnapi-inventory', {'ok': false, 'error': _err(e)});
     }
 
     OrtRuntime rt;

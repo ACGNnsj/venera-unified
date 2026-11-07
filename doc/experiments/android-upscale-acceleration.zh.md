@@ -19,9 +19,13 @@
   `Can't find service`，`service list` 里也没有该服务。
 - ORT 仍能建出「NNAPI 会话」，但所有节点静默落回 CPU：输出与 CPU 逐位相同
   （MAE 0.0），256×256 单次 17 ms vs CPU 16 ms，没有加速。
-- 因此 Android 端先探运行时再决定是否请求 NNAPI：`NnapiSupport` 尝试加载
-  `libneuralnetworks`，加载失败即视为不可用（不写死版本号，不同 OEM 取舍
-  不一致）；不可用时方法通道直接按 CPU 处理，不再白跑一遍 CPU 参考推理。
+- 因此 Android 端先看 NNAPI 到底有没有加速器再决定是否请求它：
+  `NnapiDevices`（dart:ffi 调 NDK 的 `ANeuralNetworks_getDeviceCount` /
+  `ANeuralNetworksDevice_getType`）枚举本机驱动，只有存在 GPU/NPU 类型的
+  非参考驱动才算可用。本机实测只枚举到 `gpu:nnapi-reference`——参考实现被
+  报成 GPU 类型，但名字就是 CPU 参考驱动，按不可用处理。
+- Kotlin 侧另有一道兜底：`NnapiSupport` 加载 `libneuralnetworks`，连库都
+  加载不到时直接按 CPU 建会话；两道判据都不写死版本号（不同 OEM 取舍不一）。
 
 ## QNN（Qualcomm NPU）可行性
 

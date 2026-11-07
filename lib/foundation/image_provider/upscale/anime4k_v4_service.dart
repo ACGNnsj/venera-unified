@@ -12,6 +12,7 @@ import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/log.dart';
 
 import 'anime4k_v4_model_manager.dart';
+import 'nnapi_devices.dart';
 
 /// Anime4K v4 超分服务（官方 ACNet 2×）。
 ///
@@ -83,24 +84,29 @@ class Anime4KV4Service {
       await Anime4KV4ModelManager.extractBundledModelIfNeeded();
       _modelPath = await Anime4KV4ModelManager.ensureModelAvailable();
       if (App.isAndroid) {
-        await _refreshNnapiCapability();
+        _refreshNnapiCapability();
       }
     } catch (e) {
       Log.error('Anime4KV4', 'init error: $e');
     }
   }
 
-  /// 向原生端确认 NNAPI 运行时是否还在（Android 16 起系统已移除）。
-  Future<void> _refreshNnapiCapability() async {
+  /// 枚举 NNAPI 设备，判断本机有没有真正的加速器。
+  ///
+  /// 只看运行库能否加载会误判：Android 17 上库仍在（APEX），却只剩 CPU
+  /// 参考实现——NNAPI 会话能建、节点全静默落回 CPU。判据改成「有没有
+  /// GPU/NPU 类型的设备」。
+  void _refreshNnapiCapability() {
     try {
-      _nnapiCapable =
-          await _channel.invokeMethod<bool>('nnapiAvailable') ?? true;
+      final inventory = NnapiDevices.inventory;
+      _nnapiCapable = inventory.hasHardwareAccelerator;
+      Log.info('Anime4KV4', 'NNAPI ${inventory.describe()}');
     } catch (e) {
-      // 旧原生实现没有该 MethodChannel 方法，按可用处理交给原生侧兜底。
+      // 探测失败按可用处理，由原生侧与 CPU 参考比对兜底。
       _nnapiCapable = true;
     }
     if (!_nnapiCapable) {
-      Log.info('Anime4KV4', 'NNAPI runtime missing, upscale uses CPU only');
+      Log.info('Anime4KV4', 'no NNAPI accelerator, upscale uses CPU only');
     }
   }
 

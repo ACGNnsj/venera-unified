@@ -80,11 +80,6 @@ class UpscalePlugin : MethodChannel.MethodCallHandler {
             result.success(null)
             return
         }
-        if (call.method == "nnapiAvailable") {
-            // Dart 侧据此决定是否请求 NNAPI：新机型上直接走 CPU，省一次参考推理。
-            result.success(NnapiSupport.isAvailable())
-            return
-        }
         if (call.method != "upscale") {
             result.notImplemented()
             return
