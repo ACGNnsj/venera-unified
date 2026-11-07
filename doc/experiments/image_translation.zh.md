@@ -72,7 +72,7 @@ Dart 侧绑定分别是 `ocr_preprocess_native.dart`、`image_transpose_native.d
 
 | 平台 | 后端 | 选择方式 |
 |---|---|---|
-| Android | 图片翻译：NNAPI → XNNPACK → CPU；动漫超分：按通道数判断 | 前者由 `ort_runtime_choice.dart` 给出候选、会话逐个尝试；后者单通道强制 CPU，带偏色/全黑自检，异常整图重跑 |
+| Android | 图片翻译：XNNPACK → CPU；动漫超分：按通道数判断 | 前者由 `ort_runtime_choice.dart` 给出候选、会话逐个尝试；后者单通道强制 CPU，带偏色/全黑自检，异常整图重跑 |
 | Windows 11 24H2+ | 系统 Windows ML（ORT + DirectML）优先，缺失则回退随包 CPU | `ort_runtime_choice.dart` 在 `C:\Program Files\WindowsApps` 里挑版本最高的 `Microsoft.WindowsAppRuntime.*` 框架包 |
 | 其它桌面/移动 | 随包 CPU | — |
 
@@ -86,9 +86,11 @@ RTX 4080 Laptop 实测（单线程、warmup 2 次取中位数）：
 
 Windows ML 的厂商 EP（TensorRT RTX、OpenVINO、QNN 等）走 EP catalog 按需下载，未打包进程里枚举为空，需要 MSIX 或 WinAppSdk bootstrapper 才有包依赖图，暂未接入。
 
-Android 随包的 `libonnxruntime.so`（onnxruntime-android 1.28.0）同时编进了 NNAPI 与 XNNPACK，但两者的挂载方式不同：ORT 1.28 的通用 `SessionOptionsAppendExecutionProvider` 白名单里**已经没有 NNAPI**，传字符串会报 `NNAPI execution provider is not supported in this build`，必须查专用导出 `OrtSessionOptionsAppendExecutionProvider_Nnapi(options, 0)`；XNNPACK 仍走通用名。`ort_ffi.dart` 按 EP 名分流：NNAPI 走专用符号，其它继续通用 append；候选链仍是 NNAPI → XNNPACK → CPU，单个候选建会话失败只记一次日志并继续下一个。
+Android 随包的 `libonnxruntime.so`（onnxruntime-android 1.28.0）编进了 XNNPACK：CPU 侧的加速内核（Arm NEON/BF16 优化），数值行为与默认 CPU EP 接近，走 ORT 的通用 `SessionOptionsAppendExecutionProvider` 按名挂载。候选链只有 XNNPACK → CPU，单个候选建会话失败只记一次日志并继续下一个。
 
-设备上首次用到某个模型的 NNAPI 会话时，会把同一组输入再跑一遍 CPU：逐元素 MAE ≤ 0.04（或相对 MAE ≤ 0.02）才采用加速输出；超阈值、输出形状不一致或空输出都判该 EP 不可信，整页剩余推理切回 CPU，并把结论打进日志。启动时 `OrtRuntime.logStartupDiagnostics()` 会列出本机实际可挂载的 EP（`[ORT]` 前缀），排障不用再猜运行库有没有编进去。NNAPI 从 Android 15 起被 Google 弃用，但仍是覆盖面最广的加速通道；iOS/macOS 的 pod 里带了 CoreML EP，Linux/鸿蒙的随包运行库只有 CPU，均暂未接。
+不再挂 NNAPI：Google 从 Android 15 起弃用 NNAPI；实测 SM-S9480 / Android 17 / SDK 37 上已经没有 `libneuralnetworks.so`，`dumpsys neuralnetworks` 也报 `Can't find service`。ORT 的 NNAPI EP 仍能建会话（导出符号还在），但所有节点都静默落回 CPU——输出与 CPU 逐位相同（MAE 0.0，256×256 单次 17 ms vs 16 ms），既没有加速，还把 XNNPACK 挡在后面。要真正用上 NPU 得换 ONNX Runtime 的 QNN EP（Qualcomm），它要求随包分发 `libQnnHtp.so`/`libQnnSystem.so` 并受 Qualcomm 许可约束，当前安装包里没有，暂不接入。
+
+设备上首次用到某个非 CPU 会话时，会把同一组输入再跑一遍 CPU：逐元素 MAE ≤ 0.04（或相对 MAE ≤ 0.02）才采用加速输出；超阈值、输出形状不一致或空输出都判该 EP 不可信，整页剩余推理切回 CPU，并把结论打进日志。启动时 `OrtRuntime.logStartupDiagnostics()` 会列出本机实际可挂载的 EP（`[ORT]` 前缀），排障不用再猜运行库有没有编进去。iOS/macOS 的 pod 里带了 CoreML EP，Linux/鸿蒙的随包运行库只有 CPU，均暂未接。
 
 ## 验证
 

@@ -2,10 +2,10 @@ import 'dart:typed_data';
 
 import 'ort_ffi.dart';
 
-/// NNAPI 输出与 CPU 参考的逐元素平均绝对误差（MAE）阈值。
+/// 加速 EP 输出与 CPU 参考的逐元素平均绝对误差（MAE）阈值。
 ///
 /// 与 Android 超分侧的 `NNAPI_COLOR_TOL`（0.04，值域 [0,1]）同一量级：
-/// NNAPI 在部分设备上只做 fp16 近似，正常数值误差通常远小于此；真正的
+/// 加速 EP 在部分设备上可能只做 fp16 近似，正常数值误差通常远小于此；真正的
 /// 通道错位/算子实现错误往往在 0.1 以上。检测模型输出是 [0,1] 概率图，
 /// 直接用绝对 MAE 判定。
 const double acceleratorMaeTolerance = 0.04;
@@ -48,7 +48,7 @@ bool sameTensorShape(List<int> a, List<int> b) {
   return true;
 }
 
-/// NNAPI 首轮输出与 CPU 参考的比对结果。
+/// 加速 EP 首轮输出与 CPU 参考的比对结果。
 class OrtAccelerationCheck {
   const OrtAccelerationCheck({
     required this.provider,
@@ -59,7 +59,7 @@ class OrtAccelerationCheck {
     this.detail,
   });
 
-  /// 被验证的加速 EP（目前只有 `NNAPI`）。
+  /// 被验证的加速 EP（如 `XNNPACK`）。
   final String provider;
 
   /// 输出是否在容差内；false 表示这一页要回退 CPU。

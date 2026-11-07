@@ -20,22 +20,14 @@ import 'ort_runtime_choice.dart';
 /// indices below were extracted from onnxruntime_c_api.h and are valid for
 /// every 1.x release.
 class OrtRuntime {
-  OrtRuntime._(
-    this._api,
-    this._library,
-    this.defaultExecutionProviders,
-    this.runtimeSource,
-  );
+  OrtRuntime._(this._api, this.defaultExecutionProviders, this.runtimeSource);
 
   static OrtRuntime? _instance;
 
   final Pointer<Pointer<Void>> _api;
 
-  /// 已载入的运行库。NNAPI 的挂载入口不在 [OrtApi] 表里，要靠它 lookupFunction。
-  final DynamicLibrary _library;
-
   /// 会话默认按这个顺序尝试挂 EP（见 [executionProvidersForPlatform]）：
-  /// Windows ML 运行时是 ['DML']，Android 是 ['NNAPI', 'XNNPACK']，
+  /// Windows ML 运行时是 ['DML']，Android 是 ['XNNPACK']，
   /// 其它平台（含随包分发的纯 CPU 运行库）为空，表示直接用默认 CPU EP。
   final List<String> defaultExecutionProviders;
 
@@ -43,9 +35,6 @@ class OrtRuntime {
   final String runtimeSource;
 
   static const _ortApiVersion = 16;
-
-  static const _nnapiAppendSymbol =
-      'OrtSessionOptionsAppendExecutionProvider_Nnapi';
 
   /// 同一 EP 的挂载失败只打一次日志，避免 OCR 每页重复刷屏。
   static final _loggedProviderFailures = <String>{};
@@ -77,7 +66,6 @@ class OrtRuntime {
     }
     return _instance = OrtRuntime._(
       api,
-      opened.library,
       opened.executionProviders,
       opened.source,
     );
@@ -115,7 +103,7 @@ class OrtRuntime {
       candidates.add(() => 'libonnxruntime.dylib');
     }
     // 选了 Windows ML 却没能载入它的运行时：此时手里这份是纯 CPU 的，
-    // 别再拿 DML 去试。其余情况沿用平台候选（Android 的 NNAPI/XNNPACK）。
+    // 别再拿 DML 去试。其余情况沿用平台候选（Android 的 XNNPACK）。
     var fallbackProviders = choice.isWindowsMl
         ? const <String>[]
         : choice.executionProviders;
@@ -196,16 +184,12 @@ class OrtRuntime {
 
   /// 挂一个执行提供者；失败抛异常（异常里带 ORT 的错误文本）。
   ///
-  /// NNAPI 没有通用名称入口：通用 [SessionOptionsAppendExecutionProvider]
-  /// 的支持列表里没有它（1.28 实测会报 “NNAPI execution provider is not
-  /// supported in this build”），必须调用专用导出符号。DML、XNNPACK 等继续
-  /// 走通用入口。
+  /// 统一走通用入口 [SessionOptionsAppendExecutionProvider]，按名字交给运行库
+  /// 自己的注册表查。NNAPI 曾经只能靠专用导出符号，但它从 Android 15 起被
+  /// 弃用、Android 17 的部分设备已经不再带 `libneuralnetworks.so`，候选里
+  /// 已移除（实测见 doc/experiments/image_translation.zh.md）。
   void _applyExecutionProvider(Pointer<Void> options, String provider) {
-    if (provider == 'NNAPI') {
-      _appendNnapi(options);
-    } else {
-      _appendGenericExecutionProvider(options, provider);
-    }
+    _appendGenericExecutionProvider(options, provider);
   }
 
   void _appendGenericExecutionProvider(Pointer<Void> options, String provider) {
@@ -238,28 +222,6 @@ class OrtRuntime {
       _check(append(options, name, nullptr, nullptr, 0));
     } finally {
       calloc.free(name);
-    }
-  }
-
-  /// `OrtStatus* OrtSessionOptionsAppendExecutionProvider_Nnapi(
-  ///     OrtSessionOptions*, uint32_t nnapi_flags)`；flags 0 = 默认。
-  void _appendNnapi(Pointer<Void> options) {
-    var append = _nnapiAppend;
-    if (append == null) {
-      throw Exception('ONNX Runtime 未导出 $_nnapiAppendSymbol（该构建没有编进 NNAPI）');
-    }
-    _check(append(options, 0));
-  }
-
-  late final _NnapiAppend? _nnapiAppend = _lookupNnapiAppend();
-
-  _NnapiAppend? _lookupNnapiAppend() {
-    try {
-      return _library.lookupFunction<_NnapiAppendNative, _NnapiAppend>(
-        _nnapiAppendSymbol,
-      );
-    } on ArgumentError {
-      return null;
     }
   }
 
@@ -407,9 +369,6 @@ class OrtRuntime {
   }
 }
 
-typedef _NnapiAppendNative = Pointer<Void> Function(Pointer<Void>, Uint32);
-typedef _NnapiAppend = Pointer<Void> Function(Pointer<Void>, int);
-
 /// 一个 EP 在当前运行库/设备上能否挂载。
 class OrtExecutionProviderProbe {
   const OrtExecutionProviderProbe({
@@ -470,7 +429,7 @@ class OrtFfiSession {
 
   /// 实际生效的执行提供者；null 表示默认的 CPU EP。
   ///
-  /// 'DML' 需要带 DirectML 的运行库，'NNAPI' / 'XNNPACK' 需要 Android 版；
+  /// 'DML' 需要带 DirectML 的运行库，'XNNPACK' 需要 Android 版；
   /// 运行库里没编进对应 EP 时就挂不上，[open] 会继续试下一个。
   final String? executionProvider;
 
@@ -503,7 +462,7 @@ class OrtFfiSession {
 
   /// 建一个纯 CPU 会话，不尝试任何 EP。
   ///
-  /// 用于 NNAPI 输出比对：同一模型同时持有加速与 CPU 两份会话，首轮双跑后
+  /// 用于加速 EP 输出比对：同一模型同时持有加速与 CPU 两份会话，首轮双跑后
   /// 只保留通过比对的那份输出。
   static OrtFfiSession openCpu(String modelPath, {int? intraOpThreads}) {
     return _open(OrtRuntime.open(), modelPath, intraOpThreads, null);

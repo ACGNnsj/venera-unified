@@ -127,13 +127,13 @@ class _OcrPageWorker {
   final _cpuSessions = <String, OrtFfiSession>{};
   final _charsets = <String, List<String>>{};
 
-  /// 之前页面里已确认 NNAPI 输出与 CPU 一致的模型路径。
+  /// 之前页面里已确认加速 EP 输出与 CPU 一致的模型路径。
   final Set<String> verifiedModels;
 
   /// 本页是否整体回退 CPU。
   bool _cpuOnly;
 
-  /// 本页是否有模型的 NNAPI 输出偏差过大。
+  /// 本页是否有模型的加速 EP 输出偏差过大。
   bool accelerationRejected = false;
 
   OrtFfiSession _session(String path) {
@@ -151,7 +151,7 @@ class _OcrPageWorker {
     );
   }
 
-  /// 首次用某个模型的 NNAPI 会话时，先与 CPU 参考做一次双跑比对。
+  /// 首次用某个模型的加速 EP 会话时，先与 CPU 参考做一次双跑比对。
   Map<String, OrtOutput> _run(
     String path,
     Map<String, OrtInput> Function(OrtFfiSession session) build,
@@ -162,7 +162,7 @@ class _OcrPageWorker {
     }
     var session = _session(path);
     var inputs = build(session);
-    if (session.executionProvider != 'NNAPI' || verifiedModels.contains(path)) {
+    if (session.executionProvider == null || verifiedModels.contains(path)) {
       return session.run(inputs);
     }
     var checked = runAgainstCpuReference(

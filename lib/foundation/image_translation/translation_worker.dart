@@ -531,13 +531,13 @@ class _WorkerState {
   WordPieceVocab? _jaVocab;
   int _intraThreads = 2;
 
-  /// worker 生命周期内已确认 NNAPI 输出与 CPU 参考一致的模型路径。
+  /// worker 生命周期内已确认加速 EP 输出与 CPU 参考一致的模型路径。
   ///
-  /// 验证一次即可：NNAPI 的误差来自算子实现与设备 fp16 能力，与具体哪一页
+  /// 验证一次即可：加速 EP 的误差来自算子实现与设备能力，与具体哪一页
   /// 无关；每页重复双跑会白白多算一遍 CPU 推理。
   final _verifiedModels = <String>{};
 
-  /// 本页 NNAPI 输出偏差过大、已整体回退 CPU。
+  /// 本页加速 EP 输出偏差过大、已整体回退 CPU。
   bool _cpuOnly = false;
 
   /// worker 生命周期内被判定不可信的模型路径；之后一直走 CPU。
@@ -560,7 +560,7 @@ class _WorkerState {
     );
   }
 
-  /// 用同一组输入跑 [path]，首次遇到 NNAPI 会话时先与 CPU 参考比对。
+  /// 用同一组输入跑 [path]，首次遇到非 CPU 会话时先与 CPU 参考比对。
   ///
   /// 通过则继续用加速输出并记下该模型；不通过则本页剩余推理全部回退 CPU
   /// （[_cpuOnly]），且该模型在 worker 生命周期内不再尝试加速。
@@ -574,8 +574,7 @@ class _WorkerState {
     }
     var session = _session(path);
     var inputs = build(session);
-    if (session.executionProvider != 'NNAPI' ||
-        _verifiedModels.contains(path)) {
+    if (session.executionProvider == null || _verifiedModels.contains(path)) {
       return session.run(inputs);
     }
     var checked = runAgainstCpuReference(
@@ -593,7 +592,7 @@ class _WorkerState {
     return checked.outputs;
   }
 
-  /// decoder 用 argmax 读取，不需要整份 logits；首次用 NNAPI 时仍做一次
+  /// decoder 用 argmax 读取，不需要整份 logits；首次用加速 EP 时仍做一次
   /// 双跑比对，决定这一页 decoder 走哪份会话。
   OrtFfiSession _decoderSession(
     String path,
@@ -601,8 +600,7 @@ class _WorkerState {
   ) {
     if (_cpuOnly) return _cpuSession(path);
     var session = _session(path);
-    if (session.executionProvider != 'NNAPI' ||
-        _verifiedModels.contains(path)) {
+    if (session.executionProvider == null || _verifiedModels.contains(path)) {
       return session;
     }
     var checked = runAgainstCpuReference(

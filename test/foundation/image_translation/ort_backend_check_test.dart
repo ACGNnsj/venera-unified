@@ -69,18 +69,18 @@ void main() {
   group('evaluateAcceleratedOutput', () {
     test('accepts small absolute error', () {
       var check = evaluateAcceleratedOutput(
-        provider: 'NNAPI',
+        provider: 'XNNPACK',
         cpu: _out([0.1, 0.2]),
         accelerated: _out([0.11, 0.21]),
       );
       expect(check.accepted, isTrue);
-      expect(check.provider, 'NNAPI');
+      expect(check.provider, 'XNNPACK');
       expect(check.mae, closeTo(0.01, 1e-6));
     });
 
     test('rejects large absolute and relative error', () {
       var check = evaluateAcceleratedOutput(
-        provider: 'NNAPI',
+        provider: 'XNNPACK',
         cpu: _out([1, 1]),
         accelerated: _out([1.1, 1.1]),
       );
@@ -92,7 +92,7 @@ void main() {
 
     test('accepts magnitude-scaled logits error within relative tolerance', () {
       var check = evaluateAcceleratedOutput(
-        provider: 'NNAPI',
+        provider: 'XNNPACK',
         cpu: _out([10, 10]),
         accelerated: _out([10.1, 10.1]),
       );
@@ -102,7 +102,7 @@ void main() {
 
     test('shape mismatch is untrusted regardless of values', () {
       var check = evaluateAcceleratedOutput(
-        provider: 'NNAPI',
+        provider: 'XNNPACK',
         cpu: _out([0, 0]),
         accelerated: _out([0, 0], shape: [2, 1]),
       );
@@ -113,7 +113,7 @@ void main() {
 
     test('zero reference accepts error within absolute tolerance', () {
       var check = evaluateAcceleratedOutput(
-        provider: 'NNAPI',
+        provider: 'XNNPACK',
         cpu: _out([0, 0]),
         accelerated: _out([0.01, 0.01]),
       );
@@ -123,7 +123,7 @@ void main() {
 
     test('zero reference rejects error beyond absolute tolerance', () {
       var check = evaluateAcceleratedOutput(
-        provider: 'NNAPI',
+        provider: 'XNNPACK',
         cpu: _out([0, 0]),
         accelerated: _out([0.5, 0.5]),
       );
@@ -133,12 +133,12 @@ void main() {
 
     test('describe reports provider and per-output detail', () {
       var check = evaluateAcceleratedOutput(
-        provider: 'NNAPI',
+        provider: 'XNNPACK',
         cpu: _out([0.1]),
         accelerated: _out([0.1]),
         outputName: 'logits',
       );
-      expect(check.describe(), contains('NNAPI'));
+      expect(check.describe(), contains('XNNPACK'));
       expect(check.describe(), contains('logits'));
       expect(check.describe(), contains('与 CPU 参考一致'));
     });

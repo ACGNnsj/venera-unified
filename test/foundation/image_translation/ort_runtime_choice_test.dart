@@ -79,8 +79,8 @@ void main() {
     expect(windowsMl.executionProviders, ['DML']);
   });
 
-  test('Android tries NNAPI before XNNPACK', () {
-    expect(executionProvidersForPlatform('android'), ['NNAPI', 'XNNPACK']);
+  test('Android uses XNNPACK and never the removed NNAPI EP', () {
+    expect(executionProvidersForPlatform('android'), ['XNNPACK']);
   });
 
   test('other platforms stay on the default CPU provider', () {

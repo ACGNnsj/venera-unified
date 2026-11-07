@@ -23,10 +23,9 @@ class OrtRuntimeChoice {
 
   /// 会话默认要挂的执行提供者，按尝试顺序排列；空表示不挂、走纯 CPU。
   ///
-  /// Windows ML 那份运行时内置 DirectML（legacy）；Android 的 AAR 同时编进了
-  /// NNAPI 与 XNNPACK（实测 arm64 的 libonnxruntime.so 里两个 provider 符号都在）。
-  /// 两者都不保证每台设备都能建起来，由 [OrtFfiSession.open] 逐个尝试并在失败时
-  /// 退到下一个，最后落到 CPU。
+  /// Windows ML 那份运行时内置 DirectML（legacy）；Android 的 AAR 编进了
+  /// XNNPACK（CPU 侧的加速内核）。候选不保证每台设备都能建起来，由
+  /// [OrtFfiSession.open] 逐个尝试并在失败时退到下一个，最后落到 CPU。
   List<String> get executionProviders {
     if (isWindowsMl) {
       return const ['DML'];
@@ -38,11 +37,17 @@ class OrtRuntimeChoice {
 /// 各平台随包 ONNX Runtime 里可用的执行提供者（按尝试顺序）。
 ///
 /// 只有真正编进了该 EP 的构建才挂得上；不支持时 ORT 会明确报错，由调用方回退。
-/// Android 先试 NNAPI（NPU/GPU），不可用时退到 XNNPACK（CPU 侧的加速内核，
-/// 数值行为与默认 CPU EP 一致）。其它平台目前都只有默认 CPU EP。
+/// Android 用 XNNPACK：CPU 侧的加速内核，数值行为与默认 CPU EP 接近，是随包
+/// 运行库真正可用的加速通道；其它平台目前都只有默认 CPU EP。
+///
+/// 不挂 NNAPI：Google 从 Android 15 起弃用 NNAPI，实测 SM-S9480 / Android 17 /
+/// SDK 37 已经拿不到 `libneuralnetworks.so`，NNAPI EP 仍有导出符号、会话也能
+/// 建起来，但所有节点都静默落回 CPU——没有加速，还把 XNNPACK 挡在后面。要 NPU
+/// 得换 ONNX Runtime 的 QNN EP（Qualcomm），它要求随包分发 libQnnHtp/libQnnSystem
+/// 并受 Qualcomm 许可约束，当前包里没有。
 List<String> executionProvidersForPlatform(String platform) {
   if (platform == 'android') {
-    return const ['NNAPI', 'XNNPACK'];
+    return const ['XNNPACK'];
   }
   return const [];
 }
