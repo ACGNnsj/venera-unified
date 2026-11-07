@@ -162,9 +162,13 @@ modules:
         chmod +x .rustup-shim/rustup
         PATH="$PWD/.rustup-shim:$PATH" flutter build linux --release --no-pub -v
       - rm -rf /app/pub-cache
-      - install -Dm755 build/linux/x64/release/bundle/venera-unified /app/bin/venera-unified
-      - cp -a build/linux/x64/release/bundle/lib/. /app/lib/venera-unified/
-      - cp -a build/linux/x64/release/bundle/data/. /app/share/venera-unified/
+      # Flutter 的 linux 产物按 $ORIGIN/lib 找插件库、按 $ORIGIN/data 找资源（flutter_assets），
+      # 所以整份 bundle 必须原样落在同一目录；/app/bin 只放一个转发脚本，否则启动即 127。
+      - cp -a build/linux/x64/release/bundle/. /app/lib/venera-unified/
+      - |
+        mkdir -p /app/bin
+        printf '#!/bin/sh\nexec /app/lib/venera-unified/venera-unified "$@"\n' > /app/bin/venera-unified
+        chmod +x /app/bin/venera-unified
     sources:
       - type: git
         url: https://github.com/ACGNnsj/venera-unified.git

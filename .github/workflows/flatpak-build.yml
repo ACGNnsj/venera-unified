@@ -156,6 +156,7 @@ jobs:
           fi
           if grep -qE 'error while loading shared libraries|Failed to load|cannot open shared object' smoke.log; then
             echo "::error::启动时缺共享库"
+            cat smoke.log
             exit 1
           fi
           if [ $code -ne 124 ] && [ $code -ne 0 ]; then
