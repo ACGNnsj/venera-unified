@@ -58,6 +58,7 @@ English index: [README.en.md](README.en.md)
 - [图像翻译（实验）](experiments/image_translation.zh.md)
 - [Android 端超分加速与 NNAPI 门控](experiments/android-upscale-acceleration.zh.md)
 - [Qualcomm QNN（HTP）可行性](experiments/qnn-htp-spike.zh.md)
+- [iOS / macOS 的 CoreML 执行提供器](experiments/ios-coreml-ep.zh.md)
 
 ## 维护原则
 

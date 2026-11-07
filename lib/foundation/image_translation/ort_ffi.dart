@@ -27,8 +27,9 @@ class OrtRuntime {
   final Pointer<Pointer<Void>> _api;
 
   /// 会话默认按这个顺序尝试挂 EP（见 [executionProvidersForPlatform]）：
-  /// Windows ML 运行时是 ['DML']，Android 是 ['XNNPACK']，
-  /// 其它平台（含随包分发的纯 CPU 运行库）为空，表示直接用默认 CPU EP。
+  /// Windows ML 运行时是 ['DML']，Android 是 ['XNNPACK']，iOS/macOS 是
+  /// ['CoreML']，其它平台（含随包分发的纯 CPU 运行库）为空，表示直接用默认
+  /// CPU EP。
   final List<String> defaultExecutionProviders;
 
   /// 实际载入的运行库说明，启动日志用。
@@ -103,7 +104,8 @@ class OrtRuntime {
       candidates.add(() => 'libonnxruntime.dylib');
     }
     // 选了 Windows ML 却没能载入它的运行时：此时手里这份是纯 CPU 的，
-    // 别再拿 DML 去试。其余情况沿用平台候选（Android 的 XNNPACK）。
+    // 别再拿 DML 去试。其余情况沿用平台候选（Android 的 XNNPACK、
+    // iOS/macOS 的 CoreML）。
     var fallbackProviders = choice.isWindowsMl
         ? const <String>[]
         : choice.executionProviders;
@@ -429,7 +431,8 @@ class OrtFfiSession {
 
   /// 实际生效的执行提供者；null 表示默认的 CPU EP。
   ///
-  /// 'DML' 需要带 DirectML 的运行库，'XNNPACK' 需要 Android 版；
+  /// 'DML' 需要带 DirectML 的运行库，'XNNPACK' 需要 Android 版，'CoreML'
+  /// 需要带 CoreML EP 的 Apple 版（onnxruntime-objc pod 即带）；
   /// 运行库里没编进对应 EP 时就挂不上，[open] 会继续试下一个。
   final String? executionProvider;
 

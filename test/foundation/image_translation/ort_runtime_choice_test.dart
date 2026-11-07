@@ -83,8 +83,15 @@ void main() {
     expect(executionProvidersForPlatform('android'), ['XNNPACK']);
   });
 
+  test('Apple platforms use the CoreML EP shipped by onnxruntime-objc', () {
+    // onnxruntime-objc pod 是官方预编译包，CoreML EP 已编进去；运行库侧不支持时
+    // 由 OrtFfiSession.open 逐候选回退，最终落到 CPU。
+    expect(executionProvidersForPlatform('ios'), ['CoreML']);
+    expect(executionProvidersForPlatform('macos'), ['CoreML']);
+  });
+
   test('other platforms stay on the default CPU provider', () {
-    for (var platform in ['windows', 'linux', 'macos', 'ios', 'ohos']) {
+    for (var platform in ['windows', 'linux', 'ohos', 'fuchsia']) {
       expect(executionProvidersForPlatform(platform), isEmpty);
     }
   });
