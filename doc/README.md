@@ -56,6 +56,8 @@ English index: [README.en.md](README.en.md)
 - [WebDAV 阅读卡顿分阶段排查](experiments/webdav_reader_performance.zh.md)
 - [AVIF 格式识别与解码评估](experiments/avif_decoder.zh.md)
 - [图像翻译（实验）](experiments/image_translation.zh.md)
+- [Android 端超分加速与 NNAPI 门控](experiments/android-upscale-acceleration.zh.md)
+- [Qualcomm QNN（HTP）可行性](experiments/qnn-htp-spike.zh.md)
 
 ## 维护原则
 
