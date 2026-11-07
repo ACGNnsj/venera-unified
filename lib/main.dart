@@ -52,6 +52,7 @@ import 'foundation/app_locale.dart';
 import 'foundation/appdata.dart';
 import 'foundation/text_scale.dart';
 import 'foundation/context.dart';
+import 'foundation/image_translation/ort_ffi.dart';
 import 'foundation/js_engine.dart';
 import 'features/webdav_library/webdav_library.dart';
 import 'features/sync/sync.dart';
@@ -134,6 +135,7 @@ void main(List<String> args) {
           );
           runApp(MyApp(host: host));
           applicationShown = true;
+          unawaited(OrtRuntime.logStartupDiagnostics());
           if (App.isDesktop) {
             AppShortcuts.install(onToggleFullscreen: WindowFullscreen.toggle);
           }

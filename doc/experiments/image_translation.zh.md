@@ -86,11 +86,13 @@ RTX 4080 Laptop 实测（单线程、warmup 2 次取中位数）：
 
 Windows ML 的厂商 EP（TensorRT RTX、OpenVINO、QNN 等）走 EP catalog 按需下载，未打包进程里枚举为空，需要 MSIX 或 WinAppSdk bootstrapper 才有包依赖图，暂未接入。
 
-Android 随包的 `libonnxruntime.so`（onnxruntime-android 1.28.0）同时编进了 NNAPI 与 XNNPACK：前者走 NPU/GPU，后者是 CPU 侧的卷积/矩阵加速内核。两者都在建会话时按 provider 名字挂载，运行库不认这个名字或这台设备建不起来就依次退到下一个，最后是默认 CPU——候选顺序由单测固定，设备上的实际加速比待真机实测（本机当前未连接设备）。NNAPI 从 Android 15 起被 Google 弃用，但仍是覆盖面最广的加速通道。iOS/macOS 的 pod 里带了 CoreML EP，Linux/鸿蒙的随包运行库只有 CPU，暂未接。
+Android 随包的 `libonnxruntime.so`（onnxruntime-android 1.28.0）同时编进了 NNAPI 与 XNNPACK，但两者的挂载方式不同：ORT 1.28 的通用 `SessionOptionsAppendExecutionProvider` 白名单里**已经没有 NNAPI**，传字符串会报 `NNAPI execution provider is not supported in this build`，必须查专用导出 `OrtSessionOptionsAppendExecutionProvider_Nnapi(options, 0)`；XNNPACK 仍走通用名。`ort_ffi.dart` 按 EP 名分流：NNAPI 走专用符号，其它继续通用 append；候选链仍是 NNAPI → XNNPACK → CPU，单个候选建会话失败只记一次日志并继续下一个。
+
+设备上首次用到某个模型的 NNAPI 会话时，会把同一组输入再跑一遍 CPU：逐元素 MAE ≤ 0.04（或相对 MAE ≤ 0.02）才采用加速输出；超阈值、输出形状不一致或空输出都判该 EP 不可信，整页剩余推理切回 CPU，并把结论打进日志。启动时 `OrtRuntime.logStartupDiagnostics()` 会列出本机实际可挂载的 EP（`[ORT]` 前缀），排障不用再猜运行库有没有编进去。NNAPI 从 Android 15 起被 Google 弃用，但仍是覆盖面最广的加速通道；iOS/macOS 的 pod 里带了 CoreML EP，Linux/鸿蒙的随包运行库只有 CPU，均暂未接。
 
 ## 验证
 
-- `test/foundation/image_translation/` 覆盖类型、抹字、渲染、服务层、worker、缓存、模型注册表、运行时与执行提供者选择，以及各原生 crate 的像素等价与加速比门禁。
+- `test/foundation/image_translation/` 覆盖类型、抹字、渲染、服务层、worker、缓存、模型注册表、运行时与执行提供者选择（含 `ort_backend_check_test.dart` 的 MAE／相对误差判定与形状不一致回退），以及各原生 crate 的像素等价与加速比门禁。
 - `test/features/reader/pre_translation_tasks_test.dart`（10 个用例）覆盖队列的续跑、逐页失败重试与单章取消。
 - `test/features/settings/` 覆盖设置页取值、保存时序与继承规则。
 - 真机（Windows Release）已走通：主页/详情/阅读器正常，顶栏开关开→关颜色切换正常，设置页四节与模型下载行正常渲染。

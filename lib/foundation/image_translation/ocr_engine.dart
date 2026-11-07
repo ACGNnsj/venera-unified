@@ -14,6 +14,12 @@ import 'ocr_worker.dart';
 /// (downloaded on first use), ORT sessions open inside the isolate and close
 /// when the call finishes.
 abstract class OcrEngine {
+  /// 第一页验证后记住的、NNAPI 输出可信的模型路径。
+  static final _verifiedModels = <String>{};
+
+  /// 任一次比对失败后，后续页面直接走 CPU。
+  static bool _accelerationRejected = false;
+
   /// Recognizes [imageBytes] (any format `package:image` decodes).
   ///
   /// [onDownloadProgress] reports model-download progress on first use, with
@@ -41,9 +47,16 @@ abstract class OcrEngine {
       detector: paths.detector,
       recModel: paths.recModel,
       recDict: paths.recDict,
+      forceCpu: _accelerationRejected,
+      verifiedModels: {..._verifiedModels},
     );
     try {
-      return await Isolate.run(() => runOcrPage(request));
+      var outcome = await Isolate.run(() => runOcrPage(request));
+      _verifiedModels.addAll(outcome.verifiedModels);
+      if (outcome.accelerationRejected) {
+        _accelerationRejected = true;
+      }
+      return outcome.blocks;
     } catch (e) {
       throw Exception(_readableError(e));
     }

@@ -1160,6 +1160,7 @@
     "foundation/image_translation/ocr_types.dart",
     "foundation/image_translation/ocr_worker.dart",
     "foundation/image_translation/ordered_group_committer.dart",
+    "foundation/image_translation/ort_backend_check.dart",
     "foundation/image_translation/ort_ffi.dart",
     "foundation/image_translation/ort_runtime_choice.dart",
     "foundation/image_translation/page_renderer.dart",

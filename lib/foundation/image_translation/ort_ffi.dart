@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 
 import 'ort_runtime_choice.dart';
 
@@ -19,18 +20,35 @@ import 'ort_runtime_choice.dart';
 /// indices below were extracted from onnxruntime_c_api.h and are valid for
 /// every 1.x release.
 class OrtRuntime {
-  OrtRuntime._(this._api, this.defaultExecutionProviders);
+  OrtRuntime._(
+    this._api,
+    this._library,
+    this.defaultExecutionProviders,
+    this.runtimeSource,
+  );
 
   static OrtRuntime? _instance;
 
   final Pointer<Pointer<Void>> _api;
+
+  /// 已载入的运行库。NNAPI 的挂载入口不在 [OrtApi] 表里，要靠它 lookupFunction。
+  final DynamicLibrary _library;
 
   /// 会话默认按这个顺序尝试挂 EP（见 [executionProvidersForPlatform]）：
   /// Windows ML 运行时是 ['DML']，Android 是 ['NNAPI', 'XNNPACK']，
   /// 其它平台（含随包分发的纯 CPU 运行库）为空，表示直接用默认 CPU EP。
   final List<String> defaultExecutionProviders;
 
+  /// 实际载入的运行库说明，启动日志用。
+  final String runtimeSource;
+
   static const _ortApiVersion = 16;
+
+  static const _nnapiAppendSymbol =
+      'OrtSessionOptionsAppendExecutionProvider_Nnapi';
+
+  /// 同一 EP 的挂载失败只打一次日志，避免 OCR 每页重复刷屏。
+  static final _loggedProviderFailures = <String>{};
 
   // ONNXTensorElementDataType
   static const typeFloat32 = 1;
@@ -57,16 +75,26 @@ class OrtRuntime {
     if (api == nullptr) {
       throw Exception('ONNX Runtime API version $_ortApiVersion unavailable');
     }
-    return _instance = OrtRuntime._(api, opened.executionProviders);
+    return _instance = OrtRuntime._(
+      api,
+      opened.library,
+      opened.executionProviders,
+      opened.source,
+    );
   }
 
-  static ({DynamicLibrary library, List<String> executionProviders})
+  static ({
+    DynamicLibrary library,
+    List<String> executionProviders,
+    String source,
+  })
   _openLibrary(OrtRuntimeChoice choice) {
     if (choice.isWindowsMl) {
       try {
         return (
           library: DynamicLibrary.open(choice.windowsMlDllPath!),
           executionProviders: choice.executionProviders,
+          source: 'windows-ml ${choice.windowsMlDllPath}',
         );
       } catch (_) {
         // 框架包里的 DLL 载入失败（权限、版本、依赖缺失）就当没有它，
@@ -96,7 +124,11 @@ class OrtRuntime {
     try {
       var process = DynamicLibrary.process();
       if (process.providesSymbol('OrtGetApiBase')) {
-        return (library: process, executionProviders: fallbackProviders);
+        return (
+          library: process,
+          executionProviders: fallbackProviders,
+          source: 'process',
+        );
       }
     } catch (_) {}
     for (var candidate in candidates) {
@@ -104,6 +136,7 @@ class OrtRuntime {
         return (
           library: DynamicLibrary.open(candidate()),
           executionProviders: fallbackProviders,
+          source: candidate(),
         );
       } catch (e) {
         lastError = e;
@@ -159,6 +192,137 @@ class OrtRuntime {
     var message = _getErrorMessage(status).toDartString();
     _releaseStatus(status);
     throw Exception('ONNX Runtime error: $message');
+  }
+
+  /// 挂一个执行提供者；失败抛异常（异常里带 ORT 的错误文本）。
+  ///
+  /// NNAPI 没有通用名称入口：通用 [SessionOptionsAppendExecutionProvider]
+  /// 的支持列表里没有它（1.28 实测会报 “NNAPI execution provider is not
+  /// supported in this build”），必须调用专用导出符号。DML、XNNPACK 等继续
+  /// 走通用入口。
+  void _applyExecutionProvider(Pointer<Void> options, String provider) {
+    if (provider == 'NNAPI') {
+      _appendNnapi(options);
+    } else {
+      _appendGenericExecutionProvider(options, provider);
+    }
+  }
+
+  void _appendGenericExecutionProvider(Pointer<Void> options, String provider) {
+    // OrtStatus* SessionOptionsAppendExecutionProvider(
+    //     OrtSessionOptions*, const char* provider_name,
+    //     const char* const* keys, const char* const* values, size_t num_keys)
+    var append = _api[_iAppendExecutionProvider]
+        .cast<
+          NativeFunction<
+            Pointer<Void> Function(
+              Pointer<Void>,
+              Pointer<Utf8>,
+              Pointer<Pointer<Utf8>>,
+              Pointer<Pointer<Utf8>>,
+              Size,
+            )
+          >
+        >()
+        .asFunction<
+          Pointer<Void> Function(
+            Pointer<Void>,
+            Pointer<Utf8>,
+            Pointer<Pointer<Utf8>>,
+            Pointer<Pointer<Utf8>>,
+            int,
+          )
+        >();
+    var name = provider.toNativeUtf8();
+    try {
+      _check(append(options, name, nullptr, nullptr, 0));
+    } finally {
+      calloc.free(name);
+    }
+  }
+
+  /// `OrtStatus* OrtSessionOptionsAppendExecutionProvider_Nnapi(
+  ///     OrtSessionOptions*, uint32_t nnapi_flags)`；flags 0 = 默认。
+  void _appendNnapi(Pointer<Void> options) {
+    var append = _nnapiAppend;
+    if (append == null) {
+      throw Exception('ONNX Runtime 未导出 $_nnapiAppendSymbol（该构建没有编进 NNAPI）');
+    }
+    _check(append(options, 0));
+  }
+
+  late final _NnapiAppend? _nnapiAppend = _lookupNnapiAppend();
+
+  _NnapiAppend? _lookupNnapiAppend() {
+    try {
+      return _library.lookupFunction<_NnapiAppendNative, _NnapiAppend>(
+        _nnapiAppendSymbol,
+      );
+    } on ArgumentError {
+      return null;
+    }
+  }
+
+  /// 逐项探测候选 EP 能否在当前运行库/设备上挂载。
+  ///
+  /// 只建 session options 并 append，不建会话，不跑推理，开销很小。
+  List<OrtExecutionProviderProbe> probeExecutionProviders() {
+    return [for (var provider in defaultExecutionProviders) _probe(provider)];
+  }
+
+  OrtExecutionProviderProbe _probe(String provider) {
+    var optionsOut = calloc<Pointer<Void>>();
+    Pointer<Void>? options;
+    try {
+      var createOptions = _api[_iCreateSessionOptions]
+          .cast<
+            NativeFunction<Pointer<Void> Function(Pointer<Pointer<Void>>)>
+          >()
+          .asFunction<Pointer<Void> Function(Pointer<Pointer<Void>>)>();
+      _check(createOptions(optionsOut));
+      options = optionsOut.value;
+      _applyExecutionProvider(options, provider);
+      return OrtExecutionProviderProbe(name: provider, available: true);
+    } on Exception catch (e) {
+      return OrtExecutionProviderProbe(
+        name: provider,
+        available: false,
+        detail: _shortError(e),
+      );
+    } finally {
+      if (options != null) _releaser(_iReleaseSessionOptions)(options);
+      calloc.free(optionsOut);
+    }
+  }
+
+  /// 启动时打印一次诊断：平台/ABI、用哪份运行库、候选 EP 与可挂载性。
+  ///
+  /// 日志前缀统一为 `[ORT]`，真机排障时 `adb logcat | grep '\[ORT\]'` 即可。
+  static Future<void> logStartupDiagnostics() async {
+    try {
+      var choice = resolveOrtRuntime();
+      debugPrint(
+        '[ORT] platform=${Platform.operatingSystem} '
+        '${Platform.operatingSystemVersion} abi=${Abi.current()}',
+      );
+      debugPrint(
+        '[ORT] runtime=${choice.isWindowsMl ? 'Windows ML ${choice.windowsMlDllPath}' : 'bundled'} '
+        'candidates=${choice.executionProviders.isEmpty ? '[CPU]' : choice.executionProviders}',
+      );
+      var rt = open();
+      debugPrint('[ORT] loaded=${rt.runtimeSource} api=$_ortApiVersion');
+      var probes = rt.probeExecutionProviders();
+      if (probes.isEmpty) {
+        debugPrint('[ORT] CPU: 可用（无加速候选）');
+        return;
+      }
+      for (var probe in probes) {
+        debugPrint('[ORT] ${probe.describe()}');
+      }
+      debugPrint('[ORT] CPU: 可用（默认回退）');
+    } catch (e) {
+      debugPrint('[ORT] 启动诊断失败：${_shortError(e)}');
+    }
   }
 
   Pointer<Void>? _env;
@@ -243,6 +407,33 @@ class OrtRuntime {
   }
 }
 
+typedef _NnapiAppendNative = Pointer<Void> Function(Pointer<Void>, Uint32);
+typedef _NnapiAppend = Pointer<Void> Function(Pointer<Void>, int);
+
+/// 一个 EP 在当前运行库/设备上能否挂载。
+class OrtExecutionProviderProbe {
+  const OrtExecutionProviderProbe({
+    required this.name,
+    required this.available,
+    this.detail,
+  });
+
+  final String name;
+  final bool available;
+  final String? detail;
+
+  String describe() {
+    if (available) return '$name: 可用';
+    return '$name: 不可用${detail == null ? '' : '（$detail）'}';
+  }
+}
+
+String _shortError(Object error) {
+  var text = error.toString().replaceFirst('Exception: ', '');
+  if (text.length <= 200) return text;
+  return '${text.substring(0, 200)}…';
+}
+
 /// A float32 or int64 input tensor description.
 class OrtInput {
   OrtInput.float32(Float32List this.f32Data, this.shape) : i64Data = null;
@@ -298,11 +489,24 @@ class OrtFfiSession {
     for (var candidate in rt.defaultExecutionProviders) {
       try {
         return _open(rt, modelPath, intraOpThreads, candidate);
-      } on Exception {
-        // 这台设备上建不起来，换下一个候选。
+      } on Exception catch (e) {
+        // 这台设备上建不起来，换下一个候选。同一 EP 只记一次，避免 OCR
+        // 每页重复刷日志。
+        if (OrtRuntime._loggedProviderFailures.add(candidate)) {
+          debugPrint('[ORT] $candidate 建会话失败，尝试下一个：${_shortError(e)}');
+        }
       }
     }
+    debugPrint('[ORT] 加速 EP 均不可用，本页使用 CPU');
     return _open(rt, modelPath, intraOpThreads, null);
+  }
+
+  /// 建一个纯 CPU 会话，不尝试任何 EP。
+  ///
+  /// 用于 NNAPI 输出比对：同一模型同时持有加速与 CPU 两份会话，首轮双跑后
+  /// 只保留通过比对的那份输出。
+  static OrtFfiSession openCpu(String modelPath, {int? intraOpThreads}) {
+    return _open(OrtRuntime.open(), modelPath, intraOpThreads, null);
   }
 
   static OrtFfiSession _open(
@@ -331,36 +535,7 @@ class OrtFfiSession {
         rt._check(setThreads(options, intraOpThreads));
       }
       if (executionProvider != null) {
-        // OrtStatus* SessionOptionsAppendExecutionProvider(
-        //     OrtSessionOptions*, const char* provider_name,
-        //     const char* const* keys, const char* const* values, size_t num_keys)
-        var appendEp = rt._api[OrtRuntime._iAppendExecutionProvider]
-            .cast<
-              NativeFunction<
-                Pointer<Void> Function(
-                  Pointer<Void>,
-                  Pointer<Utf8>,
-                  Pointer<Pointer<Utf8>>,
-                  Pointer<Pointer<Utf8>>,
-                  Size,
-                )
-              >
-            >()
-            .asFunction<
-              Pointer<Void> Function(
-                Pointer<Void>,
-                Pointer<Utf8>,
-                Pointer<Pointer<Utf8>>,
-                Pointer<Pointer<Utf8>>,
-                int,
-              )
-            >();
-        var name = executionProvider.toNativeUtf8();
-        try {
-          rt._check(appendEp(options, name, nullptr, nullptr, 0));
-        } finally {
-          calloc.free(name);
-        }
+        rt._applyExecutionProvider(options, executionProvider);
       }
 
       // ORTCHAR_T is wchar_t (UTF-16) on Windows and char (UTF-8) elsewhere.

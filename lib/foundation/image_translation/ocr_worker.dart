@@ -3,10 +3,11 @@ import 'dart:isolate';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 
 import 'ocr_preprocess_native.dart';
 import 'ocr_types.dart';
+import 'ort_backend_check.dart';
 import 'ort_ffi.dart';
 
 /// Request handed to the OCR worker. All fields cross isolate boundaries.
@@ -20,6 +21,8 @@ class OcrPageRequest {
     required this.recDict,
     this.recHeight = 48,
     this.intraOpThreads,
+    this.forceCpu = false,
+    this.verifiedModels = const {},
   });
 
   final TransferableTypedData pixels;
@@ -30,6 +33,29 @@ class OcrPageRequest {
   final String recDict;
   final int recHeight;
   final int? intraOpThreads;
+
+  /// 之前页面已经确认 NNAPI 输出可信的模型路径；本页跳过重复比对。
+  final Set<String> verifiedModels;
+
+  /// 之前某页比对失败过；本页直接走 CPU。
+  final bool forceCpu;
+}
+
+/// 一页 OCR 的结果，附带 NNAPI 比对结论。
+class OcrPageOutcome {
+  const OcrPageOutcome({
+    required this.blocks,
+    required this.verifiedModels,
+    required this.accelerationRejected,
+  });
+
+  final List<OcrBlock> blocks;
+
+  /// 本页验证通过的模型路径（调用方应与已有集合合并）。
+  final Set<String> verifiedModels;
+
+  /// 本页是否因 NNAPI 输出偏差过大而回退 CPU。
+  final bool accelerationRejected;
 }
 
 /// Recognizes one page: detect -> cluster -> recognize. Runs inside
@@ -38,11 +64,19 @@ class OcrPageRequest {
 /// Ported from VeneraX `translation_worker.dart`, cut down to the single
 /// Japanese PP-OCRv4 line engine this release ships: no engine chain, no manga
 /// OCR, no page-level engine hint, no translation or rendering stages.
-List<OcrBlock> runOcrPage(OcrPageRequest req) {
-  var worker = _OcrPageWorker(req.intraOpThreads);
+OcrPageOutcome runOcrPage(OcrPageRequest req) {
+  var worker = _OcrPageWorker(req);
   try {
     var pixels = req.pixels.materialize().asUint8List();
-    return worker.recognize(RgbaImage(req.width, req.height, pixels), req);
+    var blocks = worker.recognize(
+      RgbaImage(req.width, req.height, pixels),
+      req,
+    );
+    return OcrPageOutcome(
+      blocks: blocks,
+      verifiedModels: worker.verifiedModels,
+      accelerationRejected: worker.accelerationRejected,
+    );
   } finally {
     worker.close();
   }
@@ -83,22 +117,78 @@ String detectBlockLanguage(String text, String engineLang) {
 }
 
 class _OcrPageWorker {
-  _OcrPageWorker(this.intraOpThreads);
+  _OcrPageWorker(OcrPageRequest req)
+    : intraOpThreads = req.intraOpThreads,
+      _cpuOnly = req.forceCpu,
+      verifiedModels = {...req.verifiedModels};
 
   final int? intraOpThreads;
   final _sessions = <String, OrtFfiSession>{};
+  final _cpuSessions = <String, OrtFfiSession>{};
   final _charsets = <String, List<String>>{};
 
-  OrtFfiSession _session(String path) => _sessions.putIfAbsent(
-    path,
-    () => OrtFfiSession.open(path, intraOpThreads: intraOpThreads),
-  );
+  /// 之前页面里已确认 NNAPI 输出与 CPU 一致的模型路径。
+  final Set<String> verifiedModels;
+
+  /// 本页是否整体回退 CPU。
+  bool _cpuOnly;
+
+  /// 本页是否有模型的 NNAPI 输出偏差过大。
+  bool accelerationRejected = false;
+
+  OrtFfiSession _session(String path) {
+    if (_cpuOnly) return _cpuSession(path);
+    return _sessions.putIfAbsent(
+      path,
+      () => OrtFfiSession.open(path, intraOpThreads: intraOpThreads),
+    );
+  }
+
+  OrtFfiSession _cpuSession(String path) {
+    return _cpuSessions.putIfAbsent(
+      path,
+      () => OrtFfiSession.openCpu(path, intraOpThreads: intraOpThreads),
+    );
+  }
+
+  /// 首次用某个模型的 NNAPI 会话时，先与 CPU 参考做一次双跑比对。
+  Map<String, OrtOutput> _run(
+    String path,
+    Map<String, OrtInput> Function(OrtFfiSession session) build,
+  ) {
+    if (_cpuOnly) {
+      var cpu = _cpuSession(path);
+      return cpu.run(build(cpu));
+    }
+    var session = _session(path);
+    var inputs = build(session);
+    if (session.executionProvider != 'NNAPI' || verifiedModels.contains(path)) {
+      return session.run(inputs);
+    }
+    var checked = runAgainstCpuReference(
+      accelerated: session,
+      cpu: _cpuSession(path),
+      inputs: inputs,
+    );
+    debugPrint('[OCR] ${checked.check.describe()}');
+    if (!checked.check.accepted) {
+      _cpuOnly = true;
+      accelerationRejected = true;
+      return checked.outputs;
+    }
+    verifiedModels.add(path);
+    return checked.outputs;
+  }
 
   void close() {
     for (var session in _sessions.values) {
       session.close();
     }
     _sessions.clear();
+    for (var session in _cpuSessions.values) {
+      session.close();
+    }
+    _cpuSessions.clear();
   }
 
   List<OcrBlock> recognize(RgbaImage image, OcrPageRequest req) {
@@ -163,7 +253,6 @@ class _OcrPageWorker {
   // ----- detection -----
 
   List<IntRect> _detectBoxes(RgbaImage image, OcrPageRequest req) {
-    var session = _session(req.detector);
     var boxes = <IntRect>[];
     const tileHeight = 1280;
     const tileOverlap = 128;
@@ -187,17 +276,17 @@ class _OcrPageWorker {
         // Native library not built for this platform; Dart fallback.
         input = _detPreprocess(tile);
       }
-      var output = session
-          .run({
-            session.inputNames.first: OrtInput.float32(input.tensor, [
-              1,
-              3,
-              input.height,
-              input.width,
-            ]),
-          })
-          .values
-          .first;
+      var output = _run(
+        req.detector,
+        (session) => {
+          session.inputNames.first: OrtInput.float32(input.tensor, [
+            1,
+            3,
+            input.height,
+            input.width,
+          ]),
+        },
+      ).values.first;
       List<IntRect> tileBoxes;
       try {
         tileBoxes = OcrPreprocessNative.detPostprocess(
@@ -237,7 +326,6 @@ class _OcrPageWorker {
     List<IntRect> lines,
     OcrPageRequest req,
   ) {
-    var session = _session(req.recModel);
     var charset = _charsets.putIfAbsent('ja', () {
       var dict = File(req.recDict).readAsLinesSync();
       return ['', ...dict.map((line) => line.isEmpty ? ' ' : line), ' '];
@@ -287,17 +375,17 @@ class _OcrPageWorker {
         }
       }
       var tensor = _normalize(resized, outW, height);
-      var output = session
-          .run({
-            session.inputNames.first: OrtInput.float32(tensor, [
-              1,
-              3,
-              height,
-              outW,
-            ]),
-          })
-          .values
-          .first;
+      var output = _run(
+        req.recModel,
+        (session) => {
+          session.inputNames.first: OrtInput.float32(tensor, [
+            1,
+            3,
+            height,
+            outW,
+          ]),
+        },
+      ).values.first;
       var text = _ctcDecode(output.data, output.shape.last, charset);
       if (text.trim().isNotEmpty) {
         parts.add(text.trim());

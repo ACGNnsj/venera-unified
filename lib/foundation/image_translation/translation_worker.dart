@@ -2,9 +2,10 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/image_translation/hf_tokenizer.dart';
+import 'package:venera_unified/foundation/image_translation/ort_backend_check.dart';
 import 'package:venera_unified/foundation/image_translation/ort_ffi.dart';
 import 'package:venera_unified/foundation/image_translation/translation_types.dart';
 import 'package:venera_unified/foundation/image_translation/translation_performance_config.dart';
@@ -77,12 +78,15 @@ Future<void> checkRecognitionModel(String model, String dict, int height) {
       throw const ModelCheckException(ModelCheckFailure.cannotRun);
     }
     try {
-      output = session.run({
-        session.inputNames.first: OrtInput.float32(
-          Float32List(3 * height * 160),
-          [1, 3, height, 160],
-        ),
-      }).values.first;
+      output = session
+          .run({
+            session.inputNames.first: OrtInput.float32(
+              Float32List(3 * height * 160),
+              [1, 3, height, 160],
+            ),
+          })
+          .values
+          .first;
     } catch (_) {
       throw const ModelCheckException(ModelCheckFailure.cannotRun);
     } finally {
@@ -115,12 +119,15 @@ Future<void> checkDetectionModel(String model) {
       throw const ModelCheckException(ModelCheckFailure.cannotRun);
     }
     try {
-      output = session.run({
-        session.inputNames.first: OrtInput.float32(
-          Float32List(3 * 64 * 64),
-          const [1, 3, 64, 64],
-        ),
-      }).values.first;
+      output = session
+          .run({
+            session.inputNames.first: OrtInput.float32(
+              Float32List(3 * 64 * 64),
+              const [1, 3, 64, 64],
+            ),
+          })
+          .values
+          .first;
     } catch (_) {
       throw const ModelCheckException(ModelCheckFailure.cannotRun);
     } finally {
@@ -519,15 +526,95 @@ void _workerMain(SendPort mainPort) {
 
 class _WorkerState {
   final _sessions = <String, OrtFfiSession>{};
+  final _cpuSessions = <String, OrtFfiSession>{};
   final _charsets = <String, List<String>>{};
   WordPieceVocab? _jaVocab;
   int _intraThreads = 2;
 
+  /// 本页已确认 NNAPI 输出与 CPU 参考一致的模型路径。
+  final _verifiedModels = <String>{};
+
+  /// 本页 NNAPI 输出偏差过大、已整体回退 CPU。
+  bool _cpuOnly = false;
+
+  /// worker 生命周期内被判定不可信的模型路径；之后一直走 CPU。
+  final _rejectedModels = <String>{};
+
   OrtFfiSession _session(String path) {
+    if (_cpuOnly || _rejectedModels.contains(path)) {
+      return _cpuSession(path);
+    }
     return _sessions.putIfAbsent(
       path,
       () => OrtFfiSession.open(path, intraOpThreads: _intraThreads),
     );
+  }
+
+  OrtFfiSession _cpuSession(String path) {
+    return _cpuSessions.putIfAbsent(
+      path,
+      () => OrtFfiSession.openCpu(path, intraOpThreads: _intraThreads),
+    );
+  }
+
+  /// 用同一组输入跑 [path]，首次遇到 NNAPI 会话时先与 CPU 参考比对。
+  ///
+  /// 通过则继续用加速输出并记下该模型；不通过则本页剩余推理全部回退 CPU
+  /// （[_cpuOnly]），且该模型在 worker 生命周期内不再尝试加速。
+  Map<String, OrtOutput> _run(
+    String path,
+    Map<String, OrtInput> Function(OrtFfiSession session) build,
+  ) {
+    if (_cpuOnly) {
+      var cpu = _cpuSession(path);
+      return cpu.run(build(cpu));
+    }
+    var session = _session(path);
+    var inputs = build(session);
+    if (session.executionProvider != 'NNAPI' ||
+        _verifiedModels.contains(path)) {
+      return session.run(inputs);
+    }
+    var checked = runAgainstCpuReference(
+      accelerated: session,
+      cpu: _cpuSession(path),
+      inputs: inputs,
+    );
+    debugPrint('[ORT] ${checked.check.describe()}');
+    if (!checked.check.accepted) {
+      _cpuOnly = true;
+      _rejectedModels.add(path);
+      return checked.outputs;
+    }
+    _verifiedModels.add(path);
+    return checked.outputs;
+  }
+
+  /// decoder 用 argmax 读取，不需要整份 logits；首次用 NNAPI 时仍做一次
+  /// 双跑比对，决定这一页 decoder 走哪份会话。
+  OrtFfiSession _decoderSession(
+    String path,
+    Map<String, OrtInput> Function(OrtFfiSession session) build,
+  ) {
+    if (_cpuOnly) return _cpuSession(path);
+    var session = _session(path);
+    if (session.executionProvider != 'NNAPI' ||
+        _verifiedModels.contains(path)) {
+      return session;
+    }
+    var checked = runAgainstCpuReference(
+      accelerated: session,
+      cpu: _cpuSession(path),
+      inputs: build(session),
+    );
+    debugPrint('[ORT] ${checked.check.describe()}');
+    if (!checked.check.accepted) {
+      _cpuOnly = true;
+      _rejectedModels.add(path);
+      return _cpuSession(path);
+    }
+    _verifiedModels.add(path);
+    return session;
   }
 
   void release() {
@@ -535,6 +622,10 @@ class _WorkerState {
       session.close();
     }
     _sessions.clear();
+    for (var session in _cpuSessions.values) {
+      session.close();
+    }
+    _cpuSessions.clear();
     _jaVocab = null;
   }
 
@@ -544,6 +635,8 @@ class _WorkerState {
 
   List<OcrBlock> ocrPage(_OcrPageRequest req) {
     _intraThreads = req.intraThreads;
+    _cpuOnly = false;
+    _verifiedModels.clear();
     var image = RgbaImage(
       req.width,
       req.height,
@@ -693,7 +786,6 @@ class _WorkerState {
   // ----- detection -----
 
   List<IntRect> _detectBoxes(RgbaImage image, WorkerModelPaths paths) {
-    var session = _session(paths.detector);
     var boxes = <IntRect>[];
     const tileHeight = 1280;
     const tileOverlap = 128;
@@ -710,17 +802,17 @@ class _WorkerState {
         ),
       );
       var input = _detPreprocess(tile);
-      var output = session
-          .run({
-            session.inputNames.first: OrtInput.float32(input.tensor, [
-              1,
-              3,
-              input.height,
-              input.width,
-            ]),
-          })
-          .values
-          .first;
+      var output = _run(
+        paths.detector,
+        (session) => {
+          session.inputNames.first: OrtInput.float32(input.tensor, [
+            1,
+            3,
+            input.height,
+            input.width,
+          ]),
+        },
+      ).values.first;
       var tileBoxes = _detPostprocess(
         output.data,
         input.width,
@@ -745,25 +837,30 @@ class _WorkerState {
 
   String _mangaOcr(RgbaImage image, IntRect bounds, WorkerModelPaths paths) {
     _jaVocab ??= WordPieceVocab.fromFileSync(paths.jaVocab!);
-    var encoder = _session(paths.jaEncoder!);
-    var decoder = _session(paths.jaDecoder!);
     var pixels = _cropNormalized(image, bounds, 224, 224);
-    var hidden = encoder
-        .run({
-          encoder.inputNames.first: OrtInput.float32(pixels, const [
-            1,
-            3,
-            224,
-            224,
-          ]),
-        })
-        .values
-        .first;
+    var hidden = _run(
+      paths.jaEncoder!,
+      (session) => {
+        session.inputNames.first: OrtInput.float32(pixels, const [
+          1,
+          3,
+          224,
+          224,
+        ]),
+      },
+    ).values.first;
 
     const startToken = 2;
     const eosToken = 3;
     const maxTokens = 80;
     var ids = <int>[startToken];
+    var decoder = _decoderSession(
+      paths.jaDecoder!,
+      (session) => {
+        'input_ids': OrtInput.int64(Int64List.fromList(ids), [1, ids.length]),
+        'encoder_hidden_states': OrtInput.float32(hidden.data, hidden.shape),
+      },
+    );
     while (ids.length < maxTokens) {
       var next = decoder.runArgmaxLastRow({
         'input_ids': OrtInput.int64(Int64List.fromList(ids), [1, ids.length]),
@@ -814,7 +911,6 @@ class _WorkerState {
     WorkerModelPaths paths,
   ) {
     var modelPath = paths.recModels[lang]!;
-    var session = _session(modelPath);
     var charset = _charsets.putIfAbsent(lang, () {
       var dict = File(paths.recDicts[lang]!).readAsLinesSync();
       return ['', ...dict.map((line) => line.isEmpty ? ' ' : line), ' '];
@@ -824,9 +920,8 @@ class _WorkerState {
     var vertical = lines.any(_isVerticalLine);
     var sorted = [...lines]
       ..sort(
-        (a, b) => vertical
-            ? b.right.compareTo(a.right)
-            : a.top.compareTo(b.top),
+        (a, b) =>
+            vertical ? b.right.compareTo(a.right) : a.top.compareTo(b.top),
       );
     var parts = <String>[];
     for (var line in sorted) {
@@ -848,17 +943,17 @@ class _WorkerState {
         outW,
         height,
       );
-      var output = session
-          .run({
-            session.inputNames.first: OrtInput.float32(tensor, [
-              1,
-              3,
-              height,
-              outW,
-            ]),
-          })
-          .values
-          .first;
+      var output = _run(
+        modelPath,
+        (session) => {
+          session.inputNames.first: OrtInput.float32(tensor, [
+            1,
+            3,
+            height,
+            outW,
+          ]),
+        },
+      ).values.first;
       var text = _ctcDecode(output.data, output.shape.last, charset);
       if (text.trim().isNotEmpty) {
         parts.add(text.trim());
