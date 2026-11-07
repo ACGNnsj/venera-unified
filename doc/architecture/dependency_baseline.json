@@ -1161,6 +1161,7 @@
     "foundation/image_translation/ocr_worker.dart",
     "foundation/image_translation/ordered_group_committer.dart",
     "foundation/image_translation/ort_ffi.dart",
+    "foundation/image_translation/ort_runtime_choice.dart",
     "foundation/image_translation/page_renderer.dart",
     "foundation/image_translation/public_translator.dart",
     "foundation/image_translation/rate_limiter.dart",

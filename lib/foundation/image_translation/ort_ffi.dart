@@ -4,6 +4,8 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
+import 'ort_runtime_choice.dart';
+
 /// Minimal, synchronous binding to the ONNX Runtime C API.
 ///
 /// The runtime library itself is bundled by the flutter_onnxruntime plugin
@@ -17,11 +19,17 @@ import 'package:ffi/ffi.dart';
 /// indices below were extracted from onnxruntime_c_api.h and are valid for
 /// every 1.x release.
 class OrtRuntime {
-  OrtRuntime._(this._api);
+  OrtRuntime._(this._api, this.defaultExecutionProvider);
 
   static OrtRuntime? _instance;
 
   final Pointer<Pointer<Void>> _api;
+
+  /// 当前运行库默认要挂的 EP：Windows ML 那份运行时是 'DML'；随包分发的
+  /// CPU 版是 null（与历史行为一致）。
+  final String? defaultExecutionProvider;
+
+  bool get usesWindowsMl => defaultExecutionProvider != null;
 
   static const _ortApiVersion = 16;
 
@@ -33,7 +41,9 @@ class OrtRuntime {
     if (_instance != null) {
       return _instance!;
     }
-    var lib = _openLibrary();
+    var choice = resolveOrtRuntime();
+    var opened = _openLibrary(choice);
+    var lib = opened.library;
     // const OrtApiBase* OrtGetApiBase(); OrtApiBase = { GetApi, GetVersionString }
     var getApiBase = lib
         .lookupFunction<
@@ -48,10 +58,26 @@ class OrtRuntime {
     if (api == nullptr) {
       throw Exception('ONNX Runtime API version $_ortApiVersion unavailable');
     }
-    return _instance = OrtRuntime._(api);
+    return _instance = OrtRuntime._(
+      api,
+      opened.windowsMl ? choice.executionProvider : null,
+    );
   }
 
-  static DynamicLibrary _openLibrary() {
+  static ({DynamicLibrary library, bool windowsMl}) _openLibrary(
+    OrtRuntimeChoice choice,
+  ) {
+    if (choice.isWindowsMl) {
+      try {
+        return (
+          library: DynamicLibrary.open(choice.windowsMlDllPath!),
+          windowsMl: true,
+        );
+      } catch (_) {
+        // 框架包里的 DLL 载入失败（权限、版本、依赖缺失）就当没有它，
+        // 继续往下试随包分发的那份。
+      }
+    }
     var candidates = <String Function()>[];
     if (Platform.isWindows) {
       candidates.add(() => 'onnxruntime.dll');
@@ -70,12 +96,12 @@ class OrtRuntime {
     try {
       var process = DynamicLibrary.process();
       if (process.providesSymbol('OrtGetApiBase')) {
-        return process;
+        return (library: process, windowsMl: false);
       }
     } catch (_) {}
     for (var candidate in candidates) {
       try {
-        return DynamicLibrary.open(candidate());
+        return (library: DynamicLibrary.open(candidate()), windowsMl: false);
       } catch (e) {
         lastError = e;
       }
@@ -90,6 +116,9 @@ class OrtRuntime {
   static const _iRun = 9;
   static const _iCreateSessionOptions = 10;
   static const _iSetIntraOpNumThreads = 24;
+  // 通用的 SessionOptionsAppendExecutionProvider（1.12 起）：DML 没有专用的 C 入口，
+  // 要按 provider_name='DML' 走这条；CUDA 另有专用槽位。
+  static const _iAppendExecutionProvider = 216;
   static const _iSessionGetInputCount = 30;
   static const _iSessionGetOutputCount = 31;
   static const _iSessionGetInputName = 36;
@@ -239,8 +268,34 @@ class OrtFfiSession {
   final List<String> inputNames;
   final List<String> outputNames;
 
-  static OrtFfiSession open(String modelPath, {int? intraOpThreads}) {
+  /// [executionProvider] 目前只支持 'DML'（只有带 DirectML 的运行库才认）。
+  /// 传 null 时跟随运行库默认值：Windows ML 那份走 DML，随包分发的 CPU 版
+  /// 保持纯 CPU（与历史行为一致）。
+  static OrtFfiSession open(
+    String modelPath, {
+    int? intraOpThreads,
+    String? executionProvider,
+  }) {
     var rt = OrtRuntime.open();
+    var requested = executionProvider ?? rt.defaultExecutionProvider;
+    try {
+      return _open(rt, modelPath, intraOpThreads, requested);
+    } on Exception {
+      if (executionProvider == null && requested != null) {
+        // GPU 会话建不起来（驱动、显存、算子不支持）：退回 CPU，
+        // 让功能本身照旧可用，而不是把整页翻译报错。
+        return _open(rt, modelPath, intraOpThreads, null);
+      }
+      rethrow;
+    }
+  }
+
+  static OrtFfiSession _open(
+    OrtRuntime rt,
+    String modelPath,
+    int? intraOpThreads,
+    String? executionProvider,
+  ) {
     var optionsOut = calloc<Pointer<Void>>();
     var sessionOut = calloc<Pointer<Void>>();
     Pointer<Void>? options;
@@ -259,6 +314,38 @@ class OrtFfiSession {
             >()
             .asFunction<Pointer<Void> Function(Pointer<Void>, int)>();
         rt._check(setThreads(options, intraOpThreads));
+      }
+      if (executionProvider != null) {
+        // OrtStatus* SessionOptionsAppendExecutionProvider(
+        //     OrtSessionOptions*, const char* provider_name,
+        //     const char* const* keys, const char* const* values, size_t num_keys)
+        var appendEp = rt._api[OrtRuntime._iAppendExecutionProvider]
+            .cast<
+              NativeFunction<
+                Pointer<Void> Function(
+                  Pointer<Void>,
+                  Pointer<Utf8>,
+                  Pointer<Pointer<Utf8>>,
+                  Pointer<Pointer<Utf8>>,
+                  Size,
+                )
+              >
+            >()
+            .asFunction<
+              Pointer<Void> Function(
+                Pointer<Void>,
+                Pointer<Utf8>,
+                Pointer<Pointer<Utf8>>,
+                Pointer<Pointer<Utf8>>,
+                int,
+              )
+            >();
+        var name = executionProvider.toNativeUtf8();
+        try {
+          rt._check(appendEp(options, name, nullptr, nullptr, 0));
+        } finally {
+          calloc.free(name);
+        }
       }
 
       // ORTCHAR_T is wchar_t (UTF-16) on Windows and char (UTF-8) elsewhere.
