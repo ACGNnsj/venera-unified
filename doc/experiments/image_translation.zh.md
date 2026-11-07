@@ -66,6 +66,8 @@ Dart 侧绑定分别是 `ocr_preprocess_native.dart`、`image_transpose_native.d
 - OCR 前后处理 2.5–3.9 倍，整页管线 3.3–3.5 倍
 - 单页抹字 2.6–3.3 倍
 
+性能门一律只设 2.0 倍下限（JPEG、抹字、OCR 三个测试口径一致）：CI 共享 runner 的实测会比本机低一截（JPEG 最低见过 2.91 倍），门槛按 CI 分位数留余量，质量与体积断言不随性能门放宽。
+
 ## 执行后端
 
 推理走 ONNX Runtime，按平台挑能用的加速，拿不到就退回默认 CPU：
