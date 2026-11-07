@@ -138,7 +138,8 @@ jobs:
         run: |
           python3 "$GITHUB_WORKSPACE/.github/scripts/prepare_rust_toolchain.py"
           cd "$APP_DIR/packages/rhttp/rust"
-          cargo vendor vendor > "$RUNNER_TEMP/vendor-config.txt"
+          # 两个工作区可能有同名但不同版本的 crate（bytes 1.6 与 1.12），目录必须带版本号共存。
+          cargo vendor --versioned-dirs vendor > "$RUNNER_TEMP/vendor-config.txt"
           # 插件自带的 Rust crate 也要一起 vendor：super_native_extensions 的 Cargo.lock 钉了
           # 一个 git 源分支上的 mime_guess，沙箱离线时 cargo 没地方 clone，插件编译就断在那里。
           VENDOR_DIR="$APP_DIR/packages/rhttp/rust/vendor"
@@ -148,7 +149,7 @@ jobs:
           for manifest in $PLUGIN_CRATES; do
             crate_dir=$(dirname "$manifest")
             echo "vendoring plugin crate: $crate_dir"
-            ( cd "$crate_dir" && cargo vendor --no-delete "$VENDOR_DIR" ) >> "$RUNNER_TEMP/plugin-vendor-config.txt"
+            ( cd "$crate_dir" && cargo vendor --no-delete --versioned-dirs "$VENDOR_DIR" ) >> "$RUNNER_TEMP/plugin-vendor-config.txt"
           done
           python3 "$GITHUB_WORKSPACE/.github/scripts/merge_vendor_config.py" \
             "$RUNNER_TEMP/vendor-config-merged.txt" \
