@@ -5,7 +5,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show MethodChannel, rootBundle;
 import 'package:path_provider/path_provider.dart';
 import 'package:venera_unified/foundation/image_translation/ort_backend_check.dart';
 import 'package:venera_unified/foundation/image_translation/ort_ffi.dart';
@@ -43,7 +43,7 @@ class _ProbeAppState extends State<_ProbeApp> {
 
   String _err(Object error) {
     var text = error.toString().replaceFirst('Exception: ', '');
-    return text.length <= 200 ? text : '${text.substring(0, 200)}…';
+    return text.length <= 400 ? text : '${text.substring(0, 400)}…';
   }
 
   double _min(Float32List data) => data.reduce((a, b) => a < b ? a : b);
@@ -145,6 +145,15 @@ class _ProbeAppState extends State<_ProbeApp> {
       _json('startup-log', {'ok': false, 'error': _err(e)});
     }
 
+    // 原生桥自检：Kotlin 侧的 NNAPI 运行时探测是否真的接上了。
+    try {
+      var channel = MethodChannel('venera/upscale');
+      var available = await channel.invokeMethod<bool>('nnapiAvailable');
+      _json('nnapi-channel', {'ok': true, 'available': available});
+    } catch (e) {
+      _json('nnapi-channel', {'ok': false, 'error': _err(e)});
+    }
+
     OrtRuntime rt;
     try {
       rt = OrtRuntime.open();
@@ -197,6 +206,25 @@ class _ProbeAppState extends State<_ProbeApp> {
       });
     } catch (e) {
       _json('session', {'ep': 'CPU', 'ok': false, 'error': _err(e)});
+    }
+    // QNN（Qualcomm NPU）探测：随包 ORT 只留了 provider 名字，是否真的编进来
+    // 要看这里的报错——「未编进该构建」与「缺 libQnnHtp.so」是两种不同结论。
+    try {
+      var qnn = OrtFfiSession.open(
+        model.path,
+        intraOpThreads: 1,
+        executionProvider: 'QNN',
+      );
+      _json('session', {
+        'ep': 'QNN',
+        'ok': true,
+        'actual': qnn.executionProvider,
+        'inputs': qnn.inputNames,
+        'outputs': qnn.outputNames,
+      });
+      qnn.close();
+    } catch (e) {
+      _json('session', {'ep': 'QNN', 'ok': false, 'error': _err(e)});
     }
     try {
       xnnpack = OrtFfiSession.open(

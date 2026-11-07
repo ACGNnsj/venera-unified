@@ -2,6 +2,7 @@ package com.github.cyrilpeng.veneranext.upscale
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import android.graphics.BitmapFactory
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
@@ -22,6 +23,7 @@ class UpscalePlugin : MethodChannel.MethodCallHandler {
 
     companion object {
         const val CHANNEL = "venera/upscale"
+        private const val TAG = "UpscalePlugin"
 
         fun registerWith(context: Context, messenger: BinaryMessenger): UpscalePlugin {
             val plugin = UpscalePlugin(context, messenger)
@@ -78,13 +80,23 @@ class UpscalePlugin : MethodChannel.MethodCallHandler {
             result.success(null)
             return
         }
+        if (call.method == "nnapiAvailable") {
+            // Dart 侧据此决定是否请求 NNAPI：新机型上直接走 CPU，省一次参考推理。
+            result.success(NnapiSupport.isAvailable())
+            return
+        }
         if (call.method != "upscale") {
             result.notImplemented()
             return
         }
         val imageBytes = call.argument<ByteArray>("imageBytes")
         val modelPath = call.argument<String>("modelPath")
-        val useNnapi = call.argument<Boolean>("useNnapi") ?: false
+        val requestedNnapi = call.argument<Boolean>("useNnapi") ?: false
+        // 系统移除 NNAPI 运行时后仍请求 NNAPI 只会白跑：这里统一降到 CPU。
+        val useNnapi = requestedNnapi && NnapiSupport.isAvailable()
+        if (requestedNnapi && !useNnapi) {
+            Log.i(TAG, "NNAPI requested but unavailable; using CPU")
+        }
         val intensity = call.argument<Double>("intensity")?.toFloat() ?: 1.0f
 
         if (imageBytes == null || modelPath == null) {

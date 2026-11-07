@@ -46,13 +46,22 @@ class Anime4KV4Service {
   String? _modelPath;
   Future<void>? _initFuture;
 
+  /// 原生端 NNAPI 运行时是否可用；未知时按可用处理（原生侧还会再兜一次）。
+  bool _nnapiCapable = true;
+
+  bool get nnapiCapable => _nnapiCapable;
+
   final Set<String> _processingKeys = {};
   static const int _maxConcurrentTasks = 2;
   int _runningTasks = 0;
   final List<Function> _taskQueue = [];
 
   /// 该通道数的模型是否优先 NNAPI。1 通道（Y 亮度/ACNet）强制 CPU。
-  static bool shouldUseNnapi(int channels) => channels != 1;
+  ///
+  /// [nnapiAvailable] 来自原生端探测：Android 16 起系统移除了 NNAPI 运行时，
+  /// 此时 3 通道模型也只能走 CPU，否则会多跑一遍注定落回 CPU 的参考推理。
+  static bool shouldUseNnapi(int channels, {bool nnapiAvailable = true}) =>
+      channels != 1 && nnapiAvailable;
 
   /// 缓存键：前缀含模型 id + intensity，避免串图与旧缓存复用。
   static String buildCacheKey(
@@ -72,8 +81,25 @@ class Anime4KV4Service {
       }
       await Anime4KV4ModelManager.extractBundledModelIfNeeded();
       _modelPath = await Anime4KV4ModelManager.ensureModelAvailable();
+      if (App.isAndroid) {
+        await _refreshNnapiCapability();
+      }
     } catch (e) {
       Log.error('Anime4KV4', 'init error: $e');
+    }
+  }
+
+  /// 向原生端确认 NNAPI 运行时是否还在（Android 16 起系统已移除）。
+  Future<void> _refreshNnapiCapability() async {
+    try {
+      _nnapiCapable =
+          await _channel.invokeMethod<bool>('nnapiAvailable') ?? true;
+    } catch (e) {
+      // 旧原生实现没有该 MethodChannel 方法，按可用处理交给原生侧兜底。
+      _nnapiCapable = true;
+    }
+    if (!_nnapiCapable) {
+      Log.info('Anime4KV4', 'NNAPI runtime missing, upscale uses CPU only');
     }
   }
 
@@ -205,7 +231,10 @@ class Anime4KV4Service {
         Log.info('Anime4KV4', 'processing image $cacheKey');
 
         Uint8List? result;
-        if (shouldUseNnapi(Anime4KV4ModelManager.selectedDef.channels)) {
+        if (shouldUseNnapi(
+          Anime4KV4ModelManager.selectedDef.channels,
+          nnapiAvailable: _nnapiCapable,
+        )) {
           result = await _upscaleOnNative(
             imageBytes,
             modelPath,

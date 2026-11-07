@@ -65,6 +65,21 @@ void main() {
       expect(Anime4KV4Service.shouldUseNnapi(3), isTrue);
     });
 
+    test('shouldUseNnapi: missing NNAPI runtime forces CPU', () {
+      expect(
+        Anime4KV4Service.shouldUseNnapi(3, nnapiAvailable: false),
+        isFalse,
+      );
+      expect(
+        Anime4KV4Service.shouldUseNnapi(1, nnapiAvailable: false),
+        isFalse,
+      );
+    });
+
+    test('nnapiCapable defaults to true before the native probe', () {
+      expect(Anime4KV4Service.instance.nnapiCapable, isTrue);
+    });
+
     test('buildCacheKey pins model id and intensity', () {
       expect(
         Anime4KV4Service.buildCacheKey('anime4k_acnet', 'k', 1.0),

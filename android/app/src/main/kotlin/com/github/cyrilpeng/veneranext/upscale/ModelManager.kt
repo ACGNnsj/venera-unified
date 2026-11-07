@@ -34,11 +34,14 @@ class ModelManager(private val env: OrtEnvironment) {
             currentPath = modelPath
         }
 
-        val k = backendKey(useNnapi)
+        // 本机没有 NNAPI 运行时时按 CPU 处理：新机型上 NNAPI 会话能建出来，
+        // 但所有节点会静默落回 CPU，白白多跑一遍 CPU 参考推理。
+        val effectiveNnapi = useNnapi && NnapiSupport.isAvailable()
+        val k = backendKey(effectiveNnapi)
         sessions[k]?.let { return it }
 
         val opts = OrtSession.SessionOptions()
-        if (useNnapi) {
+        if (effectiveNnapi) {
             try {
                 // NNAPI 统一抽象 CPU/GPU/NPU；不支持时回退 CPU
                 opts.addNnapi()
