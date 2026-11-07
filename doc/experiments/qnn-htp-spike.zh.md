@@ -1,6 +1,6 @@
 # Qualcomm QNN（HTP）可行性：取证、阻塞点与打通配方
 
-状态：2026-11-07 取证完成，**本轮不开工**。硬前置是 Qualcomm AI Engine Direct（QAIRT）SDK，需高通账号与许可，本机没有存量。
+状态：2026-11-08 已用 QAIRT 2.52 自建出带 QNN EP 的 libonnxruntime.so 并跑通装机，但设备侧 HTP 建不起来（QNN_DEVICE_ERROR_INVALID_CONFIG），QNN 对本机当前零收益。实测见第七节。
 
 ## 一、结论
 
@@ -68,3 +68,34 @@ cd onnxruntime && git checkout v1.28.0
 
 - [ ] 设备插上后确认 `/vendor/lib64` 有没有 `libQnnHtp.so`：有则说明设备侧运行库可能可复用，但编译仍必须有 SDK 头文件。
 - [ ] 高通账号 + QAIRT SDK（需用户拍板；替代是先走 Qualcomm AI Hub 云端真机估收益，同样要账号）。
+
+## 七、自建实测记录（2026-11-08 01:00-02:20，SM-S9480 / SM8850 / canoe）
+
+能走通：
+- QAIRT /mnt/d/qairt/2.52.0.261104（QNN API 2.41.0）。ORT 1.28 的 qnn_backend_manager.cc:40-42 static_assert 要求 QNN API >= 2.29，满足。
+- 构建必须在 WSL：Windows cmake 取 abseil zip 报 schannel: recv returned error 56。
+- 两个必踩坑：① NNAPI 与 QNN 同时编译撞 NodeAttrHelper 重复符号（providers/nnapi/utils.cc 与 providers/qnn/ort_api.cc 各一份），用 -Wl,--allow-multiple-definition 放行；② AAR 里的 libonnxruntime4j_jni.so 静态依赖 OrtSessionOptionsAppendExecutionProvider_Nnapi，只编 QNN 时 JNI 加载即 UnsatisfiedLinkError 崩溃，所以自建库必须带 --use_nnapi。
+- 产物 libonnxruntime.so 23,462,976 B，替换 AAR 的 jni/arm64-v8a/libonnxruntime.so；jniLibs 放 libQnnHtp.so / libQnnSystem.so / libQnnHtpV85Stub.so。QNN EP 确认编入：会话报 {"ep":"QNN","ok":true}，不再报 not supported in this build。
+
+卡住：
+- 四种组合全失败：无选项、只 backend_path、backend_path+soc_model=87、backend_path+soc_model=87+htp_arch=85（后者需本地给 ORT 的 ParseHtpArchitecture 打补丁，它只认 68/69/73/75/81）。
+- ORT 原文：W ... Unable to determine backend path from provider options. Using default. / E qnn_execution_provider.cc:1046 GetCapability QNN SetupBackend failed Failed to create device. Error: QNN_DEVICE_ERROR_INVALID_CONFIG: Invalid config values
+- 设备：ro.soc.model=SM8850、ro.board.platform=canoe、soc_id=660；/vendor/lib64 与 /odm/lib64 无 libQnnHtp.so。
+- SDK：QnnTypes.h 有 QNN_SOC_MODEL_SM8850=87，HTP/QnnHtpDeviceConfigShared.h 有 QNN_HTP_DEVICE_ARCH_V85=85。
+- 陷阱：GetCapability 失败后 QNN EP 不报错、整图回落 CPU，输出与 CPU 逐位一致（MAE 0.0）、耗时等于 CPU（256² 13ms / 128² 3ms / 64² 0ms）。会话 ok 不等于跑在 NPU 上，必须看 logcat 的 SetupBackend 行。
+
+结论：QAIRT 2.52 在本机建不起 HTP 设备，QNN 当前零收益；XNNPACK 与 CPU 在该模型上同速。继续的前提是先证明 SDK 能在本机建设备——最小验证是只调 QnnDevice_create 的 NDK 小程序。
+
+## 八、最小验证程序结论（2026-11-08 02:30，NDK 直调 QNN C API）
+
+为了排除 ORT 的因素，直接用 NDK r27c 编了一个 `qnn_device_probe`（dlopen `libQnnHtp.so` → `QnnInterface_getProviders` → `logCreate` → `backendCreate` → 四种 `deviceCreate` 变体），推到 `/data/local/tmp/qnnprobe/` 配 QAIRT 运行库跑。
+
+- 结果：`getProviders status=0x0 count=1 providerName=HTP_QTI_AISW`、`logCreate status=0x0`、`backendCreate status=0x0`，四种 `deviceCreate` 全部 `status=0x36b1`（14001）、`dev=0x0` —— 与 ORT 里的报错同源，问题不在 ORT。
+- QNN verbose 日志给出根因链：① `Detected Snapdragon SOC SM8850 with 6 SOCs`（SoC 认出来了）；② 补上 `libQnnHtpV81Stub.so` 后 → `FastRPC resolved session URI file:///libQnnHtpV81Skel.so?...&_dom=cdsp` → `openSessionForPriority failed ... status=0x80000406` → `DspTransport.openSession qnn_open failed`。
+- 也就是说：SDK 把本机 DSP arch 判定为 **V81**（与厂商一致，不是头文件里的 V85），去 DSP 上按名字加载 `libQnnHtpV81Skel.so`，而该库在设备上不存在。
+- 设备侧实证：`find /vendor /odm /system -name '*HtpV*Skel*'` 只命中 `/vendor/lib64/rfs/dsp/libSnpeHtpV81Skel.so`（SNPE 命名，12,533,144 B），没有 QNN 命名的 skel；`/vendor/dsp` 整个目录 Permission denied。
+- 设备自带 QNN 后端存在但不可用：`/vendor/lib64/rfs/dsp/libHexlpQnnHtp.so` 12,891,316 B、`libHexlpQnnSystem.so` 726,704 B、`libVppFrcQnnHtp.so` 11,549,644 B。但 shell `head -c 8` 读到 0 字节、dlopen 报 not found、`adb pull` 报 Permission denied（user build、SELinux Enforcing、ro.secure=1）⇒ 应用侧同样加载不了。
+
+结论（终局）：这不是参数问题，而是**DSP 镜像只有 SNPE 命名的 skel、没有 QNN 命名的 skel**，且厂商自带的 QNN 运行库被 SELinux 拦在保护区里。ORT 的 QNN EP 在本机没有可走通的路径，QNN 线到此为止。
+
+仍可走的前提（都需要外部条件，不做）：① 向 OEM/高通要带 QNN skel 的固件；② 换一台社区固件常带 QNN skel 的高通机型再验（SM8650/SM8750 一档）；③ 放弃 HTP，等 NNAPI 侧出现真正的硬件加速器。
