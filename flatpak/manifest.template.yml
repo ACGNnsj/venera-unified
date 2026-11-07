@@ -92,6 +92,10 @@ modules:
         CARGOKIT_PUB_OFFLINE: '1'
         # pdfium_dart 的 hook 默认用 HTTP 拉 pdfium；给它本地库，见 patch_pdfium_hook.py。
         PDFIUM_PREBUILT: /app/pdfium/lib/libpdfium.so
+        # GNOME SDK 48 的 libayatana-appindicator 把 app_indicator_new 标了 deprecated，
+        # tray_manager 又带 -Werror，插件编译会直接失败。这类第三方插件的弃用告警不该当错误。
+        CFLAGS: -Wno-deprecated-declarations
+        CXXFLAGS: -Wno-deprecated-declarations
     build-commands:
       - test -d hosted && test -d git || { echo '::error::pub cache 没解到构建目录'; exit 1; }
       # pub 拒绝任何位于缓存根之下的目录当项目根。缓存若留在构建目录里，插件的 cargokit
