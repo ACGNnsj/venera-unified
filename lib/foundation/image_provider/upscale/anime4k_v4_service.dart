@@ -58,8 +58,9 @@ class Anime4KV4Service {
 
   /// 该通道数的模型是否优先 NNAPI。1 通道（Y 亮度/ACNet）强制 CPU。
   ///
-  /// [nnapiAvailable] 来自原生端探测：Android 16 起系统移除了 NNAPI 运行时，
-  /// 此时 3 通道模型也只能走 CPU，否则会多跑一遍注定落回 CPU 的参考推理。
+  /// [nnapiAvailable] 来自原生端探测：NNAPI 在 Android 15 起废弃、较新系统已
+  /// 移除运行时，此时 3 通道模型也只能走 CPU，否则会多跑一遍注定落回 CPU 的
+  /// 参考推理。
   static bool shouldUseNnapi(int channels, {bool nnapiAvailable = true}) =>
       channels != 1 && nnapiAvailable;
 

@@ -8,8 +8,8 @@
 - 随包 `libonnxruntime.so`（onnxruntime-android 1.28.0，28,637,280 B）编进了
   **NNAPI** 与 **XNNPACK** 两个 EP：前者含完整 `NnapiExecutionProvider` 符号，
   后者含 `XnnpackExecutionProvider` 符号。
-- 真正能提效的只有 XNNPACK（CPU 侧 NEON/BF16 内核）；NNAPI 在 Android 16 起已从
-  系统移除，见下节。
+- 真正能提效的只有 XNNPACK（CPU 侧 NEON/BF16 内核）；NNAPI 自 Android 15
+  起废弃、较新系统已移除运行时，见下节。
 
 ## NNAPI 为什么不再值得挂
 
@@ -19,9 +19,9 @@
   `Can't find service`，`service list` 里也没有该服务。
 - ORT 仍能建出「NNAPI 会话」，但所有节点静默落回 CPU：输出与 CPU 逐位相同
   （MAE 0.0），256×256 单次 17 ms vs CPU 16 ms，没有加速。
-- 因此 Android 端先探运行时再决定是否请求 NNAPI：`NnapiSupport` 在 API ≥ 36
-  直接判否，低版本尝试加载 `libneuralnetworks`，加载失败即视为不可用；
-  不可用时方法通道直接按 CPU 处理，不再白跑一遍 CPU 参考推理。
+- 因此 Android 端先探运行时再决定是否请求 NNAPI：`NnapiSupport` 尝试加载
+  `libneuralnetworks`，加载失败即视为不可用（不写死版本号，不同 OEM 取舍
+  不一致）；不可用时方法通道直接按 CPU 处理，不再白跑一遍 CPU 参考推理。
 
 ## QNN（Qualcomm NPU）可行性
 
