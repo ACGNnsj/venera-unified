@@ -531,7 +531,10 @@ class _WorkerState {
   WordPieceVocab? _jaVocab;
   int _intraThreads = 2;
 
-  /// 本页已确认 NNAPI 输出与 CPU 参考一致的模型路径。
+  /// worker 生命周期内已确认 NNAPI 输出与 CPU 参考一致的模型路径。
+  ///
+  /// 验证一次即可：NNAPI 的误差来自算子实现与设备 fp16 能力，与具体哪一页
+  /// 无关；每页重复双跑会白白多算一遍 CPU 推理。
   final _verifiedModels = <String>{};
 
   /// 本页 NNAPI 输出偏差过大、已整体回退 CPU。
@@ -636,7 +639,6 @@ class _WorkerState {
   List<OcrBlock> ocrPage(_OcrPageRequest req) {
     _intraThreads = req.intraThreads;
     _cpuOnly = false;
-    _verifiedModels.clear();
     var image = RgbaImage(
       req.width,
       req.height,
