@@ -1,6 +1,8 @@
 import 'dart:ffi';
 import 'dart:io';
 
+import 'package:ffi/ffi.dart';
+
 /// Picks the ONNX Runtime binary this process should use.
 ///
 /// Windows 自带一份 Windows ML 运行时：Windows App Runtime 框架包里就有微软自编的
@@ -78,15 +80,8 @@ OrtRuntimeChoice resolveOrtRuntime() {
     return const OrtRuntimeChoice.bundled();
   }
   try {
-    var directories = Directory(windowsAppsDirectory)
-        .listSync(followLinks: false)
-        .whereType<Directory>()
-        .map((directory) {
-          return directory.uri.pathSegments.where((s) => s.isNotEmpty).last;
-        })
-        .toList();
     var picked = pickWindowsMlPackage(
-      directories,
+      _installedPackageNames(),
       architecture: _currentArchitecture(),
       hasRuntimeLibrary: (name) {
         return File(_runtimeLibraryPath(name)).existsSync();
@@ -97,9 +92,149 @@ OrtRuntimeChoice resolveOrtRuntime() {
     }
     return OrtRuntimeChoice.windowsMl(_runtimeLibraryPath(picked));
   } catch (_) {
-    // 受限账户可能列不出 WindowsApps；退回随包分发的那份，功能照旧可用。
+    // 受限账户既列不出 WindowsApps 也读不到包仓库；退回随包分发的那份。
     return const OrtRuntimeChoice.bundled();
   }
+}
+
+/// 已安装的框架包目录名。
+///
+/// 优先列 [windowsAppsDirectory]，但普通账户通常没有该目录的「列出」权限
+/// （OS Error 5），这时改读 HKCU 下的 AppModel 包仓库：那里的子键名就是包全名，
+/// 与 WindowsApps 下的目录名一致。仓库里可能留着已卸载的条目，
+/// 所以候选仍要过 [pickWindowsMlPackage] 的 hasRuntimeLibrary 复核。
+List<String> _installedPackageNames() {
+  try {
+    var names = Directory(windowsAppsDirectory)
+        .listSync(followLinks: false)
+        .whereType<Directory>()
+        .map((directory) {
+          return directory.uri.pathSegments.where((s) => s.isNotEmpty).last;
+        })
+        .toList();
+    if (names.isNotEmpty) {
+      return names;
+    }
+  } catch (_) {
+    // 列不出来就走注册表。
+  }
+  return _registryPackageNames();
+}
+
+const _packagesKey =
+    r'Software\Classes\Local Settings\Software\Microsoft\Windows\'
+    r'CurrentVersion\AppModel\Repository\Packages';
+
+const _hkeyCurrentUser = 0x80000001;
+
+const _keyRead = 0x20019;
+
+const _maxKeyLength = 256;
+
+typedef _RegOpenKeyExWNative =
+    Int32 Function(
+      IntPtr hKey,
+      Pointer<Utf16> lpSubKey,
+      Uint32 ulOptions,
+      Uint32 samDesired,
+      Pointer<IntPtr> phkResult,
+    );
+
+typedef _RegOpenKeyExWDart =
+    int Function(
+      int hKey,
+      Pointer<Utf16> lpSubKey,
+      int ulOptions,
+      int samDesired,
+      Pointer<IntPtr> phkResult,
+    );
+
+typedef _RegEnumKeyExWNative =
+    Int32 Function(
+      IntPtr hKey,
+      Uint32 dwIndex,
+      Pointer<Utf16> lpName,
+      Pointer<Uint32> lpcchName,
+      Pointer<Uint32> lpReserved,
+      Pointer<Utf16> lpClass,
+      Pointer<Uint32> lpcchClass,
+      Pointer<Void> lpftLastWriteTime,
+    );
+
+typedef _RegEnumKeyExWDart =
+    int Function(
+      int hKey,
+      int dwIndex,
+      Pointer<Utf16> lpName,
+      Pointer<Uint32> lpcchName,
+      Pointer<Uint32> lpReserved,
+      Pointer<Utf16> lpClass,
+      Pointer<Uint32> lpcchClass,
+      Pointer<Void> lpftLastWriteTime,
+    );
+
+typedef _RegCloseKeyNative = Int32 Function(IntPtr hKey);
+
+typedef _RegCloseKeyDart = int Function(int hKey);
+
+/// 读 AppModel 包仓库里当前用户的包全名（WindowsApps 列不出来时的后备）。
+List<String> _registryPackageNames() {
+  DynamicLibrary advapi;
+  try {
+    advapi = DynamicLibrary.open('advapi32.dll');
+  } catch (_) {
+    return const [];
+  }
+  var openKey = advapi.lookupFunction<_RegOpenKeyExWNative, _RegOpenKeyExWDart>(
+    'RegOpenKeyExW',
+  );
+  var enumKey = advapi.lookupFunction<_RegEnumKeyExWNative, _RegEnumKeyExWDart>(
+    'RegEnumKeyExW',
+  );
+  var closeKey = advapi.lookupFunction<_RegCloseKeyNative, _RegCloseKeyDart>(
+    'RegCloseKey',
+  );
+
+  var subKey = _packagesKey.toNativeUtf16();
+  var keyOut = calloc<IntPtr>();
+  var names = <String>[];
+  try {
+    if (openKey(_hkeyCurrentUser, subKey, 0, _keyRead, keyOut) != 0) {
+      return names;
+    }
+    var key = keyOut.value;
+    var nameSize = calloc<Uint32>();
+    var nameBuffer = calloc<Uint16>(_maxKeyLength);
+    try {
+      for (var index = 0; ; index++) {
+        nameSize.value = _maxKeyLength;
+        var status = enumKey(
+          key,
+          index,
+          nameBuffer.cast<Utf16>(),
+          nameSize,
+          nullptr,
+          nullptr,
+          nullptr,
+          nullptr,
+        );
+        if (status != 0) {
+          break;
+        }
+        names.add(
+          nameBuffer.cast<Utf16>().toDartString(length: nameSize.value),
+        );
+      }
+    } finally {
+      calloc.free(nameBuffer);
+      calloc.free(nameSize);
+      closeKey(key);
+    }
+  } finally {
+    calloc.free(subKey);
+    calloc.free(keyOut);
+  }
+  return names;
 }
 
 String _runtimeLibraryPath(String packageDirectory) {

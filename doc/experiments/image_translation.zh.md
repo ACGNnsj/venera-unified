@@ -76,7 +76,7 @@ Dart 侧绑定分别是 `ocr_preprocess_native.dart`、`image_transpose_native.d
 | Windows 11 24H2+ | 系统 Windows ML（ORT + DirectML）优先，缺失则回退随包 CPU | `ort_runtime_choice.dart` 在 `C:\Program Files\WindowsApps` 里挑版本最高的 `Microsoft.WindowsAppRuntime.*` 框架包 |
 | 其它桌面/移动 | 随包 CPU | — |
 
-Windows 上不再自带 DirectML：Windows 11 的 Windows App Runtime 框架包已经带了 ONNX Runtime 1.23.5 和 DirectML.dll，直接加载那份并把 `DML` 作为 execution provider 挂上，比随包分发省 38 MB，运行时还跟着 Windows 更新。任何一步失败（列不出目录、DLL 载入失败、GPU 会话建不起来）都静默回退到随包 CPU，功能不受影响。
+Windows 上不再自带 DirectML：Windows 11 的 Windows App Runtime 框架包已经带了 ONNX Runtime 与 DirectML.dll，直接加载那份并把 `DML` 作为 execution provider 挂上，比随包分发省 38 MB，运行时还跟着 Windows 更新。普通账户列不出 `C:\Program Files\WindowsApps`（OS Error 5），因此候选包名改从注册表 `HKCU\Software\Classes\Local Settings\...\AppModel\Repository\Packages` 读，再用文件是否存在复核。任何一步失败（DLL 载入失败、GPU 会话建不起来）都静默回退到随包 CPU，功能不受影响。
 
 RTX 4080 Laptop 实测（单线程、warmup 2 次取中位数）：
 
