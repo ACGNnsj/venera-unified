@@ -131,7 +131,32 @@ modules:
       - |
         printf 'use_precompiled_binaries: false\nverbose_logging: true\n' > cargokit_options.yaml
       - test -f cargokit_options.yaml && cat cargokit_options.yaml
-      - flutter build linux --release --no-pub -v
+      # cargokit 用 `rustup run <toolchain> cargo` 构建；Flatpak 的 rust-stable 扩展只有
+      # cargo/rustc、没有 rustup，于是它直接报 rustup not found。这里放一个极简替身，
+      # 把 run 落到真 cargo 上，工具链/目标查询一律回答“已装好”。
+      - |
+        mkdir -p .rustup-shim
+        cat > .rustup-shim/rustup <<'SHIM'
+        #!/bin/sh
+        case "$1" in
+          toolchain)
+            case "$2" in
+              list) echo "stable-x86_64-unknown-linux-gnu (default)"; exit 0 ;;
+              install) exit 0 ;;
+            esac ;;
+          target)
+            case "$2" in
+              list) echo "x86_64-unknown-linux-gnu"; exit 0 ;;
+              add) exit 0 ;;
+            esac ;;
+          component) exit 0 ;;
+          run) shift 2; exec "$@" ;;
+        esac
+        echo "rustup shim: 未支持的调用 $*" >&2
+        exit 1
+        SHIM
+        chmod +x .rustup-shim/rustup
+        PATH="$PWD/.rustup-shim:$PATH" flutter build linux --release --no-pub -v
       - rm -rf /app/pub-cache
       - install -Dm755 build/linux/x64/release/bundle/venera-unified /app/bin/venera-unified
       - cp -a build/linux/x64/release/bundle/lib/. /app/lib/venera-unified/
