@@ -320,6 +320,14 @@ void main() {
             expect(reader.page, mode.isGallery ? 3 : 4);
             expect(reader.history!.page, 4);
             expect(reader.history!.maxPage, 10);
+            // The viewport is attached in a follow-up build: waiting only for
+            // `mode` leaves `imageViewController` null on a loaded CI runner.
+            await _pumpUntil(
+              tester,
+              () => mode.isGallery
+                  ? reader.imageViewController is GalleryModeState
+                  : reader.imageViewController is ContinuousModeState,
+            );
             expect(
               reader.imageViewController,
               mode.isGallery
@@ -2386,92 +2394,84 @@ void main() {
     variant: TargetPlatformVariant.only(TargetPlatform.android),
   );
 
-  testWidgets(
-    'reader back waits for native effects restoration',
-    (tester) async {
-      final fixture = await _ReaderFixture.create(tester);
-      final platform = _PlatformEffectsProbe()..install();
-      final restored = Completer<void>();
-      try {
-        appdata.settings['showSystemStatusBar'] = false;
-        await fixture.mount(tester, pushed: true, withWindow: false);
-        final reader = fixture.readerKey.currentState!;
-        reader.cycleReaderOrientation();
-        await tester.pump();
-        platform.onBars = (value) => value ? restored.future : Future.value();
-        var left = false;
-        final leaving = reader.requestExit().then((_) => left = true);
-        await tester.pump();
-        expect(left, isFalse);
-        expect(
-          ModalRoute.of(fixture.readerKey.currentContext!)!.isCurrent,
-          isTrue,
-        );
-        restored.complete();
-        await _pumpUntil(tester, () => left);
-        await leaving;
-        await tester.pump(const Duration(seconds: 1));
-        expect(fixture.readerKey.currentState, isNull);
-        expect(platform.orientation, isEmpty);
-        expect(platform.barsVisible, isTrue);
-        expect(tester.takeException(), isNull);
-      } finally {
-        if (!restored.isCompleted) restored.complete();
-        await fixture.dispose(tester);
-        platform.uninstall();
-      }
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.android),
-  );
+  testWidgets('reader back waits for native effects restoration', (
+    tester,
+  ) async {
+    final fixture = await _ReaderFixture.create(tester);
+    final platform = _PlatformEffectsProbe()..install();
+    final restored = Completer<void>();
+    try {
+      appdata.settings['showSystemStatusBar'] = false;
+      await fixture.mount(tester, pushed: true, withWindow: false);
+      final reader = fixture.readerKey.currentState!;
+      reader.cycleReaderOrientation();
+      await tester.pump();
+      platform.onBars = (value) => value ? restored.future : Future.value();
+      var left = false;
+      final leaving = reader.requestExit().then((_) => left = true);
+      await tester.pump();
+      expect(left, isFalse);
+      expect(
+        ModalRoute.of(fixture.readerKey.currentContext!)!.isCurrent,
+        isTrue,
+      );
+      restored.complete();
+      await _pumpUntil(tester, () => left);
+      await leaving;
+      await tester.pump(const Duration(seconds: 1));
+      expect(fixture.readerKey.currentState, isNull);
+      expect(platform.orientation, isEmpty);
+      expect(platform.barsVisible, isTrue);
+      expect(tester.takeException(), isNull);
+    } finally {
+      if (!restored.isCompleted) restored.complete();
+      await fixture.dispose(tester);
+      platform.uninstall();
+    }
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 
-  testWidgets(
-    'reversible window failure resumes reader effects',
-    (tester) async {
-      final fixture = await _ReaderFixture.create(tester);
-      final platform = _PlatformEffectsProbe()..install();
-      var failing = true;
-      try {
-        appdata.settings['showSystemStatusBar'] = false;
-        await fixture.mount(
-          tester,
-          pushed: false,
-          beforeReaderMount: (frame) {
-            frame.addExitTask(() async {
-              if (failing) throw StateError('other preparation');
-            });
-          },
-        );
-        fixture.readerKey.currentState!.cycleReaderOrientation();
-        await tester.pump();
-        platform.events.clear();
-        fixture.closeWindow(tester);
-        await _pumpUntil(
-          tester,
-          () => platform.events
-              .where((event) => event == 'bars:false')
-              .isNotEmpty,
-        );
-        expect(tester.takeException(), isA<StateError>());
-        expect(
-          platform.events,
-          containsAllInOrder(['bars:true', 'bars:false']),
-        );
-        expect(platform.orientation, contains('portraitUp'));
-        expect(fixture.exits, 0);
-        failing = false;
-        fixture.closeWindow(tester);
-        await _pumpUntil(tester, () => fixture.exits == 1);
-        expect(platform.orientation, isEmpty);
-        expect(platform.barsVisible, isTrue);
-        expect(tester.takeException(), isNull);
-      } finally {
-        failing = false;
-        await fixture.dispose(tester);
-        platform.uninstall();
-      }
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.android),
-  );
+  testWidgets('reversible window failure resumes reader effects', (
+    tester,
+  ) async {
+    final fixture = await _ReaderFixture.create(tester);
+    final platform = _PlatformEffectsProbe()..install();
+    var failing = true;
+    try {
+      appdata.settings['showSystemStatusBar'] = false;
+      await fixture.mount(
+        tester,
+        pushed: false,
+        beforeReaderMount: (frame) {
+          frame.addExitTask(() async {
+            if (failing) throw StateError('other preparation');
+          });
+        },
+      );
+      fixture.readerKey.currentState!.cycleReaderOrientation();
+      await tester.pump();
+      platform.events.clear();
+      fixture.closeWindow(tester);
+      await _pumpUntil(
+        tester,
+        () =>
+            platform.events.where((event) => event == 'bars:false').isNotEmpty,
+      );
+      expect(tester.takeException(), isA<StateError>());
+      expect(platform.events, containsAllInOrder(['bars:true', 'bars:false']));
+      expect(platform.orientation, contains('portraitUp'));
+      expect(fixture.exits, 0);
+      failing = false;
+      fixture.closeWindow(tester);
+      await _pumpUntil(tester, () => fixture.exits == 1);
+      expect(platform.orientation, isEmpty);
+      expect(platform.barsVisible, isTrue);
+      expect(tester.takeException(), isNull);
+    } finally {
+      failing = false;
+      await fixture.dispose(tester);
+      platform.uninstall();
+    }
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 
   testWidgets(
     'platform release remains with original registry during reparenting',
