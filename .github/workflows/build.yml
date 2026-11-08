@@ -602,6 +602,20 @@ jobs:
           cache: true
       - name: 准备 Rust 工具链
         run: python3 .github/scripts/prepare_rust_toolchain.py
+      - name: 诊断 git 依赖可达性
+        run: |
+          set +e
+          echo '--- env ---'
+          env | grep -i -E 'proxy|^GIT_' || true
+          echo '--- curl repo page ---'
+          curl -sS -o /dev/null -w 'repo_page=%{http_code}\n' https://github.com/CyrilPeng/webdav_client
+          echo '--- curl info/refs ---'
+          curl -sS -o /dev/null -w 'info_refs=%{http_code}\n' 'https://github.com/CyrilPeng/webdav_client/info/refs?service=git-upload-pack'
+          echo '--- git ls-remote ---'
+          GIT_TERMINAL_PROMPT=0 git ls-remote https://github.com/CyrilPeng/webdav_client 2>&1 | head -5
+          echo '--- pubspec git deps ---'
+          grep -n -A3 'git:' pubspec.yaml | head -20
+          exit 0
       # ARM runner 上 github.com 的 git 依赖克隆会偶发中断（Git error, exit 69），
       # 于是把 pub get 包成重试：失败就清掉 git 依赖的裸镜像再来一次。
       - name: 拉取依赖
