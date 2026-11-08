@@ -148,7 +148,7 @@ PDF 导入（PDFium）、自定义存储目录与持久化外部目录引用、�
 2. **本地归档 ✔**：探针源的 `comic.archive.getArchives/getDownloadUrl` 提供 cbz／zip／7z 三种归档；详情页 下载 → 归档 → 选中 → 确认后落本地库，阅读器直接读归档内图片——读 ZIP／CBZ 时服务端没有 p1/p2/p3 请求，证明读的是本地解压产物。三种归档可以并存，本地库计数到 3（cbz／zip／7z 各一条）。
 3. **WebDAV ✔（上传方向）**：自建 WebDAV 探针，测试连接得到 `PROPFIND /dav/ 207`；保存配置后 `OPTIONS` + `PUT /dav/<id>.venera 201`，服务端收到的 5,875 字节归档解出 6 项（history.db／local_favorite.db／cookie.db／appdata.json／comic_source/source.js 等）。下载方向本次未触发（实时同步判定远端无变更）。
 
-为此必须改的两处代码（同一根因：只走 zip_flutter 原生库）：
+为此必须改的代码（同一根因：只走 zip_flutter 原生库）：
 
 | 位置 | 现象 | 处理 |
 | --- | --- | --- |
@@ -156,6 +156,7 @@ PDF 导入（PDFium）、自定义存储目录与持久化外部目录引用、�
 | `lib/features/sync/app_data_archive.dart` | 数据同步与「导出应用数据」的备份 zip 用 `ZipFile.open` 原生写，ohos 上同样抛 Unknown platform，保存配置报「保存失败」 | 抽出 `_writeZip`：先试原生写，异常则删半成品并改用 `archive_io.ZipEncoder` 纯 Dart 编码；解压侧 `_extractZip` 本就是纯 Dart，未动 |
 | `lib/features/local_comics/local_comics_page.dart:697`（导出为 cbz／epub 的压缩端口，另有 `import_export/cbz.dart` 单本导出与 `import_export/epub.dart:186`） | 三处都直接调 `ZipFile.compressFolderAsync`，ohos 上抛 Unknown platform，本地库导出全不通 | 新建 `lib/foundation/zip_writer.dart` 的 `writeZipFromDirectory`：先试原生压缩，异常则删半成品并 `Isolate.run` 里用 `archive_io.ZipEncoder` 纯 Dart 编码；条目按 '/' 归一，`mimetype` 固定排最前（EPUB 要求）。三个调用点统一改走它 |
 | `lib/features/local_comics/import_export/pdf.dart:413`（导出为 pdf 的图片流压缩） | 图片流借 `zip_flutter` 的 miniz `tdeflCompressData` 做 FlateDecode 压缩，ohos 上同样抛 Unknown platform；而这段跑在独立 isolate 里、异常没人接，界面会永远停在「导出中 0/N」 | 改用 `dart:io` 的 `ZLibCodec(level: 9)`（zlib 包装的 deflate，正合 `/FlateDecode`）；isolate 内 try/catch 后回一条 `('pdfExportFailure', msg)`，主 isolate 收到即 `completeError`，不再挂死 |
+| `lib/foundation/archive_security.dart:149`（解压兜底） | 条目经 archive 的惰性 `FileContent` 读不出时，原兜底改走 `ZipFile.openRead` 原生库——ohos 上这条路同样是 Unknown platform，其它平台也多一份原生依赖 | 新建 `lib/foundation/zip_entry_reader.dart` 的 `readZipEntry`：按中央目录给出的 `localHeaderOffset`／`compressedSize`／`uncompressedSize` 直读本地头，stored 原样返回、deflate 用 `ZLibDecoder(raw: true)` 解压，加密／越界／尺寸不符一律 `FormatException`；解压器不再引用 zip_flutter |
 
 仍缺（未修／未验）：
 

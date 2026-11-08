@@ -1226,6 +1226,7 @@
     "foundation/window_hotkey_controller.dart",
     "foundation/window_placement.dart",
     "foundation/window_placement_tracker.dart",
+    "foundation/zip_entry_reader.dart",
     "foundation/zip_writer.dart",
     "network/app_dio.dart",
     "network/cache.dart",
