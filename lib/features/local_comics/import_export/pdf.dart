@@ -6,7 +6,6 @@ import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/features/local_comics/local.dart';
 import 'package:venera_unified/foundation/image_processing.dart';
 import 'package:venera_unified/foundation/file_interaction.dart';
-import 'package:zip_flutter/zip_flutter.dart';
 import 'comic_export_service.dart';
 
 typedef DecodeImage = Future<Image> Function(Uint8List data);
@@ -106,12 +105,18 @@ Future<Isolate> _runIsolate(
         }
       });
 
-      await _createPdfFromComic(
-        comic: comic,
-        savePath: savePath,
-        localPath: localPath,
-        decodeImage: decodeImage,
-      );
+      try {
+        await _createPdfFromComic(
+          comic: comic,
+          savePath: savePath,
+          localPath: localPath,
+          decodeImage: decodeImage,
+        );
+      } catch (error) {
+        // 失败也必须回一条消息：调用方在等 null，静默死掉会让导出停在 0/N。
+        sendPort.send(('pdfExportFailure', '$error'));
+        return;
+      }
 
       sendPort.send(null);
     }),
@@ -135,6 +140,11 @@ Future<File> createPdfFromComicIsolate(
       Image.decodeImage(message).then((image) {
         sendPort!.send(image);
       });
+    } else if (message is (String, String) &&
+        message.$1 == 'pdfExportFailure') {
+      receivePort.close();
+      isolate?.kill();
+      completer.completeError(StateError(message.$2));
     } else if (message == null) {
       receivePort.close();
       completer.complete();
@@ -410,7 +420,11 @@ class PdfGenerator {
       data[i * 3 + 1] = pixel.g;
       data[i * 3 + 2] = pixel.b;
     }
-    data = tdeflCompressData(data, true, true, 9);
+    // /Filter /FlateDecode 要的是 zlib 包装的 deflate（RFC 1950）。原先借
+    // zip_flutter 的 miniz tdefl，而它的 Dart 入口在 ohos 上直接抛
+    // Unknown platform，导出会卡在 0/N 不动；dart:io 的 ZLibCodec 走引擎自带
+    // zlib，各平台一致。
+    data = Uint8List.fromList(ZLibCodec(level: 9).encode(data));
     return (width: width, height: height, data: data);
   }
 }
