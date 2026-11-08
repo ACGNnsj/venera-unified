@@ -1,0 +1,14 @@
+Categories:
+- Reading
+License: GPL-3.0-only
+AuthorName: ACGNnsj
+WebSite: https://github.com/ACGNnsj/venera-unified
+SourceCode: https://github.com/ACGNnsj/venera-unified
+IssueTracker: https://github.com/ACGNnsj/venera-unified/issues
+Summary: 漫画阅读器：多源搜索、本地库、离线下载
+Description: |
+  Venera Unified 是一个开源的漫画阅读器。
+
+  支持多书源搜索与聚合、本地书架与阅读进度、章节离线下载与图片翻译。界面为 miuix 风格，可在 Android、Windows、Linux、macOS 与鸿蒙上运行。
+
+  这是作者自建的 F-Droid 仓库，只收录本仓发布的安装包，不进入 F-Droid 官方主库；官方收录需要单独提交流程。
