@@ -5,7 +5,7 @@ import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/features/local_comics/local.dart';
 import 'package:venera_unified/foundation/file_type.dart';
 import 'package:venera_unified/foundation/file_interaction.dart';
-import 'package:zip_flutter/zip_flutter.dart';
+import 'package:venera_unified/foundation/zip_writer.dart';
 import 'comic_export_service.dart';
 
 class EpubData {
@@ -183,7 +183,7 @@ ${navMapStrBuilder.toString()}
 </ncx>
   ''');
 
-  ZipFile.compressFolder(workingDir.path, outFilePath);
+  await writeZipFromDirectory(workingDir.path, outFilePath);
 
   workingDir.deleteSync(recursive: true);
 

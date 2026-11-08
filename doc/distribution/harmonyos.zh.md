@@ -140,7 +140,7 @@ PDF 导入（PDFium）、自定义存储目录与持久化外部目录引用、�
 - DevEco Studio 26.0（API 26／HarmonyOS 7.0.0）+ 模拟器 Mate 90 Pro（x86_64）。快照启动会 sysfreeze（`crash_report-2026-11-08T221337.zip` 的 detail 写 "Emulator found sysfreeze. Freeze type: Guest No Response"，sceneboard 连续 appfreeze），必须 `Emulator.exe -start "Mate 90 Pro" -bootMode coldboot` 冷启，约 4–5 分钟。
 - 出包：`D:/venera/.scratch/harmony/app`（与 main 同步到 d5c6d55）跑 oh347-build-hap-x64.bat，assembleHap 151.6s，HAP 64,154,703 字节。
 - 装机：`hdc install -r` 可装未签名包；`aa start` 报 10106102（锁屏）时先 `uitest uiInput swipe` 解锁再启。
-- 自动化口径：`uitest uiInput click/text`、`uitest dumpLayout`、`snapshot_display` + `hdc file recv`；设备身份 uid=2000(shell)、无 root，读不到 app 私有目录，也没有 curl/wget。
+- 自动化口径：`uitest uiInput click/text`、`uitest dumpLayout`、`snapshot_display` + `hdc file recv`；设备身份 uid=2000(shell)、无 root，也没有 curl/wget。app 私有目录**可以**按真实路径读：`/data/storage/el2/base/...` 是应用进程内的沙箱别名，shell 里要换成 `/data/app/el2/100/base/io.github.venera.venera_unified/haps/entry/files`（实测可 ls、可 file recv 导出物）。
 
 三条链路结果（模拟器实测，非推断）：
 
@@ -154,12 +154,13 @@ PDF 导入（PDFium）、自定义存储目录与持久化外部目录引用、�
 | --- | --- | --- |
 | `lib/features/local_comics/archive_download_task.dart`（默认提取器） | 归档下载走 `ZipFile.openAndExtract`，绕过 CBZ 三级梯子；ohos 上 zip_flutter 的 Dart 入口在 `zip_flutter-0.0.13/lib/src/zip_dart_base.dart:23` 直接抛 `Unsupported operation: Unknown platform: ohos`（`_dylib` 只认 macOS／iOS／Android／Linux／Windows），HAP 里也没有 `libzip_flutter.so` | 非 Android 分支改调 `CBZ.extractArchive`（zip_flutter → flutter_7zip → 纯 Dart archive 的三级降级）；Android SAF 分支原样保留 |
 | `lib/features/sync/app_data_archive.dart` | 数据同步与「导出应用数据」的备份 zip 用 `ZipFile.open` 原生写，ohos 上同样抛 Unknown platform，保存配置报「保存失败」 | 抽出 `_writeZip`：先试原生写，异常则删半成品并改用 `archive_io.ZipEncoder` 纯 Dart 编码；解压侧 `_extractZip` 本就是纯 Dart，未动 |
+| `lib/features/local_comics/local_comics_page.dart:697`（导出为 cbz／epub 的压缩端口，另有 `import_export/cbz.dart` 单本导出与 `import_export/epub.dart:186`） | 三处都直接调 `ZipFile.compressFolderAsync`，ohos 上抛 Unknown platform，本地库导出全不通 | 新建 `lib/foundation/zip_writer.dart` 的 `writeZipFromDirectory`：先试原生压缩，异常则删半成品并 `Isolate.run` 里用 `archive_io.ZipEncoder` 纯 Dart 编码；条目按 '/' 归一，`mimetype` 固定排最前（EPUB 要求）。三个调用点统一改走它 |
 
 仍缺（未修／未验）：
 
-- 「导出为 cbz／zip」仍走 `lib/features/local_comics/local_comics_page.dart:697` 的 `ZipFile.compressFolderAsync`，ohos 上会报 Unknown platform，本地库导出这条没通。
+- 本地库导出 2026-11-09 已通（x64 模拟器实测，产物从 `/data/app/el2/100/base/io.github.venera.venera_unified/haps/entry/files` 拉回宿主校验）：单本「导出为 cbz」得 75,554 字节归档，Python `zipfile.testzip()` 为 None，条目 `0001.jpg`／`0002.jpg`／`0003.jpg`／`ComicInfo.xml`／`cover.jpg`／`metadata.json`；两本多选「导出为 cbz」得 `comics_export.zip` 150,648 字节，内含两个 cbz（`Probe CBZ.cbz`／`Probe ZIP.cbz`）；两本「导出为 epub」得外层 zip，内含两个 epub，拆开验 `mimetype`（内容 `application/epub+zip`、无压缩）确实排在第 0 位，其后 `META-INF/container.xml`／`OEBPS/0.html`／`OEBPS/images/*`／`content.opf` 共 9 项，testzip None。
 - 导入本地文件只能靠路径输入框（file_selector 无 ohos 实现），且模拟器 shell 读不到 app 目录，本轮无法从设备外塞文件验证「导入」入口本身；改由归档下载覆盖同一套解压梯子。
 - WebDAV 下载方向、真机（未签名 HAP 需 DevEco 自动签名）仍未验。
 
-门禁：`dart format`（两个文件 0 changed）、`dart analyze lib/features/local_comics lib/features/sync` No issues、`flutter test test/features/local_comics test/features/sync` 1172 通过（1 项 crash 测试在并行负载下因 Windows 文件占用 flaky，单独重跑 6/6 通过）、两个架构脚本 clean。
+门禁：`dart format`（本次五个文件复跑 0 changed）、`dart analyze lib/foundation/zip_writer.dart test/foundation/zip_writer_test.dart lib/features/local_comics` No issues、`flutter test test/foundation/zip_writer_test.dart test/features/local_comics` 580 通过；`dart analyze lib/features/local_comics lib/features/sync` No issues、`flutter test test/features/local_comics test/features/sync` 1172 通过（1 项 crash 测试在并行负载下因 Windows 文件占用 flaky，单独重跑 6/6 通过）、两个架构脚本 clean。
 

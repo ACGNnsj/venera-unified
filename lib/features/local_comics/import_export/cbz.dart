@@ -10,6 +10,7 @@ import 'package:venera_unified/features/local_comics/local.dart';
 import 'package:venera_unified/foundation/log.dart';
 import 'package:venera_unified/foundation/file_type.dart';
 import 'package:venera_unified/foundation/file_system.dart';
+import 'package:venera_unified/foundation/zip_writer.dart';
 import 'package:zip_flutter/zip_flutter.dart';
 import '../local_storage_guard.dart';
 import 'comic_import_output.dart';
@@ -509,7 +510,7 @@ abstract class CBZ {
   }
 
   static Future<void> _compress(String src, String dst) async {
-    await ZipFile.compressFolderAsync(src, dst, 4);
+    await writeZipFromDirectory(src, dst);
   }
 }
 
