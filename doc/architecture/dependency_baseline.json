@@ -945,6 +945,7 @@
     "features/history/image_favorites_repository.dart",
     "features/history/image_favorites_row.dart",
     "features/history/image_favorites_statistics.dart",
+    "features/image_favorites/image_favorites_batch_download.dart",
     "features/image_favorites/type.dart",
     "features/local_comics/archive_download_task.dart",
     "features/local_comics/collection_download_hooks.dart",

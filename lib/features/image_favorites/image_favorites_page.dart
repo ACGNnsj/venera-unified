@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:venera_unified/features/history/history_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +10,7 @@ import 'package:venera_unified/components/message.dart';
 import 'package:venera_unified/components/scroll.dart';
 import 'package:venera_unified/components/select.dart';
 import 'package:venera_unified/features/history/history.dart';
+import 'package:venera_unified/features/image_favorites/image_favorites_batch_download.dart';
 import 'package:venera_unified/features/image_favorites/image_favorites_item.dart';
 import 'package:venera_unified/features/image_favorites/type.dart';
 import 'package:venera_unified/foundation/app.dart';
@@ -15,6 +18,7 @@ import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/consts.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/extensions.dart';
+import 'package:venera_unified/foundation/file_interaction.dart';
 import 'package:venera_unified/foundation/log.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
@@ -64,6 +68,7 @@ class _ImageFavoritesPageState extends State<ImageFavoritesPage> {
   int _refreshGeneration = 0;
   bool _loading = false;
   bool _deleting = false;
+  bool _downloading = false;
   Object? _loadError;
   List<ImageFavoritesComic> _loadedComics = [];
 
@@ -190,9 +195,94 @@ class _ImageFavoritesPageState extends State<ImageFavoritesPage> {
     super.dispose();
   }
 
+  Future<void> downloadSelected() async {
+    if (_downloading || _deleting || selectedImageFavorites.isEmpty) return;
+    final entries = planImageFavoritesDownload(
+      comics: comics,
+      selected: selectedImageFavorites,
+    );
+    if (entries.isEmpty) return;
+    final selection = await DirectoryPicker().pickDirectory();
+    if (selection == null) return;
+    if (!mounted) {
+      await selection.dispose();
+      return;
+    }
+    final owner = _manager;
+    bool current() => mounted && identical(owner, _manager);
+    var cancelled = false;
+    final cancelSignal = Completer<void>();
+    void cancel() {
+      cancelled = true;
+      if (!cancelSignal.isCompleted) {
+        cancelSignal.complete();
+      }
+    }
+
+    final controller = showLoadingDialog(
+      context,
+      message: 'Saving images... @a/@b'.tlParams({'a': 0, 'b': entries.length}),
+      onCancel: cancel,
+    );
+    setState(() => _downloading = true);
+    try {
+      await selection.retainAccessForSession();
+      if (!current()) return;
+      final result = await selection.withDirectory((directory) async {
+        if (!current()) return const ImageFavoritesDownloadResult();
+        return writeImageFavorites(
+          directory: directory,
+          entries: entries,
+          read: (image, stop, signal) => ImageFavoritesProvider(
+            image,
+          ).readBytes(checkStop: stop, cancelSignal: signal),
+          checkStop: () {
+            if (cancelled) throw const ImageFavoritesDownloadCancelled();
+          },
+          cancelSignal: cancelSignal.future,
+          isCancelled: () => cancelled,
+          onProgress: (done, total) => controller.setMessage(
+            'Saving images... @a/@b'.tlParams({'a': done, 'b': total}),
+          ),
+        );
+      });
+      controller.close();
+      if (cancelled) return;
+      if (!mounted) return;
+      if (!identical(owner, _manager)) return;
+      context.showMessage(
+        message: 'Saved @a images, skipped @b, failed @c'.tlParams({
+          'a': result.saved,
+          'b': result.skipped,
+          'c': result.failed,
+        }),
+      );
+    } catch (error, stack) {
+      controller.close();
+      if (cancelled) return;
+      Log.error('Image Favorites', error, stack);
+      if (!mounted) return;
+      if (!identical(owner, _manager)) return;
+      context.showMessage(message: 'Error'.tl);
+    } finally {
+      controller.close();
+      if (current()) {
+        setState(() => _downloading = false);
+      } else {
+        _downloading = false;
+      }
+      await selection.dispose();
+    }
+  }
+
   Widget buildMultiSelectMenu() {
     return MenuButton(
       entries: [
+        MenuEntry(
+          icon: Icons.download_outlined,
+          text: "Download".tl,
+          onClick: downloadSelected,
+        ),
         MenuEntry(
           icon: Icons.delete_outline,
           text: "Delete".tl,

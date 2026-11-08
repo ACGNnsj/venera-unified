@@ -1362,7 +1362,9 @@
     "Saved categories": "已收藏的分类",
     "Show Explore and Categories shortcuts in search": "在搜索页显示发现与分类快捷入口",
     "Adds two shortcuts at the top of the search page. Off by default, and the page is unchanged while it is off.": "在搜索页顶部加两个入口；默认关闭，关闭时搜索页与之前完全一致。",
-    "Shortcut unavailable": "快捷入口不可用"
+    "Shortcut unavailable": "快捷入口不可用",
+    "Saving images... @a/@b": "正在保存图片… @a/@b",
+    "Saved @a images, skipped @b, failed @c": "已保存 @a 张；跳过 @b 张；失败 @c 张"
   },
   "zh_TW": {
     "TV low-memory mode": "TV 低記憶體模式",
@@ -2727,6 +2729,8 @@
     "Saved categories": "已收藏的分類",
     "Show Explore and Categories shortcuts in search": "在搜尋頁顯示發現與分類快捷入口",
     "Adds two shortcuts at the top of the search page. Off by default, and the page is unchanged while it is off.": "在搜尋頁頂部加兩個入口；預設關閉，關閉時搜尋頁與之前完全一致。",
-    "Shortcut unavailable": "快捷入口無法使用"
+    "Shortcut unavailable": "快捷入口無法使用",
+    "Saving images... @a/@b": "正在儲存圖片… @a/@b",
+    "Saved @a images, skipped @b, failed @c": "已儲存 @a 張；略過 @b 張；失敗 @c 張"
   }
 }
