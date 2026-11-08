@@ -36,10 +36,11 @@ void main() {
 
   test('rejects a floating branch and changed dependency origin', () {
     spec['dependencies']['flutter_qjs']['git']['ref'] = 'main';
-    spec['dependencies']['flutter_saf']['git']['url'] = 'https://example.com/fork';
+    spec['dependencies']['webdav_client']['git']['url'] =
+        'https://example.com/fork';
     final errors = checkGitDependencies(spec, lock, inventory);
     expect(errors.any((e) => e.startsWith('flutter_qjs:')), isTrue);
-    expect(errors.any((e) => e.startsWith('flutter_saf:')), isTrue);
+    expect(errors.any((e) => e.startsWith('webdav_client:')), isTrue);
   });
 
   test('detects platform package left on upstream and resolved SHA drift', () {

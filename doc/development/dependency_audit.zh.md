@@ -19,7 +19,7 @@
 | `photo_view` | pub.dev 0.15.0；`renancaraujo/photo_view`，MIT | 发布归档缺少项目使用的 `getInitialScale`；当前 fork 历史还增加过 `resetWithNewBoxFit`。当前 fork 还修改了 GIF、dispose、触控板与动画定位。保留自有 fork；替换需验证缩放、长按、触控板、双页、自动阅读和图片生命周期。 |
 | `scrollable_positioned_list` | pub.dev 0.3.8；`google/flutter.widgets`，BSD-3-Clause | 候选没有 `scrollControllerCallback` 和 `scrollBehavior`；当前定制提交 `09e756b` 明确加入两者。保留自有 fork；替换需改造阅读器滚动控制并验证长章节跳页、自动阅读和触摸恢复。 |
 | `flutter_inappwebview` | pub.dev 稳定版 6.1.5；`pichillilorenzo/flutter_inappwebview`，Apache-2.0 | 当前包为 6.2.0-beta.3 定制分支，含 `GraphicsContext` 释放修复。切换稳定版会同时改变 API 基线和多个平台实现。保留整仓 fork；先逐个平台比较，再验证网页登录、Cookie、代理、Cloudflare 流程和销毁重建。 |
-| `webdav_client` | pub.dev 1.2.2；原始上游 `flymzero/webdav_client`，BSD-3-Clause | 官方 `newClient` 只有 user/password/debug 参数，没有应用传入的 adapter。当前历史另有 HTTP adapter、301、上传及多认证修改。fork 仓库已删除，2026-11-09 起改为仓库内本地包，行为不变；替换仍需验证 RHttpAdapter、认证、重定向、目录和大文件上传。 |
+| `webdav_client` | pub.dev 1.2.2；原始上游 `flymzero/webdav_client`，BSD-3-Clause | 官方 `newClient` 只有 user/password/debug 参数，没有应用传入的 adapter。当前历史另有 HTTP adapter、301、上传及多认证修改。保留自有 fork；替换需验证 RHttpAdapter、认证、重定向、目录和大文件上传。 |
 | `desktop_webview_window` | pub.dev 0.3.0；源码指向 `MixinNetwork/flutter-plugins` | 官方包有 Apache-2.0 许可证，但不能据此自动补齐当前 fork 的授权记录。官方 `CreateConfiguration` 没有应用使用的 proxy；当前 fork 还有 libsoup-3.0、Linux 和 Windows ARM64 修改。保留原固定来源，先追溯定制代码授权，再决定迁移。 |
 | `flutter_saf` | 当前来源 `pkuislm/flutter_saf` 的 fork；pub.dev 同名 0.1.0 来自 `hamiranisahil/flutter_saf` | 当前 LICENSE 是占位文本，同名发布包虽为 MIT，但没有当前使用的 IOOverrides 机制，属于不同实现。保留原固定来源；替换必须覆盖持久目录授权、isolate 内 IO override、随机访问和后台读写。 |
 | `flutter_7zip` | `wgh136/flutter_7zip` 的 fork；pub.dev 同名查询返回 404 | 当前 LICENSE 是占位文本；7Z/CB7 导入直接使用 `SZArchive.extractIsolates`，ZIP 也用它作回退。不能因已有 `archive` 依赖就移除。先核实 Dart/FFI 包装层和内嵌原生代码许可，或选取具有等价 7Z 能力的替代实现。 |
