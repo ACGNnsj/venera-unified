@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>venera-unified</id>
-    <version>1.20.0</version>
+    <version>1.21.0</version>
     <title>VeneraUnified</title>
     <authors>ACGNnsj</authors>
     <description>Cross-platform comic reader with JavaScript source extensions.</description>
