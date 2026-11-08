@@ -17,7 +17,7 @@ English version: [dependencies.en.md](dependencies.en.md)
 
 ## 当前 Git 依赖
 
-2026-09-28：`flutter_qjs`、`photo_view`、`flutter.widgets`、`flutter_inappwebview` 和 `webdav_client` 曾改用 `CyrilPeng` 下的现有 fork，固定 commit 不变。`flutter_inappwebview` 的六个平台子包通过仓库内相对路径一起解析到同一 fork。该阶段只迁移来源，不升级版本。2026-10-05 起，`photo_view` 改为下文记录的本地 path 包，不再列入当前 Git 清单；回滚时同步恢复依赖声明、锁文件和对应清单记录。
+2026-09-28：`flutter_qjs`、`photo_view`、`flutter.widgets`、`flutter_inappwebview` 和 `webdav_client` 曾改用 `CyrilPeng` 下的现有 fork，固定 commit 不变。`flutter_inappwebview` 的六个平台子包通过仓库内相对路径一起解析到同一 fork。该阶段只迁移来源，不升级版本。2026-10-05 起，`photo_view` 改为下文记录的本地 path 包，不再列入当前 Git 清单；2026-11-09 起，`webdav_client` 因维护用 fork 仓库已删除同样改为本地 path 包，见下文。回滚时同步恢复依赖声明、锁文件和对应清单记录。
 
 这些 fork 的补丁选择、上游审查和更新验证由 VeneraNext 维护者负责。保留原作者版权和许可证；镜像不能替代持续维护，也不能解决许可证缺失。
 
@@ -28,7 +28,6 @@ English version: [dependencies.en.md](dependencies.en.md)
 | `desktop_webview_window` | `7801fc582ecf5a7351632887891ecf309a7b2583` | `wgh136/flutter_desktop_webview` / 未声明 | 固定版本包含 Windows ARM64 构建修复，替换前需验证全部桌面平台 |
 | `flutter_inappwebview` | `3ef899b3db57c911b080979f1392253b835f98ab` | `pichillilorenzo/flutter_inappwebview` / Apache-2.0 | 固定版本包含 `GraphicsContext` 释放修复；内嵌 WebView 和 Cloudflare 流程依赖该分支行为 |
 | `lodepng_flutter` | `ac7d05dde32e8d728102a9ff66e6b55f05d94ba1` | 未记录 fork 上游 / 许可证文件仍为占位内容 | 固定版本包含 NDK r28 构建适配，图片处理链路仍依赖其原生插件 |
-| `webdav_client` | `2f669c98fb81cff1c64fee93466a1475c77e4273` | `wgh136/webdav_client` / BSD-3-Clause | 固定版本增加多种认证方式支持，WebDAV 阅读和备份依赖该兼容性 |
 | `flutter_saf` | `fe182cdf40e5fa6230f451bc1d643b860f610d13` | `pkuislm/flutter_saf` / 许可证文件仍为占位内容 | 固定版本关闭代码压缩以规避 Android 发布构建问题，存储访问流程依赖该插件 |
 | `flutter_7zip` | `b33344797f1d2469339e0e1b75f5f954f1da224c` | `wgh136/flutter_7zip` / 许可证文件仍为占位内容 | 固定版本修复编译错误，CBZ 和归档兼容回退链路依赖该插件 |
 
@@ -39,6 +38,14 @@ English version: [dependencies.en.md](dependencies.en.md)
 ## QuickJS 数值缓冲引用扫描（2026-10-31）
 
 固定 commit 从 `8feae95df7fb00455df129ad7a0dfec1d0e8d8e4` 更新为 `295f77421eedff356a02e92987181b525970c780`，差异仅在 `lib/src/ffi.dart`：`JSRef._callRecursive` 对 `Uint8List` 等纯数值缓冲提前返回，不再复制成普通列表并逐个扫描（包里不可能含 JS 引用）。Promise、普通列表/映射、环、回调引用与异步完成协议不变，包版本仍为 0.3.7，原生代码、NDK/CMake 与平台配置未改。回滚时同一次恢复 `pubspec.yaml`、`pubspec.lock`、`doc/development/git_dependencies.json` 与本表。
+
+## 本地维护的 webdav_client
+
+`webdav_client` 通过 `path: packages/webdav_client` 使用仓库内的 [本地包](../../packages/webdav_client/pubspec.yaml)，版本仍为 **1.2.2**。来源是 [CyrilPeng/webdav_client](https://github.com/CyrilPeng/webdav_client) 的原锁定提交 `2f669c98fb81cff1c64fee93466a1475c77e4273`，上游为 [flymzero/webdav_client](https://github.com/flymzero/webdav_client)。原作者版权和 [BSD-3-Clause 许可证](../../packages/webdav_client/LICENSE) 保持不变。
+
+迁移原因：该 fork 仓库已从 GitHub 删除（2026-11-09 核对：仓库页返回 404，`info/refs` 返回 401，`git ls-remote` 报 `repository ... not found`）。pub 缓存已预热的机器仍能解析，但缓存被淘汰的运行器（例如 Linux ARM64 任务）会在 `flutter pub get` 阶段失败。改为本地包后，发布构建不再依赖这个已消失的仓库。
+
+`newClient` 的 adapter 参数以及 301/302 重定向、上传、多认证方式等定制行为全部原样保留：不动任何逻辑，只把 CRLF 归一成 LF，并让 Dart 源码过一遍项目格式化器（仅重新折行 `lib/src/webdav_dio.dart`）。`packages/webdav_client/UPSTREAM_MANIFEST.json` 记录保留文件的 SHA-256，[LOCAL_PATCHES.md](../../packages/webdav_client/LOCAL_PATCHES.md) 记录保留/省略的文件与后续比较方法。
 
 ## 本地维护的 PhotoView
 

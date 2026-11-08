@@ -58,16 +58,6 @@
       }
     },
     {
-      "dependency": "webdav_client",
-      "url": "https://github.com/CyrilPeng/webdav_client",
-      "commit": "2f669c98fb81cff1c64fee93466a1475c77e4273",
-      "status": "maintained-fork",
-      "reason": "Requires the newClient adapter parameter plus redirect, upload and authentication patches.",
-      "packages": {
-        "webdav_client": "."
-      }
-    },
-    {
       "dependency": "flutter_saf",
       "url": "https://github.com/venera-app/flutter_saf",
       "commit": "fe182cdf40e5fa6230f451bc1d643b860f610d13",

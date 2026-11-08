@@ -17,7 +17,7 @@ See the [2026-09-28 audit](dependency_audit.en.md) for ownership and replacement
 
 ## Current Git Dependencies
 
-2026-09-28: `flutter_qjs`, `photo_view`, `flutter.widgets`, `flutter_inappwebview`, and `webdav_client` moved to the existing forks under `CyrilPeng`, without changing pinned commits. The six platform subpackages of `flutter_inappwebview` resolve through repository-relative paths to the same fork. That stage changed provenance only, not versions. On 2026-10-05, `photo_view` became the local path package documented below and left the current Git inventory. Roll back dependency declarations, lockfile, and the corresponding inventory entry together.
+2026-09-28: `flutter_qjs`, `photo_view`, `flutter.widgets`, `flutter_inappwebview`, and `webdav_client` moved to the existing forks under `CyrilPeng`, without changing pinned commits. The six platform subpackages of `flutter_inappwebview` resolve through repository-relative paths to the same fork. That stage changed provenance only, not versions. On 2026-10-05, `photo_view` became the local path package documented below and left the current Git inventory. On 2026-11-09, `webdav_client` followed it for the same reason: its maintenance fork no longer exists. Roll back dependency declarations, lockfile, and the corresponding inventory entry together.
 
 VeneraNext maintainers own patch selection, upstream review, and validation for these forks. Preserve original copyrights and licenses. Mirroring does not replace ongoing maintenance or resolve missing licenses.
 
@@ -28,13 +28,20 @@ VeneraNext maintainers own patch selection, upstream review, and validation for 
 | `desktop_webview_window` | `7801fc582ecf5a7351632887891ecf309a7b2583` | `wgh136/flutter_desktop_webview` / not declared | The pinned revision fixes Windows ARM64 builds; replacement requires verification on every desktop platform |
 | `flutter_inappwebview` | `3ef899b3db57c911b080979f1392253b835f98ab` | `pichillilorenzo/flutter_inappwebview` / Apache-2.0 | The pinned revision fixes `GraphicsContext` deallocation; embedded WebView and Cloudflare flows rely on this branch behavior |
 | `lodepng_flutter` | `ac7d05dde32e8d728102a9ff66e6b55f05d94ba1` | Fork upstream not recorded / license file is still a placeholder | The pinned revision includes NDK r28 build support, and the image pipeline still uses its native plugin |
-| `webdav_client` | `2f669c98fb81cff1c64fee93466a1475c77e4273` | `wgh136/webdav_client` / BSD-3-Clause | The pinned revision adds multiple authentication methods required by WebDAV reading and backup compatibility |
 | `flutter_saf` | `fe182cdf40e5fa6230f451bc1d643b860f610d13` | `pkuislm/flutter_saf` / license file is still a placeholder | The pinned revision disables minification to avoid Android release-build problems; storage access still uses this plugin |
 | `flutter_7zip` | `b33344797f1d2469339e0e1b75f5f954f1da224c` | `wgh136/flutter_7zip` / license file is still a placeholder | The pinned revision fixes compilation errors, and CBZ/archive fallback compatibility still uses this plugin |
 
 The table uses commit messages to explain why the project cannot immediately switch back to upstream. It is not a complete diff audit. Every Git dependency update must document the upstream repository, comparison range, all custom changes, upstream PR if any, security impact, and rollback path.
 
 `desktop_webview_window` does not declare a license, while `lodepng_flutter`, `flutter_saf`, and `flutter_7zip` still contain placeholder license files. These are known supply-chain debts. Confirm licensing with the maintainers before upgrading; if it cannot be confirmed, migrate to an upstream revision or replacement with clear licensing.
+
+## Locally Maintained webdav_client
+
+`webdav_client` resolves through `path: packages/webdav_client` to the [local package](../../packages/webdav_client/pubspec.yaml), still at version **1.2.2**. Its source is the previously pinned [CyrilPeng/webdav_client](https://github.com/CyrilPeng/webdav_client) commit `2f669c98fb81cff1c64fee93466a1475c77e4273`, with [flymzero/webdav_client](https://github.com/flymzero/webdav_client) as upstream. Original copyrights and the [BSD-3-Clause license](../../packages/webdav_client/LICENSE) remain unchanged.
+
+Why it moved: the fork repository was deleted from GitHub (checked 2026-11-09: the repository page returns 404, `info/refs` returns 401, and `git ls-remote` reports `repository ... not found`). Machines with a warm pub cache still resolved it, but any runner whose cache expired (for example the Linux ARM64 job) failed during `flutter pub get`. The local package removes that vanished repository from release builds.
+
+All customized behaviour is retained unchanged, including the `newClient` adapter parameter, 301/302 redirect handling, uploads and multiple authentication modes. No logic was edited: only CRLF normalisation plus a pass through the project formatter, which relined `lib/src/webdav_dio.dart` alone. `packages/webdav_client/UPSTREAM_MANIFEST.json` records SHA-256 hashes of the retained files, and [LOCAL_PATCHES.md](../../packages/webdav_client/LOCAL_PATCHES.md) records what was kept or omitted plus how to compare later.
 
 ## Locally Maintained PhotoView
 
