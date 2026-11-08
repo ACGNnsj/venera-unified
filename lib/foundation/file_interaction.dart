@@ -350,8 +350,14 @@ class Share {
   static final _dialogs = PlatformDialogQueue();
 
   /// Whether text sharing lands on the clipboard instead of a platform share
-  /// target. Desktop platforms have none; tests pin this to the path they cover.
-  static bool Function() usesClipboard = () => App.isDesktop;
+  /// target. Desktop and HarmonyOS have none; tests pin this to the path they
+  /// cover.
+  static bool Function() usesClipboard = () => App.isDesktop || App.isOhos;
+
+  /// Whether a platform file-share target exists. Linux and HarmonyOS ship no
+  /// `share_plus` implementation, so they report that instead of letting the
+  /// plugin throw MissingPluginException after the source file was prepared.
+  static bool Function() canShareFiles = () => !App.isLinux && !App.isOhos;
 
   static Future<void> shareFile({
     required Uint8List data,
@@ -362,8 +368,8 @@ class Share {
     void Function()? checkStop,
   }) => _dialogs.run(() async {
     checkStop?.call();
-    if (App.isLinux) {
-      throw UnsupportedError('File sharing is unavailable on Linux');
+    if (!canShareFiles()) {
+      throw UnsupportedError('File sharing is unavailable on this platform');
     }
     Rect? actualOrigin;
     await withShareFileSource(

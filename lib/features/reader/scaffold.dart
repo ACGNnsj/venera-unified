@@ -3,6 +3,7 @@ import 'package:venera_unified/components/settings_save_state.dart';
 import 'package:venera_unified/components/tv_navigation.dart';
 import 'tv_input.dart';
 
+import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/features/reader/status_info.dart';
 import 'package:venera_unified/foundation/image_translation/translation_config.dart';
 import 'package:venera_unified/foundation/image_translation/translation_service.dart';
@@ -411,8 +412,8 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
             onPressed: openChapterComments,
           ),
         ),
-      _TranslationToggle(data: widget.data, update: update),
-      if (widget.onTranslatePage != null)
+      if (!App.isOhos) _TranslationToggle(data: widget.data, update: update),
+      if (!App.isOhos && widget.onTranslatePage != null)
         Tooltip(
           message: "Translate page".tl,
           child: IconButton(
@@ -764,12 +765,16 @@ class _TranslationToggle extends StatelessWidget {
       message: !enabled
           ? "Image translation off".tl
           : ready
-              ? "Image translation on".tl
-              : "Translation models missing".tl,
+          ? "Image translation on".tl
+          : "Translation models missing".tl,
       child: IconButton(
         icon: Icon(
           Icons.translate,
-          color: !enabled ? null : ready ? scheme.primary : scheme.error,
+          color: !enabled
+              ? null
+              : ready
+              ? scheme.primary
+              : scheme.error,
         ),
         onPressed: () {
           ImageTranslationService.setEnabledForComic(

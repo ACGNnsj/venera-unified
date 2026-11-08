@@ -5,6 +5,7 @@ import 'package:venera_unified/components/message.dart';
 import 'package:venera_unified/components/settings_save_state.dart';
 import 'package:venera_unified/features/settings/credential_setup_dialog.dart';
 import 'package:venera_unified/features/settings/setting_components.dart';
+import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/auth_storage.dart';
@@ -248,15 +249,26 @@ class CacheRetentionSetting extends StatelessWidget {
   );
 }
 
-Future<bool> _supportsAuthorization() async {
+/// Whether this device can run a biometric (or device-credential) prompt.
+///
+/// HarmonyOS ships no `local_auth` implementation and the plugin throws
+/// MissingPluginException there, so a missing plugin has to read as
+/// "unsupported" instead of breaking the settings page.
+Future<bool> supportsAuthorization() async {
+  if (App.isOhos) return false;
   final auth = LocalAuthentication();
-  return await auth.canCheckBiometrics || await auth.isDeviceSupported();
+  try {
+    return await auth.canCheckBiometrics || await auth.isDeviceSupported();
+  } catch (e) {
+    Log.error('Auth', 'Biometric support probe failed: $e');
+    return false;
+  }
 }
 
 class AuthorizationRequiredSetting extends StatefulWidget {
   const AuthorizationRequiredSetting({
     super.key,
-    this.checkSupport = _supportsAuthorization,
+    this.checkSupport = supportsAuthorization,
   });
   final Future<bool> Function() checkSupport;
   @override

@@ -1364,7 +1364,9 @@
     "Adds two shortcuts at the top of the search page. Off by default, and the page is unchanged while it is off.": "在搜索页顶部加两个入口；默认关闭，关闭时搜索页与之前完全一致。",
     "Shortcut unavailable": "快捷入口不可用",
     "Saving images... @a/@b": "正在保存图片… @a/@b",
-    "Saved @a images, skipped @b, failed @c": "已保存 @a 张；跳过 @b 张；失败 @c 张"
+    "Saved @a images, skipped @b, failed @c": "已保存 @a 张；跳过 @b 张；失败 @c 张",
+    "Image translation is unavailable on this HarmonyOS build": "此鸿蒙版本暂不支持图像翻译",
+    "OCR needs ONNX Runtime, which this build does not ship. These settings stay for synced profiles but cannot run here.": "OCR 需要 ONNX Runtime，本版本未内置。这些设置会随同步配置保留，但在此设备上无法运行。"
   },
   "zh_TW": {
     "TV low-memory mode": "TV 低記憶體模式",
@@ -2731,6 +2733,8 @@
     "Adds two shortcuts at the top of the search page. Off by default, and the page is unchanged while it is off.": "在搜尋頁頂部加兩個入口；預設關閉，關閉時搜尋頁與之前完全一致。",
     "Shortcut unavailable": "快捷入口無法使用",
     "Saving images... @a/@b": "正在儲存圖片… @a/@b",
-    "Saved @a images, skipped @b, failed @c": "已儲存 @a 張；略過 @b 張；失敗 @c 張"
+    "Saved @a images, skipped @b, failed @c": "已儲存 @a 張；略過 @b 張；失敗 @c 張",
+    "Image translation is unavailable on this HarmonyOS build": "此鴻蒙版本暫不支援圖像翻譯",
+    "OCR needs ONNX Runtime, which this build does not ship. These settings stay for synced profiles but cannot run here.": "OCR 需要 ONNX Runtime，本版本未內建。這些設定會隨同步設定保留，但在此裝置上無法執行。"
   }
 }

@@ -117,4 +117,18 @@ PDF 导入（PDFium）、自定义存储目录与持久化外部目录引用、�
 1. 路径输入框放在 `lib/routing/ohos_path_prompt.dart`（UI 文件），`foundation/file_interaction.dart` 只调用 `lib/foundation/path_prompt.dart` 里可注入的 handler，handler 在 `lib/main.dart` 启动时注册。原因：`foundation/` 一旦 import `components/` 或 `routing/`，`.github/scripts/check_architecture_dependencies.py` 会报 `Business file reaches UI`（`file_interaction.dart` 是 business 文件，bootstrap 会经它摸到整张 UI 图），而 `.github/scripts/check_structure_imports.py` 也禁止 foundation→components。新增文件必须同时登记进 `doc/architecture/dependency_baseline.json` 的 `business_files`/`ui_files`，否则报 `Unclassified library file`。
 2. Cloudflare 的跳过是「诚实失败」而不是降级：没有内置网页就拿不到 `cf_clearance`，假装验证通过只会让后续请求 403。
 
-仍未接的还有：图像翻译的 ONNX 推理（`foundation/image_translation/ort_ffi.dart` 无 ohos 候选，必须短路）、PDF 导入、系统分享、生物识别应用锁。
+## 2026-11-08 第二轮运行期兜底：缺原生实现的入口改为明确降级
+
+上一节处理的是启动链上的六处；本次补的是导入、分享、生物识别与图像翻译这些非主链入口，规则统一成「没有原生实现就显式降级并说清原因」：
+
+| 位置 | 现象 | 处理 |
+| --- | --- | --- |
+| `lib/features/local_comics/local_comics_summary.dart` | 导入对话框的 PDF 选项会走到 pdfrx→PDFium，HAP 没编这个库 | ohos 隐藏该项（`importMethodIndices`），其余项索引不变 |
+| `lib/foundation/file_interaction.dart` | `share_plus` 无 ohos 实现 | 文件分享抛 `UnsupportedError`（与 Linux 同口径，调用方提示）；文本分享改走剪贴板（`usesClipboard`） |
+| `lib/features/settings/app_controls.dart` | `local_auth` 无 ohos 实现，`canCheckBiometrics` 抛 MissingPluginException 会打断设置页 | `supportsAuthorization()` 在 ohos 直接读作不支持，其他平台异常也归为不支持，退回 PIN／密码 |
+| `lib/features/reader/scaffold.dart`、`lib/features/settings/image_translation.dart` | 图像翻译依赖 ONNX Runtime，HAP 不随包 | 阅读器顶栏两个翻译入口隐藏；设置页顶部说明该构建暂不支持，同步来的配置保留但不假装能跑 |
+| `lib/foundation/image_translation/ocr_engine.dart` | 缺库时报「重装应用再试」 | ohos 上改为说明该构建不含 ONNX Runtime |
+
+门禁：`dart format`／`dart analyze` 干净；新增 3 个测试（导入选项索引、分享平台闸、生物识别探测），`test/features/settings` + `test/features/local_comics` + `test/foundation/image_translation` 共 889 项、`test/features/reader` 972 项全通过；两个架构脚本 clean。
+
+仍未接的还有：图像翻译的 ONNX 推理本体（要把 onnxruntime 交叉编译进 HAP）、PDF 导入（PDFium）、系统分享、内置 WebView（验证码与站点登录）。

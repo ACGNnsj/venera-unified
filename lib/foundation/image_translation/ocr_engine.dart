@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 
+import 'package:venera_unified/foundation/app.dart';
 import 'ocr_models.dart';
 import 'ocr_types.dart';
 import 'ocr_worker.dart';
@@ -65,6 +66,13 @@ abstract class OcrEngine {
   static String _readableError(Object e) {
     var text = e.toString();
     if (text.contains('Failed to load ONNX Runtime library')) {
+      // The HarmonyOS HAP ships no ONNX Runtime yet, so "reinstall and retry"
+      // would be a lie there: the library is genuinely absent from this build.
+      if (App.isOhos) {
+        return 'Image translation is unavailable on this HarmonyOS build: '
+            'it needs the ONNX Runtime library, which the experimental HAP '
+            'does not bundle yet.';
+      }
       return 'OCR is unavailable: the ONNX Runtime library is missing. '
           'Reinstall the app and retry.';
     }

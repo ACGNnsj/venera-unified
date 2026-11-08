@@ -6,6 +6,7 @@ import 'package:venera_unified/components/message.dart';
 import 'package:venera_unified/components/scroll.dart';
 import 'package:venera_unified/components/settings_save_state.dart';
 import 'package:venera_unified/features/settings/setting_components.dart';
+import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/image_translation/llm_translator.dart';
 import 'package:venera_unified/foundation/image_translation/translation_config.dart';
@@ -182,6 +183,17 @@ class _ImageTranslationSettingsState
         slivers: [
           SliverAppbar(title: Text('Image Translation'.tl)),
           settingsSaveStatus.toSliver(),
+          if (App.isOhos)
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: Text(
+                'Image translation is unavailable on this HarmonyOS build'.tl,
+              ),
+              subtitle: Text(
+                'OCR needs ONNX Runtime, which this build does not ship. These settings stay for synced profiles but cannot run here.'
+                    .tl,
+              ),
+            ),
           if (!configured)
             ListTile(
               leading: const Icon(Icons.warning_amber),
