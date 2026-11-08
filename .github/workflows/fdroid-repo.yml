@@ -136,7 +136,13 @@ jobs:
           with open("config.yml", "w", encoding="utf-8") as handle:
               json.dump(config, handle)
           PY
+          chmod 600 config.yml
           cp ../../newapk/*.apk repo/
+          # 仓库里维护一份完整的 metadata（名称/摘要/描述/许可证），覆盖 gh-pages 上
+          # --create-metadata 生成的空骨架，否则客户端里只有包名、没有简介。
+          if [ -d ../../fdroid/metadata ]; then
+            cp -f ../../fdroid/metadata/*.yml metadata/
+          fi
           # 没有 metadata 时 fdroid update 只警告一句就跳过，索引里 numPackages=0；
           # -c 会为缺 metadata 的包生成骨架（之后随 gh-pages 提交留存），本次与后续都能索引到。
           fdroid update --create-metadata
