@@ -3,6 +3,14 @@ name: 商店清单跟版
 on:
   release:
     types: [published]
+  # 用默认 GITHUB_TOKEN 建出来的 release 不会再触发本工作流（GitHub 会抑制），
+  # 所以发版后也可以用这里手工补跑。只接受稳定版标签。
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "已发布的稳定版标签，例如 v1.20.0"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -10,9 +18,11 @@ permissions:
 jobs:
   bump:
     # 仅稳定版跟版：预发布 tag（含 -，如 v1.21.0-rc.1）直接跳过，不碰 bucket/Casks/chocolatey
-    if: ${{ !contains(github.event.release.tag_name, '-') }}
+    if: ${{ !contains(inputs.tag || github.event.release.tag_name, '-') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    env:
+      TAG_NAME: ${{ inputs.tag || github.event.release.tag_name }}
     steps:
       - uses: actions/checkout@v7
       - name: 下载包并重算哈希
@@ -20,7 +30,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p bump && cd bump
-          gh release download "${{ github.event.release.tag_name }}" --pattern "*-windows.zip" --pattern "*.dmg"
+          gh release download "$TAG_NAME" --pattern "*-windows.zip" --pattern "*.dmg"
           ls
       - name: 更清单
         run: |
@@ -62,9 +72,9 @@ jobs:
           print("bumped", ver, build)
           PY
         env:
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ env.TAG_NAME }}
       - name: 提交
         run: |
           git add bucket/venera-unified.json Casks/venera-unified.rb chocolatey/venera-unified.nuspec chocolatey/tools/chocolateyinstall.ps1
-          git -c user.name='github-actions[bot]' -c user.email='github-actions[bot]@users.noreply.github.com' commit -m "chore: bump store manifests for ${{ github.event.release.tag_name }}" || exit 0
+          git -c user.name='github-actions[bot]' -c user.email='github-actions[bot]@users.noreply.github.com' commit -m "chore: bump store manifests for $TAG_NAME" || exit 0
           git push origin HEAD:main
