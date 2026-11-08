@@ -145,7 +145,7 @@ PDF 导入（PDFium）、自定义存储目录与持久化外部目录引用、�
 三条链路结果（模拟器实测，非推断）：
 
 1. **在线书源 ✔**：本地探针 JS 源（`source.js`，含 search/explore/comic/chapter 与 archive 段）导入后，搜索 → 详情 → 章节 → p1/p2/p3 三页上屏（页码 3/3），取图 UA 为 `VeneraUnified/v1.20.0-rc.1`，JS 内部 Network.get 走 Chrome/119 UA。
-2. **本地归档 ✔**：探针源的 `comic.archive.getArchives/getDownloadUrl` 提供 cbz／zip／7z 三种归档；详情页 下载 → 归档 → 选中 → 确认后落本地库，阅读器直接读归档内图片——读 ZIP／CBZ 时服务端没有 p1/p2/p3 请求，证明读的是本地解压产物。
+2. **本地归档 ✔**：探针源的 `comic.archive.getArchives/getDownloadUrl` 提供 cbz／zip／7z 三种归档；详情页 下载 → 归档 → 选中 → 确认后落本地库，阅读器直接读归档内图片——读 ZIP／CBZ 时服务端没有 p1/p2/p3 请求，证明读的是本地解压产物。三种归档可以并存，本地库计数到 3（cbz／zip／7z 各一条）。
 3. **WebDAV ✔（上传方向）**：自建 WebDAV 探针，测试连接得到 `PROPFIND /dav/ 207`；保存配置后 `OPTIONS` + `PUT /dav/<id>.venera 201`，服务端收到的 5,875 字节归档解出 6 项（history.db／local_favorite.db／cookie.db／appdata.json／comic_source/source.js 等）。下载方向本次未触发（实时同步判定远端无变更）。
 
 为此必须改的两处代码（同一根因：只走 zip_flutter 原生库）：
