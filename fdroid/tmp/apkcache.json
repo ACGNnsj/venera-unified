@@ -81,5 +81,86 @@
     "size": 56176867,
     "apkName": "VeneraUnified-1.20.0-android-arm64-v8a.apk",
     "added": 1794143577.0
+  },
+  "VeneraUnified-1.21.0-android-arm64-v8a.apk": {
+    "hash": "53b1626bfde3225eadceeb71a19e66062c116a66a4224fb5be240433b5e8ad58",
+    "hashType": "sha256",
+    "uses-permission": [
+      [
+        "android.permission.INTERNET",
+        null
+      ],
+      [
+        "android.permission.REQUEST_INSTALL_PACKAGES",
+        null
+      ],
+      [
+        "android.permission.ACCESS_NETWORK_STATE",
+        null
+      ],
+      [
+        "android.permission.FOREGROUND_SERVICE",
+        null
+      ],
+      [
+        "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
+        null
+      ],
+      [
+        "android.permission.POST_NOTIFICATIONS",
+        null
+      ],
+      [
+        "android.permission.WAKE_LOCK",
+        null
+      ],
+      [
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        null
+      ],
+      [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        null
+      ],
+      [
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        null
+      ],
+      [
+        "android.permission.USE_BIOMETRIC",
+        null
+      ],
+      [
+        "android.permission.CAMERA",
+        null
+      ],
+      [
+        "android.permission.USE_FINGERPRINT",
+        null
+      ],
+      [
+        "io.github.venera.unified.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+        null
+      ]
+    ],
+    "uses-permission-sdk-23": [],
+    "features": [],
+    "icons_src": {},
+    "icons": {},
+    "antiFeatures": {},
+    "packageName": "io.github.venera.unified",
+    "versionCode": 2472,
+    "name": "Venera Unified",
+    "versionName": "1.21.0",
+    "minSdkVersion": 24,
+    "targetSdkVersion": 36,
+    "nativecode": [
+      "arm64-v8a"
+    ],
+    "sig": "aac2d5cc6cdfc209294ed351198c24c3",
+    "signer": "16bb6bed09de33796fbf603cc2530c29d60f8350601deeffb8be3c440372850f",
+    "size": 57468194,
+    "apkName": "VeneraUnified-1.21.0-android-arm64-v8a.apk",
+    "added": 1794179486.834059
   }
 }
