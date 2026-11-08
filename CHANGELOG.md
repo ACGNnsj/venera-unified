@@ -34,11 +34,12 @@
 
 ### 分发
 
-- 新增 Snap、Flatpak（离线 vendor 归档，清单仍在验证）、自托管 F-Droid 仓库、Scoop/Homebrew/Chocolatey 清单自动 bump、MSIX 打包与 Microsoft Store 提交、Play 上架脚本。清单 bump 只在稳定版标签触发，预发布不污染候选通道；缺少凭据的发布作业改为告警跳过而非失败。
+- 新增 Snap、Flatpak（离线 vendor 归档，构建与启动已在 CI 演练验通）、自托管 F-Droid 仓库、Scoop/Homebrew/Chocolatey 清单自动 bump、MSIX 打包与 Microsoft Store 提交、Play 上架脚本。清单 bump 只在稳定版标签触发，预发布不污染候选通道；缺少凭据的发布作业改为告警跳过而非失败。
 - 鸿蒙（HarmonyOS NEXT）实验管线：可复现的未签名 HAP 构建（arm64 与 x64），sqlite3、rhttp、qjs、7zip 四个原生库直接编译，x64 模拟器可冷启动进入主页。仍不参与主 CI 阻塞。
 
 ### 依赖
 
+- 三个 fork 依赖（`flutter_inappwebview`、`flutter.widgets`、`webdav_client`）的仓库已迁到 `venera-app` 名下，来源地址随之更新，固定 commit 一律未变。旧地址在新机器上会直接解析失败，之前只有 pub 缓存是热的机器才能构建。
 - pdfrx 2.4.8 → 2.11.0，测试夹具跟进其 priority 参数。
 - GitHub Actions 组更新：upload-artifact v7、cache v6、setup-node v7。
 
