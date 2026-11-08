@@ -602,7 +602,21 @@ jobs:
           cache: true
       - name: 准备 Rust 工具链
         run: python3 .github/scripts/prepare_rust_toolchain.py
-      - run: flutter pub get --enforce-lockfile
+      # ARM runner 上 github.com 的 git 依赖克隆会偶发中断（Git error, exit 69），
+      # 于是把 pub get 包成重试：失败就清掉 git 依赖的裸镜像再来一次。
+      - name: 拉取依赖
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3 4; do
+            if flutter pub get --enforce-lockfile; then
+              exit 0
+            fi
+            echo "::warning::flutter pub get 第 $attempt 次失败，清理 git 依赖缓存后重试"
+            rm -rf "$HOME/.pub-cache/_temp" "$HOME/.pub-cache/git/cache"
+            sleep 20
+          done
+          echo "::error::flutter pub get 连续 4 次失败"
+          exit 1
       - name: 安装 Linux 构建依赖
         run: |
           sudo apt-get update -y
