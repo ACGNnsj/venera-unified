@@ -28,6 +28,7 @@ import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'package:venera_unified/features/comic_details/comic_details.dart';
 import 'aggregated_search_page.dart';
+import 'search_discovery_shortcuts.dart';
 import 'search_result_page.dart';
 import 'search_shortcuts.dart';
 
@@ -288,6 +289,7 @@ class _SearchPageState extends State<SearchPage> {
         child: buildSearchOptions(),
       );
       yield buildTagInput();
+      yield const SearchDiscoveryShortcutsSliver();
       yield const SearchShortcutsSliver();
       yield _SearchHistory(search);
     }

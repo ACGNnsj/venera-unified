@@ -48,6 +48,13 @@ class _ExploreSettingsState extends State<ExploreSettings> {
           builder: setSearchSourcesWidget,
         ).toSliver(),
         SwitchSetting.preference(
+          title: 'Show Explore and Categories shortcuts in search'.tl,
+          subtitle:
+              'Adds two shortcuts at the top of the search page. Off by default, and the page is unchanged while it is off.'
+                  .tl,
+          preference: DiscoveryPreferences.searchDiscoveryShortcuts,
+        ).toSliver(),
+        SwitchSetting.preference(
           title: "Show favorite status on comic tile".tl,
           preference: DiscoveryPreferences.showFavoriteStatusOnTile,
         ).toSliver(),

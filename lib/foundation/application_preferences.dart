@@ -196,6 +196,15 @@ abstract final class DiscoveryPreferences {
   static const defaultSearchTarget = NullableStringPreference(
     'defaultSearchTarget',
   );
+
+  /// 搜索页是否显示「发现 / 分类」快捷入口。
+  ///
+  /// 默认关：升级后搜索页与之前完全一致；打开只多一条去发现页的路，
+  /// 不合并 Explore Tab，也不隐藏任何现有入口。
+  static const searchDiscoveryShortcuts = BoolPreference(
+    'searchDiscoveryShortcuts',
+    false,
+  );
   static const all = <Preference<Object?>>[
     comicDisplayMode,
     comicTileScale,
@@ -211,6 +220,7 @@ abstract final class DiscoveryPreferences {
     favoritePages,
     searchSources,
     defaultSearchTarget,
+    searchDiscoveryShortcuts,
   ];
 }
 
