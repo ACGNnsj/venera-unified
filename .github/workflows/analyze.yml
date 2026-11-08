@@ -191,12 +191,38 @@ jobs:
           sudo apt-get install -y cmake ninja-build g++ libsqlite3-dev
           python3 .github/scripts/prepare_linux_test_libraries.py
       - name: 跑分片测试
-        run: >-
-          flutter test --coverage
-          --coverage-path=coverage/lcov-shard-${{ matrix.shard }}.info
-          --total-shards "$TOTAL_SHARDS"
-          --shard-index ${{ matrix.shard }}
-          --fail-fast
+        # pdfium / sqlite3 的 build hook 每次跑测试前都从 GitHub 资产 CDN 抓原生库，
+        # 偶发被 504 打回或回传坏包（Hash of downloaded file ... expected ...）；
+        # 那是上游分发的问题、不是本仓代码，所以只在这种失败上重试，测试真失败照旧放行退出码。
+        run: |
+          set -uo pipefail
+          log="/tmp/shard-${{ matrix.shard }}.log"
+          for attempt in 1 2 3; do
+            echo "::group::第 ${attempt} 次：分片 ${{ matrix.shard }}"
+            set +e
+            flutter test --coverage \
+              --coverage-path=coverage/lcov-shard-${{ matrix.shard }}.info \
+              --total-shards "$TOTAL_SHARDS" \
+              --shard-index ${{ matrix.shard }} \
+              --fail-fast 2>&1 | tee "$log"
+            status=${PIPESTATUS[0]}
+            set -e
+            echo "::endgroup::"
+            if (( status == 0 )); then
+              exit 0
+            fi
+            if ! grep -qE 'Building assets for package: .* failed|Failed to download|Hash of downloaded file' "$log"; then
+              echo "不是原生资源下载问题，按真失败处理。"
+              exit "$status"
+            fi
+            if (( attempt == 3 )); then
+              echo "原生资源连续三次没下来，判红。"
+              exit "$status"
+            fi
+            echo "原生资源下载失败，清掉半成品缓存后重试。"
+            find .dart_tool build -type f \( -name 'libsqlite3*' -o -name 'libpdfium*' \) -print -delete 2>/dev/null || true
+            sleep $(( attempt * 20 ))
+          done
         env:
           LD_LIBRARY_PATH: ${{ github.workspace }}/build/test-native/lib
       - name: 上传分片覆盖率
