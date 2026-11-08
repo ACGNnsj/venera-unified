@@ -32,7 +32,7 @@ dependencies:
     path: packages/share_plus
   scrollable_positioned_list:
     git:
-      url: https://github.com/CyrilPeng/flutter.widgets
+      url: https://github.com/venera-app/flutter.widgets
       ref: 09e756b1f1b04e6298318d99ec20a787fb360f59
       path: packages/scrollable_positioned_list
   flutter_reorderable_grid_view: ^5.7.0
@@ -44,7 +44,7 @@ dependencies:
       ref: 7801fc582ecf5a7351632887891ecf309a7b2583
   flutter_inappwebview:
     git:
-      url: https://github.com/CyrilPeng/flutter_inappwebview
+      url: https://github.com/venera-app/flutter_inappwebview
       path: flutter_inappwebview
       ref: 3ef899b3db57c911b080979f1392253b835f98ab
   app_links: ^7.2.1
@@ -61,7 +61,7 @@ dependencies:
   flutter_rust_bridge: 2.11.1
   webdav_client:
     git:
-      url: https://github.com/CyrilPeng/webdav_client
+      url: https://github.com/venera-app/webdav_client
       ref: 2f669c98fb81cff1c64fee93466a1475c77e4273
   battery_plus: ^7.1.2
   local_auth: ^3.0.2

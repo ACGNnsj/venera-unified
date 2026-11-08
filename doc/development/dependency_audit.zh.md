@@ -45,7 +45,7 @@ VeneraNext 维护者负责自有 fork 的补丁选择、上游变更审查和发
 
 ## 后续更新：PhotoView 本地补丁（2026-10-05）
 
-上述 `photo_view` 判断保留为历史记录；当前来源已从 Git 改为 `path: packages/photo_view`，仍为 **0.14.0**。本地包复制自 [CyrilPeng/photo_view](https://github.com/CyrilPeng/photo_view) 的原锁定提交 `a1255d1b5945aad4b7323303ec2ecdf0c90ffc4c`，上游为 [renancaraujo/photo_view](https://github.com/renancaraujo/photo_view)。[MIT 许可证](../../packages/photo_view/LICENSE)、版权、包 manifest 和原 fork 接口保留；没有切换到此前审计的 pub.dev 0.15.0。
+上述 `photo_view` 判断保留为历史记录；当前来源已从 Git 改为 `path: packages/photo_view`，仍为 **0.14.0**。本地包复制自 [CyrilPeng/photo_view](https://github.com/venera-app/photo_view) 的原锁定提交 `a1255d1b5945aad4b7323303ec2ecdf0c90ffc4c`，上游为 [renancaraujo/photo_view](https://github.com/renancaraujo/photo_view)。[MIT 许可证](../../packages/photo_view/LICENSE)、版权、包 manifest 和原 fork 接口保留；没有切换到此前审计的 pub.dev 0.15.0。
 
 新增补丁仅修复尺寸监听器未释放 `ImageInfo` 克隆的缺陷，并将三处已弃用调用等价更新为 `TickerMode.valuesOf(context).enabled`、`translateByDouble(dx, dy, 0.0, 1.0)` 和 `scaleByDouble(s, s, s, 1.0)`。后者保持锁定 vector_math 2.2.0 的原标量分支语义。16 个 Dart 源文件中仅三个在格式化归一后有差异；[LOCAL_PATCHES.md](../../packages/photo_view/LOCAL_PATCHES.md) 保存源文件 canonical LF Git blob SHA-256、差异说明、维护责任及回滚要求。其他 **156** 个依赖完整锁定记录和 SDK 锁定保持不变。
 

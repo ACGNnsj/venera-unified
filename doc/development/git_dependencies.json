@@ -13,7 +13,7 @@
     },
     {
       "dependency": "scrollable_positioned_list",
-      "url": "https://github.com/CyrilPeng/flutter.widgets",
+      "url": "https://github.com/venera-app/flutter.widgets",
       "commit": "09e756b1f1b04e6298318d99ec20a787fb360f59",
       "status": "maintained-fork",
       "reason": "Reader uses scrollControllerCallback and scrollBehavior absent from the stable package.",
@@ -33,7 +33,7 @@
     },
     {
       "dependency": "flutter_inappwebview",
-      "url": "https://github.com/CyrilPeng/flutter_inappwebview",
+      "url": "https://github.com/venera-app/flutter_inappwebview",
       "commit": "3ef899b3db57c911b080979f1392253b835f98ab",
       "status": "maintained-fork",
       "reason": "Keep the coordinated 6.2.0-beta.3 platform packages and GraphicsContext disposal fix.",
@@ -59,7 +59,7 @@
     },
     {
       "dependency": "webdav_client",
-      "url": "https://github.com/CyrilPeng/webdav_client",
+      "url": "https://github.com/venera-app/webdav_client",
       "commit": "2f669c98fb81cff1c64fee93466a1475c77e4273",
       "status": "maintained-fork",
       "reason": "Requires the newClient adapter parameter plus redirect, upload and authentication patches.",

@@ -17,7 +17,7 @@ English version: [dependencies.en.md](dependencies.en.md)
 
 ## 当前 Git 依赖
 
-2026-09-28：`flutter_qjs`、`photo_view`、`flutter.widgets`、`flutter_inappwebview` 和 `webdav_client` 曾改用 `CyrilPeng` 下的现有 fork，固定 commit 不变。`flutter_inappwebview` 的六个平台子包通过仓库内相对路径一起解析到同一 fork。该阶段只迁移来源，不升级版本。2026-10-05 起，`photo_view` 改为下文记录的本地 path 包，不再列入当前 Git 清单；回滚时同步恢复依赖声明、锁文件和对应清单记录。
+2026-09-28：`flutter_qjs`、`photo_view`、`flutter.widgets`、`flutter_inappwebview` 和 `webdav_client` 曾改用 `CyrilPeng` 下的现有 fork，固定 commit 不变（2026-11 这些仓库迁到 `venera-app` 名下，固定 commit 未变）。`flutter_inappwebview` 的六个平台子包通过仓库内相对路径一起解析到同一 fork。该阶段只迁移来源，不升级版本。2026-10-05 起，`photo_view` 改为下文记录的本地 path 包，不再列入当前 Git 清单；回滚时同步恢复依赖声明、锁文件和对应清单记录。
 
 这些 fork 的补丁选择、上游审查和更新验证由 VeneraNext 维护者负责。保留原作者版权和许可证；镜像不能替代持续维护，也不能解决许可证缺失。
 
@@ -42,7 +42,7 @@ English version: [dependencies.en.md](dependencies.en.md)
 
 ## 本地维护的 PhotoView
 
-`photo_view` 通过 `path: packages/photo_view` 使用仓库内的 [本地包](../../packages/photo_view/pubspec.yaml)，版本仍为 **0.14.0**。来源是 [CyrilPeng/photo_view](https://github.com/CyrilPeng/photo_view) 的原锁定提交 `a1255d1b5945aad4b7323303ec2ecdf0c90ffc4c`，上游为 [renancaraujo/photo_view](https://github.com/renancaraujo/photo_view)。原作者版权和 [MIT 许可证](../../packages/photo_view/LICENSE) 保持不变；VeneraNext 维护者负责本地补丁和后续上游比较。
+`photo_view` 通过 `path: packages/photo_view` 使用仓库内的 [本地包](../../packages/photo_view/pubspec.yaml)，版本仍为 **0.14.0**。来源是 [CyrilPeng/photo_view](https://github.com/venera-app/photo_view) 的原锁定提交 `a1255d1b5945aad4b7323303ec2ecdf0c90ffc4c`，上游为 [renancaraujo/photo_view](https://github.com/renancaraujo/photo_view)。原作者版权和 [MIT 许可证](../../packages/photo_view/LICENSE) 保持不变；VeneraNext 维护者负责本地补丁和后续上游比较。
 
 [LOCAL_PATCHES.md](../../packages/photo_view/LOCAL_PATCHES.md) 记录原始 Git blob 的 SHA-256、保留文件范围和验证方式。补丁修复尺寸监听器丢弃 `ImageInfo` 克隆造成的泄漏：读取尺寸后在 `finally` 释放克隆，绘制监听器继续独立管理自己的图片。为适配当前 SDK，另有三项等价调用替换：
 

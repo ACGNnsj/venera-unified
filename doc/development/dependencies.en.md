@@ -17,7 +17,7 @@ See the [2026-09-28 audit](dependency_audit.en.md) for ownership and replacement
 
 ## Current Git Dependencies
 
-2026-09-28: `flutter_qjs`, `photo_view`, `flutter.widgets`, `flutter_inappwebview`, and `webdav_client` moved to the existing forks under `CyrilPeng`, without changing pinned commits. The six platform subpackages of `flutter_inappwebview` resolve through repository-relative paths to the same fork. That stage changed provenance only, not versions. On 2026-10-05, `photo_view` became the local path package documented below and left the current Git inventory. Roll back dependency declarations, lockfile, and the corresponding inventory entry together.
+2026-09-28: `flutter_qjs`, `photo_view`, `flutter.widgets`, `flutter_inappwebview`, and `webdav_client` moved to the existing forks under `CyrilPeng`, without changing pinned commits. The forks now live under `venera-app` (the account moved several repositories in 2026-11); pinned commits are unchanged. The six platform subpackages of `flutter_inappwebview` resolve through repository-relative paths to the same fork. That stage changed provenance only, not versions. On 2026-10-05, `photo_view` became the local path package documented below and left the current Git inventory. Roll back dependency declarations, lockfile, and the corresponding inventory entry together.
 
 VeneraNext maintainers own patch selection, upstream review, and validation for these forks. Preserve original copyrights and licenses. Mirroring does not replace ongoing maintenance or resolve missing licenses.
 
@@ -38,7 +38,7 @@ The table uses commit messages to explain why the project cannot immediately swi
 
 ## Locally Maintained PhotoView
 
-`photo_view` resolves through `path: packages/photo_view` to the [local package](../../packages/photo_view/pubspec.yaml), still at version **0.14.0**. Its source is the previously pinned [CyrilPeng/photo_view](https://github.com/CyrilPeng/photo_view) commit `a1255d1b5945aad4b7323303ec2ecdf0c90ffc4c`, with [renancaraujo/photo_view](https://github.com/renancaraujo/photo_view) as upstream. Original copyrights and the [MIT license](../../packages/photo_view/LICENSE) remain unchanged. VeneraNext maintainers own the local patch and future upstream comparisons.
+`photo_view` resolves through `path: packages/photo_view` to the [local package](../../packages/photo_view/pubspec.yaml), still at version **0.14.0**. Its source is the previously pinned [CyrilPeng/photo_view](https://github.com/venera-app/photo_view) commit `a1255d1b5945aad4b7323303ec2ecdf0c90ffc4c`, with [renancaraujo/photo_view](https://github.com/renancaraujo/photo_view) as upstream. Original copyrights and the [MIT license](../../packages/photo_view/LICENSE) remain unchanged. VeneraNext maintainers own the local patch and future upstream comparisons.
 
 [LOCAL_PATCHES.md](../../packages/photo_view/LOCAL_PATCHES.md) records canonical Git blob SHA-256 hashes, retained files, and validation. The patch fixes leaked `ImageInfo` clones in the dimension listener by disposing each clone in `finally` after reading its size. The painting listener continues to own its separate image. Three equivalent calls also replace deprecated SDK APIs:
 

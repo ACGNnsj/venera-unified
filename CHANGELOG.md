@@ -52,12 +52,14 @@
 
 - pdfrx 2.4.8 → 2.11.0，测试夹具跟进其 priority 参数。
 - GitHub Actions 组更新：upload-artifact v7、cache v6、setup-node v7。
+- 三个 fork 依赖（`flutter_inappwebview`、`flutter.widgets`、`webdav_client`）已迁到 `venera-app` 名下，来源地址随之更新，固定 commit 一律未变；`flutter_qjs` 仍在 `CyrilPeng` 下，不动。旧地址在新机器上解析会直接失败（仓库页 404、`info/refs` 401），之前只有 pub 缓存是热的机器才能构建。
 
 ### 仓库维护
 
 - Issue 入口拆分为崩溃／启动、阅读性能、本地导入／数据、网络／WebDAV、界面／其他缺陷与功能建议六类，统一版本、平台、设备、复现与结果字段。崩溃、数据、网络、扩展运行时与其他缺陷要求脱敏日志；阅读性能要求手动诊断摘要，无法取得时需说明原因并提供替代证据；纯界面问题与功能建议不强制日志。
 - 新增不依赖 AI Secrets 的固定格式校验（`issue_policy.py`）：随正文与评论变化复查，维护分类与 `needs: information` 标签，补齐后更新同一条提示，保留旧报告与人工跟进状态，不自动关闭 Issue；日志片段兼容通用 `Exception`／`Error`、简短 HTTP 错误与原生崩溃信息。可选 AI 仅在材料齐全后生成辅助摘要，重复检查更新原评论。
 - 新增中英文《分类与诊断采集说明》（`doc/user/issue_reporting.zh.md`／`.en.md`）与六份 Issue 表单，贡献指南补充提交要求。
+- Windows 构建在复用增量缓存时会带出上一版的安装包，导致产物校验看到两个 zip 而失败；缓存恢复后先清掉旧版本的 zip／安装器／MSIX 再打包。Linux ARM64 拉取依赖加了失败重试，git 依赖瞬断不再直接判死。
 
 ## v1.20.0-rc.1
 
