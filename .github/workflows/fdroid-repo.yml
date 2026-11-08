@@ -94,18 +94,29 @@ jobs:
         run: |
           cd site/fdroid
           echo "$FDROID_KEYSTORE_B64" | base64 --decode > fdroid-repo.jks
-          cat > config.py <<EOF
-          repo_url = "https://acgnnsj.github.io/venera-unified/fdroid/repo"
-          repo_name = "VeneraUnified"
-          repo_description = "VeneraUnified comic reader"
-          keystore = "fdroid-repo.jks"
-          keystorepass = "$FDROID_KEYSTORE_PASS"
-          keypass = "$FDROID_KEYSTORE_PASS"
-          keyalias = "$FDROID_KEY_ALIAS"
-          EOF
+          # fdroidserver 2.x 只读 config.yml，config.py 会被忽略（日志里只有一行
+          # WARNING: Ignoring deprecated config.py），随后按默认 keystore.p12 去找，
+          # 于是报 repo_keyalias/keystore.p12/keystorepass/keypass 全缺。
+          # 用 JSON 写 config.yml（YAML 是 JSON 的超集），密码里的引号、冒号、# 不会被 YAML 解析吃掉。
+          python3 - <<'PY'
+          import json
+          import os
+
+          config = {
+              "repo_url": "https://acgnnsj.github.io/venera-unified/fdroid/repo",
+              "repo_name": "VeneraUnified",
+              "repo_description": "VeneraUnified comic reader",
+              "repo_keyalias": os.environ["FDROID_KEY_ALIAS"],
+              "keystore": "fdroid-repo.jks",
+              "keystorepass": os.environ["FDROID_KEYSTORE_PASS"],
+              "keypass": os.environ["FDROID_KEYSTORE_PASS"],
+          }
+          with open("config.yml", "w", encoding="utf-8") as handle:
+              json.dump(config, handle)
+          PY
           cp ../../newapk/*.apk repo/
           fdroid update
-          rm -f fdroid-repo.jks config.py
+          rm -f fdroid-repo.jks config.yml
       - name: 推回 gh-pages
         run: |
           cd site
