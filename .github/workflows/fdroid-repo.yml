@@ -4,8 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "已发布的标签，例如 v1.20.0-rc.1（取其中的 universal APK）"
+        description: "已发布的标签，例如 v1.20.0（取其中的 APK）"
         required: true
+        type: string
+      asset:
+        description: "Release 里 APK 资产名的通配符。默认 universal 包；它超过 GitHub 单文件 100 MiB 上限时，改填 *-android-arm64-v8a.apk"
+        required: false
+        default: "*-android.apk"
         type: string
 
 concurrency:
@@ -42,19 +47,43 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: 下载 universal APK
+      - name: 下载 APK 并检查体积
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           mkdir -p newapk
-          gh release download "${{ inputs.tag }}" --pattern "*-android.apk" --dir newapk
-          ls newapk
+          gh release download "${{ inputs.tag }}" --pattern "${{ inputs.asset }}" --dir newapk
+          ls -l newapk
+          # GitHub 对分支上的单个文件有 100 MiB 硬上限，超过就整个 push 被拒；
+          # universal 包目前 130–155 MB，所以在推之前先拦住并说清楚换哪个资产。
+          for apk in newapk/*.apk; do
+            size=$(stat -c %s "$apk")
+            echo "$apk: $size 字节"
+            if [ "$size" -gt 104857600 ]; then
+              echo "::error::$(basename "$apk") 有 $size 字节，超过 GitHub 单文件 100 MiB 上限，push 到 gh-pages 会被拒。"
+              echo "把 asset 输入改成 *-android-arm64-v8a.apk（约 56 MB）之类的分 ABI 包，或先给 universal 包瘦身。"
+              exit 1
+            fi
+          done
       - name: 取回已发布的仓内容
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          git clone --branch gh-pages "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" site 2>/dev/null || mkdir -p site
-          mkdir -p site/fdroid/repo
+          set -euo pipefail
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$remote" gh-pages >/dev/null 2>&1; then
+            git clone --branch gh-pages --depth 1 "$remote" site
+          else
+            # 首次运行时 gh-pages 还不存在：起一个孤儿分支，否则后面 git commit 会因为
+            # site 不是 git 仓库而报 not a git repository
+            echo "gh-pages 不存在，创建孤儿分支"
+            mkdir -p site
+            git -C site init --quiet
+            git -C site checkout --quiet --orphan gh-pages
+            git -C site remote add origin "$remote"
+          fi
+          mkdir -p site/fdroid/repo site/fdroid/metadata
       - name: 安装 fdroidserver
         run: pip install fdroidserver
       - name: 生成索引
