@@ -47,8 +47,14 @@ jobs:
           version="$(grep -m1 '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)"
           sed -i "s/^version: .*/version: \"$version\"/" snap/snapcraft.yaml
           grep -m1 '^version:' snap/snapcraft.yaml
-      - name: 安装 snapcraft
-        run: sudo snap install snapcraft --classic
+      - name: 安装 snapcraft 与 LXD
+        run: |
+          sudo snap install snapcraft --classic
+          # snapcraft 8 默认用 LXD 容器构建；runner 用户默认不在 lxd 组里，
+          # 先建好 daemon 与组成员，构建时用 sg 带上组。
+          sudo snap install lxd
+          sudo lxd init --auto
+          sudo usermod -aG lxd "$USER"
       - name: 构建并发布 snap
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
@@ -57,10 +63,9 @@ jobs:
             echo "::warning::缺少 SNAPCRAFT_STORE_CREDENTIALS secret，跳过上传（prerelease 仅构建验证）"
             exit 0
           fi
-          # snapcraft 8 renamed the build subcommand from "snap" to "pack", and
-          # defaults to LXD, which the runner cannot join. Build on the host
-          # instead: the base (core24) matches the runner and the app is prebuilt.
-          snapcraft pack --destructive-mode
+          # snapcraft 8 renamed the build subcommand from "snap" to "pack"; the
+          # build runs inside LXD so the base image matches snapcraft.yaml.
+          sg lxd -c "snapcraft pack"
           channel=stable
           if [[ "${{ inputs.tag || github.ref_name }}" == *-* ]]; then channel=candidate; fi
           snapcraft upload --release="$channel" ./*.snap
