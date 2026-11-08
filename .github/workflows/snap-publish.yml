@@ -57,8 +57,10 @@ jobs:
             echo "::warning::缺少 SNAPCRAFT_STORE_CREDENTIALS secret，跳过上传（prerelease 仅构建验证）"
             exit 0
           fi
-          # snapcraft 8 renamed the build subcommand from "snap" to "pack".
-          snapcraft pack
+          # snapcraft 8 renamed the build subcommand from "snap" to "pack", and
+          # defaults to LXD, which the runner cannot join. Build on the host
+          # instead: the base (core24) matches the runner and the app is prebuilt.
+          snapcraft pack --destructive-mode
           channel=stable
           if [[ "${{ inputs.tag || github.ref_name }}" == *-* ]]; then channel=candidate; fi
           snapcraft upload --release="$channel" ./*.snap
