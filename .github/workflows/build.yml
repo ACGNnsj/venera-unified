@@ -188,6 +188,21 @@ jobs:
           key: windows-build-${{ runner.os }}-${{ hashFiles('pubspec.lock', 'windows/**', 'packages/**') }}
           restore-keys: |
             windows-build-${{ runner.os }}-
+      # 缓存里带着上一次打包留下的安装包；版本一变就会和本次产物同时命中
+      # 下面的产物校验（曾因此报「应当恰好生成一个 Windows zip，实际为 2」）。
+      - name: 清理缓存里的旧安装包
+        shell: pwsh
+        run: |
+          $patterns = @(
+            'VeneraUnified-*-windows.zip',
+            'VeneraUnified-*-windows-installer.exe',
+            'VeneraUnified-*-windows.msix',
+            'VeneraUnified-*-windows.msixbundle',
+            'VeneraUnified-*-windows.msixupload'
+          )
+          foreach ($pattern in $patterns) {
+            Remove-Item -Path "build/windows/$pattern" -Force -ErrorAction SilentlyContinue
+          }
       - name: 准备 Rust 工具链
         run: python .github/scripts/prepare_rust_toolchain.py
       - name: 构建 Windows 安装包
