@@ -3,11 +3,7 @@ import 'package:venera_unified/foundation/opencc_table.dart';
 import 'package:venera_unified/foundation/image_translation/translation_pipeline.dart';
 import 'package:venera_unified/foundation/image_translation/translation_types.dart';
 
-OcrBlock _block(
-  String text, {
-  String language = 'ja',
-  int left = 10,
-}) {
+OcrBlock _block(String text, {String language = 'ja', int left = 10}) {
   return OcrBlock(
     rect: IntRect(left, 20, left + 100, 60),
     text: text,
@@ -28,10 +24,7 @@ void main() {
     test('identical language skips', () {
       expect(sameLanguageAction('ja', 'ja'), SameLanguageAction.skip);
       expect(sameLanguageAction('en', 'en'), SameLanguageAction.skip);
-      expect(
-        sameLanguageAction('zh-TW', 'zh-TW'),
-        SameLanguageAction.skip,
-      );
+      expect(sameLanguageAction('zh-TW', 'zh-TW'), SameLanguageAction.skip);
     });
 
     test('simplified into traditional converts without the model', () {
@@ -42,10 +35,7 @@ void main() {
     });
 
     test('traditional into simplified still goes to the model', () {
-      expect(
-        sameLanguageAction('zh-TW', 'zh'),
-        SameLanguageAction.translate,
-      );
+      expect(sameLanguageAction('zh-TW', 'zh'), SameLanguageAction.translate);
     });
   });
 
@@ -90,18 +80,13 @@ void main() {
         PageOcr([_block('a').letRegion()], const [], const {}).isEmpty,
         isFalse,
       );
-      expect(
-        PageOcr(const [], [_block('a')], const {}).isEmpty,
-        isFalse,
-      );
+      expect(PageOcr(const [], [_block('a')], const {}).isEmpty, isFalse);
     });
 
     test('PageAnalysis carries votes and glossary', () {
-      final analysis = PageAnalysis(
-        [_block('a').letRegion()],
-        {'ja': 2},
-        {'name': '名'},
-      );
+      final analysis = PageAnalysis([_block('a').letRegion()], {'ja': 2}, {
+        'name': '名',
+      });
       expect(analysis.regions.single.text, 'a');
       expect(analysis.languageVotes, {'ja': 2});
       expect(analysis.newGlossary, {'name': '名'});
@@ -117,10 +102,7 @@ void main() {
 
     test('logTranslationFailure never throws', () {
       expect(
-        () => logTranslationFailure(
-          Exception('boom'),
-          StackTrace.current,
-        ),
+        () => logTranslationFailure(Exception('boom'), StackTrace.current),
         returnsNormally,
       );
     });
@@ -147,12 +129,12 @@ void main() {
 
 extension on OcrBlock {
   TranslatedRegion letRegion() => TranslatedRegion(
-        rect: rect,
-        eraseRect: eraseRect,
-        eraseRects: eraseRects,
-        text: text,
-        backgroundColor: backgroundColor,
-        textColor: textColor,
-        lineHeight: lineHeight,
-      );
+    rect: rect,
+    eraseRect: eraseRect,
+    eraseRects: eraseRects,
+    text: text,
+    backgroundColor: backgroundColor,
+    textColor: textColor,
+    lineHeight: lineHeight,
+  );
 }

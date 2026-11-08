@@ -440,8 +440,7 @@ class ModelComponent {
 
   static const markerName = 'verified';
 
-  String get directory =>
-      FilePath.join(App.dataPath, 'translation_models', id);
+  String get directory => FilePath.join(App.dataPath, 'translation_models', id);
 
   bool get isInstalled {
     for (var file in files) {

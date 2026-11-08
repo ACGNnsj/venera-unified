@@ -607,8 +607,7 @@ class TranslationStore with ChangeNotifier {
         'where source_key = ? and comic_id = ? and chapter_id = ?;',
         [entry.value, sourceKey, comicId, entry.key],
       );
-      changed =
-          changed || _db.updatedRows > 0;
+      changed = changed || _db.updatedRows > 0;
     }
     if (changed) _notifyChanged();
   }
@@ -722,7 +721,9 @@ class TranslationStore with ChangeNotifier {
   int get count {
     if (!isInitialized) return 0;
     try {
-      return _db.select("select count(*) as total from translated_page;").first['total']
+      return _db
+              .select("select count(*) as total from translated_page;")
+              .first['total']
           as int;
     } catch (e, s) {
       Log.error("TranslationStore", "count failed: $e", s);

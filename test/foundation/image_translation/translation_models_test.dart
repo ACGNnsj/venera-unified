@@ -20,7 +20,10 @@ void main() {
   group('TranslationModels registry', () {
     test('all lists six components', () {
       expect(TranslationModels.all.length, 6);
-      expect(TranslationModels.find('text_detector'), TranslationModels.detector);
+      expect(
+        TranslationModels.find('text_detector'),
+        TranslationModels.detector,
+      );
       expect(TranslationModels.find('ocr_ja'), TranslationModels.ocrJa);
       expect(TranslationModels.find('nope'), isNull);
     });
@@ -59,18 +62,16 @@ void main() {
 
   group('resolveOcrEngines', () {
     test('auto lists installed line engines in order', () {
-      expect(
-        resolveOcrEngines('auto', installed: {'zh5', 'zh', 'en', 'ko'}),
-        ['zh5', 'en', 'ko'],
-      );
+      expect(resolveOcrEngines('auto', installed: {'zh5', 'zh', 'en', 'ko'}), [
+        'zh5',
+        'en',
+        'ko',
+      ]);
       expect(resolveOcrEngines('auto', installed: {}), isEmpty);
     });
 
     test('v5 replaces v4 when present', () {
-      expect(
-        resolveOcrEngines('zh', installed: {'zh5', 'zh'}),
-        ['zh5'],
-      );
+      expect(resolveOcrEngines('zh', installed: {'zh5', 'zh'}), ['zh5']);
       expect(resolveOcrEngines('zh', installed: {'zh'}), ['zh']);
     });
 
@@ -82,7 +83,11 @@ void main() {
 
     test('unknown code uses the custom engine only', () {
       expect(
-        resolveOcrEngines('xx', installed: {'custom_1234abcd'}, customEngine: 'custom_1234abcd'),
+        resolveOcrEngines(
+          'xx',
+          installed: {'custom_1234abcd'},
+          customEngine: 'custom_1234abcd',
+        ),
         ['custom_1234abcd'],
       );
       expect(resolveOcrEngines('xx', installed: {'en'}), isEmpty);
@@ -121,7 +126,10 @@ void main() {
     test('stateOf is stable per component', () {
       var store = TranslationModelStore.instance;
       expect(
-        identical(store.stateOf(TranslationModels.detector), store.stateOf(TranslationModels.detector)),
+        identical(
+          store.stateOf(TranslationModels.detector),
+          store.stateOf(TranslationModels.detector),
+        ),
         isTrue,
       );
       expect(store.stateOf(TranslationModels.detector).downloading, isFalse);

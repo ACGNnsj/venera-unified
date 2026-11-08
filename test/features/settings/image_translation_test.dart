@@ -35,7 +35,10 @@ void main() {
     expect(find.text('Language & text removal'), findsOneWidget);
     expect(find.text('Translation providers'), findsOneWidget);
     expect(find.text('Glossary'), findsOneWidget);
-    expect(find.text('Translation models', skipOffstage: false), findsOneWidget);
+    expect(
+      find.text('Translation models', skipOffstage: false),
+      findsOneWidget,
+    );
     // Untouched install: no providers, no glossaries, model ids listed.
     expect(find.text('No providers yet'), findsOneWidget);
     expect(find.text('No glossaries yet', skipOffstage: false), findsOneWidget);

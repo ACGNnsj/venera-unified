@@ -14,24 +14,36 @@ void main() {
       expect(key, contains('cid1'));
       expect(key, endsWith('p3@'));
       final p1 = ImageTranslationService.cacheKeyFor('local', 'cid1', 'e1', 1);
-      final p10 = ImageTranslationService.cacheKeyFor('local', 'cid1', 'e1', 10);
+      final p10 = ImageTranslationService.cacheKeyFor(
+        'local',
+        'cid1',
+        'e1',
+        10,
+      );
       expect(p10.startsWith(p1), isFalse);
     });
 
     test('renderedKey separates render modes on the same page', () {
       const page = 'prefix@local@cid1@e1@p1@';
-      final smart =
-          ImageTranslationService.renderedKey(page, InpaintMode.smart);
-      final patch =
-          ImageTranslationService.renderedKey(page, InpaintMode.patch);
+      final smart = ImageTranslationService.renderedKey(
+        page,
+        InpaintMode.smart,
+      );
+      final patch = ImageTranslationService.renderedKey(
+        page,
+        InpaintMode.patch,
+      );
       expect(smart, isNot(patch));
       expect(smart, startsWith(page));
     });
 
     test('scope prefixes nest comic < chapter', () {
       final comic = ImageTranslationService.comicScopePrefix('local', 'cid1');
-      final chapter =
-          ImageTranslationService.chapterScopePrefix('local', 'cid1', 'e1');
+      final chapter = ImageTranslationService.chapterScopePrefix(
+        'local',
+        'cid1',
+        'e1',
+      );
       expect(chapter, startsWith(comic));
     });
   });
@@ -40,13 +52,17 @@ void main() {
     test('fresh service reports idle, marks translate, clears failure', () {
       final service = ImageTranslationService.instance;
       const key = 'test-status@local@cid9@e9@p9@';
-      expect(service.statusOf(key, InpaintMode.smart),
-          PageTranslationStatus.idle);
+      expect(
+        service.statusOf(key, InpaintMode.smart),
+        PageTranslationStatus.idle,
+      );
       expect(service.errorOf(key, InpaintMode.smart), isNull);
       service.markTranslated(key, InpaintMode.smart);
       expect(service.isTranslated(key, InpaintMode.smart), isTrue);
-      expect(service.statusOf(key, InpaintMode.smart),
-          PageTranslationStatus.translated);
+      expect(
+        service.statusOf(key, InpaintMode.smart),
+        PageTranslationStatus.translated,
+      );
       service.clearFailure(key, InpaintMode.smart);
       expect(service.isTranslated(key, InpaintMode.smart), isTrue);
     });
@@ -64,15 +80,21 @@ void main() {
     });
 
     test('disabled by default, enabled after set', () {
-      expect(ImageTranslationService.isEnabledForComic('cidA', 'local'),
-          isFalse);
+      expect(
+        ImageTranslationService.isEnabledForComic('cidA', 'local'),
+        isFalse,
+      );
       ImageTranslationService.setEnabledForComic('cidA', 'local', true);
-      expect(ImageTranslationService.isEnabledForComic('cidA', 'local'),
-          isTrue);
+      expect(
+        ImageTranslationService.isEnabledForComic('cidA', 'local'),
+        isTrue,
+      );
       expect(ImageTranslationService.enabledComicKeys, contains('cidA@local'));
       ImageTranslationService.setEnabledForComic('cidA', 'local', false);
-      expect(ImageTranslationService.isEnabledForComic('cidA', 'local'),
-          isFalse);
+      expect(
+        ImageTranslationService.isEnabledForComic('cidA', 'local'),
+        isFalse,
+      );
     });
   });
 
@@ -89,8 +111,7 @@ void main() {
 
     test('set/get/remove round-trip with block', () {
       final service = ImageTranslationService.instance;
-      expect(
-          service.setGlossaryEntry('cidG', 'local', '史密斯', 'Smith'), isTrue);
+      expect(service.setGlossaryEntry('cidG', 'local', '史密斯', 'Smith'), isTrue);
       expect(service.glossaryOf('cidG', 'local'), {'史密斯': 'Smith'});
       service.removeGlossaryEntry('cidG', 'local', '史密斯', block: true);
       expect(service.glossaryOf('cidG', 'local'), isEmpty);
@@ -103,9 +124,9 @@ void main() {
       final service = ImageTranslationService.instance;
       expect(service.setGlossaryEntry('cidJ', 'local', '', 'x'), isFalse);
       expect(
-          service.setGlossaryEntry(
-              'cidJ', 'local', 'https://example.com/a', 'x'),
-          isFalse);
+        service.setGlossaryEntry('cidJ', 'local', 'https://example.com/a', 'x'),
+        isFalse,
+      );
     });
   });
 

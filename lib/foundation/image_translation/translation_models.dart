@@ -200,8 +200,7 @@ abstract class TranslationModels {
     if (!activeDetector.isInstalled) return false;
     return switch (sourceLang) {
       'auto' =>
-        ocrJa.isInstalled ||
-            _builtInRec.values.any((e) => e.$1.isInstalled),
+        ocrJa.isInstalled || _builtInRec.values.any((e) => e.$1.isInstalled),
       'ja' => ocrJa.isInstalled,
       // v4 misreads Traditional text, so an explicit choice needs v5.
       'zh-TW' => ocrZhV5.isInstalled,
@@ -419,12 +418,16 @@ class TranslationModelStore with ChangeNotifier {
         } catch (_) {
           // Gone so a retry downloads fresh files instead of re-checking bad
           // ones.
-          await Directory(component.directory).deleteIgnoreError(recursive: true);
+          await Directory(
+            component.directory,
+          ).deleteIgnoreError(recursive: true);
           rethrow;
         }
       }
       if (component.marker) {
-        File(component.filePath(ModelComponent.markerName)).writeAsStringSync('');
+        File(
+          component.filePath(ModelComponent.markerName),
+        ).writeAsStringSync('');
       }
       state.progress = 1;
     } catch (e) {
@@ -432,7 +435,11 @@ class TranslationModelStore with ChangeNotifier {
         state.error = e is ModelCheckException
             ? describeModelCheck(e)
             : e.toString();
-        Log.error('Translation Models', 'Failed to download ${component.id}', e);
+        Log.error(
+          'Translation Models',
+          'Failed to download ${component.id}',
+          e,
+        );
       }
     } finally {
       dio.close();
