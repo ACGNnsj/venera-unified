@@ -111,6 +111,27 @@ class ReleaseVersionTest(unittest.TestCase):
         self.assertFalse(MODULE.sync_changelog_heading(self.config))
         self.assertEqual(self.changelog_path.read_bytes(), before)
 
+    def test_dated_heading_satisfies_the_release_section(self):
+        for newline in ("\n", "\r\n"):
+            for heading in ("## v1.2.3-rc.1 - 2026-11-08", "## v1.2.3-rc.1"):
+                with self.subTest(newline=newline, heading=heading):
+                    self.synchronized_files(newline)
+                    self.write(
+                        self.changelog_path,
+                        f"# 更新日志{newline}{newline}{heading}{newline}{newline}- 更新说明{newline}",
+                    )
+                    MODULE.check_release_files("v1.2.3-rc.1")
+                    self.assertFalse(MODULE.sync_changelog_heading(self.config))
+
+    def test_dated_heading_needs_a_real_date(self):
+        self.synchronized_files()
+        self.write(
+            self.changelog_path,
+            "# 更新日志\n\n## v1.2.3-rc.1 - unreleased\n\n- 更新说明\n",
+        )
+        with self.assertRaisesRegex(MODULE.ReleaseVersionError, "does not contain a section"):
+            MODULE.check_release_files()
+
     def test_crlf_check_still_rejects_mismatches(self):
         self.synchronized_files("\r\n", True)
         with self.assertRaisesRegex(MODULE.ReleaseVersionError, "tag .* does not match"):

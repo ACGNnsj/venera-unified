@@ -12,6 +12,16 @@ CHANGELOG_PATH = ROOT / "CHANGELOG.md"
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+(?:-rc\.\d+)?$")
 
 
+def _section_pattern(tag: str) -> re.Pattern[str]:
+    """Match the changelog heading for tag, with or without a release date."""
+    return re.compile(
+        rf"^##[^\S\r\n]+{re.escape(tag)}"
+        r"(?:[^\S\r\n]+-[^\S\r\n]+\d{4}-\d{2}-\d{2})?"
+        r"[^\S\r\n]*(?=\r?$)",
+        re.MULTILINE,
+    )
+
+
 class ReleaseVersionError(RuntimeError):
     pass
 
@@ -81,11 +91,7 @@ def sync_pubspec(config: dict) -> bool:
 def sync_changelog_heading(config: dict) -> bool:
     text = _read(CHANGELOG_PATH)
     tag = release_tag(config)
-    if re.search(
-        rf"^##[^\S\r\n]+{re.escape(tag)}[^\S\r\n]*(?=\r?$)",
-        text,
-        re.MULTILINE,
-    ):
+    if _section_pattern(tag).search(text):
         return False
     updated = re.sub(
         r"^##[^\S\r\n]+(?:未发布|Unreleased)[^\S\r\n]*(?=\r?$)",
@@ -128,11 +134,7 @@ def check_release_files(tag: str | None = None) -> None:
         )
 
     changelog_text = _read(CHANGELOG_PATH)
-    if not re.search(
-        rf"^##[^\S\r\n]+{re.escape(expected_tag)}[^\S\r\n]*(?=\r?$)",
-        changelog_text,
-        re.MULTILINE,
-    ):
+    if not _section_pattern(expected_tag).search(changelog_text):
         raise ReleaseVersionError(
             f"CHANGELOG.md does not contain a section for {expected_tag}"
         )
