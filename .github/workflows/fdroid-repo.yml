@@ -19,6 +19,7 @@ concurrency:
 
 permissions:
   contents: write
+  pages: read
 
 jobs:
   publish:
@@ -66,6 +67,26 @@ jobs:
               exit 1
             fi
           done
+      - name: 解析仓库对外地址
+        id: site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Pages 的对外地址可能与 <owner>.github.io/<repo> 不同：账号级自定义域会把
+          # github.io 跳转到自定义域，而 F-Droid 索引里的 repo address 必须写客户端真正
+          # 请求的那个地址，所以先问 Pages API，问不到（还没开启）才退回 github.io。
+          html=""
+          html=$(gh api "repos/${{ github.repository }}/pages" --jq '.html_url' 2>/dev/null || true)
+          if [ -z "$html" ] || [ "$html" = "null" ]; then
+            owner=$(echo "${{ github.repository }}" | cut -d/ -f1 | tr '[:upper:]' '[:lower:]')
+            name=$(echo "${{ github.repository }}" | cut -d/ -f2)
+            html="https://${owner}.github.io/${name}/"
+          fi
+          base="${html/http:/https:}"
+          base="${base%/}"
+          echo "repo_url=${base}/fdroid/repo" >> "$GITHUB_OUTPUT"
+          echo "索引地址 ${base}/fdroid/repo"
       - name: 取回已发布的仓内容
         env:
           GH_TOKEN: ${{ github.token }}
@@ -91,6 +112,7 @@ jobs:
           FDROID_KEYSTORE_B64: ${{ secrets.FDROID_KEYSTORE_B64 }}
           FDROID_KEYSTORE_PASS: ${{ secrets.FDROID_KEYSTORE_PASS }}
           FDROID_KEY_ALIAS: ${{ secrets.FDROID_KEY_ALIAS }}
+          REPO_URL: ${{ steps.site.outputs.repo_url }}
         run: |
           cd site/fdroid
           echo "$FDROID_KEYSTORE_B64" | base64 --decode > fdroid-repo.jks
@@ -103,7 +125,7 @@ jobs:
           import os
 
           config = {
-              "repo_url": "https://acgnnsj.github.io/venera-unified/fdroid/repo",
+              "repo_url": os.environ["REPO_URL"],
               "repo_name": "VeneraUnified",
               "repo_description": "VeneraUnified comic reader",
               "repo_keyalias": os.environ["FDROID_KEY_ALIAS"],
@@ -115,7 +137,9 @@ jobs:
               json.dump(config, handle)
           PY
           cp ../../newapk/*.apk repo/
-          fdroid update
+          # 没有 metadata 时 fdroid update 只警告一句就跳过，索引里 numPackages=0；
+          # -c 会为缺 metadata 的包生成骨架（之后随 gh-pages 提交留存），本次与后续都能索引到。
+          fdroid update --create-metadata
           rm -f fdroid-repo.jks config.yml
       - name: 推回 gh-pages
         run: |
