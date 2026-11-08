@@ -16,6 +16,7 @@ import 'package:zip_flutter/zip_flutter.dart';
 
 import 'download_task.dart';
 import 'download_retry.dart';
+import 'import_export/cbz.dart';
 
 class ArchiveDownloadTask extends DownloadTask {
   final String archiveUrl;
@@ -299,11 +300,11 @@ class ArchiveDownloadTask extends DownloadTask {
       } finally {
         await staging.deleteIgnoreError(recursive: true);
       }
-    } else {
-      await Isolate.run(() {
-        ZipFile.openAndExtract(archive, outDir);
-      });
+      return;
     }
+    // Reuse the import ladder (zip_flutter -> 7z -> pure Dart) so archives
+    // still extract on platforms without a zip_flutter native build.
+    await CBZ.extractArchive(File(archive), out);
   }
 
   @override

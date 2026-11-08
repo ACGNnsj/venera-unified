@@ -40,14 +40,7 @@ abstract final class AppDataArchive {
           stagingPath,
           settingsJson: settingsJson,
         );
-        final zip = ZipFile.open(destinationPath);
-        try {
-          for (final name in entries) {
-            zip.addFile(name, p.join(stagingPath, name));
-          }
-        } finally {
-          zip.close();
-        }
+        _writeZip(entries, stagingPath, destinationPath);
         if (syncContentId != null) {
           final content = DataSyncContentJournal.open(dataPath);
           try {
@@ -81,6 +74,46 @@ abstract final class AppDataArchive {
   /// The caller owns the extraction directory and any cleanup after failure.
   static Future<void> extract(String archivePath, String outputPath) =>
       Isolate.run(() => _extractZip(archivePath, outputPath));
+}
+
+/// Writes [entries] (paths relative to [stagingPath]) into a zip archive.
+///
+/// zip_flutter has no native build on every platform the app runs on (for
+/// example ohos), and its Dart entry point throws there, so the archive is
+/// encoded with the pure Dart encoder when the native writer is unavailable.
+void _writeZip(
+  List<String> entries,
+  String stagingPath,
+  String destinationPath,
+) {
+  try {
+    final zip = ZipFile.open(destinationPath);
+    try {
+      for (final name in entries) {
+        zip.addFile(name, p.join(stagingPath, name));
+      }
+    } finally {
+      zip.close();
+    }
+    return;
+  } catch (_) {
+    final partial = File(destinationPath);
+    if (partial.existsSync()) {
+      try {
+        partial.deleteSync();
+      } catch (_) {
+        // The rewrite below fails loudly if the stale archive cannot go.
+      }
+    }
+  }
+  final archive = archive_io.Archive();
+  for (final name in entries) {
+    final file = File(p.join(stagingPath, name));
+    archive.addFile(archive_io.ArchiveFile.bytes(name, file.readAsBytesSync()));
+  }
+  File(
+    destinationPath,
+  ).writeAsBytesSync(archive_io.ZipEncoder().encodeBytes(archive));
 }
 
 Future<void> _deleteTemporary(FileSystemEntity entity) async {

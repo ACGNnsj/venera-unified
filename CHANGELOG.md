@@ -46,6 +46,7 @@
 - 自托管 F-Droid 仓已端到端跑通，索引对外地址 `https://gallery.acgmn.asia/venera-unified/fdroid/repo`：`gh-pages` 首次运行时自动建孤儿分支，索引里的仓库地址跟随 Pages 的对外域名（本账号挂自定义域，`github.io` 会跳转），应用名称、摘要与描述改为随主仓 `fdroid/metadata/` 维护。受 GitHub 单文件 100 MiB 上限限制，universal 包（148 MB）不能进 `gh-pages`，当前自建仓只收 arm64-v8a 分 ABI 包。
 - 鸿蒙（HarmonyOS NEXT）实验管线：可复现的未签名 HAP 构建（arm64 与 x64），sqlite3、rhttp、qjs、7zip 四个原生库直接编译，x64 模拟器可冷启动进入主页；系统代理、选目录／选文件／另存为、PNG 编码改走显式分支，不再靠 MissingPluginException 冒泡。仍不参与主 CI 阻塞。
 - 鸿蒙上缺失原生实现的功能改为明确降级而非崩溃：PDF 导入选项隐藏，文件分享提示该平台不支持、文本分享改用剪贴板，生物识别探测读作不支持（退回 PIN／密码），阅读器与设置页的图像翻译入口在缺 ONNX Runtime 时给出说明。
+- 鸿蒙 x64 模拟器验通三条核心闭环：在线书源（JS 源搜索、详情、看图）、本地归档（CBZ／ZIP／7z 归档下载后由阅读器直接从归档内读图）、WebDAV 数据同步（探测 + 上传归档，服务端可解出数据库与书源）。为此修掉两处只认 zip_flutter 原生库的分支：归档下载的解压改走 CBZ 三级降级梯子，数据同步／导出应用数据的备份 zip 在原生写入不可用时改用纯 Dart 编码。
 
 ### 依赖
 
