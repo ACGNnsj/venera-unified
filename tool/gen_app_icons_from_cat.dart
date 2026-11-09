@@ -198,7 +198,17 @@ void main(List<String> args) {
   }
   _write('windows/runner/resources/app_icon.ico', encodeIco(win));
 
-  // 5. README header logo.
+  // 5. MSIX / snap / about-page / deb icon faces (default preset, opaque).
+  _write(
+    'assets/app_icon.png',
+    encodePng(_rz(defaultFlat, width: 512, height: 512)),
+  );
+  _write(
+    'debian/gui/venera-unified.png',
+    encodePng(_rz(defaultFlat, width: 256, height: 256)),
+  );
+
+  // 6. README header logo.
   _write(
     'assets/readme_logo.png',
     encodePng(_rz(defaultArt, width: 512, height: 512)),
