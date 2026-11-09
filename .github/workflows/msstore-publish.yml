@@ -44,7 +44,12 @@ jobs:
       - name: 安装 msstore CLI
         run: |
           curl -sL -o msstore.tar.gz https://github.com/microsoft/msstore-cli/releases/download/v0.4.4/MSStoreCLI-linux-x64.tar.gz
-          curl -sL https://github.com/microsoft/msstore-cli/releases/download/v0.4.4/MSStoreCLI-linux-x64.tar.gz.sha256.txt | iconv -f UTF-16LE -t UTF-8 | sha256sum -c --status
+          expected=$(curl -sL https://github.com/microsoft/msstore-cli/releases/download/v0.4.4/MSStoreCLI-linux-x64.tar.gz.sha256.txt | iconv -f UTF-16LE -t UTF-8 | grep -oE "[0-9a-f]{64}" | head -1)
+          actual=$(sha256sum msstore.tar.gz | grep -oE "^[0-9a-f]{64}")
+          if [ -z "$expected" ] || [ "$expected" != "$actual" ]; then
+            echo "::error::msstore CLI 校验失败 expected=$expected actual=$actual"
+            exit 1
+          fi
           mkdir -p msstore && tar xzf msstore.tar.gz -C msstore
           echo "$PWD/msstore" >> "$GITHUB_PATH"
       - name: 验证凭据与应用列表
