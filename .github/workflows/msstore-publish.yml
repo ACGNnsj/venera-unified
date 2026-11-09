@@ -59,8 +59,11 @@ jobs:
           MSSTORE_CLIENT_ID: ${{ secrets.MSSTORE_CLIENT_ID }}
           MSSTORE_CLIENT_SECRET: ${{ secrets.MSSTORE_CLIENT_SECRET }}
         run: |
-          msstore reconfigure --tenantId "$MSSTORE_TENANT_ID" --sellerId "$MSSTORE_SELLER_ID" --clientId "$MSSTORE_CLIENT_ID" --clientSecret "$MSSTORE_CLIENT_SECRET"
-          msstore apps list --output-stream stdout
+          set -x
+          msstore reconfigure --tenantId "$MSSTORE_TENANT_ID" --sellerId "$MSSTORE_SELLER_ID" --clientId "$MSSTORE_CLIENT_ID" --clientSecret "$MSSTORE_CLIENT_SECRET" 2>&1 | tail -40
+          echo "RECONFIGURE_EXIT=${PIPESTATUS[0]}"
+          msstore apps list --output-stream stdout 2>&1 | tail -40
+          echo "APPS_EXIT=${PIPESTATUS[0]}"
       - name: 发布到商店
         if: ${{ inputs.dry_run == false }}
         env:
