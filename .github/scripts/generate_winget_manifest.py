@@ -79,7 +79,7 @@ def validate_installer_path(version: str, path: Path) -> None:
 
 
 def manifest_dir(output: Path, version: str) -> Path:
-    return output / "manifests" / "c" / "CyrilPeng" / "Venera Unified" / version
+    return output / "manifests" / "a" / "ACGNnsj" / "VeneraUnified" / version
 
 
 def clean_output(path: Path) -> None:
