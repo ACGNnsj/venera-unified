@@ -143,14 +143,14 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", required=True)
     parser.add_argument("--manifest-root", type=Path, required=True)
-    parser.add_argument("--fork-repo", default="CyrilPeng/winget-pkgs")
+    parser.add_argument("--fork-repo", default="ACGNnsj/winget-pkgs")
     parser.add_argument("--upstream-repo", default="microsoft/winget-pkgs")
     parser.add_argument("--base-branch", default="master")
     parser.add_argument("--branch")
     args = parser.parse_args()
 
     try:
-        branch = args.branch or f"cyrilpeng-veneranext-{args.version}"
+        branch = args.branch or f"acgnnsj-venera-unified-{args.version}"
         files = manifest_files(args.manifest_root, args.version)
         create_or_update_branch(
             args.fork_repo,
