@@ -72,11 +72,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "reconfigure failed with exit code $LASTEXITCODE" }
           # apps list 只列 API 视角的「托管应用」，本账号返回空是正常的；
           # 直接按 Store ID 取一次提交，能拿到 JSON 说明凭据与权限都通。
-          $out = msstore submission get 9PPRKVBR61W9 --verbose 2>&1 | Out-String
-          Write-Host "SUBMISSION_OUTPUT_START"
-          Write-Host $out
-          Write-Host "SUBMISSION_OUTPUT_END"
-          if ($LASTEXITCODE -ne 0) { throw "submission get failed with exit code $LASTEXITCODE" }
+          msstore submission get 9PPRKVBR61W9
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::读取提交失败：多半是该 Entra 应用还没在 Partner Center 的「用户管理 → Microsoft Entra 应用程序」里被授予 Manager 角色"
+            throw "submission get failed with exit code $LASTEXITCODE"
+          }
       - name: 发布到商店
         if: ${{ inputs.dry_run == false }}
         shell: pwsh
