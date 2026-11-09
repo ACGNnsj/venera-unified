@@ -97,5 +97,6 @@ jobs:
         run: |
           msstore reconfigure --tenantId "$env:MSSTORE_TENANT_ID" --sellerId "$env:MSSTORE_SELLER_ID" --clientId "$env:MSSTORE_CLIENT_ID" --clientSecret "$env:MSSTORE_CLIENT_SECRET"
           if ($LASTEXITCODE -ne 0) { throw "reconfigure failed with exit code $LASTEXITCODE" }
-          msstore publish .\pkg --inputDirectory .\pkg --appId 9PPRKVBR61W9
+          $pkg = (Get-ChildItem pkg -Filter '*.msixupload').FullName
+          msstore publish "$pkg" --inputDirectory .\pkg --appId 9PPRKVBR61W9
           if ($LASTEXITCODE -ne 0) { throw "publish failed with exit code $LASTEXITCODE" }
