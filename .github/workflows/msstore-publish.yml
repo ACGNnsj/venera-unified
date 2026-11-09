@@ -36,7 +36,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p pkg
-          gh release download "${{ inputs.tag }}" --pattern "*.msixupload" --dir pkg
+          gh release download "${{ inputs.tag }}" --repo "${{ github.repository }}" --pattern "*.msixupload" --dir pkg
           ls pkg
       - uses: actions/setup-dotnet@v6
         with:
