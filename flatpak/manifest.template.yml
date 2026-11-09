@@ -183,6 +183,14 @@ modules:
         # 启动脚本把自己那份 lib 目录拼到前面，同时保留 flatpak 自己注入的路径。
         printf '#!/bin/sh\nexport LD_LIBRARY_PATH="/app/lib/venera-unified/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"\nexec /app/lib/venera-unified/venera-unified "$@"\n' > /app/bin/venera-unified
         chmod +x /app/bin/venera-unified
+      # Flathub 上架用元数据：desktop 文件、图标与 AppStream metainfo。
+      # debian/gui 下的是 deb 模板（缺 Exec、Icon 是裸名），这里按 flatpak 安装形态落盘。
+      - |
+        mkdir -p /app/share/applications /app/share/icons/hicolor/256x256/apps /app/share/metainfo
+        sed -e 's|^Icon=.*|Icon=io.github.venera.unified|' -e 's|^Comment=.*|Comment=Comic reader|' debian/gui/venera-unified.desktop > /app/share/applications/io.github.venera.unified.desktop
+        printf 'Exec=venera-unified %%U\n' >> /app/share/applications/io.github.venera.unified.desktop
+        install -m644 debian/gui/venera-unified.png /app/share/icons/hicolor/256x256/apps/io.github.venera.unified.png
+        install -m644 flatpak/io.github.venera.unified.metainfo.xml /app/share/metainfo/
     sources:
       - type: git
         url: https://github.com/ACGNnsj/venera-unified.git
