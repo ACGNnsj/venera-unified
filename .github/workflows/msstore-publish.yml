@@ -72,7 +72,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "reconfigure failed with exit code $LASTEXITCODE" }
           # apps list 只列 API 视角的「托管应用」，本账号返回空是正常的；
           # 直接按 Store ID 取一次提交，能拿到 JSON 说明凭据与权限都通。
-          msstore submission get 9PPRKVBR61W9
+          $out = msstore submission get 9PPRKVBR61W9 --verbose 2>&1 | Out-String
+          Write-Host "SUBMISSION_OUTPUT_START"
+          Write-Host $out
+          Write-Host "SUBMISSION_OUTPUT_END"
           if ($LASTEXITCODE -ne 0) { throw "submission get failed with exit code $LASTEXITCODE" }
       - name: 发布到商店
         if: ${{ inputs.dry_run == false }}
