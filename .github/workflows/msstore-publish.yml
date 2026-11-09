@@ -52,6 +52,10 @@ jobs:
           fi
           mkdir -p msstore && tar xzf msstore.tar.gz -C msstore
           echo "$PWD/msstore" >> "$GITHUB_PATH"
+      - name: 安装 CLI 需要的 keyring 依赖
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libsecret-1-0
       - name: 验证凭据与应用列表
         env:
           MSSTORE_TENANT_ID: ${{ secrets.MSSTORE_TENANT_ID }}
@@ -59,11 +63,13 @@ jobs:
           MSSTORE_CLIENT_ID: ${{ secrets.MSSTORE_CLIENT_ID }}
           MSSTORE_CLIENT_SECRET: ${{ secrets.MSSTORE_CLIENT_SECRET }}
         run: |
-          set -x
-          msstore reconfigure --tenantId "$MSSTORE_TENANT_ID" --sellerId "$MSSTORE_SELLER_ID" --clientId "$MSSTORE_CLIENT_ID" --clientSecret "$MSSTORE_CLIENT_SECRET" 2>&1 | tail -40
-          echo "RECONFIGURE_EXIT=${PIPESTATUS[0]}"
-          msstore apps list --output-stream stdout 2>&1 | tail -40
-          echo "APPS_EXIT=${PIPESTATUS[0]}"
+          set +e
+          msstore reconfigure --tenantId "$MSSTORE_TENANT_ID" --sellerId "$MSSTORE_SELLER_ID" --clientId "$MSSTORE_CLIENT_ID" --clientSecret "$MSSTORE_CLIENT_SECRET" > /tmp/reconf.log 2>&1
+          echo "RECONFIGURE_EXIT=$?"
+          grep -viE "^\\s*(__|\||\\)" /tmp/reconf.log | tail -30
+          msstore apps list --output-stream stdout > /tmp/apps.log 2>&1
+          echo "APPS_EXIT=$?"
+          tail -30 /tmp/apps.log
       - name: 发布到商店
         if: ${{ inputs.dry_run == false }}
         env:
