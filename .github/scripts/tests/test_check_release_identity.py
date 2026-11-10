@@ -1,4 +1,6 @@
+import contextlib
 import importlib.util
+import io
 import tempfile
 import unittest
 from pathlib import Path
@@ -15,6 +17,20 @@ def write(root: Path, relative: str, text: str) -> None:
     path = root / relative
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding='utf-8')
+
+
+def run_main(args: list[str]) -> tuple[int, str]:
+    """Run identity.main() with stdout captured.
+
+    Negative cases intentionally feed bad fixtures, and main() reports
+    them with ::error:: lines for CI. Capturing keeps those lines out of
+    the test log so GitHub doesn't pin misleading error annotations on
+    green runs; the returned output is still asserted below.
+    """
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        code = identity.main(args)
+    return code, buf.getvalue()
 
 
 class ReleaseIdentityTest(unittest.TestCase):
@@ -46,14 +62,18 @@ class ReleaseIdentityTest(unittest.TestCase):
         self.write_defaults()
         found = identity.collect(self.root)
         self.assertEqual(identity.check(found), [])
-        self.assertEqual(identity.main(['--root', str(self.root)]), 0)
+        code, out = run_main(['--root', str(self.root)])
+        self.assertEqual(code, 0)
+        self.assertNotIn('::error::', out)
 
     def test_rejects_mismatched_bundle_identifier(self):
         self.write_defaults()
         write(self.root, 'linux/CMakeLists.txt', 'set(APPLICATION_ID "io.github.other.unified")\n')
         problems = identity.check(identity.collect(self.root))
         self.assertTrue(any('包标识不一致' in problem for problem in problems), problems)
-        self.assertEqual(identity.main(['--root', str(self.root)]), 1)
+        code, out = run_main(['--root', str(self.root)])
+        self.assertEqual(code, 1)
+        self.assertIn('::error::', out)
 
     def test_rejects_executable_name_drift(self):
         self.write_defaults(exe='VeneraNext.exe')
