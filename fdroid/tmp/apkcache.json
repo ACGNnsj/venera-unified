@@ -162,5 +162,86 @@
     "size": 57468194,
     "apkName": "VeneraUnified-1.21.0-android-arm64-v8a.apk",
     "added": 1794179486.834059
+  },
+  "VeneraUnified-1.21.1-android-arm64-v8a.apk": {
+    "hash": "f635f0fba52b7440a11b99f40c19986d16f5689329da90c7430e99218a69599f",
+    "hashType": "sha256",
+    "uses-permission": [
+      [
+        "android.permission.INTERNET",
+        null
+      ],
+      [
+        "android.permission.REQUEST_INSTALL_PACKAGES",
+        null
+      ],
+      [
+        "android.permission.ACCESS_NETWORK_STATE",
+        null
+      ],
+      [
+        "android.permission.FOREGROUND_SERVICE",
+        null
+      ],
+      [
+        "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
+        null
+      ],
+      [
+        "android.permission.POST_NOTIFICATIONS",
+        null
+      ],
+      [
+        "android.permission.WAKE_LOCK",
+        null
+      ],
+      [
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        null
+      ],
+      [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        null
+      ],
+      [
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        null
+      ],
+      [
+        "android.permission.USE_BIOMETRIC",
+        null
+      ],
+      [
+        "android.permission.CAMERA",
+        null
+      ],
+      [
+        "android.permission.USE_FINGERPRINT",
+        null
+      ],
+      [
+        "io.github.venera.unified.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+        null
+      ]
+    ],
+    "uses-permission-sdk-23": [],
+    "features": [],
+    "icons_src": {},
+    "icons": {},
+    "antiFeatures": {},
+    "packageName": "io.github.venera.unified",
+    "versionCode": 2482,
+    "name": "Venera Unified",
+    "versionName": "1.21.1",
+    "minSdkVersion": 24,
+    "targetSdkVersion": 36,
+    "nativecode": [
+      "arm64-v8a"
+    ],
+    "sig": "aac2d5cc6cdfc209294ed351198c24c3",
+    "signer": "16bb6bed09de33796fbf603cc2530c29d60f8350601deeffb8be3c440372850f",
+    "size": 57714778,
+    "apkName": "VeneraUnified-1.21.1-android-arm64-v8a.apk",
+    "added": 1794279062.590057
   }
 }
