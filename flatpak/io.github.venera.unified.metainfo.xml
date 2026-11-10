@@ -20,6 +20,16 @@
     </ul>
   </description>
   <launchable type="desktop-id">io.github.venera.unified.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/ACGNnsj/venera-unified/a2d7a778e4cf43083f9aa64eda27561e64065f9b/flatpak/screenshots/main-window.png</image>
+      <caption>Main library view</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/ACGNnsj/venera-unified/a2d7a778e4cf43083f9aa64eda27561e64065f9b/flatpak/screenshots/desktop.png</image>
+      <caption>Main window on the desktop</caption>
+    </screenshot>
+  </screenshots>
   <url type="homepage">https://github.com/ACGNnsj/venera-unified</url>
   <url type="bugtracker">https://github.com/ACGNnsj/venera-unified/issues</url>
   <url type="vcs-browser">https://github.com/ACGNnsj/venera-unified</url>
