@@ -1366,7 +1366,9 @@
     "Saving images... @a/@b": "正在保存图片… @a/@b",
     "Saved @a images, skipped @b, failed @c": "已保存 @a 张；跳过 @b 张；失败 @c 张",
     "Image translation is unavailable on this HarmonyOS build": "此鸿蒙版本暂不支持图像翻译",
-    "OCR needs ONNX Runtime, which this build does not ship. These settings stay for synced profiles but cannot run here.": "OCR 需要 ONNX Runtime，本版本未内置。这些设置会随同步配置保留，但在此设备上无法运行。"
+    "OCR needs ONNX Runtime, which this build does not ship. These settings stay for synced profiles but cannot run here.": "OCR 需要 ONNX Runtime，本版本未内置。这些设置会随同步配置保留，但在此设备上无法运行。",
+    "Anime4K shader sharpening": "Anime4K 着色器锐化",
+    "GPU-baked Push filter for reader pages. Off by default; applies to newly loaded pages.": "阅读页 GPU 烘焙 Push 滤波。默认关闭，对新加载的页面生效。"
   },
   "zh_TW": {
     "TV low-memory mode": "TV 低記憶體模式",
@@ -2735,6 +2737,8 @@
     "Saving images... @a/@b": "正在儲存圖片… @a/@b",
     "Saved @a images, skipped @b, failed @c": "已儲存 @a 張；略過 @b 張；失敗 @c 張",
     "Image translation is unavailable on this HarmonyOS build": "此鴻蒙版本暫不支援圖像翻譯",
-    "OCR needs ONNX Runtime, which this build does not ship. These settings stay for synced profiles but cannot run here.": "OCR 需要 ONNX Runtime，本版本未內建。這些設定會隨同步設定保留，但在此裝置上無法執行。"
+    "OCR needs ONNX Runtime, which this build does not ship. These settings stay for synced profiles but cannot run here.": "OCR 需要 ONNX Runtime，本版本未內建。這些設定會隨同步設定保留，但在此裝置上無法執行。",
+    "Anime4K shader sharpening": "Anime4K 著色器銳化",
+    "GPU-baked Push filter for reader pages. Off by default; applies to newly loaded pages.": "閱讀頁 GPU 烘焙 Push 濾波。預設關閉，對新載入的頁面生效。"
   }
 }

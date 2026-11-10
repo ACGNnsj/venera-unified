@@ -134,6 +134,8 @@ flutter:
     - assets/launcher_icon_green.ico
     - assets/launcher_icon_orange.ico
     - assets/launcher_icon_silver.ico
+  shaders:
+    - shaders/anime4k_push.frag
 # fonts:
 
 # Metadata consumed by .github/scripts/build_arch_package.py (no Dart package required).

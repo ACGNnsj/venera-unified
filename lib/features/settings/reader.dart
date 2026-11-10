@@ -820,12 +820,11 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
             callback: () => context.to(() => const ImageTranslationSettings()),
             actionTitle: "Edit".tl,
           ).toSliver(),
-          if (App.isAndroid)
-            CallbackSetting(
-              title: "Image Upscaling".tl,
-              callback: () => context.to(() => const UpscaleSetting()),
-              actionTitle: "Edit".tl,
-            ).toSliver(),
+          CallbackSetting(
+            title: "Image Upscaling".tl,
+            callback: () => context.to(() => const UpscaleSetting()),
+            actionTitle: "Edit".tl,
+          ).toSliver(),
           SliderSetting.reader(
             title: "Number of images preloaded".tl,
             preference: ReaderPreferences.preloadImageCount,

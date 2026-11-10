@@ -38,6 +38,13 @@ class _UpscaleSettingState extends SettingsSaveState<UpscaleSetting> {
             subtitle: "Also process images saved to downloads".tl,
             preference: ReaderPreferences.upscaleApplyToDownloads,
           ).toSliver(),
+          SwitchSetting.reader(
+            title: "Anime4K shader sharpening".tl,
+            subtitle:
+                "GPU-baked Push filter for reader pages. Off by default; applies to newly loaded pages."
+                    .tl,
+            preference: ReaderPreferences.anime4KShader,
+          ).toSliver(),
           ListTile(
             title: Text("Upscale model".tl),
             subtitle: Text(Anime4KV4ModelManager.selectedDef.displayName),

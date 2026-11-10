@@ -11,18 +11,18 @@ import 'package:path_provider/path_provider.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/log.dart';
 
+import 'acnet_ffi_pipeline.dart';
 import 'anime4k_v4_model_manager.dart';
 import 'nnapi_devices.dart';
 
 /// Anime4K v4 超分服务（官方 ACNet 2×）。
 ///
-/// 基于 Anime4K v4 超分 ONNX 模型，经原生（Kotlin + ONNX Runtime）完成超分辨率，
-/// 倍数由模型实际维度决定。
+/// 基于 Anime4K v4 超分 ONNX 模型完成超分辨率，倍数由模型实际维度决定。
 ///  - 单例 + 缓存 + 任务队列；
-///  - 通过 [channelName] MethodChannel 与原生 [UpscaleEngine] 对接；
-///  - 1 通道（Y 亮度）模型强制 CPU；3 通道模型优先 NNAPI，失败回退 CPU。
-///
-/// v4 仅 Android 生效，非 Android 时 [isAvailable] 为 false。
+///  - Android 经 [channelName] MethodChannel 与原生 [UpscaleEngine] 对接
+///    （1 通道强制 CPU；3 通道优先 NNAPI，失败回退 CPU）；
+///  - 其他平台走 [AcnetFfiPipeline]：同一套分块数学经 ORT FFI 跨平台推理
+///    （DirectML / CoreML / XNNPACK / CPU），首 tile 与 CPU 双跑自检。
 class Anime4KV4Service {
   Anime4KV4Service._internal();
 
@@ -116,8 +116,26 @@ class Anime4KV4Service {
     return _initFuture ??= init();
   }
 
-  /// 模型是否可用（已就绪到本地且当前平台支持）。
-  bool get isAvailable => App.isAndroid && _modelPath != null;
+  /// 模型是否可用（已就绪到本地）。Android 走原生通道，其他平台走 FFI。
+  bool get isAvailable => _modelPath != null;
+
+  /// 解析可用模型路径；平台通道不可用（单测/受限环境）时按模型缺失处理。
+  Future<String?> _resolveModelPath(String cacheKey) async {
+    try {
+      if (_modelPath == null) {
+        if (!await checkModelAvailable()) {
+          Log.warning(
+            'Anime4KV4',
+            'Model not available, skipping for $cacheKey',
+          );
+          return null;
+        }
+      }
+      return _modelPath;
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<bool> checkModelAvailable() async {
     if (_modelPath != null) {
@@ -193,25 +211,15 @@ class Anime4KV4Service {
 
   /// 处理图片字节数据，返回超分后的 PNG 字节数据（倍数由模型决定）。
   ///
-  /// 模型缺失或非 Android 时直接返回 null（上层据此回退或保持原图）。
+  /// 模型缺失时直接返回 null（上层据此回退或保持原图）。
   Future<Uint8List?> processImage({
     required Uint8List imageBytes,
     required String cacheKey,
     double intensity = 1.0,
   }) async {
-    if (!App.isAndroid) {
-      // v4 依赖 Android 原生 ONNX Runtime，非 Android 不处理。
-      return null;
-    }
     // 首次请求时懒初始化（抽取内置模型 + 建缓存目录），调用方无需启动钩子。
     await ensureInitialized();
-    if (_modelPath == null) {
-      if (!await checkModelAvailable()) {
-        Log.warning('Anime4KV4', 'Model not available, skipping for $cacheKey');
-        return null;
-      }
-    }
-    final modelPath = _modelPath;
+    final modelPath = await _resolveModelPath(cacheKey);
     if (modelPath == null) return null;
 
     final fullKey = buildCacheKey(
@@ -238,7 +246,15 @@ class Anime4KV4Service {
         Log.info('Anime4KV4', 'processing image $cacheKey');
 
         Uint8List? result;
-        if (shouldUseNnapi(
+        if (!App.isAndroid) {
+          // 非 Android：同一套分块数学经 ORT FFI 跨平台推理。
+          result = await AcnetFfiPipeline.upscale(
+            imageBytes: imageBytes,
+            modelPath: modelPath,
+            channels: Anime4KV4ModelManager.selectedDef.channels,
+            intensity: intensity,
+          );
+        } else if (shouldUseNnapi(
           Anime4KV4ModelManager.selectedDef.channels,
           nnapiAvailable: _nnapiCapable,
         )) {

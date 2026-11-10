@@ -8,6 +8,7 @@ import 'package:venera_unified/features/reader/image_position.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'image_dimensions.dart';
+import 'anime4k_shader.dart';
 import 'auto_reading.dart';
 
 class ComicImage extends StatefulWidget {
@@ -117,6 +118,8 @@ List<Rect> splitWideImageSourceRects(Size imageSize, {required bool invert}) {
 class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
   ImageStream? _imageStream;
   ImageInfo? _imageInfo;
+  ui.Image? _bakedImage;
+  int _bakeToken = 0;
   ImageChunkEvent? _loadingProgress;
   bool _isListeningToStream = false;
   late bool _invertColors;
@@ -260,6 +263,7 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
   void _handleImageFrame(ImageInfo imageInfo, bool synchronousCall) {
     setState(() {
       _replaceImage(info: imageInfo);
+      _maybeBakeShader();
       _loadingProgress = null;
       _lastException = null;
       _frameNumber = _frameNumber == null ? 0 : _frameNumber! + 1;
@@ -274,7 +278,40 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
     });
   }
 
+  /// Starts a GPU bake of the new page when the Anime4K shader switch is
+  /// on. Only the first frame is baked; animated images and bake failures
+  /// keep the original draw path.
+  void _maybeBakeShader() {
+    final info = _imageInfo;
+    if (info == null || _frameNumber != 0 || !Anime4KShader.isEnabled) {
+      _discardBaked();
+      return;
+    }
+    final token = ++_bakeToken;
+    Anime4KShader.bake(info.image).then((baked) {
+      if (!mounted || token != _bakeToken) {
+        baked?.dispose();
+        return;
+      }
+      if (baked == null) return;
+      setState(() {
+        _bakedImage?.dispose();
+        _bakedImage = baked;
+      });
+    });
+  }
+
+  void _discardBaked() {
+    _bakeToken++;
+    final old = _bakedImage;
+    _bakedImage = null;
+    if (old != null) {
+      SchedulerBinding.instance.addPostFrameCallback((_) => old.dispose());
+    }
+  }
+
   void _replaceImage({required ImageInfo? info}) {
+    _discardBaked();
     final ImageInfo? oldImageInfo = _imageInfo;
     SchedulerBinding.instance.addPostFrameCallback(
       (_) => oldImageInfo?.dispose(),
@@ -441,7 +478,7 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
           // build image
           Widget result = shouldSplit
               ? _SplitWideImage(
-                  image: _imageInfo!.image,
+                  image: _bakedImage ?? _imageInfo!.image,
                   width: width,
                   height: height,
                   color: widget.color,
@@ -460,7 +497,7 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
                   // The image will be disposed by this state object when it is not needed
                   // anymore, such as when it is unmounted or when the image stream pushes
                   // a new image.
-                  image: _imageInfo?.image,
+                  image: _bakedImage ?? _imageInfo?.image,
                   debugImageLabel: _imageInfo?.debugLabel,
                   width: width,
                   height: height,

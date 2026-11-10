@@ -269,6 +269,7 @@ abstract final class ReaderPreferences {
     'upscaleApplyToDownloads',
     false,
   );
+  static const anime4KShader = BoolPreference('anime4KShader', false);
   static const all = <Preference<Object>>[
     readerMode,
     pagedReaderMode,
@@ -323,6 +324,7 @@ abstract final class ReaderPreferences {
     translationTargetLanguage,
     upscaleEnabled,
     upscaleApplyToDownloads,
+    anime4KShader,
   ];
   static Map<String, Object?> get storageDefaults => {
     for (final preference in all) preference.key: preference.storageDefault,
