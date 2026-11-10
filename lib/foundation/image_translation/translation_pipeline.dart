@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:venera_unified/foundation/image_translation/inpaint.dart';
+import 'package:venera_unified/foundation/image_translation/inpaint_native.dart';
 import 'package:venera_unified/foundation/image_translation/llm_translator.dart';
 import 'package:venera_unified/foundation/image_translation/page_renderer.dart';
 import 'package:venera_unified/foundation/image_translation/translation_models.dart';
@@ -169,9 +170,13 @@ class PageTranslationPipeline {
   }) async {
     var image = await _decode(imageBytes);
     if (mode != InpaintMode.patch && regions.isNotEmpty) {
-      TextInpainter.erase(image, [
-        for (var region in regions) ...region.eraseRects,
-      ]);
+      final rects = [for (var region in regions) ...region.eraseRects];
+      try {
+        InpaintNative.erase(image, rects);
+      } catch (_) {
+        // Native library not built for this platform; Dart fallback.
+        TextInpainter.erase(image, rects);
+      }
     }
     return await renderTranslatedPage(imageBytes, image, regions, mode: mode);
   }

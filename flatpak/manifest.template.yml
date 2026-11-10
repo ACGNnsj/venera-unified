@@ -161,6 +161,9 @@ modules:
         SHIM
         chmod +x .rustup-shim/rustup
         PATH="$PWD/.rustup-shim:$PATH" flutter build linux --release --no-pub -v
+      # 自研 Rust C-ABI 小库（inpaint/ocr_preprocess/jpg_encode/transpose/anime4k）：
+      # Dart 绑定在 bundle/lib 下找 libvenera_*.so（exe 相对路径），编完直接落到那里。
+      - python3 .github/scripts/build_venera_native.py linux --out build/linux/x64/release/bundle/lib
       - rm -rf /app/pub-cache
       # flutter 只按 bundled_libraries 复制一个文件；ONNX Runtime 的 soname 是 libonnxruntime.so.1，
       # 少了这条符号链接，插件 dlopen 失败、应用启动直接 127（libonnxruntime.so.1: cannot open）。
