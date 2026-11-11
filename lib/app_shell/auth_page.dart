@@ -66,9 +66,7 @@ class _AuthPageState extends State<AuthPage> {
           Padding(
             padding: const EdgeInsets.only(top: 16),
             child: Text(
-              'Biometric app lock is not supported in this HarmonyOS experiment. '
-                      'Continue without app authentication, or exit. You can turn off '
-                      'the imported app-lock setting in Settings.'
+              'Biometric app lock is not supported in this HarmonyOS experiment. Continue without app authentication, or exit. You can turn off the imported app-lock setting in Settings.'
                   .tl,
               textAlign: TextAlign.center,
             ),
