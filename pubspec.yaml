@@ -77,7 +77,7 @@ dependencies:
     git:
       url: https://github.com/venera-app/flutter_7zip
       ref: b33344797f1d2469339e0e1b75f5f954f1da224c
-  flex_seed_scheme: ^4.0.1
+  flex_seed_scheme: ^5.0.1
   flutter_localizations:
     sdk: flutter
   yaml: ^3.1.4
