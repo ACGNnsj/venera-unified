@@ -7,6 +7,7 @@ import 'favorite_models.dart';
 import 'favorite_folder.dart';
 import 'favorite_folder_path.dart';
 import 'folder_move_dialog.dart';
+import 'folder_order_dialog.dart';
 import 'dart:convert';
 import 'dart:async';
 
@@ -162,6 +163,26 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
   void _replaceComics(List<FavoriteItem> value) {
     comics = value;
     if (searchMode) _refreshSearchResults();
+    _reconcileSelection();
+  }
+
+  List<FavoriteItem> get _visibleComics =>
+      (searchMode ? searchResults : filterComics(comics))
+          .where((comic) => isBlocked(comic) == null)
+          .toList();
+
+  void _reconcileSelection() {
+    lastSelectedIndex = null;
+    if (selectedComics.isEmpty) return;
+    selectedComics = {
+      for (final comic in _visibleComics)
+        if (selectedComics[comic] == true) comic: true,
+    };
+    if (selectedComics.isEmpty) multiSelectMode = false;
+  }
+
+  void _onSettingsChanged() {
+    if (_canReadObservedFolder) setState(_reconcileSelection);
   }
 
   /// Persists the fallback to the overview after the open folder disappears.
@@ -341,6 +362,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
     }
     comics = [];
     _observedManager.addListener(updateComics);
+    appdata.settings.addListener(_onSettingsChanged);
   }
 
   @override
@@ -369,6 +391,11 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
       _pagePublishedSelection = false;
       _cancelMetadataUpdates();
       _filterRequest++;
+      selectedComics.clear();
+      lastSelectedIndex = null;
+      multiSelectMode = false;
+      searchMode = false;
+      keyword = '';
       final linked = isAllFolder || !_canReadObservedFolder
           ? (null, null)
           : _observedManager.findLinked(widget.folder);
@@ -387,37 +414,27 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
     _cancelMetadataUpdates();
     _retireUpdateFlyout();
     _observedManager.removeListener(updateComics);
+    appdata.settings.removeListener(_onSettingsChanged);
     scrollController.dispose();
     super.dispose();
   }
 
   void selectAll() {
+    if (!_canReadObservedFolder) return;
     setState(() {
-      if (searchMode) {
-        selectedComics = searchResults.asMap().map((k, v) => MapEntry(v, true));
-      } else {
-        selectedComics = comics.asMap().map((k, v) => MapEntry(v, true));
-      }
+      selectedComics = {for (final comic in _visibleComics) comic: true};
+      lastSelectedIndex = null;
     });
   }
 
   void invertSelection() {
+    if (!_canReadObservedFolder) return;
     setState(() {
-      if (searchMode) {
-        for (var c in searchResults) {
-          if (selectedComics.containsKey(c)) {
-            selectedComics.remove(c);
-          } else {
-            selectedComics[c] = true;
-          }
-        }
-      } else {
-        for (var c in comics) {
-          if (selectedComics.containsKey(c)) {
-            selectedComics.remove(c);
-          } else {
-            selectedComics[c] = true;
-          }
+      for (final c in _visibleComics) {
+        if (selectedComics.containsKey(c)) {
+          selectedComics.remove(c);
+        } else {
+          selectedComics[c] = true;
         }
       }
     });
@@ -708,9 +725,44 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                         });
                       },
                     ),
+                    if (childFolders.isNotEmpty)
+                      MenuEntry(
+                        icon: Icons.folder_copy_outlined,
+                        text: 'Sort subfolders'.tl,
+                        onClick: () {
+                          if (!_canReadObservedFolder ||
+                              currentFolder == null ||
+                              widget.folder != target.folder ||
+                              _queryOwner?.canPresent != true) {
+                            return;
+                          }
+                          sortFolders(
+                            context,
+                            initialParentId: currentFolder.id,
+                            isCurrent: () =>
+                                _canReadObservedFolder &&
+                                widget.folder == target.folder,
+                          ).then<void>(
+                            (_) {
+                              if (_canReadObservedFolder &&
+                                  widget.folder == target.folder &&
+                                  _queryOwner?.canPresent == true) {
+                                target.updateFolderList();
+                              }
+                            },
+                            onError: (Object error, StackTrace stack) {
+                              Log.error(
+                                'Favorite subfolder order',
+                                error,
+                                stack,
+                              );
+                            },
+                          );
+                        },
+                      ),
                     MenuEntry(
                       icon: Icons.reorder,
-                      text: "Reorder".tl,
+                      text: 'Reorder comics'.tl,
                       onClick: () {
                         if (_queryOwner?.canPresent != true) return;
                         reorderFavoriteComics(
