@@ -7,6 +7,7 @@ import 'package:venera_unified/features/comic_source/source_transaction_journal.
 import 'package:venera_unified/features/favorites/favorites.dart';
 import 'package:venera_unified/features/history/history.dart';
 import 'package:venera_unified/features/sync/app_data_transfer.dart';
+import 'package:venera_unified/features/sync/data_sync_content_fingerprint.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
@@ -18,6 +19,39 @@ Map<String, dynamic> _settings(Archive archive) =>
         as Map<String, dynamic>;
 
 void main() {
+  test(
+    'keyword option changes follow the word-list sync exclusion fingerprint',
+    () {
+      for (final (words, options) in [
+        ('blockedWords', 'blockedWordRules'),
+        ('blockedCommentWords', 'blockedCommentWordRules'),
+      ]) {
+        final original = jsonEncode({
+          'settings': {
+            words: ['bl'],
+            options: {'bl': 'wholeWord:insensitive'},
+          },
+        });
+        final changed = jsonEncode({
+          'settings': {
+            words: ['bl'],
+            options: {'bl': 'contains:insensitive'},
+          },
+        });
+        expect(
+          DataSyncContentFingerprint.settings(original, ''),
+          isNot(DataSyncContentFingerprint.settings(changed, '')),
+        );
+        for (final excluded in [words, options]) {
+          expect(
+            DataSyncContentFingerprint.settings(original, excluded),
+            DataSyncContentFingerprint.settings(changed, excluded),
+          );
+        }
+      }
+    },
+  );
+
   test(
     'export awaits accepted history and stages current filtered settings',
     () async {
@@ -69,7 +103,9 @@ void main() {
           'hotkey': {'modifiers': 3, 'keyCode': 72},
         };
         appdata.settings['tvLowMemoryMode'] = false;
-        appdata.settings['disableSyncFields'] = 'language';
+        appdata.settings['blockedWords'] = ['bl'];
+        appdata.settings['blockedWordRules'] = {'bl': 'wholeWord:insensitive'};
+        appdata.settings['disableSyncFields'] = 'language, blockedWords';
         final pending = await SourceTransactionJournal.begin(
           dataPath: App.dataPath,
           script: File('${App.dataPath}/comic_source/example.js'),
@@ -100,6 +136,10 @@ void main() {
           isFalse,
         );
         expect(_settings(complete)['language'], 'zh-CN');
+        expect(_settings(complete)['blockedWords'], ['bl']);
+        expect(_settings(complete)['blockedWordRules'], {
+          'bl': 'wholeWord:insensitive',
+        });
         expect(_settings(complete).containsKey('windowsWindowHotkey'), isFalse);
         expect(_settings(complete).containsKey('tvLowMemoryMode'), isFalse);
         expect(
@@ -135,6 +175,8 @@ void main() {
           (await exportAppData()).readAsBytesSync(),
         );
         expect(_settings(filtered).containsKey('language'), isFalse);
+        expect(_settings(filtered).containsKey('blockedWords'), isFalse);
+        expect(_settings(filtered).containsKey('blockedWordRules'), isFalse);
         expect(_settings(filtered).containsKey('windowsWindowHotkey'), isFalse);
         expect(_settings(filtered).containsKey('tvLowMemoryMode'), isFalse);
         // A prior filtered syncdata.json must not leak into a now-unfiltered export.

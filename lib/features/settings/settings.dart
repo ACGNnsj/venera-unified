@@ -3,6 +3,7 @@ export 'app.dart';
 export 'appearance.dart';
 export 'debug.dart';
 export 'explore_settings.dart';
+export 'keyword_blocking.dart' show showKeywordRuleEditor;
 export 'image_translation.dart';
 export 'local_favorites.dart';
 export 'logs.dart';

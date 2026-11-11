@@ -28,6 +28,7 @@ import 'package:venera_unified/features/comic_collection/comic_collection_store.
 import 'package:venera_unified/features/comic_details/comic_details.dart';
 import 'package:venera_unified/features/comic_source/comic_source.dart';
 import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
+import 'package:venera_unified/foundation/keyword_filter.dart';
 import 'package:venera_unified/features/favorites/favorite_actions.dart';
 import 'package:venera_unified/features/favorites/favorites_display.dart';
 import 'package:venera_unified/features/favorites/favorites_constants.dart';
@@ -166,10 +167,12 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
     _reconcileSelection();
   }
 
-  List<FavoriteItem> get _visibleComics =>
-      (searchMode ? searchResults : filterComics(comics))
-          .where((comic) => isBlocked(comic) == null)
-          .toList();
+  List<FavoriteItem> get _visibleComics {
+    final filter = KeywordFilter.fromSettings(appdata.settings);
+    return (searchMode ? searchResults : filterComics(comics))
+        .where((comic) => isBlocked(comic, filter: filter) == null)
+        .toList();
+  }
 
   void _reconcileSelection() {
     lastSelectedIndex = null;
