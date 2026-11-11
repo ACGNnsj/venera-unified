@@ -12,6 +12,24 @@ class DirectorySelection {
     this._releaseAccess,
     this._retainAccess,
   }) : _directory = directory,
+       _prepareOwnedCopy = null,
+       _temporary = false,
+       _cacheDirectory = null,
+       _copy = null;
+
+  DirectorySelection.ownedCopy({
+    required Directory directory,
+    required String token,
+    required Future<void> Function(Map<String, String>) prepare,
+    required Future<void> Function(Map<String, String>) release,
+  }) : _directory = directory,
+       _prepareOwnedCopy = (() =>
+           prepare({'path': directory.path, 'token': token})),
+       _releaseAccess = (() =>
+           release({'path': directory.path, 'token': token})),
+       _retainAccess = null,
+       _temporary = true,
+       _token = token,
        _cacheDirectory = null,
        _copy = null;
 
@@ -20,6 +38,8 @@ class DirectorySelection {
     required Directory this._cacheDirectory,
     required Future<void> Function(Directory, Directory) copy,
   }) : _copy = ((directory) => copy(source, directory)),
+       _prepareOwnedCopy = null,
+       _temporary = true,
        _releaseAccess = null,
        _retainAccess = null;
 
@@ -28,11 +48,15 @@ class DirectorySelection {
     required Directory this._cacheDirectory,
     required Future<void> Function(Directory) prepare,
   }) : _copy = prepare,
+       _prepareOwnedCopy = null,
+       _temporary = true,
        _releaseAccess = null,
        _retainAccess = null;
 
   final Directory? _cacheDirectory;
   final Future<void> Function(Directory)? _copy;
+  final Future<void> Function()? _prepareOwnedCopy;
+  final bool _temporary;
   Future<void> Function()? _releaseAccess;
   final Future<void> Function()? _retainAccess;
   Directory? _directory;
@@ -55,6 +79,8 @@ class DirectorySelection {
     final done = Completer<Directory>();
     _preparing = done.future;
     Future<Directory>.sync(() async {
+      if (_closed) throw StateError('Directory selection is closing');
+      await _prepareOwnedCopy?.call();
       if (_closed) throw StateError('Directory selection is closing');
       if (_directory == null) {
         final root = await _cacheDirectory!.createTemp('selected-directory-');
@@ -103,7 +129,7 @@ class DirectorySelection {
   /// Transfer native access to the application session before publishing a
   /// directory reference. A temporary copy can never become a library path.
   Future<void> retainAccessForSession() {
-    if (_copy != null) {
+    if (_temporary) {
       return Future.error(StateError('Cannot retain a temporary directory'));
     }
     if (_closed) {
