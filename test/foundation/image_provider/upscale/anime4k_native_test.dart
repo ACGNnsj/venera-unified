@@ -44,6 +44,7 @@ void main() {
   test('native matches Dart pipeline byte for byte', () {
     if (!Anime4KNative.available) {
       markTestSkipped('venera_anime4k not built for this platform');
+      return;
     }
     expect(Anime4KNative.version(), 1);
     final unblur = (0.31 * 255).round().clamp(0, 0xFFFF);
@@ -65,6 +66,7 @@ void main() {
   test('native wins the pipeline race', () {
     if (!Anime4KNative.available) {
       markTestSkipped('venera_anime4k not built for this platform');
+      return;
     }
     final unblur = (0.31 * 255).round().clamp(0, 0xFFFF);
     final refine = (1.0 * 255).round().clamp(0, 0xFFFF);
