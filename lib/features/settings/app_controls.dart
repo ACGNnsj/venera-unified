@@ -329,7 +329,7 @@ class _AuthorizationRequiredSettingState
   }
 
   Future<void> _change(bool value) async {
-    if (!acceptsSettingsChanges) return;
+    if (!acceptsSettingsChanges || (value && App.isOhos)) return;
     final request = ++_request;
     final checkSupport = widget.checkSupport;
     Future<bool>? checked;
@@ -369,37 +369,49 @@ class _AuthorizationRequiredSettingState
   }
 
   @override
-  Widget build(BuildContext context) => protectSettings(
-    Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SwitchListTile(
-          title: Text('Authorization Required'.tl),
-          value:
-              _preview ??
-              GlobalPreferenceStore(
-                appdata.settings,
-              ).read(AppPreferences.authorizationRequired),
-          onChanged: _change,
-        ),
-        ListTile(
-          title: Text('Unlock method'.tl),
-          subtitle: Text(
-            !_lockTypeLoaded
-                ? ''
-                : switch (_lockType) {
-                    AppLockType.pin => 'PIN is set'.tl,
-                    AppLockType.password => 'Password is set'.tl,
-                    AppLockType.pattern => 'Pattern is set'.tl,
-                    _ => 'No lock set'.tl,
-                  },
+  Widget build(BuildContext context) {
+    final bool value =
+        _preview ??
+        GlobalPreferenceStore(
+          appdata.settings,
+        ).read(AppPreferences.authorizationRequired);
+    return protectSettings(
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SwitchListTile(
+            title: Text('Authorization Required'.tl),
+            subtitle: App.isOhos
+                ? Text(
+                    'App lock is not available on HarmonyOS. An imported lock can still be turned off.'
+                        .tl,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  )
+                : null,
+            value: value,
+            onChanged: App.isOhos && !value ? null : _change,
           ),
-          onTap: _managePin,
-        ),
-        settingsSaveStatus,
-      ],
-    ),
-  );
+          ListTile(
+            title: Text('Unlock method'.tl),
+            subtitle: Text(
+              !_lockTypeLoaded
+                  ? ''
+                  : switch (_lockType) {
+                      AppLockType.pin => 'PIN is set'.tl,
+                      AppLockType.password => 'Password is set'.tl,
+                      AppLockType.pattern => 'Pattern is set'.tl,
+                      _ => 'No lock set'.tl,
+                    },
+            ),
+            onTap: _managePin,
+          ),
+          settingsSaveStatus,
+        ],
+      ),
+    );
+  }
 
   @override
   void dispose() {

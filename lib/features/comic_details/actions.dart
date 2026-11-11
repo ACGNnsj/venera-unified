@@ -28,6 +28,7 @@ import 'package:venera_unified/features/reader/reader.dart';
 import 'package:venera_unified/features/search/search_shortcut.dart';
 import 'package:venera_unified/features/search/search_shortcuts.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/app_data_operations.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/context.dart';
@@ -211,6 +212,14 @@ abstract mixin class ComicPageActions {
     final window = owner.getInheritedWidgetOfExactType<WindowFrameController>();
     final operation = () async {
       try {
+        if (App.isOhos) {
+          if (!isCurrentOwner() || window?.isClosing == true) return;
+          await Clipboard.setData(ClipboardData(text: text));
+          if (owner.mounted && isCurrentOwner() && window?.isClosing != true) {
+            owner.showMessage(message: 'Copied'.tl);
+          }
+          return;
+        }
         final result = await Share.shareText(
           text,
           resolveOrigin: () => owner.sharePositionOrigin,
