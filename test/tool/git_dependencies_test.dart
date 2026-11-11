@@ -43,10 +43,10 @@ void main() {
     expect(errors.any((e) => e.startsWith('webdav_client:')), isTrue);
   });
 
-  test('detects platform package left on upstream and resolved SHA drift', () {
+  test('detects platform package moved off reviewed source and resolved SHA drift', () {
     final packages = lock['packages'];
     packages['flutter_inappwebview_windows']['description']['url'] =
-        'https://github.com/pichillilorenzo/flutter_inappwebview';
+        'https://github.com/venera-app/flutter_inappwebview';
     packages['flutter_inappwebview_ios']['description']['resolved-ref'] =
         'other';
     final errors = checkGitDependencies(spec, lock, inventory);
