@@ -1437,7 +1437,10 @@
     "Folder selection is unavailable on this device. Use Multiple archive files to import several comics at once.": "当前设备不提供文件夹选择。可改用「多个归档文件」，一次选择多本漫画批量导入。",
     "Could not read or copy the selected folder. Check file access and free space, or use Multiple archive files.": "无法读取或复制所选文件夹。请检查文件访问权限和剩余空间，或改用「多个归档文件」批量导入。",
     "HarmonyOS beta @v is available. Open the release page, choose the unsigned HAP, and sign it with your existing key to upgrade.": "鸿蒙测试版 @v 已发布。请打开发布页，选择未签名 HAP，并沿用原签名密钥签装升级。",
-    "Biometric app lock is not supported in this HarmonyOS experiment. Continue without app authentication, or exit. You can turn off the imported app-lock setting in Settings.": "此鸿蒙实验版不支持生物识别应用锁。你可以在不进行应用认证的情况下继续，或退出应用；进入后可在设置中关闭导入的应用锁选项。"
+    "Biometric app lock is not supported in this HarmonyOS experiment. Continue without app authentication, or exit. You can turn off the imported app-lock setting in Settings.": "此鸿蒙实验版不支持生物识别应用锁。你可以在不进行应用认证的情况下继续，或退出应用；进入后可在设置中关闭导入的应用锁选项。",
+    "TV version @v is available. Open the release page and choose an android-tv APK.": "TV 版 @v 已发布。请前往发布页面，选择文件名含 android-tv 的 APK 安装包。",
+    "TV updates are published alongside mobile releases. Choose an android-tv APK; mobile and TV apps keep separate data.": "TV 版与手机版同步发布。请选择文件名含 android-tv 的 APK；手机版与 TV 版的数据相互独立。",
+    "Application updates are disabled in this build.": "此构建已禁用应用更新。"
   },
   "zh_TW": {
     "HarmonyOS currently stores comics inside the app. Import external folders by copying their contents.": "目前鴻蒙版將漫畫儲存在應用程式內，暫不支援變更儲存目錄。外部資料夾可透過複製匯入。",
@@ -2877,6 +2880,9 @@
     "Folder selection is unavailable on this device. Use Multiple archive files to import several comics at once.": "目前裝置不提供資料夾選擇。可改用「多個封存檔」，一次選擇多本漫畫批次匯入。",
     "Could not read or copy the selected folder. Check file access and free space, or use Multiple archive files.": "無法讀取或複製所選資料夾。請檢查檔案存取權限和剩餘空間，或改用「多個封存檔」批次匯入。",
     "HarmonyOS beta @v is available. Open the release page, choose the unsigned HAP, and sign it with your existing key to upgrade.": "鴻蒙測試版 @v 已發布。請開啟發布頁，選擇未簽名 HAP，並沿用原簽名金鑰簽裝升級。",
-    "Biometric app lock is not supported in this HarmonyOS experiment. Continue without app authentication, or exit. You can turn off the imported app-lock setting in Settings.": "此鴻蒙實驗版不支援生物辨識應用程式鎖。你可以在不進行應用程式認證的情況下繼續，或退出應用程式；進入後可在設定中關閉匯入的應用程式鎖選項。"
+    "Biometric app lock is not supported in this HarmonyOS experiment. Continue without app authentication, or exit. You can turn off the imported app-lock setting in Settings.": "此鴻蒙實驗版不支援生物辨識應用程式鎖。你可以在不進行應用程式認證的情況下繼續，或退出應用程式；進入後可在設定中關閉匯入的應用程式鎖選項。",
+    "TV version @v is available. Open the release page and choose an android-tv APK.": "TV 版 @v 已發布。請前往發布頁面，選擇檔名含 android-tv 的 APK 安裝套件。",
+    "TV updates are published alongside mobile releases. Choose an android-tv APK; mobile and TV apps keep separate data.": "TV 版與手機版同步發布。請選擇檔名含 android-tv 的 APK；手機版與 TV 版的資料相互獨立。",
+    "Application updates are disabled in this build.": "此構建已停用應用更新。"
   }
 }

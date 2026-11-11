@@ -569,9 +569,9 @@
     "network/shared_request_stream.dart"
   ],
   "ui_files": [
+    "app_runtime/android_downloads.dart",
     "features/reader/tv_input.dart",
     "components/tv_navigation.dart",
-    "app_runtime/android_downloads.dart",
     "app_runtime/app_runtime.dart",
     "app_runtime/init.dart",
     "app_runtime/interactive_platform_bindings.dart",

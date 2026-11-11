@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:venera_unified/components/application_update_prompt.dart';
+import 'package:venera_unified/components/tv_navigation.dart';
 import 'package:venera_unified/components/window_frame.dart';
 import 'package:venera_unified/features/settings/about.dart';
 import 'package:venera_unified/foundation/app.dart';
@@ -51,6 +52,7 @@ void main() {
     String name,
     Future<void> Function(WidgetTester) body, {
     bool forHarmonyOS = false,
+    bool forAndroidTv = false,
   }) {
     testWidgets(name, (tester) async {
       adapter = ApplicationUpdateAdapter();
@@ -58,6 +60,7 @@ void main() {
         createClient: () => Dio()..httpClientAdapter = adapter,
         currentVersion: () => '1.0.0',
         forHarmonyOS: forHarmonyOS,
+        forAndroidTv: forAndroidTv,
       );
       try {
         await body(tester);
@@ -99,7 +102,10 @@ void main() {
       ).copyWith(textScaler: TextScaler.linear(textScale)),
       child: ApplicationUpdateScope(
         service: service,
-        child: WindowFrame(child!, onExit: onExit ?? () {}),
+        child: TvNavigation(
+          enabled: service.forAndroidTv,
+          child: WindowFrame(child!, onExit: onExit ?? () {}),
+        ),
       ),
     ),
     home: Scaffold(body: child),
@@ -313,6 +319,50 @@ void main() {
   );
 
   for (final brightness in Brightness.values) {
+    testUpdateWidgets(
+      'TV update dialog identifies the correct APK in ${brightness.name}',
+      (tester) async {
+        tester.view.physicalSize = const Size(1280, 720);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(
+          app(const AboutSettings(), brightness: brightness, textScale: 2),
+        );
+        await tester.tap(find.text('Check'));
+        await waitFor(tester, () => adapter.entered.isCompleted);
+        adapter.complete({
+          'tag_name': 'v2.0.0',
+          'assets': [
+            {
+              'name': 'VeneraUnified-2.0.0-android-tv.apk',
+              'state': 'uploaded',
+              'size': 20,
+            },
+          ],
+        });
+        adapter.released.complete();
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            'TV version 2.0.0 is available. Open the release page and choose an android-tv APK.',
+          ),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+        await tester.pumpAndSettle();
+        final cancel = tester.element(find.text('Cancel'));
+        Focus.of(cancel).requestFocus();
+        await tester.pumpAndSettle();
+        await tester.sendKeyEvent(LogicalKeyboardKey.select);
+        await tester.pumpAndSettle();
+        expect(find.text('New version available'), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+      forAndroidTv: true,
+    );
+
     testUpdateWidgets(
       'large-text ${brightness.name} update dialog supports keyboard dismissal',
       (tester) async {

@@ -137,9 +137,9 @@ class _AboutSettingsState extends State<AboutSettings> {
         if (AppProfile.current.isTv)
           ListTile(
             leading: const Icon(Icons.tv),
-            title: const Text('TV Alpha'),
+            title: const Text('Android TV'),
             subtitle: Text(
-              'Experimental build. Install updates manually from the android-tv branch. Source updates remain available. Real-device compatibility is not yet verified.'
+              'TV updates are published alongside mobile releases. Choose an android-tv APK; mobile and TV apps keep separate data.'
                   .tl,
             ),
           ).toSliver(),

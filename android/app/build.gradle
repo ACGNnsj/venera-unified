@@ -90,6 +90,8 @@ android {
         tv {
             dimension "device"
             applicationIdSuffix ".tv"
+            // Keep upgrades above the retired Alpha sequence (100000 + run).
+            versionCode = flutterVersionCode.toInteger() + 200000
         }
     }
 

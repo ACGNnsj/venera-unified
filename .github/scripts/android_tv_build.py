@@ -13,7 +13,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 
-PACKAGE = "com.github.cyrilpeng.veneranext"
+PACKAGE = "io.github.venera.unified"
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 ABI_CODES = {"armeabi-v7a": 1, "arm64-v8a": 2, "x86_64": 3, "universal": 0}
 # Also enforced in Gradle so local builds use the same upgrade-safe sequence.
@@ -98,7 +98,7 @@ def validate_manifest(xml, metadata, abi):
             raise ValueError("TV must also allow generic Android boxes")
         if not application.get(ANDROID + "banner"):
             raise ValueError("TV banner is missing")
-        if application.get(ANDROID + "label") != "VeneraNext TV":
+        if application.get(ANDROID + "label") != "Venera Unified TV":
             raise ValueError("TV launcher identity is missing")
         # apkanalyzer decodes the compiled orientation enum as integer 0.
         if main.get(ANDROID + "screenOrientation") not in ("landscape", "0", "0x0"):
@@ -163,7 +163,7 @@ def write_outputs(path, values):
 def apk_filename(metadata, abi):
     platform = "android-tv" if metadata["flavor"] == "tv" else "android"
     suffix = "" if abi == "universal" else "-" + abi
-    return f"VeneraNext-{metadata['base_version']}-{platform}{suffix}.apk"
+    return f"VeneraUnified-{metadata['base_version']}-{platform}{suffix}.apk"
 
 
 def apk_record(apk, metadata, abi, fingerprints):

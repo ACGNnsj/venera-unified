@@ -29,7 +29,7 @@ ENV = {
 
 def manifest(metadata, abi="universal"):
     tv = metadata["flavor"] == "tv"
-    label = "VeneraNext TV" if tv else "VeneraNext"
+    label = "Venera Unified TV" if tv else "Venera Unified"
     features = (
         '<uses-feature android:name="android.hardware.touchscreen" android:required="false"/>'
         '<uses-feature android:name="android.software.leanback" android:required="false"/>'
@@ -132,7 +132,7 @@ class AndroidTvBuildTest(unittest.TestCase):
             ("LEANBACK_LAUNCHER", "LAUNCHER"),
             ("android.intent.action.MAIN", "android.intent.action.VIEW"),
             ('android:banner="@drawable/tv_banner"', ""),
-            ("VeneraNext TV", "VeneraNext"),
+            ("Venera Unified TV", "Venera Unified"),
             ('android:screenOrientation="landscape"', ""),
             ("<application ", '<application android:debuggable="true" '),
         ]
@@ -192,7 +192,7 @@ class AndroidTvBuildTest(unittest.TestCase):
         platform = "android-tv" if flavor == "tv" else "android"
         abis = {}
         for abi in MODULE.ABI_CODES:
-            path = directory / f"VeneraNext-{metadata['base_version']}-{platform}{'' if abi == 'universal' else '-' + abi}.apk"
+            path = directory / f"VeneraUnified-{metadata['base_version']}-{platform}{'' if abi == 'universal' else '-' + abi}.apk"
             write_apk(path, abi)
             abis[str(path)] = abi
 
@@ -219,7 +219,7 @@ class AndroidTvBuildTest(unittest.TestCase):
                 self.assertEqual(catalog["revision"], metadata["revision"])
                 self.assertEqual(len(catalog["apks"]), 4)
                 for apk in catalog["apks"]:
-                    self.assertTrue(apk["file"].startswith("VeneraNext-1.18.2-rc.1-android-tv"))
+                    self.assertTrue(apk["file"].startswith("VeneraUnified-1.18.2-rc.1-android-tv"))
                     self.assertNotIn("alpha", apk["file"])
                     self.assertEqual(len(apk["sha256"]), 64)
                     self.assertEqual(apk["signer_sha256"], [MODULE.SIGNER_SHA256])
@@ -281,11 +281,11 @@ class AndroidTvBuildTest(unittest.TestCase):
                 try:
                     os.chdir(directory)
                     output = self.release_fixture()
-                    tv = output / "VeneraNext-1.18.2-rc.1-android-tv.apk"
+                    tv = output / "VeneraUnified-1.18.2-rc.1-android-tv.apk"
                     if mutation == "missing-tv":
                         tv.unlink()
                     elif mutation == "missing-mobile":
-                        (output / "VeneraNext-1.18.2-rc.1-android.apk").unlink()
+                        (output / "VeneraUnified-1.18.2-rc.1-android.apk").unlink()
                     elif mutation == "extra":
                         (output / "unexpected.apk").write_bytes(b"unexpected")
                     elif mutation == "changed-bytes":

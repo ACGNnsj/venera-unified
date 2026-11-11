@@ -103,7 +103,9 @@ class ApplicationUpdatePrompt {
       if (!service.enabled) {
         onChecked?.call();
         if (!silent) {
-          context.showMessage(message: 'TV Alpha uses manual test builds.'.tl);
+          context.showMessage(
+            message: 'Application updates are disabled in this build.'.tl,
+          );
         }
         return;
       }
@@ -125,7 +127,10 @@ class ApplicationUpdatePrompt {
           scrollable: service.forHarmonyOS,
           title: Text('New version available'.tl),
           content: Text(
-            service.forHarmonyOS
+            service.forAndroidTv
+                ? 'TV version @v is available. Open the release page and choose an android-tv APK.'
+                      .tlParams({'v': version})
+                : service.forHarmonyOS
                 ? 'HarmonyOS beta @v is available. Open the release page, choose the unsigned HAP, and sign it with your existing key to upgrade.'
                       .tlParams({'v': version})
                 : 'A new version @v is available. Do you want to update now?'
@@ -161,7 +166,7 @@ class ApplicationUpdatePrompt {
                 }
                 try {
                   await launchUrlString(
-                    'https://github.com/CyrilPeng/venera-next/releases',
+                    'https://github.com/ACGNnsj/venera-unified/releases/tag/v${Uri.encodeComponent(version)}',
                   );
                 } catch (error, stack) {
                   Log.error('Open application release', error, stack);

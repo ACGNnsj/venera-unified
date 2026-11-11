@@ -31,12 +31,14 @@ class ApplicationUpdateService {
     required this._currentVersion,
     this.enabled = true,
     this.forHarmonyOS = false,
+    this.forAndroidTv = false,
   });
 
   final Dio Function() _createClient;
   final String Function() _currentVersion;
   final bool enabled;
   final bool forHarmonyOS;
+  final bool forAndroidTv;
   final _pending = <RequestScope, Future<void>>{};
   final _cleanupFailures = <ApplicationUpdateCleanupFailure>[];
   bool _closed = false;
@@ -126,7 +128,11 @@ class ApplicationUpdateService {
         }
       }
       final latest = selectPublishedReleaseVersion(
-        forHarmonyOS ? releases.where(_hasHarmonyPackage).toList() : data,
+        forAndroidTv
+            ? releases.where(_hasTvPackage).toList()
+            : forHarmonyOS
+            ? releases.where(_hasHarmonyPackage).toList()
+            : data,
         includePrerelease: includePrerelease,
       );
       available = latest != null && shouldNotifyRelease(latest, version)
@@ -294,6 +300,23 @@ class ApplicationUpdateService {
       'VeneraNext-$version-harmonyos-arm64-unsigned.hap',
       'harmonyos-manifest.json',
     ].every((name) => uploaded.any((asset) => asset['name'] == name));
+  }
+
+  static bool _hasTvPackage(Object? release) {
+    if (release is! Map || release['assets'] is! List) return false;
+    final version = (release['tag_name'] as String).replaceFirst(
+      RegExp(r'^[vV]'),
+      '',
+    );
+    // Updates open the release page, never download a guessed mobile APK.
+    // Require the universal TV package so the offered release is installable.
+    return (release['assets'] as List).whereType<Map>().any(
+      (asset) =>
+          asset['name'] == 'VeneraUnified-$version-android-tv.apk' &&
+          asset['state'] == 'uploaded' &&
+          asset['size'] is num &&
+          (asset['size'] as num) > 0,
+    );
   }
 
   Future<void> closeAndWait() {
