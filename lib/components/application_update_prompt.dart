@@ -122,10 +122,14 @@ class ApplicationUpdatePrompt {
       final dialog = DialogRoute<void>(
         context: context,
         builder: (context) => AlertDialog(
+          scrollable: service.forHarmonyOS,
           title: Text('New version available'.tl),
           content: Text(
-            'A new version @v is available. Do you want to update now?'
-                .tlParams({'v': version}),
+            service.forHarmonyOS
+                ? 'HarmonyOS beta @v is available. Open the release page, choose the unsigned HAP, and sign it with your existing key to upgrade.'
+                      .tlParams({'v': version})
+                : 'A new version @v is available. Do you want to update now?'
+                      .tlParams({'v': version}),
           ),
           actions: [
             TextButton(

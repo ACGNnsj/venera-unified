@@ -30,11 +30,13 @@ class ApplicationUpdateService {
     required this._createClient,
     required this._currentVersion,
     this.enabled = true,
+    this.forHarmonyOS = false,
   });
 
   final Dio Function() _createClient;
   final String Function() _currentVersion;
   final bool enabled;
+  final bool forHarmonyOS;
   final _pending = <RequestScope, Future<void>>{};
   final _cleanupFailures = <ApplicationUpdateCleanupFailure>[];
   bool _closed = false;
@@ -124,7 +126,7 @@ class ApplicationUpdateService {
         }
       }
       final latest = selectPublishedReleaseVersion(
-        data,
+        forHarmonyOS ? releases.where(_hasHarmonyPackage).toList() : data,
         includePrerelease: includePrerelease,
       );
       available = latest != null && shouldNotifyRelease(latest, version)
@@ -210,7 +212,7 @@ class ApplicationUpdateService {
         }
       }
       final latest = selectPublishedReleaseVersion(
-        data,
+        forHarmonyOS ? releases.where(_hasHarmonyPackage).toList() : data,
         includePrerelease: includePrerelease,
       );
       if (latest != null && shouldNotifyRelease(latest, version)) {
@@ -274,6 +276,24 @@ class ApplicationUpdateService {
     }
     scope.check();
     return installable;
+  }
+
+  static bool _hasHarmonyPackage(Object? release) {
+    if (release is! Map || release['assets'] is! List) return false;
+    final version = (release['tag_name'] as String).replaceFirst(
+      RegExp(r'^[vV]'),
+      '',
+    );
+    final uploaded = (release['assets'] as List).whereType<Map>().where(
+      (asset) =>
+          asset['state'] == 'uploaded' &&
+          asset['size'] is num &&
+          (asset['size'] as num) > 0,
+    );
+    return [
+      'VeneraNext-$version-harmonyos-arm64-unsigned.hap',
+      'harmonyos-manifest.json',
+    ].every((name) => uploaded.any((asset) => asset['name'] == name));
   }
 
   Future<void> closeAndWait() {

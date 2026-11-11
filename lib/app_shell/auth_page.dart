@@ -5,6 +5,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:venera_unified/components/pattern_lock.dart';
 import 'package:venera_unified/components/pin_pad.dart';
 import 'package:venera_unified/foundation/auth_storage.dart';
+import 'package:venera_unified/foundation/harmonyos.dart';
 import 'package:venera_unified/foundation/translations.dart';
 
 class AuthPage extends StatefulWidget {
@@ -29,8 +30,9 @@ class _AuthPageState extends State<AuthPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (SchedulerBinding.instance.lifecycleState !=
-          AppLifecycleState.paused) {
+      if (!HarmonyOS.isCurrent &&
+          SchedulerBinding.instance.lifecycleState !=
+              AppLifecycleState.paused) {
         auth();
       }
     });
@@ -60,6 +62,17 @@ class _AuthPageState extends State<AuthPage> {
         const Icon(Icons.security, size: 36),
         const SizedBox(height: 16),
         Text('Authentication Required'.tl),
+        if (HarmonyOS.isCurrent)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Text(
+              'Biometric app lock is not supported in this HarmonyOS experiment. '
+                      'Continue without app authentication, or exit. You can turn off '
+                      'the imported app-lock setting in Settings.'
+                  .tl,
+              textAlign: TextAlign.center,
+            ),
+          ),
         if (_error != null) ...[
           const SizedBox(height: 8),
           Text(
@@ -69,6 +82,8 @@ class _AuthPageState extends State<AuthPage> {
         ],
         const SizedBox(height: 16),
         FilledButton(onPressed: auth, child: Text('Continue'.tl)),
+        if (HarmonyOS.isCurrent)
+          TextButton(onPressed: SystemNavigator.pop, child: Text('Exit'.tl)),
       ],
     );
   }
@@ -189,6 +204,10 @@ class _AuthPageState extends State<AuthPage> {
   /// 没有生物识别、也没有设置凭据时保持旧行为直接放行——此时用户没有任何可用的
   /// 凭据，拦下来只会把人锁在门外。
   Future<void> auth() async {
+    if (HarmonyOS.isCurrent) {
+      widget.onSuccessfulAuth?.call();
+      return;
+    }
     final localAuth = LocalAuthentication();
     var supported = false;
     try {
