@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:ffi';
 import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -8,7 +7,7 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:image/image.dart' as img;
-import 'package:lodepng_flutter/lodepng_flutter.dart' as lodepng;
+import 'package:venera_native/venera_native.dart';
 import 'package:venera_unified/foundation/app.dart';
 
 import 'image_transpose_native.dart';
@@ -267,24 +266,14 @@ class Image {
   }
 
   Uint8List encodePng() {
-    // HarmonyOS ships no lodepng native library, so the experimental build
+    // HarmonyOS ships no venera_native library, so the experimental build
     // encodes PNG in pure Dart instead of failing the export path outright.
     if (App.isOhos) return _encodePngWithDart();
-    final data = lodepng.encodePngToPointer(
-      lodepng.Image(
-        _data.buffer.asUint8List(_data.offsetInBytes, _data.lengthInBytes),
-        width,
-        height,
-      ),
+    return encodePngRgba(
+      _data.buffer.asUint8List(_data.offsetInBytes, _data.lengthInBytes),
+      width,
+      height,
     );
-    final pointer = Pointer<Uint8>.fromAddress(data.address);
-    try {
-      return Uint8List.fromList(pointer.asTypedList(data.length));
-    } finally {
-      lodepng.ByteBuffer.finalizer.asFunction<void Function(Pointer<Void>)>()(
-        pointer.cast(),
-      );
-    }
   }
 
   Uint8List _encodePngWithDart() {

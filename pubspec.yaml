@@ -30,32 +30,22 @@ dependencies:
   mime: ^2.1.0
   share_plus:
     path: packages/share_plus
-  scrollable_positioned_list:
-    git:
-      url: https://github.com/venera-app/flutter.widgets
-      ref: 09e756b1f1b04e6298318d99ec20a787fb360f59
-      path: packages/scrollable_positioned_list
-  flutter_reorderable_grid_view: ^5.7.0
+  scrollable_positioned_list: ^0.3.8
+  # 5.10.0 produces negative constraints while dragging adaptive-column grids.
+  flutter_reorderable_grid_view: 5.7.0
   uuid: ^4.6.0
   desktop_webview_window:
-    git:
-      url: https://github.com/venera-app/flutter_desktop_webview
-      path: packages/desktop_webview_window
-      ref: 7801fc582ecf5a7351632887891ecf309a7b2583
+    path: packages/desktop_webview_window
   flutter_inappwebview:
     git:
-      url: https://github.com/venera-app/flutter_inappwebview
+      url: https://github.com/pichillilorenzo/flutter_inappwebview
       path: flutter_inappwebview
-      ref: 3ef899b3db57c911b080979f1392253b835f98ab
+      ref: 0aaf7a0bfc01d61a4d1453cefb57fb6783b6e676
   app_links: ^7.2.1
   sliver_tools: ^0.2.12
   flutter_file_dialog: ^3.3.2
   file_selector: ^1.1.0
   zip_flutter: ^0.0.13
-  lodepng_flutter:
-    git:
-      url: https://github.com/venera-app/lodepng_flutter
-      ref: ac7d05dde32e8d728102a9ff66e6b55f05d94ba1
   rhttp:
     path: packages/rhttp
   flutter_rust_bridge: 2.11.1
@@ -65,18 +55,14 @@ dependencies:
       ref: 2f669c98fb81cff1c64fee93466a1475c77e4273
   battery_plus: ^7.1.2
   local_auth: ^3.0.2
-  flutter_saf:
-    git:
-      url: https://github.com/venera-app/flutter_saf
-      ref: fe182cdf40e5fa6230f451bc1d643b860f610d13
+  venera_saf:
+    path: packages/venera_saf
   dynamic_color: ^2.1.0
   shimmer_animation: ^2.1.0
   flutter_memory_info: ^0.0.3
   syntax_highlight: ^0.5.0
-  flutter_7zip:
-    git:
-      url: https://github.com/venera-app/flutter_7zip
-      ref: b33344797f1d2469339e0e1b75f5f954f1da224c
+  venera_native:
+    path: packages/venera_native
   flex_seed_scheme: ^4.0.1
   flutter_localizations:
     sdk: flutter

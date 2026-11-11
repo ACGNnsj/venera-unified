@@ -437,6 +437,7 @@
     "features/reader/clipboard_image.dart",
     "features/reader/comments_controller.dart",
     "features/reader/continuous_data.dart",
+    "features/reader/continuous_scroll.dart",
     "features/reader/display_image_provider.dart",
     "features/reader/eink_refresh_controller.dart",
     "features/reader/gallery_data.dart",

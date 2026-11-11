@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart' as archive_pkg;
-import 'package:flutter_7zip/flutter_7zip.dart' as seven_zip;
+import 'package:venera_native/venera_native.dart' show extractSevenZip;
 import 'package:path/path.dart' as path_utils;
 
 import 'zip_entry_reader.dart';
@@ -169,52 +169,68 @@ abstract final class ArchiveSecurity {
   }
 
   static Future<void> extract7z(File input, Directory output) async {
-    final archive = seven_zip.SZArchive.open(input.path);
+    final archiveBytes = await input.length();
+    if (archiveBytes > maxArchiveBytes) {
+      throw const FormatException('Archive is too large');
+    }
+    // venera_native only bulk-extracts, so unpack into staging first and
+    // publish into [output] entry by entry after the safety walk below.
+    final staging = await Directory.systemTemp.createTemp('venera-7z-');
     try {
+      await extractSevenZip(input.path, staging.path);
       final root = path_utils.canonicalize(output.path);
+      final entities = staging.listSync(recursive: true, followLinks: false);
       final seen = <String>{};
+      var entries = 0;
       var total = 0;
-      for (var i = 0; i < archive.numFiles; i++) {
-        final entry = archive.getFile(i);
-        final target = safeTarget(root, entry.name);
+      for (final entity in entities) {
+        final relative = path_utils.relative(entity.path, from: staging.path);
+        if (relative == '.') continue;
+        entries++;
+        if (entity is Link) {
+          throw const FormatException('Archive symlinks are not supported');
+        }
+        if (entity is! File) continue;
+        final target = safeTarget(root, relative);
         if (!seen.add(target)) {
           throw const FormatException('Archive contains duplicate entry names');
         }
-        if (!entry.isDirectory) {
-          if (entry.size > maxSingleFileBytes) {
-            throw const FormatException('Archive entry is too large');
-          }
-          total += entry.size;
+        final size = entity.lengthSync();
+        if (size > maxSingleFileBytes) {
+          throw const FormatException('Archive entry is too large');
         }
+        total += size;
       }
-      final archiveBytes = await input.length();
       checkLimits(
-        entries: archive.numFiles,
+        entries: entries,
         totalBytes: total,
         archiveBytes: archiveBytes,
       );
       await output.create(recursive: true);
-      for (var i = 0; i < archive.numFiles; i++) {
-        final entry = archive.getFile(i);
-        final target = safeTarget(root, entry.name);
+      for (final entity in entities) {
+        final relative = path_utils.relative(entity.path, from: staging.path);
+        if (relative == '.') continue;
+        final target = safeTarget(root, relative);
         _checkExistingPath(root, target);
-        if (entry.isDirectory) {
+        if (entity is Directory) {
           await Directory(target).create(recursive: true);
-          continue;
-        }
-        await Directory(path_utils.dirname(target)).create(recursive: true);
-        archive.extractToFile(i, target);
-        if (FileSystemEntity.typeSync(target, followLinks: false) ==
-            FileSystemEntityType.link) {
-          throw const FormatException('Archive symlinks are not supported');
-        }
-        final actualLength = await File(target).length();
-        if (actualLength != entry.size) {
-          throw const FormatException('Archive entry size mismatch');
+        } else if (entity is File) {
+          await Directory(path_utils.dirname(target)).create(recursive: true);
+          await entity.copy(target);
+          if (FileSystemEntity.typeSync(target, followLinks: false) ==
+              FileSystemEntityType.link) {
+            throw const FormatException('Archive symlinks are not supported');
+          }
+          final actualLength = await File(target).length();
+          if (actualLength != entity.lengthSync()) {
+            throw const FormatException('Archive entry size mismatch');
+          }
         }
       }
     } finally {
-      archive.dispose();
+      if (await staging.exists()) {
+        await staging.delete(recursive: true);
+      }
     }
   }
 
