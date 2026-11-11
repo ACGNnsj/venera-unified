@@ -10,12 +10,12 @@ import 'package:venera_unified/foundation/file_system.dart';
 import 'package:share_plus/share_plus.dart' as s;
 import 'package:venera_unified/foundation/file_type.dart';
 import 'file_save_operation.dart';
-import 'path_prompt.dart';
 import 'selection_operation.dart';
 import 'platform_dialog_queue.dart';
 import 'share_file_operation.dart';
 import 'file_selection.dart';
 import 'directory_selection.dart';
+import 'harmonyos.dart';
 export 'directory_selection.dart';
 export 'file_selection.dart';
 
@@ -65,6 +65,9 @@ class DirectoryPicker {
 
   Future<DirectorySelection?> pickDirectory({
     bool directAccess = false,
+    // OHOS import copies cannot become persistent storage locations.
+    bool copyForImport = false,
+    void Function(int processed, int total)? onCopyProgress,
     void Function()? checkStop,
   }) async {
     checkStop?.call();
@@ -72,6 +75,18 @@ class DirectoryPicker {
     try {
       return await _directoryDialogs.run(() async {
         checkStop?.call();
+        if (App.isHarmonyOS) {
+          if (copyForImport) {
+            return HarmonyOS.selectDirectory(
+              cachePath: App.cachePath,
+              onCopyProgress: onCopyProgress,
+            );
+          }
+          throw UnsupportedError(
+            'Persistent external directories are not supported in this HarmonyOS experiment. '
+            'Use directory copy import or select archive files instead.',
+          );
+        }
         if (App.isAndroid) {
           final directory = await AndroidDirectory.pickDirectory();
           if (directory == null) return null;
@@ -103,13 +118,6 @@ class DirectoryPicker {
             ),
           );
         }
-        if (App.isOhos) {
-          final path = await promptPathInput(
-            title: 'Directory path',
-            hint: '/data/storage/el2/base/haps/entry/files',
-          );
-          return path == null ? null : DirectorySelection(Directory(path));
-        }
         final path = await file_selector.getDirectoryPath();
         return path == null ? null : DirectorySelection(Directory(path));
       });
@@ -136,7 +144,14 @@ Future<FileSelection?> selectFile({
         extensions: extensions,
       );
       FileSelection? file;
-      if (App.isAndroid) {
+      if (App.isHarmonyOS) {
+        final files = await HarmonyOS.selectFiles(
+          extensions: ext,
+          cachePath: App.cachePath,
+        );
+        if (files.isEmpty) return null;
+        file = files.single;
+      } else if (App.isAndroid) {
         const selectFileChannel = MethodChannel("venera/select_file");
         String mimeType = "*/*";
         if (ext.length == 1) {
@@ -152,13 +167,6 @@ Future<FileSelection?> selectFile({
           uri: selected['uri'] as String,
           name: selected['name'] as String,
         );
-      } else if (App.isOhos) {
-        final path = await promptPathInput(
-          title: 'File path',
-          hint: '/data/storage/el2/base/haps/entry/files/book.zip',
-        );
-        if (path == null) return null;
-        file = FileSelection(path);
       } else {
         var xFile = await file_selector.openFile(
           acceptedTypeGroups: <file_selector.XTypeGroup>[typeGroup],
@@ -208,12 +216,12 @@ Future<List<FileSelection>> selectFiles({
             ),
         ];
       }
-      if (App.isOhos) {
-        final path = await promptPathInput(
-          title: 'File path',
-          hint: '/data/storage/el2/base/haps/entry/files/book.zip',
+      if (App.isHarmonyOS) {
+        return HarmonyOS.selectFiles(
+          extensions: ext,
+          cachePath: App.cachePath,
+          multiple: true,
         );
-        return path == null ? <FileSelection>[] : [FileSelection(path)];
       }
       final files = await file_selector.openFiles(
         acceptedTypeGroups: [
@@ -260,18 +268,7 @@ Future<bool> saveFile({
     copySource: App.isMobile,
     checkStop: checkStop,
     save: (source) async {
-      if (App.isOhos) {
-        final path = await promptPathInput(
-          title: 'Save as',
-          hint: '/data/storage/el2/base/haps/entry/files/$filename',
-          initialValue: '/data/storage/el2/base/haps/entry/files/$filename',
-        );
-        if (path == null) return false;
-        operation.checkActive();
-        checkStop?.call();
-        await file_selector.XFile(source.path).saveTo(path);
-        return true;
-      }
+      if (App.isHarmonyOS) return HarmonyOS.saveFile(source);
       if (App.isMobile) {
         return _mobileFileSaves.run(() async {
           operation.checkActive();
