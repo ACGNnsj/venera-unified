@@ -302,7 +302,10 @@ def verify_bundle(directory, expected, source):
     if set(native) != native_names:
         raise ValueError("Incomplete native library manifest")
     pubspec = blob(source, commit, "pubspec.yaml").decode("utf-8-sig")
-    bundled = set(re.findall(r"^    - (assets/[^\r\n]+)$", pubspec, re.M))
+    # Directory entries (e.g. assets/opencc/) are skipped like in prepare: only
+    # git-tracked files carry per-asset digests.
+    bundled = {name for name in set(re.findall(r"^    - (assets/[^\r\n]+)$", pubspec, re.M))
+               if name in source_names}
     bundled_sources = {name: name for name in bundled}
     if next_candidate:
         bundled.add(NOTICE)

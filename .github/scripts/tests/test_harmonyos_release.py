@@ -403,6 +403,15 @@ class HarmonyReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Missing release changelog'):
             fixture.context()
 
+    def test_directory_asset_entries_are_skipped_in_bundled_inventory(self):
+        # Our real pubspec lists the assets/opencc/ directory; per-asset digests
+        # cover tracked files only, so the directory entry must not break verify.
+        fixture = self.fixture
+        fixture.pubspec = fixture.pubspec + '    - assets/opencc/\n'
+        fixture.unified_mainline()
+        expected = fixture.bundle()
+        self.verify(expected)
+
     def test_real_git_inventory_and_all_five_synthetic_assets_are_checked(self):
         expected = self.fixture.bundle()
         assets = self.verify(expected)

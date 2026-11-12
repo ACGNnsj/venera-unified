@@ -461,9 +461,13 @@ def prepare_project(args):
         "minimum_sdk": "26.0.0", "entrypoint": "lib/main.dart", "reader_integrated": True,
         "runtime_verified": False, "signed": False, "unavailable": FULL_CONFIG["unavailable"],
         "source_files": app_source_manifest(), "dependencies": records, "native_libraries": expected,
+        # Our pubspec lists the assets/opencc/ directory (upstream lists files
+        # only); directories are skipped here and in verify (their contents stay
+        # git-tracked in source_files and are still bundled by flutter).
         "bundled_assets": {
             name: digest(ROOT / name) for name in re.findall(
                 r"^    - (assets/[^\r\n]+)$", (ROOT / "pubspec.yaml").read_text(encoding="utf-8"), re.M)
+            if (ROOT / name).is_file()
         },
     }
     metadata["bundled_assets"][NATIVE_NOTICE_ASSET] = digest(NATIVE_NOTICE_SOURCE)

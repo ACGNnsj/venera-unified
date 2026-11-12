@@ -271,6 +271,17 @@ class FullAppTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             patch_webview_native_profile(result)
 
+    def test_directory_asset_entries_carry_no_per_file_digest(self):
+        # Our pubspec lists assets/opencc/ (upstream lists files only); prepare
+        # and verify skip directories, so every skipped entry must be a dir.
+        import re
+        pubspec = (ROOT / "pubspec.yaml").read_text(encoding="utf-8")
+        entries = re.findall(r"^    - (assets/[^\r\n]+)$", pubspec, re.M)
+        skipped = [name for name in entries if not (ROOT / name).is_file()]
+        self.assertIn("assets/opencc/", skipped)
+        for name in skipped:
+            self.assertTrue((ROOT / name).is_dir(), name)
+
     def test_hosted_sources_still_match_the_main_lock(self):
         lock = (ROOT / 'pubspec.lock').read_text(encoding='utf-8')
         for name, spec in FULL_CONFIG['hosted'].items():
