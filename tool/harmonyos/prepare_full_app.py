@@ -400,10 +400,11 @@ def apply_analyze_excludes(text, excludes):
 
 def app_source_manifest():
     require_committed_inputs("pubspec.yaml", "pubspec.lock", "CHANGELOG.md", "release.json",
-                             "lib", "assets", "packages")
+                             "lib", "assets", "shaders", "packages")
     files = [ROOT / "pubspec.yaml", ROOT / "pubspec.lock", ROOT / "CHANGELOG.md", ROOT / "release.json"]
     files.extend(sorted((ROOT / "lib").rglob("*.dart")))
     files.extend(sorted(path for path in (ROOT / "assets").rglob("*") if path.is_file()))
+    files.extend(sorted(path for path in (ROOT / "shaders").rglob("*") if path.is_file()))
     packages = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "-z", "--", "packages/"]).split(b"\0")
     files.extend(ROOT / name.decode("utf-8") for name in packages if name)
     return {path.relative_to(ROOT).as_posix():
@@ -435,6 +436,13 @@ def prepare_project(args):
         if destination.exists():
             shutil.rmtree(destination)
         shutil.copytree(ROOT / name, destination)
+    # pubspec declares shaders as a Flutter asset section; without the sources
+    # the asset bundle step fails before any test runs.
+    if (ROOT / "shaders").is_dir():
+        destination = require_within(project / "shaders", project)
+        if destination.exists():
+            shutil.rmtree(destination)
+        shutil.copytree(ROOT / "shaders", destination)
     notice = require_within(project / NATIVE_NOTICE_ASSET, project)
     notice.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(NATIVE_NOTICE_SOURCE, notice)

@@ -108,6 +108,7 @@ class FullAppTests(unittest.TestCase):
                         'pubspec.yaml': b'name: fixture\n', 'pubspec.lock': b'packages: {}\n',
                         'CHANGELOG.md': b'# Fixture changes\n', 'release.json': b'{}\n',
                         'lib/main.dart': b'void main() {}\n', 'assets/init.js': b'const fixture = true;\n',
+                        'shaders/fixture.frag': b'#version 460 core\nvoid main() {}\n',
                         'packages/example/tool.ps1': b'Write-Output reviewed\r\n',
                         'packages/example/data.bin': b'\x00\xff\r\n\x80'}
             for name, data in fixtures.items():
@@ -130,6 +131,8 @@ class FullAppTests(unittest.TestCase):
                 digest = prepare_full_app.project_tree_digest(root / 'packages/example')
                 self.assertEqual(digest, expected.hexdigest())
                 self.assertEqual(prepare_full_app.app_source_manifest()[script], hashlib.sha256(canonical).hexdigest())
+                self.assertEqual(prepare_full_app.app_source_manifest()['shaders/fixture.frag'],
+                                 hashlib.sha256(b'#version 460 core\nvoid main() {}\n').hexdigest())
                 (root / script).write_bytes(canonical)
                 self.assertEqual(prepare_full_app.project_tree_digest(root / 'packages/example'), digest)
                 self.assertEqual(prepare_full_app.app_source_manifest()[script], hashlib.sha256(canonical).hexdigest())
