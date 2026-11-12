@@ -280,7 +280,8 @@ def verify_bundle(directory, expected, source):
     native_names = NEXT_NATIVE if next_candidate else NATIVE
     source_names = tracked(source, commit)
     files = {n for n in source_names if n in {"pubspec.yaml", "pubspec.lock", "CHANGELOG.md"}
-             or n.startswith("assets/") or (n.startswith("lib/") and n.endswith(".dart"))}
+             or n.startswith("assets/") or n.startswith("shaders/")
+             or (n.startswith("lib/") and n.endswith(".dart"))}
     if next_candidate:
         files |= {n for n in source_names if n == "release.json" or n.startswith("packages/")}
     if set(metadata["source_files"]) != files:

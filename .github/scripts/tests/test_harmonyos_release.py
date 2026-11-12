@@ -148,7 +148,8 @@ class Fixture:
             name: release.sha256(release.blob(self.source, self.source_commit, name))
             for name in release.tracked(self.source, self.source_commit)
             if name in {'pubspec.yaml', 'pubspec.lock', 'CHANGELOG.md'}
-            or name.startswith('assets/') or (name.startswith('lib/') and name.endswith('.dart'))
+            or name.startswith('assets/') or name.startswith('shaders/')
+            or (name.startswith('lib/') and name.endswith('.dart'))
             or (next_candidate and (name == 'release.json' or name.startswith('packages/')))
         }
         native = bytearray(64)
