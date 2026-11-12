@@ -324,7 +324,7 @@ def configure_pubspec(text, identity=None):
     # drops out of the path overrides (DEPS 0.4.1 needs dart ^3.13) and resolves
     # to the hosted downgrade below.
     downgrades = {
-        "pdfrx": "2.4.8", "pdfrx_engine": "0.4.7",
+        "pdfrx": "2.4.7", "pdfrx_engine": "0.4.5",
         "pdfium_flutter": "0.2.3", "pdfium_dart": "0.2.5",
         "dynamic_color": "1.7.0",
         "app_links": "6.2.0", "app_links_linux": "1.0.2",
