@@ -240,7 +240,18 @@ def check_hosted_baseline(name, spec, text):
         raise ValueError(f"Missing main dependency {name}")
     version = re.search(r'    version: "([^"\n]+)"', block[1])
     checksum = re.search(r'      sha256: "?([0-9a-f]{64})"?', block[1])
-    if not version or not checksum or version[1] != spec["version"] or checksum[1] != spec["sha256"]:
+    if not version or not checksum:
+        raise ValueError(f"Main {name} lock changed; update the experiment explicitly")
+    pinned = HAP_PINNED_HOSTED.get(name)
+    if pinned is not None:
+        # The HAP deliberately pins a dart-3.11-compatible version that differs
+        # from the main lock. HAP_PINNED_HOSTED is the single source of truth and
+        # export_hosted still enforces the archive checksum, so the mainline
+        # record only has to exist.
+        if pinned != spec["version"]:
+            raise ValueError(f"HAP pin for {name} disagrees with the experiment pin")
+        return
+    if version[1] != spec["version"] or checksum[1] != spec["sha256"]:
         raise ValueError(f"Main {name} lock changed; update the experiment explicitly")
 
 
@@ -327,7 +338,7 @@ def verify_dependencies():
 # own floor is only dart 3.5, so 1.19.0 runs on 3.11).
 VERSION_PINS = {
     "pdfrx": "2.4.7", "pdfrx_engine": "0.4.5",
-    "pdfium_flutter": "0.2.3", "pdfium_dart": "0.2.5",
+    "pdfium_flutter": "0.2.3",
     "dynamic_color": "1.7.0",
     "app_links": "6.2.0", "app_links_linux": "1.0.2",
     "app_links_platform_interface": "2.0.1", "app_links_web": "1.0.4",
@@ -336,6 +347,12 @@ VERSION_PINS = {
     # (API-verified: SaveFileDialogParams.sourceFilePath + saveFile exist).
     "flutter_file_dialog": "3.0.2",
 }
+
+# Hosted packages the HAP pins below the main lock and applies as a path
+# override, so the exported copy (not the hosted package) carries our patch.
+# pdfium_dart 0.4.1 needs dart ^3.13; the 0.2.5 hook is the one we patch to keep
+# Linux PDFium out of the HAP.
+HAP_PINNED_HOSTED = {"pdfium_dart": "0.2.5"}
 
 
 def configure_pubspec(text, identity=None):
@@ -357,7 +374,9 @@ def configure_pubspec(text, identity=None):
         **{name: f"../full-deps/webview/{name}" for name in WEBVIEW_PACKAGES},
     }
     # HAP-only pins live in VERSION_PINS (module level, single source of truth).
-    del overrides["pdfium_dart"]
+    # pdfium_dart stays a path override on the pinned 0.2.5 archive: only that
+    # copy can be patched, and its hook would otherwise bundle Linux PDFium into
+    # the HAP (the hosted 0.4.1 export cannot resolve on dart 3.11).
     section = re.search(r"^dependency_overrides:\n(.*?)(?=^\w|\Z)", text, re.M | re.S)
     if section is None:
         raise ValueError("Missing main dependency overrides; review the OHOS candidate")

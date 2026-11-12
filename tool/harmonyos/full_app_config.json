@@ -34,8 +34,8 @@
       "sha256": "baecf8deb6bf53a50e5ab513707ab56cc0c25f5b43333aa56ef562e8e7057357"
     },
     "pdfium_dart": {
-      "version": "0.4.1",
-      "sha256": "3e250021b2f462058aae216837902fdc8b2cb7f0657e4ec2bc9ac541f960ff84"
+      "version": "0.2.5",
+      "sha256": "86e95c66b09f3245b95c4924f2edce8d4f7c9786876e5c5ee8e36b104a94bbb0"
     }
   },
   "unavailable": [

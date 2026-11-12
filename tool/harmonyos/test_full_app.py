@@ -220,11 +220,18 @@ class FullAppTests(unittest.TestCase):
         self.assertIn('    path: ../full-deps/sqlite3', prepared)
         self.assertNotIn('full-deps/code_assets', prepared)
         for name, version in (("pdfrx", "2.4.7"), ("dynamic_color", "1.7.0"),
-                                   ("app_links", "6.2.0"), ("pdfium_dart", "0.2.5"),
+                                   ("app_links", "6.2.0"),
                                    ("meta", "1.19.0"),
                                    ("flutter_file_dialog", "3.0.2")):
             self.assertIn(f"  {name}: {version}\n", overrides)
-        self.assertNotIn('full-deps/pdfium', prepared)
+        # pdfium_dart is a path override on the pinned 0.2.5 archive: only that
+        # copy carries the OHOS hook patch that keeps Linux PDFium out.
+        pdfium = [line for line in overrides.splitlines() if 'pdfium' in line]
+        self.assertIn('  pdfium_dart:', overrides)
+        self.assertEqual(overrides.count('  pdfium_dart:\n'), 1)
+        self.assertIn('  pdfium_dart:\n    path: ../full-deps/pdfium_dart\n', overrides)
+        self.assertNotIn('  pdfium_dart: 0.2.5\n', overrides)
+        self.assertTrue(pdfium)
         self.assertIn('    path: ../full-deps/webview/flutter_inappwebview_ohos', prepared)
         self.assertNotIn('full-deps/lodepng_flutter', prepared)
         self.assertNotIn('full-deps/flutter_7zip', prepared)
@@ -313,8 +320,14 @@ class FullAppTests(unittest.TestCase):
         lock = (ROOT / 'pubspec.lock').read_text(encoding='utf-8')
         for name, spec in FULL_CONFIG['hosted'].items():
             check_hosted_baseline(name, spec, lock)
-            with self.assertRaises(ValueError):
-                check_hosted_baseline(name, {**spec, 'sha256': '0' * 64}, lock)
+            if name in prepare_full_app.HAP_PINNED_HOSTED:
+                # Deliberate HAP downgrade: the pin, not the mainline checksum,
+                # is what must match; the archive hash is checked on download.
+                with self.assertRaises(ValueError):
+                    check_hosted_baseline(name, {**spec, 'version': '0.0.0'}, lock)
+            else:
+                with self.assertRaises(ValueError):
+                    check_hosted_baseline(name, {**spec, 'sha256': '0' * 64}, lock)
 
     def make_hap(self, root, *, metadata_change=None, app_change=None, omit=None, corrupt_library=False, extra=None):
         data = elf()
@@ -486,7 +499,7 @@ class FullAppTests(unittest.TestCase):
             self.assertEqual(types.get(name), 'direct overridden', name)
 
     def test_template_hosted_pins_match_prepare_pins(self):
-        from prepare_full_app import VERSION_PINS
+        from prepare_full_app import HAP_PINNED_HOSTED, VERSION_PINS
         lock = Path(__file__).with_name('app') / 'pubspec.lock.template'
         lines = lock.read_text(encoding='utf-8').splitlines()
         versions = {}
@@ -501,6 +514,8 @@ class FullAppTests(unittest.TestCase):
                 # between, so take the version following the source line.
                 versions.setdefault(current, line.split(':', 1)[1].strip().strip('"'))
         for name, version in VERSION_PINS.items():
+            self.assertEqual(versions.get(name), version, name)
+        for name, version in HAP_PINNED_HOSTED.items():
             self.assertEqual(versions.get(name), version, name)
         # SDK-imposed versions must track the OHOS SDK (3.41), not our newer
         # SDK: red 11 was 4 downgrades (intl/matcher/test_api/vector_math)
