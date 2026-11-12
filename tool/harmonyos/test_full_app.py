@@ -458,6 +458,30 @@ class FullAppTests(unittest.TestCase):
             self.assertEqual(types.get(name), 'direct overridden', name)
         self.assertEqual(types.get('flutter_inappwebview_internal_annotations'),
                          'transitive')
+        # Hosted-only overrides resolve as direct-overridden; direct deps keep
+        # direct-main even when pinned (red 10: Would change 5 dependencies).
+        for name in ('pdfrx_engine', 'pdfium_dart', 'pdfium_flutter',
+                     'app_links_linux', 'app_links_platform_interface',
+                     'app_links_web', 'meta'):
+            self.assertEqual(types.get(name), 'direct overridden', name)
+
+    def test_template_hosted_pins_match_prepare_pins(self):
+        from prepare_full_app import VERSION_PINS
+        lock = Path(__file__).with_name('app') / 'pubspec.lock.template'
+        lines = lock.read_text(encoding='utf-8').splitlines()
+        versions = {}
+        current = None
+        for i, line in enumerate(lines):
+            if (line.startswith('  ') and not line.startswith('   ')
+                    and line.endswith(':') and ':' not in line[2:-1]):
+                current = line.strip()[:-1]
+            elif (current and line.strip().startswith('version:')
+                    and lines[i - 1].strip() != 'description:'):
+                # first version: after description block; dependency line sits
+                # between, so take the version following the source line.
+                versions.setdefault(current, line.split(':', 1)[1].strip().strip('"'))
+        for name, version in VERSION_PINS.items():
+            self.assertEqual(versions.get(name), version, name)
 
 
 if __name__ == '__main__':

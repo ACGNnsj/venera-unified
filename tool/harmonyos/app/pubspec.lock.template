@@ -10,7 +10,7 @@ packages:
     source: hosted
     version: "6.2.0"
   app_links_linux:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: app_links_linux
       sha256: "567139eca3ca9fb113f2082f3aaa75a26f30f0ebdbe5fa7f09a3913c5bebd630"
@@ -18,7 +18,7 @@ packages:
     source: hosted
     version: "1.0.2"
   app_links_platform_interface:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: app_links_platform_interface
       sha256: "01b32cd1e842d88b5d276d2f9d21d295714357d937268904edc830cd2f55c798"
@@ -26,13 +26,13 @@ packages:
     source: hosted
     version: "2.0.1"
   app_links_web:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: app_links_web
-      sha256: "74586ed5f3c4786341e82a0fa43c39ec3f13108a550f74e80d8bf68aa11349d1"
+      sha256: "af060ed76183f9e2b87510a9480e56a5352b6c249778d07bd2c95fc35632a555"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.3"
+    version: "1.0.4"
   archive:
     dependency: "direct main"
     description:
@@ -698,7 +698,7 @@ packages:
     source: hosted
     version: "0.1.1"
   meta:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: meta
       sha256: "307249ce4ff29d58a18e97f6345f539382eb9c9c29ecda628900f31de0443dd9"
@@ -786,7 +786,7 @@ packages:
     source: hosted
     version: "2.3.0"
   pdfium_dart:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: pdfium_dart
       sha256: "86e95c66b09f3245b95c4924f2edce8d4f7c9786876e5c5ee8e36b104a94bbb0"
@@ -794,7 +794,7 @@ packages:
     source: hosted
     version: "0.2.5"
   pdfium_flutter:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: pdfium_flutter
       sha256: "0b115c0917aef9cf6bb9c4d47d0efc61d97f44844cd76287c921f997c26cf15d"
@@ -805,18 +805,18 @@ packages:
     dependency: "direct main"
     description:
       name: pdfrx
-      sha256: "85a87117ae6358e0ef2cc90d4db9f5e689eabbd7f19ab98c97164584d0be4a4a"
+      sha256: "acce61944c31bd36f0c3031b1bbf41f59d0b0d4e5e27614fbdc74ff093d55464"
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.8"
+    version: "2.4.7"
   pdfrx_engine:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: pdfrx_engine
-      sha256: "4399846809a75aed03881d8b8a19e5e70addd4b46b22fd94a0effd8859258f07"
+      sha256: "8043527245e4c35a2a3b7df8494c066b9efa97fe031945951e46b378318b3d5f"
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.7"
+    version: "0.4.5"
   petitparser:
     dependency: transitive
     description:
