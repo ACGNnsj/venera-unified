@@ -147,7 +147,8 @@ class _Host {
 ReorderCallback _reorder(WidgetTester tester) => tester
     .widget<ReorderableListView>(find.byType(ReorderableListView))
     // TODO(venera-unified): 3.44 起 onReorder 弃用且可为空，锁定基线后改用 onReorderItem。
-    // ignore: deprecated_member_use
+    // Nullable on the current SDK, non-nullable on the 3.41 rollback SDK.
+    // ignore: deprecated_member_use, unnecessary_non_null_assertion
     .onReorder!;
 
 VoidCallback _help(WidgetTester tester) => tester

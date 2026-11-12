@@ -30,6 +30,15 @@ NATIVE_NOTICE_SOURCE = ROOT / "packages/venera_native/notices/VENERA_NATIVE_THIR
 WEBVIEW_API_TYPES = ("browser_process_exit_kind.dart", "browser_process_exit_kind.g.dart",
                      "browser_process_exited_detail.dart", "browser_process_exited_detail.g.dart", "enum_method.dart")
 WEBVIEW_TYPES = Path("flutter_inappwebview_platform_interface/lib/src/types")
+# Host-only tests that override an interface member added by a newer pdfrx
+# release than the pinned HAP dependency set provides (PdfPageRenderPriority).
+# They are never packaged into the application, so the HAP analyze gate and
+# the HAP unit-test subset leave them out; the repository analyzes and runs
+# them on the main SDK.
+HAP_PDFRX_208_TESTS = (
+    "test/features/local_comics/import_export/pdf_import_test.dart",
+    "test/features/local_comics/import_export/import_registration_failure_test.dart",
+)
 
 
 def tree_digest(root):
@@ -366,6 +375,18 @@ def configure_pubspec(text, identity=None):
     return text
 
 
+def apply_analyze_excludes(text, excludes):
+    marker = "\n  exclude:\n"
+    if text.count(marker) != 1:
+        raise ValueError("analysis_options.yaml must carry one analyzer exclude list")
+    if not excludes:
+        return text
+    block = marker + "".join(
+        "    # HAP-only: overrides a pdfrx member the pinned set lacks.\n"
+        f"    - {name}\n" for name in excludes)
+    return text.replace(marker, block, 1)
+
+
 def app_source_manifest():
     require_committed_inputs("pubspec.yaml", "pubspec.lock", "CHANGELOG.md", "release.json",
                              "lib", "assets", "packages")
@@ -396,7 +417,9 @@ def prepare_project(args):
     if not (project / ".venera-harmonyos-owned").exists():
         raise ValueError("Missing generated-project ownership marker")
     records = verify_dependencies()
-    for name in ("lib", "assets", "test"):
+    # integration_test is copied too: unit tests under test/ import shared
+    # fixtures from it, and the analyze gate resolves those imports.
+    for name in ("lib", "assets", "test", "integration_test"):
         destination = require_within(project / name, project)
         if destination.exists():
             shutil.rmtree(destination)
@@ -420,7 +443,11 @@ def prepare_project(args):
     (project / "pubspec.yaml").write_text(configure_pubspec((ROOT / "pubspec.yaml").read_text(encoding="utf-8"), identity), encoding="utf-8")
     (project / "CHANGELOG.md").write_text(identity["changelog"], encoding="utf-8")
     shutil.copy2(ROOT / "LICENSE", project / "LICENSE")
-    shutil.copy2(ROOT / "analysis_options.yaml", project / "analysis_options.yaml")
+    options = project / "analysis_options.yaml"
+    options.write_text(
+        apply_analyze_excludes((ROOT / "analysis_options.yaml").read_text(encoding="utf-8"),
+                               HAP_PDFRX_208_TESTS),
+        encoding="utf-8")
     lock = Path(__file__).with_name("app") / "pubspec.lock.template"
     if lock.exists():
         shutil.copy2(lock, project / "pubspec.lock")

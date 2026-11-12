@@ -60,7 +60,11 @@ TESTS = (
     "test/features/local_comics/import_export/cbz_import_lifecycle_test.dart",
     "test/features/local_comics/import_export/epub_import_test.dart",
     "test/features/local_comics/import_export/comic_import_service_test.dart",
-        "test/features/local_comics/import_export/import_registration_failure_test.dart",
+    # import_registration_failure_test and pdf_import_test override a pdfrx
+    # member (PdfPageRenderPriority) that the pinned HAP dependency set does
+    # not provide; they are host-only and never packaged, so the HAP subset
+    # leaves them out and the repository runs them on the main SDK.
+    # See HAP_PDFRX_208_TESTS in prepare_full_app.py.
     "test/features/local_comics/import_export/comic_collection_archive_test.dart",
     "test/features/local_comics/import_export/collection_layout_dialog_test.dart",
     "test/features/local_comics/import_export/copy_cleanup_test.dart",
@@ -164,6 +168,9 @@ def build(flutter_sdk):
             if native["sdk_profile"] != "harmony-ci" or native["sdk_api"] != 26:
                 raise ValueError("Cloud reader HAP requires fresh API 26 libraries")
         flutter = flutter_sdk / "bin/flutter"
+        # Integration tests are host-side and never packaged, but test/ imports
+        # shared fixtures from integration_test/, so the prepared tree is
+        # analyzed with that directory present and its sources left alone.
         run_logged([flutter, "analyze", "--no-pub", "--fatal-infos", "--fatal-warnings"], "full-app-analyze", PROJECT)
         host = require_within(BASE / "full-host", BASE)
         host_sources = {"flutter_qjs": BASE / "deps/flutter_qjs", "zip_flutter": DEPS / "zip_flutter",

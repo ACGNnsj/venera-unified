@@ -265,6 +265,18 @@ class FullAppTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             patch_pdfium_hook(result)
 
+    def test_hap_analyze_excludes_only_the_pdfrx_version_gap_tests(self):
+        text = (ROOT / "analysis_options.yaml").read_text(encoding="utf-8")
+        result = prepare_full_app.apply_analyze_excludes(text, prepare_full_app.HAP_PDFRX_208_TESTS)
+        self.assertGreater(len(result), len(text))
+        for name in prepare_full_app.HAP_PDFRX_208_TESTS:
+            self.assertIn(f"    - {name}\n", result)
+            self.assertTrue((ROOT / name).is_file(), name)
+            self.assertIn("PdfPageRenderPriority", (ROOT / name).read_text(encoding="utf-8"))
+        self.assertEqual(prepare_full_app.apply_analyze_excludes(text, ()), text)
+        with self.assertRaises(ValueError):
+            prepare_full_app.apply_analyze_excludes("analyzer:\n", ())
+
     def test_webview_helper_uses_the_independent_native_build(self):
         original = '''  "buildOption": {
     "externalNativeOptions": {

@@ -21,6 +21,11 @@ class _HomeLayoutSettingsState extends State<HomeLayoutSettings> {
   void _persist() => saveHomeLayout(layout);
 
   void _onReorder(int oldIndex, int newIndex) {
+    // The legacy onReorder callback reports the insertion index before the
+    // dragged item is removed, so account for the removal here. Kept on the
+    // legacy callback so the widget still compiles on the 3.41 rollback SDK,
+    // which predates onReorderItem.
+    if (oldIndex < newIndex) newIndex--;
     setState(() {
       layout.insert(newIndex, layout.removeAt(oldIndex));
     });
@@ -75,7 +80,8 @@ class _HomeLayoutSettingsState extends State<HomeLayoutSettings> {
               buildDefaultDragHandles: false,
               padding: const EdgeInsets.symmetric(vertical: 4),
               itemCount: layout.length,
-              onReorderItem: _onReorder,
+              // ignore: deprecated_member_use
+              onReorder: _onReorder,
               itemBuilder: (context, index) {
                 var config = layout[index];
                 var meta = homeSectionMetaById[config.id]!;

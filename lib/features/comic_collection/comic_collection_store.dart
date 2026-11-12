@@ -412,7 +412,8 @@ abstract class ComicCollectionStore {
   }
 
   /// Moves a member within the collection. [newIndex] is a final list index
-  /// with the removal already accounted for, matching `onReorderItem`.
+  /// with the removal already accounted for; callers on the legacy
+  /// `onReorder` callback adjust the reported index first.
   static void reorderMember(String id, int oldIndex, int newIndex) {
     final list = all();
     final index = list.indexWhere((e) => e.id == id);
