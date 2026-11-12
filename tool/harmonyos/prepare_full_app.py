@@ -128,8 +128,17 @@ def patch_sqlite_loader(text):
     # from the system loader on OHOS instead of the GitHub prebuilt.
     if "const LookupSystem('sqlite3')" in text:
         raise ValueError("SQLite OHOS loader must only be applied once")
-    return patch_once(text, "    final targetOS = input.config.code.targetOS;\n\n    // `source` and `name` are either",
-                      "    final targetOS = input.config.code.targetOS;\n    if (targetOS == OS.ohos) return const LookupSystem('sqlite3');\n\n    // `source` and `name` are either")
+    return patch_once(
+        text,
+        "    final targetOS = input.config.code.targetOS;\n\n    // `source` and `name` are either",
+        "    final targetOS = input.config.code.targetOS;\n"
+        "    // The OHOS SDK reports hook targets as Linux, so the prepared\n"
+        "    // project opts this package into the system sqlite3 instead of\n"
+        "    // guessing from targetOS.\n"
+        "    if (input.userDefines['venera_harmonyos_system_sqlite'] == true) {\n"
+        "      return const LookupSystem('sqlite3');\n"
+        "    }\n\n"
+        "    // `source` and `name` are either")
 
 
 def patch_pdfium_hook(text):
@@ -371,7 +380,9 @@ def configure_pubspec(text, identity=None):
     if re.search(r"^hooks:", text, re.M):
         raise ValueError("Main hook configuration changed; review the experiment")
     text += ("\nhooks:\n  user_defines:\n    pdfium_dart:\n"
-             "      venera_harmonyos_experiment: true\n")
+             "      venera_harmonyos_experiment: true\n"
+             "    sqlite3:\n"
+             "      venera_harmonyos_system_sqlite: true\n")
     return text
 
 

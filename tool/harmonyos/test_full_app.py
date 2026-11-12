@@ -228,6 +228,7 @@ class FullAppTests(unittest.TestCase):
         self.assertIn('    - ' + NATIVE_NOTICE_ASSET, prepared)
         self.assertIn('    - assets/init.js', prepared)
         self.assertIn('hooks:\n  user_defines:\n    pdfium_dart:\n      venera_harmonyos_experiment: true', prepared)
+        self.assertIn('    sqlite3:\n      venera_harmonyos_system_sqlite: true', prepared)
         self.assertEqual((ROOT / 'pubspec.yaml').read_text(encoding='utf-8'), original)
 
     def test_duplicate_main_webview_override_requires_explicit_review(self):
@@ -247,7 +248,11 @@ class FullAppTests(unittest.TestCase):
         feed = ('    final targetOS = input.config.code.targetOS;\n\n'
                 '    // `source` and `name` are either')
         result = patch_sqlite_loader(feed)
-        self.assertIn("if (targetOS == OS.ohos) return const LookupSystem('sqlite3');", result)
+        # The OHOS SDK labels hook targets as Linux, so the opt-in comes from
+        # the prepared project's hook user defines, not from targetOS.
+        self.assertIn("if (input.userDefines['venera_harmonyos_system_sqlite'] == true) {", result)
+        self.assertIn("return const LookupSystem('sqlite3');", result)
+        self.assertNotIn("OS.ohos", result)
         with self.assertRaisesRegex(ValueError, 'only be applied once'):
             patch_sqlite_loader(result)
         with self.assertRaisesRegex(ValueError, 'Pinned dependency changed'):
