@@ -309,3 +309,7 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 ## 友情链接
 
 - [LINUX DO](https://linux.do/)
+
+---
+
+[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)

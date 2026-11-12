@@ -100,7 +100,7 @@ class _AboutSettingsState extends State<AboutSettings> {
               textAlign: TextAlign.center,
             ),
             Text(
-              "Venera Unified is a free and open-source app for comic reading."
+              "Venera Unified is a free and open-source comic reader for Android (mobile and TV), iOS, Windows, Linux and macOS."
                   .tl,
             ),
             const SizedBox(height: 8),

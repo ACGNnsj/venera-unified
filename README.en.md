@@ -308,3 +308,7 @@ This project is licensed under GPL-3.0.
 ## Community Links
 
 - [LINUX DO](https://linux.do/)
+
+---
+
+[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
