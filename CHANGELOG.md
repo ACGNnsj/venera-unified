@@ -2,6 +2,23 @@
 
 # 更新日志
 
+## v1.22.0 - 2026-11-13
+
+### 发布说明
+
+- 正式版 `1.22.0+249`。可从 v1.21.x 直接覆盖安装（包名、签名证书一致）。
+- TV 安装包首次随稳定版发布：手机版与 TV 版各 4 个 APK（universal／arm64-v8a／armeabi-v7a／x86_64），TV 版可与手机版共存，数据独立，更新检查在 TV 上关闭。
+- 鸿蒙（HarmonyOS NEXT）未签名测试版 HAP 首次随稳定版发布：`VeneraUnified-1.22.0-harmonyos-arm64-unsigned.hap`，附 `harmonyos-manifest.json` 与 `harmonyos-SHA256SUMS`，安装指南见仓库 `doc/distribution/harmonyos-reader.zh.md`。未签名，需自行签名侧载；实机阅读尚未验收。
+- 升级前建议照常备份应用数据。
+
+### 新增
+
+- Android TV 进入主线并随版发布：独立电视入口、固定横屏、遥控器焦点导航，低内存模式（单页、1 页预加载、64 MiB 图片缓存）仅存本机。
+- 鸿蒙 HAP 发布管线：与主线同提交构建、可复现的未签名 HAP，随版附版本清单与摘要核验。
+
+### 修复
+
+- 鸿蒙构建补齐着色器资源，pdfium hook 改走用户宏，sqlite3 走系统加载器，锁模板与 ohos SDK 基线对齐。
 ## v1.21.1 - 2026-11-10
 
 ### 发布说明
