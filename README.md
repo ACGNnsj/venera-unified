@@ -22,7 +22,7 @@
 
 ## 项目介绍
 
-Venera Unified 是从 [VeneraNext](https://github.com/CyrilPeng/venera-next) 分叉、由本仓库独立维护的 Flutter 漫画阅读器，支持 **Android、iOS、Windows、Linux 和 macOS**。v1.20.0 新增嵌套收藏夹，阅读器本体与扩展接口与上游保持兼容。
+Venera Unified 是从 [VeneraNext](https://github.com/CyrilPeng/venera-next) 分叉、由本仓库独立维护的 Flutter 漫画阅读器，支持 **Android（含手机版与 TV 版）、iOS、Windows、Linux 和 macOS**，阅读器本体与扩展接口与上游保持兼容。自 v1.21 起 Android TV 已进入主线并随稳定版发布；HarmonyOS HAP 为未签名候选验证包，实机未验收（见 [HarmonyOS 阅读器](doc/distribution/harmonyos-reader.zh.md)）。
 
 本分支围绕“少一点打断，多一点阅读”打磨日常体验：瀑布流跨章连读不用退出，长按收藏省去选择收藏夹的步骤，夜间和墨水屏设备各有阅读设置。本地导入、离线下载、阅读统计与多设备同步，让找书、看漫画和追连载更方便。
 
@@ -99,16 +99,11 @@ Venera Unified 是从 [VeneraNext](https://github.com/CyrilPeng/venera-next) 分
 
 **推荐**：如果不确定应该下载哪个，选择通用版 `VeneraUnified-xxx-android.apk`。
 
-### Android TV（实验版）
+### Android TV
 
-TV 版暂不随稳定版发布，需自行构建后旁加载：
+TV 已进入主线：Android 构建同时产出手机版与 TV 版，新版本发布时两者进入同一个 GitHub Release。从[最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest)选择含 `android-tv` 的资产（通用版 `VeneraUnified-xxx-android-tv.apk`，以及 `arm64-v8a` / `armeabi-v7a` / `x86_64` 分包），传到电视/盒子后侧载即可。
 
-```powershell
-flutter build apk --release --flavor tv
-adb install -r build/app/outputs/apk/tv/release/app-tv-release.apk
-```
-
-包名为 `io.github.venera.unified.tv`，可与手机版共存。TV 版为实验性支持，暂无自动更新，升级需重新旁加载。
+包名为 `io.github.venera.unified.tv`，可与手机版（`io.github.venera.unified`）共存，数据相互独立。应用内更新检查只提示含已上传 TV 通用包的版本，TV 提示会明确要求选择 `android-tv` 包。构建与版本码、签名清单核验见 [Android TV 安装与分发](doc/distribution/android_tv.zh.md)。
 
 ### iOS
 

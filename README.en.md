@@ -22,7 +22,7 @@
 
 ## Introduction
 
-Venera Unified is a community fork of [VeneraNext](https://github.com/CyrilPeng/venera-next), maintained in this repository — a Flutter comic reader for **Android, iOS, Windows, Linux, and macOS**. v1.20.0 adds nested favorites while keeping reader and extension compatibility with upstream.
+Venera Unified is a community fork of [VeneraNext](https://github.com/CyrilPeng/venera-next), maintained in this repository — a Flutter comic reader for **Android (mobile + TV), iOS, Windows, Linux, and macOS**, keeping reader and extension compatibility with upstream. Since v1.21 Android TV has graduated to mainline and ships with stable releases; the HarmonyOS HAP is an unsigned candidate pending on-device acceptance (see [HarmonyOS Reader](doc/distribution/harmonyos-reader.en.md)).
 
 This fork focuses on fewer interruptions and more reading: Waterfall mode scrolls across chapters without leaving the reader, long-pressing Favorite skips the folder picker, and nighttime and E-Ink devices get their own reading adjustments. Local import, offline downloads, reading statistics, and multi-device sync make finding comics, reading them, and following ongoing series easier.
 
@@ -101,16 +101,11 @@ Download an APK from the [latest stable release](https://github.com/ACGNnsj/vene
 
 When in doubt, use the universal `VeneraUnified-xxx-android.apk` package.
 
-### Android TV (experimental)
+### Android TV
 
-The TV build does not ship with stable releases yet. Build it yourself and sideload it:
+TV has graduated to mainline: Android builds produce both mobile and TV APKs, and both ship in the same GitHub Release. Pick an `android-tv` asset from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest) (universal `VeneraUnified-xxx-android-tv.apk`, plus `arm64-v8a` / `armeabi-v7a` / `x86_64` splits) and sideload it onto your TV/box.
 
-```powershell
-flutter build apk --release --flavor tv
-adb install -r build/app/outputs/apk/tv/release/app-tv-release.apk
-```
-
-The package name is `io.github.venera.unified.tv`, so it coexists with the phone build. TV support is experimental with no auto-update; sideload again to upgrade.
+The package name is `io.github.venera.unified.tv`, so it coexists with the phone build (`io.github.venera.unified`) with separate data. The in-app update check only offers releases that already contain the TV universal package, and the TV prompt explicitly asks for an `android-tv` APK. See [Android TV Installation and Distribution](doc/distribution/android_tv.en.md) for build and version-code/signature-manifest verification.
 
 ### iOS
 

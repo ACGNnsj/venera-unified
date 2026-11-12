@@ -23,7 +23,7 @@ class AppProfile {
 
   bool get isTv => flavor == 'tv';
   bool get applicationUpdatesEnabled => true;
-  String get applicationTitle => isTv ? 'VeneraNext TV' : 'VeneraNext';
+  String get applicationTitle => isTv ? 'Venera Unified TV' : 'Venera Unified';
 
   String displayVersion(String baseVersion) =>
       isTv ? '$baseVersion / TV $build / $revision' : baseVersion;
