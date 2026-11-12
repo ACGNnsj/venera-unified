@@ -332,6 +332,9 @@ def configure_pubspec(text, identity=None):
         "app_links": "6.2.0", "app_links_linux": "1.0.2",
         "app_links_platform_interface": "2.0.1", "app_links_web": "1.0.4",
         "meta": "1.19.0",
+        # flutter_file_dialog 3.x all need dart >=3.12; newest 3.11-era is 3.0.2
+        # (API-verified: SaveFileDialogParams.sourceFilePath + saveFile exist).
+        "flutter_file_dialog": "3.0.2",
     }
     del overrides["pdfium_dart"]
     section = re.search(r"^dependency_overrides:\n(.*?)(?=^\w|\Z)", text, re.M | re.S)

@@ -218,7 +218,8 @@ class FullAppTests(unittest.TestCase):
         self.assertNotIn('full-deps/code_assets', prepared)
         for name, version in (("pdfrx", "2.4.7"), ("dynamic_color", "1.7.0"),
                                    ("app_links", "6.2.0"), ("pdfium_dart", "0.2.5"),
-                                   ("meta", "1.19.0")):
+                                   ("meta", "1.19.0"),
+                                   ("flutter_file_dialog", "3.0.2")):
             self.assertIn(f"  {name}: {version}\n", overrides)
         self.assertNotIn('full-deps/pdfium', prepared)
         self.assertIn('    path: ../full-deps/webview/flutter_inappwebview_ohos', prepared)
