@@ -630,9 +630,9 @@ final class _FileOverrides extends IOOverrides {
 class _InterceptedFile implements File {
   _InterceptedFile(
     this.raw, {
-    this._copy,
+    Future<File> Function(File, String)? copy,
     this.write,
-  });
+  }) : _copy = copy;
   final File raw;
   final Future<File> Function(File, String)? _copy;
   final Future<File> Function(File, List<int>, FileMode, bool)? write;

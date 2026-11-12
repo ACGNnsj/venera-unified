@@ -5,12 +5,16 @@ import 'package:venera_unified/foundation/application_preferences.dart';
 class HistoryRetentionChange {
   HistoryRetentionChange({
     required int days,
-    required this._access,
-    required this._checkTarget,
-    required this._saveDays,
-    required this._clearBefore,
+    required Future<void> Function(Future<void> Function()) access,
+    required void Function() checkTarget,
+    required Future<void> Function(int) saveDays,
+    required Future<void> Function(int) clearBefore,
     DateTime Function()? now,
-  }) : days = AppPreferences.historyRetentionDays.normalize(days),
+  }) : _access = access,
+       _checkTarget = checkTarget,
+       _saveDays = saveDays,
+       _clearBefore = clearBefore,
+       days = AppPreferences.historyRetentionDays.normalize(days),
        _now = now ?? DateTime.now;
 
   final int days;

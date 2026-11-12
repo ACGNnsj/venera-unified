@@ -429,12 +429,14 @@ typedef _NativeImageFrame = ({
 /// request until its image is handed to Flutter or discarded after cancellation.
 class _OwnedImageCodec implements ui.Codec {
   _OwnedImageCodec(
-    this._raw,
-    this._recordFailure, {
+    ui.Codec raw,
+    void Function(Object, StackTrace) recordFailure, {
     this.diagnostics,
     required this.diagnosticIdentity,
-  }) : frameCount = _raw.frameCount,
-       repetitionCount = _raw.repetitionCount;
+  }) : _raw = raw,
+       _recordFailure = recordFailure,
+       frameCount = raw.frameCount,
+       repetitionCount = raw.repetitionCount;
 
   final ui.Codec _raw;
   final ReaderDiagnostics? diagnostics;
@@ -665,13 +667,14 @@ Future<void> _joinReleasedImageWork(Iterable<Future<void>> work) async {
 class _CancellableImageStreamCompleter extends MultiFrameImageStreamCompleter
     implements OriginalImageSize {
   _CancellableImageStreamCompleter({
-    required this._consumer,
-    required this._dimensions,
+    required _ImageConsumer consumer,
+    required _ImageDimensions dimensions,
     required super.codec,
     required super.chunkEvents,
     required super.scale,
     super.informationCollector,
-  }) {
+  }) : _consumer = consumer,
+       _dimensions = dimensions {
     _unlisten = BaseImageProvider._lifecycle.listen(
       hold: () {},
       resume: _resumeImage,

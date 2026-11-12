@@ -355,8 +355,9 @@ class JsEngine with _JSEngineApi, Init {
     Dio Function()? createHttpClient,
     Future<Uint8List> Function()? loadInitScript,
     JsPoolEngine Function(Uint8List)? createComputeWorker,
-    this._uiMessageHandler,
-  }) : _createHttpClient = createHttpClient ?? _newHttpClient,
+    JsUiMessageHandler? uiMessageHandler,
+  }) : _uiMessageHandler = uiMessageHandler,
+       _createHttpClient = createHttpClient ?? _newHttpClient,
        _loadInitScript = loadInitScript ?? _readInitScript,
        _createComputeWorker = createComputeWorker ?? _newComputeWorker;
 
@@ -1672,7 +1673,8 @@ class _JsCallbackInvocation {
 /// The Dart reference count belongs to callers; runtime shutdown can still
 /// destroy the adopted native reference regardless of outstanding dup calls.
 class _OwnedJsReference extends JSRef {
-  _OwnedJsReference(this.owner, this.nativeEngine, this._reference);
+  _OwnedJsReference(this.owner, this.nativeEngine, JSRef? reference)
+    : _reference = reference;
 
   final JsEngine owner;
   final FlutterQjs? nativeEngine;
@@ -2201,7 +2203,9 @@ class JsCallbackScope {
       _parent = null {
     _engine._callbackScopes.add(this);
   }
-  JsCallbackScope._child(this._engine, this._parent);
+  JsCallbackScope._child(JsEngine engine, JsCallbackScope? parent)
+    : _engine = engine,
+      _parent = parent;
   final JsEngine _engine;
   final JsCallbackScope? _parent;
   final _children = <JsCallbackScope>{};

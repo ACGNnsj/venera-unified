@@ -4,10 +4,12 @@ import 'sync_configuration.dart';
 /// Persistence and transfer transaction ownership remain with DataSyncController.
 class SyncPreferenceStore {
   const SyncPreferenceStore({
-    required this._readSetting,
-    required this._writeSetting,
-    required this._implicitData,
-  });
+    required Object? Function(String) readSetting,
+    required void Function(String, Object?) writeSetting,
+    required Map<String, dynamic> Function() implicitData,
+  }) : _readSetting = readSetting,
+       _writeSetting = writeSetting,
+       _implicitData = implicitData;
 
   final Object? Function(String) _readSetting;
   final void Function(String, Object?) _writeSetting;
@@ -101,10 +103,12 @@ Object? _copyConfigurationValue(Object? value) => switch (value) {
 /// Raw rollback values deliberately bypass normalization to preserve old data.
 class SyncPreferenceCheckpoint {
   SyncPreferenceCheckpoint._(
-    this._connection,
-    this._excludedFields,
-    this._schedule,
-  );
+    Object? connection,
+    Object? excludedFields,
+    Map<String, Object?> schedule,
+  ) : _connection = connection,
+      _excludedFields = excludedFields,
+      _schedule = schedule;
   final Object? _connection;
   final Object? _excludedFields;
   final Map<String, Object?> _schedule;

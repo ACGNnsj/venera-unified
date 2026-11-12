@@ -73,8 +73,9 @@ class SourceUpdatePrompt {
     required this.source,
     required this.manager,
     required this.service,
-    this._isCurrent,
-  }) : _task = WindowSelectionTask(context),
+    bool Function()? isCurrent,
+  }) : _isCurrent = isCurrent,
+       _task = WindowSelectionTask(context),
        _dataPath = App.dataPath;
 
   final ComicSource source;

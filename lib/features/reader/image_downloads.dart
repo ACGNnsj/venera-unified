@@ -12,10 +12,11 @@ import 'package:venera_unified/foundation/image_work.dart';
 /// A view owns its subscriptions; the reading session owns their actual finish.
 class ReaderImageDownloads {
   ReaderImageDownloads({
-    required this._work,
+    required ImageWork work,
     Stream<ImageDownloadProgress> Function(String, String?, String, String)?
     loader,
-  }) : _loader = loader ?? ImageDownloader.loadComicImage;
+  }) : _work = work,
+       _loader = loader ?? ImageDownloader.loadComicImage;
 
   final ImageWork _work;
   final Stream<ImageDownloadProgress> Function(String, String?, String, String)

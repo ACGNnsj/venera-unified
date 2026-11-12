@@ -21,10 +21,13 @@ class ReaderSettingsRequest {
     required this.sourceKey,
     required this.isCurrent,
     required String Function() currentMode,
-    required this._isDetectingLayout,
-    required this._detectLayout,
-    required this._applyReaderEffect,
-  }) : _currentMode = currentMode,
+    required bool Function() isDetectingLayout,
+    required Future<void> Function() detectLayout,
+    required void Function(ReaderSettingEffect) applyReaderEffect,
+  }) : _isDetectingLayout = isDetectingLayout,
+       _detectLayout = detectLayout,
+       _applyReaderEffect = applyReaderEffect,
+       _currentMode = currentMode,
        _initialMode = currentMode();
 
   final String comicId;

@@ -27,12 +27,13 @@ typedef InstallableApplicationRelease = ({
 /// Owns actual HTTP completion independently of the page showing its result.
 class ApplicationUpdateService {
   ApplicationUpdateService({
-    required this._createClient,
-    required this._currentVersion,
+    required Dio Function() createClient,
+    required String Function() currentVersion,
     this.enabled = true,
     this.forHarmonyOS = false,
     this.forAndroidTv = false,
-  });
+  }) : _createClient = createClient,
+       _currentVersion = currentVersion;
 
   final Dio Function() _createClient;
   final String Function() _currentVersion;

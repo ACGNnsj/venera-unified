@@ -9,9 +9,11 @@ import 'package:uuid/uuid.dart';
 class DirectorySelection {
   DirectorySelection(
     Directory directory, {
-    this._releaseAccess,
-    this._retainAccess,
-  }) : _directory = directory,
+    Future<void> Function()? releaseAccess,
+    Future<void> Function()? retainAccess,
+  }) : _releaseAccess = releaseAccess,
+       _retainAccess = retainAccess,
+       _directory = directory,
        _prepareOwnedCopy = null,
        _temporary = false,
        _cacheDirectory = null,
@@ -35,9 +37,10 @@ class DirectorySelection {
 
   DirectorySelection.copy({
     required Directory source,
-    required Directory this._cacheDirectory,
+    required Directory? cacheDirectory,
     required Future<void> Function(Directory, Directory) copy,
-  }) : _copy = ((directory) => copy(source, directory)),
+  }) : _cacheDirectory = cacheDirectory,
+       _copy = ((directory) => copy(source, directory)),
        _prepareOwnedCopy = null,
        _temporary = true,
        _releaseAccess = null,
@@ -45,9 +48,10 @@ class DirectorySelection {
 
   /// Owns generated contents using the same receipt protocol as copied input.
   DirectorySelection.temporary({
-    required Directory this._cacheDirectory,
+    required Directory? cacheDirectory,
     required Future<void> Function(Directory) prepare,
-  }) : _copy = prepare,
+  }) : _cacheDirectory = cacheDirectory,
+       _copy = prepare,
        _prepareOwnedCopy = null,
        _temporary = true,
        _releaseAccess = null,

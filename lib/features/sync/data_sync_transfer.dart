@@ -82,10 +82,11 @@ class DataSyncTransferFailure extends DataSyncFailure {
 /// 123 云盘等服务的下载会跳转到 CDN，不能擅自将这些要求加回稳定流程。
 class V117WebDavDataSyncTransfer implements DataSyncTransfer {
   V117WebDavDataSyncTransfer({
-    required this._participant,
+    required DataSyncParticipant participant,
     webdav.Client Function(WebDavEndpoint)? createClient,
     DateTime Function()? now,
-  }) : _createClient =
+  }) : _participant = participant,
+       _createClient =
            createClient ??
            ((endpoint) => endpoint.createClient(logRequests: true)),
        _now = now ?? DateTime.now;
@@ -220,12 +221,16 @@ Future<void> _deleteV117Temporary(Directory directory) async {
 class WebDavDataSyncTransfer
     implements DataSyncTransfer, DataSyncUploadRecovery {
   WebDavDataSyncTransfer({
-    required this._participant,
-    required this._openRemote,
-    this._readImportCommitTime,
-    required this._uploadJournalPath,
+    required DataSyncParticipant participant,
+    required DataSyncRemote Function(WebDavEndpoint) openRemote,
+    Future<int> Function(String)? readImportCommitTime,
+    required String Function() uploadJournalPath,
     DateTime Function()? now,
-  }) : _now = now ?? DateTime.now;
+  }) : _participant = participant,
+       _openRemote = openRemote,
+       _readImportCommitTime = readImportCommitTime,
+       _uploadJournalPath = uploadJournalPath,
+       _now = now ?? DateTime.now;
 
   final DataSyncParticipant _participant;
   final DataSyncRemote Function(WebDavEndpoint) _openRemote;

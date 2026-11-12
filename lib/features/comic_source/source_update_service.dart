@@ -22,10 +22,11 @@ import 'source_repositories.dart';
 /// and listeners detach themselves.
 class SourceUpdateService with ChangeNotifier {
   SourceUpdateService({
-    this._manager,
+    ComicSourceManager? manager,
     SourceRepositories? repositories,
     Dio Function()? createDio,
-  }) : _repositories = repositories ?? SourceRepositories.instance,
+  }) : _manager = manager,
+       _repositories = repositories ?? SourceRepositories.instance,
        _createDio = createDio ?? (() => AppDio());
 
   final Dio Function() _createDio;
@@ -339,10 +340,11 @@ class SourceUpdateService with ChangeNotifier {
 /// not invalidate the rest of this report by changing a global revision.
 class SourceUpdateReport extends SourceUpdateCheck {
   SourceUpdateReport._(
-    this._service,
+    SourceUpdateService service,
     SourceUpdateCheck result,
     Map<String, _SourceUpdateTarget> targets,
-  ) : _targets = Map.unmodifiable(targets),
+  ) : _service = service,
+      _targets = Map.unmodifiable(targets),
       sources = Map.unmodifiable({
         for (final entry in targets.entries) entry.key: entry.value.source,
       }),

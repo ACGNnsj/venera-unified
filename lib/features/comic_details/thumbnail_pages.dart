@@ -11,12 +11,16 @@ import 'package:venera_unified/network/request_scope.dart';
 class ComicThumbnailPages {
   ComicThumbnailPages({
     required this.comicId,
-    required this._load,
+    required ComicThumbnailLoader? load,
     required Iterable<String> initial,
-    required this._canLoad,
-    required this._retain,
-    required void Function() this._onChanged,
-  }) : _items = List.of(initial);
+    required bool Function() canLoad,
+    required void Function() Function(RequestScope, Future<void>) retain,
+    required onChanged,
+  }) : _load = load,
+       _canLoad = canLoad,
+       _retain = retain,
+       _onChanged = onChanged,
+       _items = List.of(initial);
 
   final String comicId;
   final ComicThumbnailLoader? _load;

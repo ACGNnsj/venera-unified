@@ -74,11 +74,14 @@ class FavoriteMetadataBatchFailure implements Exception {
 class FavoriteMetadataUpdate {
   FavoriteMetadataUpdate({
     required Iterable<FavoriteItem> comics,
-    required this._load,
-    required this._save,
+    required FavoriteMetadataLoader load,
+    required Future<void> Function(FavoriteItem item) save,
     required void Function() checkActive,
-    this._onProgress,
-  }) : _items = comics.map((item) => item.detached()).toList(),
+    void Function(FavoriteMetadataProgress)? onProgress,
+  }) : _load = load,
+       _save = save,
+       _onProgress = onProgress,
+       _items = comics.map((item) => item.detached()).toList(),
        _checkOwner = checkActive,
        _parent = RequestScope.current;
 

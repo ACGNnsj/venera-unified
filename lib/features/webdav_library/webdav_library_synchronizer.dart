@@ -62,13 +62,18 @@ class WebDavLibrarySyncLifecycleFailure implements Exception {
 /// Owns synchronization runs; transport/session/storage lifetimes stay with the caller.
 class WebDavLibrarySynchronizer {
   WebDavLibrarySynchronizer({
-    required this._cache,
-    required this._snapshots,
-    required this._readSettings,
-    required this._currentSession,
-    required this._onContentChanged,
+    required WebDavLibraryCache cache,
+    required WebDavLibrarySnapshotStore snapshots,
+    required WebDavLibrarySettings Function() readSettings,
+    required WebDavLibrarySession Function() currentSession,
+    required void Function() onContentChanged,
     int Function()? nowMilliseconds,
-  }) : _nowMilliseconds = nowMilliseconds ?? _systemTime;
+  }) : _cache = cache,
+       _snapshots = snapshots,
+       _readSettings = readSettings,
+       _currentSession = currentSession,
+       _onContentChanged = onContentChanged,
+       _nowMilliseconds = nowMilliseconds ?? _systemTime;
 
   static int _systemTime() => DateTime.now().millisecondsSinceEpoch;
   final WebDavLibraryCache _cache;

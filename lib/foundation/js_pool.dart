@@ -23,9 +23,10 @@ class JSPool {
 
   /// Owns workers produced by this factory, including partial startup.
   JSPool.create({
-    required this._loadJsInit,
-    required this._createEngine,
-  });
+    required Future<Uint8List> Function() loadJsInit,
+    required JsPoolEngine Function(Uint8List) createEngine,
+  }) : _loadJsInit = loadJsInit,
+       _createEngine = createEngine;
 
   final Future<Uint8List> Function() _loadJsInit;
   final JsPoolEngine Function(Uint8List) _createEngine;

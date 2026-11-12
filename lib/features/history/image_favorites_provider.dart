@@ -18,8 +18,8 @@ class ImageFavoritesProvider extends BaseImageProvider<ImageFavoritesProvider> {
   /// Image provider for imageFavorites
   const ImageFavoritesProvider(
     this.imageFavorite, {
-    this._loadImage = ImageDownloader.loadComicImage,
-  });
+    ComicImageLoader loadImage = ImageDownloader.loadComicImage,
+  }) : _loadImage = loadImage;
 
   final ImageFavorite imageFavorite;
   final ComicImageLoader _loadImage;

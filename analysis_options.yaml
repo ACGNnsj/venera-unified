@@ -13,6 +13,11 @@ analyzer:
   errors:
     collection_methods_unrelated_type: warning
     use_build_context_synchronously: warning
+    # HarmonyOS HAP builds pin Dart 3.11, which rejects the experimental
+    # `private-named-parameters` syntax, so constructors must use public
+    # params with explicit `_x = x` initializers; silence the lint that
+    # suggests converting them back to `this._x`.
+    prefer_initializing_formals: ignore
   exclude:
     # Plugin build runners and local build probes are generated artifacts.
     - build/**

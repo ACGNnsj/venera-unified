@@ -72,8 +72,9 @@ class ReaderImageExport {
   ReaderImageExport(
     ReaderImageSelection selection,
     this.bytes, {
-    this._checkStop,
-  }) : type = detectFileType(bytes),
+    void Function()? checkStop,
+  }) : _checkStop = checkStop,
+       type = detectFileType(bytes),
        _stem =
            '${selection.title}_EP${selection.chapter}_P${selection.imageNumber}';
   final Uint8List bytes;

@@ -31,10 +31,11 @@ class ArchiveDownloadTask extends DownloadTask {
   ArchiveDownloadTask(
     this.archiveUrl,
     this.comic, {
-    required this._storage,
+    required DownloadTaskStorage storage,
     FileDownloader Function(String, String)? createDownloader,
     Future<void> Function(String, String)? extractArchive,
-  }) : _createDownloader =
+  }) : _storage = storage,
+       _createDownloader =
            createDownloader ?? ((url, path) => FileDownloader(url, path)),
        _extract = extractArchive ?? _extractArchive {
     source = ComicSource.find(comic.sourceKey)!;

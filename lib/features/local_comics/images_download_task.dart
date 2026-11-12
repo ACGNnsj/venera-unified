@@ -55,7 +55,7 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
   String? comicTitle;
 
   ImagesDownloadTask({
-    required this._storage,
+    required DownloadTaskStorage storage,
     required this.source,
     required this.comicId,
     this.comic,
@@ -64,8 +64,11 @@ class ImagesDownloadTask extends DownloadTask with _TransferSpeedMixin {
     bool? skipUnavailableImages,
     Stream<ImageDownloadProgress> Function(String, String)? loadThumbnail,
     ComicImageLoader? loadImage,
-    this._allocateDirectory,
-  }) : skipUnavailableImages =
+    Future<DownloadDirectoryAllocation> Function(String, ComicType, String)?
+    allocateDirectory,
+  }) : _storage = storage,
+       _allocateDirectory = allocateDirectory,
+       skipUnavailableImages =
            skipUnavailableImages ??
            GlobalPreferenceStore(
              appdata.settings,

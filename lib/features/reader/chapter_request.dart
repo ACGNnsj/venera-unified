@@ -10,8 +10,10 @@ class ReaderChapterRequest {
     required ComicChapters? chapters,
     required this.isCurrent,
     required this.canInteract,
-    required this._load,
-  }) : _chapters = _freeze(chapters);
+    required Future<List<String>> Function(int, ComicChapters?, RequestScope)
+    load,
+  }) : _load = load,
+       _chapters = _freeze(chapters);
 
   final Object identity;
   final ComicChapters? _chapters;

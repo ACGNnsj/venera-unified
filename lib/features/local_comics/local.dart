@@ -88,9 +88,10 @@ class LocalManager with ChangeNotifier implements DownloadTaskStorage {
 
   LocalManager._({
     Database Function(String)? openDatabase,
-    this._initializeSources,
+    Future<void> Function()? initializeSources,
     LocalComicRelatedData? relatedData,
-  }) : _openDatabase = openDatabase ?? openSqliteDatabase,
+  }) : _initializeSources = initializeSources,
+       _openDatabase = openDatabase ?? openSqliteDatabase,
        _providedRelatedData = relatedData;
 
   /// A caller-owned library that does not replace the application's default.
