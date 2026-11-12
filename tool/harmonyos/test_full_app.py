@@ -215,6 +215,7 @@ class FullAppTests(unittest.TestCase):
         self.assertIn('scrollable_positioned_list: ^0.3.8', prepared)
         self.assertNotIn('      url:', overrides)
         self.assertIn('    path: ../full-deps/sqlite3', prepared)
+        self.assertNotIn('full-deps/code_assets', prepared)
         self.assertIn('    path: ../full-deps/webview/flutter_inappwebview_ohos', prepared)
         self.assertNotIn('full-deps/lodepng_flutter', prepared)
         self.assertNotIn('full-deps/flutter_7zip', prepared)

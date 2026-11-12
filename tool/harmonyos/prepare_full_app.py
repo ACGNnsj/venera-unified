@@ -310,10 +310,12 @@ def configure_pubspec(text, identity=None):
     text = patch_once(text, "  flutter: 3.47.8", '  flutter: ">=3.41.4 <4.0.0"')
     for name in PROJECT_PACKAGES:
         text = patch_once(text, f"path: packages/{name}", f"path: ../../../packages/{name}")
+    # sqlite3 3.8.0's hook needs the code_assets v2 API (and hooks ^2.2.0);
+    # DEPS pins code_assets 1.0.0 (hooks ^1.0.0), which cannot solve together.
+    # Hosted code_assets 1.2.1 (our lock, CI-proven with this hook) is used.
     overrides = {
         "flutter_qjs": "../deps/flutter_qjs",
         **{name: f"../full-deps/{name}" for name in ("sqlite3", "zip_flutter", "pdfium_dart")},
-        "code_assets": "../full-deps/code_assets/pkgs/code_assets",
         **{name: f"../full-deps/webview/{name}" for name in WEBVIEW_PACKAGES},
     }
     section = re.search(r"^dependency_overrides:\n(.*?)(?=^\w|\Z)", text, re.M | re.S)
