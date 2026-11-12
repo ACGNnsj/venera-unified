@@ -796,10 +796,9 @@ packages:
   pdfium_dart:
     dependency: "direct overridden"
     description:
-      name: pdfium_dart
-      sha256: "86e95c66b09f3245b95c4924f2edce8d4f7c9786876e5c5ee8e36b104a94bbb0"
-      url: "https://pub.dev"
-    source: hosted
+      path: "../full-deps/pdfium_dart"
+      relative: true
+    source: path
     version: "0.2.5"
   pdfium_flutter:
     dependency: "direct overridden"

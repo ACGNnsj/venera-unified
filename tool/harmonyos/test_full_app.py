@@ -493,10 +493,19 @@ class FullAppTests(unittest.TestCase):
                          'transitive')
         # Hosted-only overrides resolve as direct-overridden; direct deps keep
         # direct-main even when pinned (red 10: Would change 5 dependencies).
-        for name in ('pdfrx_engine', 'pdfium_dart', 'pdfium_flutter',
+        for name in ('pdfrx_engine', 'pdfium_flutter',
                      'app_links_linux', 'app_links_platform_interface',
                      'app_links_web', 'meta'):
             self.assertEqual(types.get(name), 'direct overridden', name)
+        # The HAP pins pdfium_dart to its own exported 0.2.5 copy so the patched
+        # hook is the one that compiles, so the lock entry is a path source.
+        self.assertEqual(types.get('pdfium_dart'), 'direct overridden')
+        lock_text = Path(__file__).with_name('app').joinpath(
+            'pubspec.lock.template').read_text(encoding='utf-8')
+        self.assertIn('  pdfium_dart:\n    dependency: "direct overridden"\n'
+                      '    description:\n      path: "../full-deps/pdfium_dart"\n'
+                      '      relative: true\n    source: path\n    version: "0.2.5"\n',
+                      lock_text)
 
     def test_template_hosted_pins_match_prepare_pins(self):
         from prepare_full_app import HAP_PINNED_HOSTED, VERSION_PINS

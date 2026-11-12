@@ -331,9 +331,9 @@ def verify_dependencies():
 
 # The ohos SDK ships dart 3.11.5 / flutter 3.41: our main lock moved past
 # it (pdfrx 2.11, material pair, app_links 7). Pin the newest compatible
-# versions for the HAP build only; the main app is untouched. pdfium_dart
-# drops out of the path overrides (DEPS 0.4.1 needs dart ^3.13) and resolves
-# to the hosted pin below. meta is pinned UP: the ohos flutter_test pins
+# versions for the HAP build only; the main app is untouched. pdfium_dart is
+# not here: it keeps a path override on the exported 0.2.5 copy (see
+# HAP_PINNED_HOSTED). meta is pinned UP: the ohos flutter_test pins
 # meta 1.17.0 exactly, but hooks 2.2.0 -> record_use needs ^1.19.0 (whose
 # own floor is only dart 3.5, so 1.19.0 runs on 3.11).
 VERSION_PINS = {
