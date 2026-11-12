@@ -318,6 +318,19 @@ def configure_pubspec(text, identity=None):
         **{name: f"../full-deps/{name}" for name in ("sqlite3", "zip_flutter", "pdfium_dart")},
         **{name: f"../full-deps/webview/{name}" for name in WEBVIEW_PACKAGES},
     }
+    # The ohos SDK ships dart 3.11.5 / flutter 3.41: our main lock moved past
+    # it (pdfrx 2.11, material pair, app_links 7). Pin the newest 3.11-era
+    # versions for the HAP build only; the main app is untouched. pdfium_dart
+    # drops out of the path overrides (DEPS 0.4.1 needs dart ^3.13) and resolves
+    # to the hosted downgrade below.
+    downgrades = {
+        "pdfrx": "2.4.8", "pdfrx_engine": "0.4.7",
+        "pdfium_flutter": "0.2.3", "pdfium_dart": "0.2.5",
+        "dynamic_color": "1.7.0",
+        "app_links": "6.2.0", "app_links_linux": "1.0.2",
+        "app_links_platform_interface": "2.0.1", "app_links_web": "1.0.3",
+    }
+    del overrides["pdfium_dart"]
     section = re.search(r"^dependency_overrides:\n(.*?)(?=^\w|\Z)", text, re.M | re.S)
     if section is None:
         raise ValueError("Missing main dependency overrides; review the OHOS candidate")
@@ -332,6 +345,7 @@ def configure_pubspec(text, identity=None):
             raise ValueError("Duplicate main dependency override: " + name)
     text = patch_once(text, section[0], "dependency_overrides:\n" + body)
     lines = "".join(f"  {name}:\n    path: {path}\n" for name, path in overrides.items())
+    lines += "".join(f"  {name}: {version}\n" for name, version in downgrades.items())
     text = patch_once(text, "dependency_overrides:\n", "dependency_overrides:\n" + lines)
     text = patch_once(text, "    - assets/translation.json\n",
                       "    - assets/translation.json\n    - assets/harmonyos-app-build.json\n"

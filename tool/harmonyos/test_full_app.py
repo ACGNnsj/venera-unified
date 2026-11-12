@@ -216,6 +216,10 @@ class FullAppTests(unittest.TestCase):
         self.assertNotIn('      url:', overrides)
         self.assertIn('    path: ../full-deps/sqlite3', prepared)
         self.assertNotIn('full-deps/code_assets', prepared)
+        for name, version in (("pdfrx", "2.4.8"), ("dynamic_color", "1.7.0"),
+                                   ("app_links", "6.2.0"), ("pdfium_dart", "0.2.5")):
+            self.assertIn(f"  {name}: {version}\n", overrides)
+        self.assertNotIn('full-deps/pdfium', prepared)
         self.assertIn('    path: ../full-deps/webview/flutter_inappwebview_ohos', prepared)
         self.assertNotIn('full-deps/lodepng_flutter', prepared)
         self.assertNotIn('full-deps/flutter_7zip', prepared)

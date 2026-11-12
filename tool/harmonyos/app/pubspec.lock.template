@@ -5,34 +5,34 @@ packages:
     dependency: "direct main"
     description:
       name: app_links
-      sha256: "08ba88bf19d9edea33130cb71c8ced2cb982b4e00b82efef4a434d1357bc69c3"
+      sha256: "4acba851087b25136e8f6e32a53bd4536eb3bec69947ddb66e7b9a5792ceb0c7"
       url: "https://pub.dev"
     source: hosted
-    version: "7.2.2"
+    version: "6.2.0"
   app_links_linux:
     dependency: transitive
     description:
       name: app_links_linux
-      sha256: "9ccb5802085a1e57bb07b6256fd1d61a78c7ec104944d4965e62938b4fefd9cb"
+      sha256: "567139eca3ca9fb113f2082f3aaa75a26f30f0ebdbe5fa7f09a3913c5bebd630"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.4"
+    version: "1.0.2"
   app_links_platform_interface:
     dependency: transitive
     description:
       name: app_links_platform_interface
-      sha256: "7546f09a6e93f4a2df2fe2bd40a5c6c64310ac461b036d82b43033be7a59f809"
+      sha256: "01b32cd1e842d88b5d276d2f9d21d295714357d937268904edc830cd2f55c798"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.4"
+    version: "2.0.1"
   app_links_web:
     dependency: transitive
     description:
       name: app_links_web
-      sha256: "382d32c6f486f15b1d7f5d6a37a70a481a4fc08382eef419d373169921a3e765"
+      sha256: "74586ed5f3c4786341e82a0fa43c39ec3f13108a550f74e80d8bf68aa11349d1"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.5"
+    version: "1.0.3"
   archive:
     dependency: "direct main"
     description:
@@ -153,14 +153,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
-  cupertino_ui:
-    dependency: transitive
-    description:
-      name: cupertino_ui
-      sha256: e9dfe7fac704028f8928cbe4028a0be5e8a709498e8daf8247de99e99a32aef3
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.2"
   dbus:
     dependency: transitive
     description:
@@ -220,10 +212,10 @@ packages:
     dependency: "direct main"
     description:
       name: dynamic_color
-      sha256: "869b3bce0100eb519768ecd71c0111f0b5ea679f5f62e1f59c49d80067e730c5"
+      sha256: "eae98052fa6e2826bdac3dd2e921c6ce2903be15c6b7f8b6d8a5d49b5086298d"
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.0"
+    version: "1.7.0"
   enough_convert:
     dependency: "direct main"
     description:
@@ -520,10 +512,10 @@ packages:
     dependency: transitive
     description:
       name: hooks
-      sha256: "5d309c86e7ce34cd8e37aa71cb30cb652d3829b900ab145e4d9da564b31d59f7"
+      sha256: eaac480a35ec0814146c2c48d96aaa829e0e44a7662c88ae84c9edf4bc35651f
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.0"
+    version: "2.2.0"
   html:
     dependency: "direct main"
     description:
@@ -697,14 +689,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.0"
-  material_ui:
-    dependency: transitive
-    description:
-      name: material_ui
-      sha256: fbfb53cab6c4629438feeade5f3d305f72944bc9d9f25786b19106d32b80ec45
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.0"
   menu_base:
     dependency: transitive
     description:
@@ -802,36 +786,37 @@ packages:
     source: hosted
     version: "2.3.0"
   pdfium_dart:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: "../full-deps/pdfium_dart"
-      relative: true
-    source: path
-    version: "0.4.1"
+      name: pdfium_dart
+      sha256: "86e95c66b09f3245b95c4924f2edce8d4f7c9786876e5c5ee8e36b104a94bbb0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.5"
   pdfium_flutter:
     dependency: transitive
     description:
       name: pdfium_flutter
-      sha256: "4d18e6181aa87200750aa4fc607c870f957731b1de9252c2ea19627c19109388"
+      sha256: "0b115c0917aef9cf6bb9c4d47d0efc61d97f44844cd76287c921f997c26cf15d"
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.1"
+    version: "0.2.3"
   pdfrx:
     dependency: "direct main"
     description:
       name: pdfrx
-      sha256: "6aa2eb0fce9029933790e58f8dcd46ec630342e46d8f6c6d32b716acc03ca02c"
+      sha256: "85a87117ae6358e0ef2cc90d4db9f5e689eabbd7f19ab98c97164584d0be4a4a"
       url: "https://pub.dev"
     source: hosted
-    version: "2.11.0"
+    version: "2.4.8"
   pdfrx_engine:
     dependency: transitive
     description:
       name: pdfrx_engine
-      sha256: "08d0d0843807b632f23836d6f021d1ff391b1988e124894067045242f03d7f96"
+      sha256: "4399846809a75aed03881d8b8a19e5e70addd4b46b22fd94a0effd8859258f07"
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.0"
+    version: "0.4.7"
   petitparser:
     dependency: transitive
     description:
@@ -1343,6 +1328,10 @@ packages:
       relative: true
     source: path
     version: "0.0.13"
+sdks:
+  dart: ">=3.11.0 <4.0.0"
+  flutter: ">=3.41.4"
+
 sdks:
   dart: ">=3.11.0 <4.0.0"
   flutter: ">=3.41.4"
