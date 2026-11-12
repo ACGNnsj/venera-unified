@@ -319,16 +319,19 @@ def configure_pubspec(text, identity=None):
         **{name: f"../full-deps/webview/{name}" for name in WEBVIEW_PACKAGES},
     }
     # The ohos SDK ships dart 3.11.5 / flutter 3.41: our main lock moved past
-    # it (pdfrx 2.11, material pair, app_links 7). Pin the newest 3.11-era
+    # it (pdfrx 2.11, material pair, app_links 7). Pin the newest compatible
     # versions for the HAP build only; the main app is untouched. pdfium_dart
     # drops out of the path overrides (DEPS 0.4.1 needs dart ^3.13) and resolves
-    # to the hosted downgrade below.
-    downgrades = {
+    # to the hosted pin below. meta is pinned UP: the ohos flutter_test pins
+    # meta 1.17.0 exactly, but hooks 2.2.0 -> record_use needs ^1.19.0 (whose
+    # own floor is only dart 3.5, so 1.19.0 runs on 3.11).
+    version_pins = {
         "pdfrx": "2.4.7", "pdfrx_engine": "0.4.5",
         "pdfium_flutter": "0.2.3", "pdfium_dart": "0.2.5",
         "dynamic_color": "1.7.0",
         "app_links": "6.2.0", "app_links_linux": "1.0.2",
         "app_links_platform_interface": "2.0.1", "app_links_web": "1.0.4",
+        "meta": "1.19.0",
     }
     del overrides["pdfium_dart"]
     section = re.search(r"^dependency_overrides:\n(.*?)(?=^\w|\Z)", text, re.M | re.S)
@@ -345,7 +348,7 @@ def configure_pubspec(text, identity=None):
             raise ValueError("Duplicate main dependency override: " + name)
     text = patch_once(text, section[0], "dependency_overrides:\n" + body)
     lines = "".join(f"  {name}:\n    path: {path}\n" for name, path in overrides.items())
-    lines += "".join(f"  {name}: {version}\n" for name, version in downgrades.items())
+    lines += "".join(f"  {name}: {version}\n" for name, version in version_pins.items())
     text = patch_once(text, "dependency_overrides:\n", "dependency_overrides:\n" + lines)
     text = patch_once(text, "    - assets/translation.json\n",
                       "    - assets/translation.json\n    - assets/harmonyos-app-build.json\n"
