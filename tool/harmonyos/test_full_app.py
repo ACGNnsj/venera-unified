@@ -436,6 +436,29 @@ class FullAppTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 audit_full_hap(path, metadata, assets | {'assets/init.js': '0' * 64})
 
+    def test_template_path_packages_keep_resolution_dependency_types(self):
+        # pub --enforce-lockfile rejects a template whose path entries claim
+        # "direct overridden" for packages that are direct deps in the prepared
+        # pubspec (red 9: Would change 9 dependencies on every path package).
+        lock = Path(__file__).with_name('app') / 'pubspec.lock.template'
+        entry_lines = lock.read_text(encoding='utf-8').splitlines()
+        types = {}
+        for i, line in enumerate(entry_lines):
+            if (line.startswith('  ') and not line.startswith('   ')
+                    and line.endswith(':') and ':' not in line[2:-1]):
+                follower = entry_lines[i + 1] if i + 1 < len(entry_lines) else ''
+                if follower.strip().startswith('dependency:'):
+                    types[line.strip()[:-1]] = follower.split(':', 1)[1].strip().strip('"')
+        for name in ('flutter_inappwebview', 'flutter_qjs', 'sqlite3', 'zip_flutter'):
+            self.assertEqual(types.get(name), 'direct main', name)
+        for name in ('flutter_inappwebview_android', 'flutter_inappwebview_ios',
+                     'flutter_inappwebview_macos', 'flutter_inappwebview_ohos',
+                     'flutter_inappwebview_platform_interface',
+                     'flutter_inappwebview_web', 'flutter_inappwebview_windows'):
+            self.assertEqual(types.get(name), 'direct overridden', name)
+        self.assertEqual(types.get('flutter_inappwebview_internal_annotations'),
+                         'transitive')
+
 
 if __name__ == '__main__':
     unittest.main()
