@@ -1,5 +1,11 @@
 {
-  "description": "Pinned toolchain for the HarmonyOS experiment. Blank-HAP stage verified with the 3.41.9 line; the full application needs the 3.47.7 preview line, which is where the port is currently blocked (see doc/distribution/harmonyos.zh.md).",
+  "branch": "main",
+  "flutter": {
+    "repository": "https://gitcode.com/CPF-Flutter/flutter_flutter.git",
+    "tag": "3.41.9+ohos-1.0.2",
+    "revision": "62357a93d653bf844f730bb1f4b7cc9e2139d14e",
+    "dart": "3.11.5"
+  },
   "nativeSdk": {
     "version": "6.0.0.47",
     "api": 20,
@@ -31,37 +37,18 @@
       }
     ]
   },
-  "devEco": {
-    "version": "26.0",
-    "build": "DS-261.23567.138.36.2600865",
-    "sdkApi": 26,
-    "sdkVersion": "26.0.0.105"
+  "rust": {
+    "version": "1.92.0",
+    "target": "aarch64-unknown-linux-ohos",
+    "flutterRustBridge": "2.11.1"
   },
-  "blankStage": {
-    "flutter": {
-      "tag": "3.41.9+ohos-1.0.2",
-      "revision": "62357a93d653bf844f730bb1f4b7cc9e2139d14e",
-      "dart": "3.11.5"
-    },
-    "verifiedHap": {
-      "bytes": 20626990,
-      "members": 19,
-      "note": "produced by tool/harmonyos/build_blank_hap.py from a cold work directory"
-    }
+  "quickjs": {
+    "repository": "https://github.com/CyrilPeng/flutter_qjs.git",
+    "revision": "f5a1f20d08c33b0a6b3e38eda2a7b27705420620"
   },
-  "fullAppStage": {
-    "flutter": {
-      "tag": "3.47.7+ohos-0.0.1-pre",
-      "revision": "650641656f",
-      "dart": "3.13.5"
-    },
-    "pubspecConstraint": "flutter: '>=3.47.7-0 <3.47.8' (the OHOS preview is a pre-release, so the exact pin must be relaxed)",
-    "blocked": "TargetPlatform.ohos is not exhaustively matched by switch statements in pub packages (168 compile errors, starting with material_ui-1.2.0) and in lib/."
-  },
-  "env": {
-    "DEVECO_SDK_HOME": "C:/Program Files/Huawei/DevEco Studio/sdk",
-    "FLUTTER_OHOS_STORAGE_BASE_URL": "https://flutter-ohos.obs.cn-south-1.myhuaweicloud.com",
-    "FLUTTER_STORAGE_BASE_URL": "https://storage.flutter-io.cn",
-    "note": "HVIGOR_USER_HOME and USERPROFILE must point inside the workspace on machines that deny writes under the real user profile."
+  "sqlite": {
+    "version": "3.52.0",
+    "archive": "https://sqlite.org/2026/sqlite-autoconf-3520000.tar.gz",
+    "amalgamationSha256": "a503acc9fe98f628eed36eb2aa2116a26f2541270d757f9b7cdbc2f19eb72b8f"
   }
 }

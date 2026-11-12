@@ -1,5 +1,9 @@
 # HarmonyOS（鸿蒙）移植状态
 
+> ## 2026-11-12 更新：完整阅读器 HAP 发布管线已落地
+> 本批移植了 HarmonyOS 发布管线（tool/harmonyos 全套 + caller 侧 pin/脚本/工作流），上文 P2 阻塞解除：发布 tag 时 Release 作业构建、核验并附带未签名阅读器 HAP（VeneraUnified-*-harmonyos-arm64-unsigned.hap，bundle io.github.venera.unified.harmony）。详见[鸿蒙发布流程](../development/harmonyos_releases.zh.md)与[HarmonyOS 阅读器](harmonyos-reader.zh.md)。下文 P1/P2 状态与空白包验证保留为历史记录。
+>
+
 本仓没有鸿蒙发行版，只有一条**实验管线**：先把宿主工具链跑通，再谈把阅读器搬过去。
 上游 CyrilPeng/Venera-Next 的 HarmonyOS 分支同样只是空白包与探针 HAP，不是可安装的阅读器；
 其自述的文档只覆盖探针、进程重启与合成升级数据。

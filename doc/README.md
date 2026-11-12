@@ -28,11 +28,13 @@ English index: [README.en.md](README.en.md)
 - [漫画源本地调试](development/source_debugging.zh.md) / [Local Source Debugging](development/source_debugging.en.md)
 - [磁盘日志](development/logging.zh.md) / [Disk logs](development/logging.en.md)
 - [依赖治理](development/dependencies.zh.md) / [Dependency Governance](development/dependencies.en.md)
+- [鸿蒙发布流程](development/harmonyos_releases.zh.md) / [HarmonyOS Release Process](development/harmonyos_releases.en.md)
 
 ## 分发和发布
 
 - [Windows 分发](distribution/windows.zh.md) / [Windows Distribution](distribution/windows.en.md)
 - [Linux 安装与分发](distribution/linux.zh.md) / [Linux Installation and Distribution](distribution/linux.en.md)
+- [HarmonyOS 阅读器](distribution/harmonyos-reader.zh.md) / [HarmonyOS Reader](distribution/harmonyos-reader.en.md)
 
 ## 用户和命令行
 
