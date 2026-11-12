@@ -328,7 +328,7 @@ def configure_pubspec(text, identity=None):
         "pdfium_flutter": "0.2.3", "pdfium_dart": "0.2.5",
         "dynamic_color": "1.7.0",
         "app_links": "6.2.0", "app_links_linux": "1.0.2",
-        "app_links_platform_interface": "2.0.1", "app_links_web": "1.0.3",
+        "app_links_platform_interface": "2.0.1", "app_links_web": "1.0.4",
     }
     del overrides["pdfium_dart"]
     section = re.search(r"^dependency_overrides:\n(.*?)(?=^\w|\Z)", text, re.M | re.S)
