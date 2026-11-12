@@ -482,6 +482,15 @@ class FullAppTests(unittest.TestCase):
                 versions.setdefault(current, line.split(':', 1)[1].strip().strip('"'))
         for name, version in VERSION_PINS.items():
             self.assertEqual(versions.get(name), version, name)
+        # SDK-imposed versions must track the OHOS SDK (3.41), not our newer
+        # SDK: red 11 was 4 downgrades (intl/matcher/test_api/vector_math)
+        # plus gtk 2.2.0 missing entirely (app_links_linux needs it, our 7.x
+        # app_links never did).
+        sdk_pins = {'intl': '0.20.2', 'matcher': '0.12.19',
+                    'test_api': '0.7.10', 'vector_math': '2.2.0',
+                    'gtk': '2.2.0'}
+        for name, version in sdk_pins.items():
+            self.assertEqual(versions.get(name), version, name)
 
 
 if __name__ == '__main__':
