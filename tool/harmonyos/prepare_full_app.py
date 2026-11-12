@@ -142,14 +142,16 @@ def patch_sqlite_loader(text):
 
 
 def patch_pdfium_hook(text):
-    # This SDK deliberately labels OHOS hook inputs as Linux. An explicit,
-    # isolated-project define prevents silently bundling Linux PDFium for OHOS.
-    if "OS.ohos" in text:
+    # This SDK deliberately labels OHOS hook inputs as Linux, and the pinned
+    # code_assets 1.2.1 enum has no OS.ohos member, so the boundary is an
+    # explicit isolated-project define. Without it the hook silently bundles
+    # Linux PDFium into the HAP as a reader library.
+    marker = "input.userDefines['venera_harmonyos_experiment'] == true"
+    if marker in text:
         raise ValueError("PDFium's unsupported OHOS boundary must only be applied once")
     return patch_once(text, "if (!input.config.buildCodeAssets) return;",
                       "if (!input.config.buildCodeAssets) return;\n"
-                      "    if (input.userDefines['venera_harmonyos_experiment'] == true) return;\n"
-                      "    if (input.config.code.targetOS == OS.ohos) return;")
+                      f"    if ({marker}) return;")
 
 
 def patch_webview_native_profile(text):

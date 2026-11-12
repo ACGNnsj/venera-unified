@@ -274,7 +274,8 @@ class FullAppTests(unittest.TestCase):
     def test_pdfium_hook_explicitly_leaves_ohos_unsupported(self):
         original = 'if (!input.config.buildCodeAssets) return;\nif (input.config.code.targetOS == OS.iOS) return;'
         result = patch_pdfium_hook(original)
-        self.assertIn('targetOS == OS.ohos) return;', result)
+        # code_assets 1.2.1 has no OS.ohos member; the define is the guard.
+        self.assertNotIn('OS.ohos', result)
         self.assertIn("input.userDefines['venera_harmonyos_experiment'] == true) return;", result)
         self.assertIn('targetOS == OS.iOS) return;', result)
         with self.assertRaises(ValueError):
