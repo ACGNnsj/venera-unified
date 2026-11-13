@@ -47,9 +47,7 @@ Venera's JavaScript extensions, local reading, search and categories, favorites,
 
 ## Screenshots
 
-| Home: history, Read Later, and update tracking | Comic details |
-|---|---|
-| <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg" alt="Venera Unified home page with reading history, Read Later, and update tracking" width="100%" /></a> | <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg" alt="Venera Unified comic details page with reading actions, comic information, and chapters" width="100%" /></a> |
+Fresh screenshots are on the way.
 
 ---
 
@@ -166,9 +164,6 @@ Download `VeneraUnified-xxx.dmg` from the [latest stable release](https://github
 - **Resume:** progress stores the chapter and page, and Waterfall records the chapter you are actually reading. Ascending/descending on the details page only changes the list display.
 - **Separate reader settings:** enable device-specific or per-comic settings so you do not have to readjust them each time.
 
-| Single-page view | Split double-page view |
-|---|---|
-| <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Single%20Page%20View.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Single%20Page%20View.jpg" alt="A wide page before splitting" width="100%" /></a> | <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Double%20Page%20View.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Double%20Page%20View.jpg" alt="The same spread with double-page splitting enabled" width="100%" /></a> |
 
 ### Nighttime and E-Ink reading
 

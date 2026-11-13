@@ -45,9 +45,7 @@ Venera Unified 是从 [VeneraNext](https://github.com/CyrilPeng/venera-next) 分
 
 ## 软件截图
 
-| 主页：阅读历史、稍后阅读与追更 | 漫画详情页 |
-|---|---|
-| <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg" alt="Venera Unified 主页，展示阅读历史、稍后阅读和追更" width="100%" /></a> | <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg" alt="Venera Unified 漫画详情页，展示阅读操作、作品信息和章节列表" width="100%" /></a> |
+新版截图正在拍摄中，稍后补上。
 
 ---
 
@@ -164,9 +162,6 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 - **继续阅读**：进度记录章节与页码，瀑布流记录实际正在读的章节；详情页的正序/倒序只影响章节列表显示。
 - **独立阅读设置**：可以为当前设备或某本漫画启用独立设置，不必每次重新调整。
 
-| 单页阅读模式 | 拆分双页模式 |
-|---|---|
-| <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Single%20Page%20View.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Single%20Page%20View.jpg" alt="未拆分的单页阅读画面" width="100%" /></a> | <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Double%20Page%20View.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Double%20Page%20View.jpg" alt="开启拆分双页后的阅读画面" width="100%" /></a> |
 
 ### 夜间与墨水屏阅读
 
