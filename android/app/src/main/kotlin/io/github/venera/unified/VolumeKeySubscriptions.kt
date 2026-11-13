@@ -1,4 +1,4 @@
-package com.github.cyrilpeng.veneranext
+package io.github.venera.unified
 
 /** Activity/engine-owned tokens. All calls run on the Android main thread. */
 internal class VolumeKeySubscriptions {

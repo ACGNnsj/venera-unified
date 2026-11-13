@@ -1,4 +1,4 @@
-package com.github.cyrilpeng.veneranext
+package io.github.venera.unified
 
 /** Main-thread state shared by the channel and service. Retired starts/updates
  * cannot resurrect a paused transfer, even if Android delivers an old Intent. */

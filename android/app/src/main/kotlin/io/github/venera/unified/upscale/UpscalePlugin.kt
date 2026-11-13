@@ -1,4 +1,4 @@
-package com.github.cyrilpeng.veneranext.upscale
+package io.github.venera.unified.upscale
 
 import android.content.Context
 import android.graphics.Bitmap

@@ -1,4 +1,4 @@
-package com.github.cyrilpeng.veneranext
+package io.github.venera.unified
 
 import android.content.Context
 import android.content.Intent

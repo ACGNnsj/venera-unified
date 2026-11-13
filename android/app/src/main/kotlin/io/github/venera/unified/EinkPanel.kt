@@ -1,4 +1,4 @@
-package com.github.cyrilpeng.veneranext
+package io.github.venera.unified
 
 import android.app.Activity
 import android.os.Build

@@ -1,4 +1,4 @@
-package com.github.cyrilpeng.veneranext
+package io.github.venera.unified
 
 import android.Manifest
 import android.app.Activity
@@ -30,7 +30,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
-import com.github.cyrilpeng.veneranext.upscale.UpscalePlugin
+import io.github.venera.unified.upscale.UpscalePlugin
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID

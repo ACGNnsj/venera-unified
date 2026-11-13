@@ -19,6 +19,7 @@ from pathlib import Path
 
 # applicationIdSuffix（如 TV flavor 的 ".tv"）是派生后缀，不计入基础身份。
 BUNDLE_ID_RE = re.compile(r'^\s*applicationId(?![\w])\s*=?\s*"?([\w.\-]+)"?', re.MULTILINE)
+NS_RE = re.compile(r'^\s*namespace\s*=\s*"([\w.\-]+)"', re.MULTILINE)
 NS_BUNDLE_RE = re.compile(
     r"^\s*PRODUCT_BUNDLE_IDENTIFIER\s*=\s*([\w.\-]+);?", re.MULTILINE
 )
@@ -52,6 +53,7 @@ def _single(pattern: re.Pattern[str], text: str, what: str) -> str:
 
 def collect(root: Path) -> dict[str, str]:
     android = _single(BUNDLE_ID_RE, _read(root, "android/app/build.gradle"), "Android applicationId")
+    android_ns = _single(NS_RE, _read(root, "android/app/build.gradle"), "Android namespace")
 
     macos_ids = NS_BUNDLE_RE.findall(_read(root, "macos/Runner/Configs/AppInfo.xcconfig"))
     if not macos_ids:
@@ -77,6 +79,7 @@ def collect(root: Path) -> dict[str, str]:
 
     return {
         "android": android,
+        "android_ns": android_ns,
         "macos": macos,
         "ios": next(iter(ios_ids)),
         "linux": linux,
@@ -108,6 +111,14 @@ def check(identity: dict[str, str]) -> list[str]:
                 f"Dart 包名 {identity['dart_name']!r} 与包标识 {bundle!r} 不同源，"
                 f"缺少片段：{missing or tokens}"
             )
+
+    # Gradle namespace 决定了相对组件名展开后的完整类名，必须与包标识同源；
+    # 否则验证脚本看到的 MainActivity 会指向旧包名，签名门禁永远过不了。
+    if identity["android_ns"] != bundle_ids["android"]:
+        problems.append(
+            f"Android namespace {identity['android_ns']!r} 与包标识 "
+            f"{bundle_ids['android']!r} 不同源"
+        )
 
     # Windows 的可执行文件名与产品名必须来自同一个词：Venera Unified -> VeneraUnified.exe。
     expected_exe = identity["windows_name"].replace(" ", "") + ".exe"
