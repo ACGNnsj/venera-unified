@@ -264,11 +264,11 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 
 ## 星标历史
 
-<a href="https://www.star-history.com/?repos=CyrilPeng%2FVenera-Next&type=date&legend=top-left">
+<a href="https://www.star-history.com/?repos=ACGNnsj%2Fvenera-unified&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=CyrilPeng/Venera-Next&type=date&theme=dark&legend=top-left&sealed_token=oOpEg16aOzfNd-LxRdnNlKMFvVT7R4hxnX3R0_siwlG1kcvQby3KmHFNPHaH-dbuficb1pbCiQyzTRFVYt2oKGGfjghUgiIs1huNy1yZ1ffelz7owlDrYQ" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=CyrilPeng/Venera-Next&type=date&legend=top-left&sealed_token=oOpEg16aOzfNd-LxRdnNlKMFvVT7R4hxnX3R0_siwlG1kcvQby3KmHFNPHaH-dbuficb1pbCiQyzTRFVYt2oKGGfjghUgiIs1huNy1yZ1ffelz7owlDrYQ" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=CyrilPeng/Venera-Next&type=date&legend=top-left&sealed_token=oOpEg16aOzfNd-LxRdnNlKMFvVT7R4hxnX3R0_siwlG1kcvQby3KmHFNPHaH-dbuficb1pbCiQyzTRFVYt2oKGGfjghUgiIs1huNy1yZ1ffelz7owlDrYQ" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ACGNnsj/venera-unified&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=ACGNnsj/venera-unified&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ACGNnsj/venera-unified&type=Date" />
  </picture>
 </a>
 
