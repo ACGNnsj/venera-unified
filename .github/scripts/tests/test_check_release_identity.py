@@ -40,7 +40,7 @@ class ReleaseIdentityTest(unittest.TestCase):
         self.root = Path(self.temp.name)
 
     def write_defaults(self, *, android='io.github.venera.unified', exe='VeneraUnified.exe'):
-        write(self.root, 'android/app/build.gradle', f'android {{\n    applicationId = "{android}"\n}}\n')
+        write(self.root, 'android/app/build.gradle', f'android {{\n    namespace = "{android}"\n    applicationId = "{android}"\n}}\n')
         write(self.root, 'macos/Runner/Configs/AppInfo.xcconfig', 'PRODUCT_BUNDLE_IDENTIFIER = io.github.venera.unified\n')
         write(
             self.root,
@@ -74,6 +74,16 @@ class ReleaseIdentityTest(unittest.TestCase):
         code, out = run_main(['--root', str(self.root)])
         self.assertEqual(code, 1)
         self.assertIn('::error::', out)
+
+    def test_rejects_namespace_drift(self):
+        self.write_defaults()
+        write(
+            self.root,
+            'android/app/build.gradle',
+            'android {\n    namespace = "com.github.cyrilpeng.veneranext"\n    applicationId = "io.github.venera.unified"\n}\n',
+        )
+        problems = identity.check(identity.collect(self.root))
+        self.assertTrue(any('namespace' in problem for problem in problems), problems)
 
     def test_rejects_executable_name_drift(self):
         self.write_defaults(exe='VeneraNext.exe')
