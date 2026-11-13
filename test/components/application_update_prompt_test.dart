@@ -381,7 +381,7 @@ void main() {
             ),
           ),
         );
-        await tester.ensureVisible(find.text('Check'));
+        await tester.scrollUntilVisible(find.text('Check'), 200);
         await tester.pumpAndSettle();
         await tester.tap(find.text('Check'));
         await waitFor(tester, () => adapter.entered.isCompleted);
