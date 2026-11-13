@@ -7,7 +7,7 @@ void main() {
       final profile = AppProfile(flavor: flavor);
       expect(profile.isTv, isFalse);
       expect(profile.applicationUpdatesEnabled, isTrue);
-      expect(profile.applicationTitle, 'VeneraNext');
+      expect(profile.applicationTitle, 'Venera Unified');
       expect(profile.displayVersion('1.18.2-rc.1'), '1.18.2-rc.1');
     }
   });
@@ -22,7 +22,7 @@ void main() {
       );
       expect(profile.isTv, isTrue);
       expect(profile.applicationUpdatesEnabled, isTrue);
-      expect(profile.applicationTitle, 'VeneraNext TV');
+      expect(profile.applicationTitle, 'Venera Unified TV');
       expect(
         profile.displayVersion('1.18.2-rc.1'),
         '1.18.2-rc.1 / TV 12 / abc1234',

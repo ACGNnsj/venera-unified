@@ -381,6 +381,8 @@ void main() {
             ),
           ),
         );
+        await tester.ensureVisible(find.text('Check'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Check'));
         await waitFor(tester, () => adapter.entered.isCompleted);
         adapter.complete({'tag_name': 'v2.0.0'});
