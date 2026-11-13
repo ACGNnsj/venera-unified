@@ -18,7 +18,7 @@ ANDROID = "{http://schemas.android.com/apk/res/android}"
 ABI_CODES = {"armeabi-v7a": 1, "arm64-v8a": 2, "x86_64": 3, "universal": 0}
 # Also enforced in Gradle so local builds use the same upgrade-safe sequence.
 TV_BUILD_OFFSET = 200000
-SIGNER_SHA256 = "3d990535d15d2ecb8f65f599db7725e1d83e10a5e801ddcdae262cc78983dc10"
+SIGNER_SHA256 = "16bb6bed09de33796fbf603cc2530c29d60f8350601deeffb8be3c440372850f"
 
 
 def build_metadata(flavor, pubspec, environ):
@@ -199,7 +199,10 @@ def verify_apks(metadata, sdk, github_output=None):
         certificate = run_tool(signer, "verify", "--verbose", "--print-certs", str(apk))
         fingerprints = signer_fingerprints(certificate)
         if fingerprints != [SIGNER_SHA256]:
-            raise ValueError("APK signing certificate differs from published mobile/TV builds")
+            raise ValueError(
+                "APK signing certificate differs from published mobile/TV builds: "
+                f"found {fingerprints}, expected {[SIGNER_SHA256]}"
+            )
         records.append((abi, apk, fingerprints))
 
     # Expose outputs only after every variant has passed the checks above.
