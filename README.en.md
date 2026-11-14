@@ -274,7 +274,7 @@ Network reading uses extensions compatible with the JavaScript API. Users are re
 
 ## Acknowledgements
 
-Thanks to [Venera](https://github.com/venera-app/venera) for the reader and extension foundation, and [EhTagTranslation](https://github.com/EhTagTranslation/Database) for Chinese tag translations.
+Thanks to [Venera](https://github.com/venera-app/venera) for the reader and extension foundation, [venera-next](https://github.com/CyrilPeng/venera-next) as the fork starting point, and [EhTagTranslation](https://github.com/EhTagTranslation/Database) for Chinese tag translations; underlying capabilities rely on [flutter_qjs](https://github.com/CyrilPeng/flutter_qjs), [flutter_inappwebview](https://github.com/pichillilorenzo/flutter_inappwebview) and [webdav_client](https://github.com/venera-app/webdav_client).
 
 ## License
 
