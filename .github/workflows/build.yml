@@ -422,7 +422,7 @@ jobs:
 
   Build_MacOS:
     if: ${{ inputs.build_macos }}
-    runs-on: macos-14
+    runs-on: macos-26
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
