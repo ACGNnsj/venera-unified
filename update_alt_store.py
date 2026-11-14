@@ -13,7 +13,7 @@ def is_project_release_url(url):
     return (
         parsed.scheme == "https"
         and parsed.netloc.lower() == "github.com"
-        and parsed.path.lower().startswith("/cyrilpeng/venera-next/releases/")
+        and parsed.path.lower().startswith("/acgnnsj/venera-unified/releases/")
     )
 
 
