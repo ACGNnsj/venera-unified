@@ -142,13 +142,13 @@ List<Widget> buildReaderBottomActions(
       child: IconButton(icon: const Icon(Icons.download), onPressed: onSave),
     ),
     Tooltip(
-      message: App.isOhos
+      message: App.isHarmonyOS
           ? 'System sharing is not available on HarmonyOS. Save the image to Files instead.'
                 .tl
           : 'Share'.tl,
       child: IconButton(
         icon: const Icon(Icons.share),
-        onPressed: App.isOhos ? null : onShare,
+        onPressed: App.isHarmonyOS ? null : onShare,
       ),
     ),
   ];

@@ -3,6 +3,7 @@ import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'network_favorite_import.dart';
 import 'favorite_folder_import.dart';
+import 'favorite_folder_name.dart';
 import 'favorite_updates_service.dart';
 import 'read_later_service.dart';
 import 'package:venera_unified/foundation/app_data_operations.dart';
@@ -1041,14 +1042,13 @@ class LocalFavoritesManager with ChangeNotifier {
         throw OperationFailure.message("name is empty!");
       }
     }
-    if (existsFolder(name)) {
+    if (hasFavoriteFolderName(folderNames, name)) {
       if (renameWhenInvalidName) {
         var prevName = name;
         int i = 0;
-        while (existsFolder(i.toString())) {
-          i++;
-        }
-        name = prevName + i.toString();
+        do {
+          name = prevName + (i++).toString();
+        } while (hasFavoriteFolderName(folderNames, name));
       } else {
         throw Exception("Folder is existing");
       }
