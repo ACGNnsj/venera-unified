@@ -15,7 +15,7 @@ import 'package:venera_unified/foundation/persistence_failure.dart';
 import 'package:venera_unified/foundation/selection_operation.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'sidebar_presentation_test.dart'
+import '../support/sidebar_test_support.dart'
     show pumpSidebar, settleSidebarWork, sidebarCauses;
 
 class _Navigator extends Navigator {

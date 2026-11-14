@@ -208,25 +208,21 @@ void main() {
     );
   }
 
-  test(
-    'archive removed after durable confirmation is never rebuilt',
-    () async {
-      final fixture = await _Fixture.create();
-      try {
-        await fixture.killAt('confirmed');
-        expect(fixture.objects, hasLength(1));
-        fixture.objects.clear();
-        final result = await fixture.run('recover');
-        expect(result['state'], 'applied');
-        expect(fixture.puts, hasLength(1));
-        expect(fixture.objects, isEmpty);
-        fixture.expectPreparedOnce();
-      } finally {
-        await fixture.close();
-      }
-    },
-    timeout: const Timeout(Duration(seconds: 90)),
-  );
+  test('archive removed after durable confirmation is never rebuilt', () async {
+    final fixture = await _Fixture.create();
+    try {
+      await fixture.killAt('confirmed');
+      expect(fixture.objects, hasLength(1));
+      fixture.objects.clear();
+      final result = await fixture.run('recover');
+      expect(result['state'], 'applied');
+      expect(fixture.puts, hasLength(1));
+      expect(fixture.objects, isEmpty);
+      fixture.expectPreparedOnce();
+    } finally {
+      await fixture.close();
+    }
+  }, timeout: const Timeout(Duration(seconds: 90)));
 
   test(
     'retention DELETE applied before killed client receives acknowledgement',
@@ -370,7 +366,7 @@ class _Fixture {
   }
 
   Future<_Probe> start(String command, [String phase = '']) async {
-    final process = await startProbeProcess([
+    final process = await Process.start(dartExecutable(), [
       '--packages=${p.absolute('.dart_tool/package_config.json')}',
       'test/fixtures/data_sync_upload_crash_probe.dart',
       root.path,

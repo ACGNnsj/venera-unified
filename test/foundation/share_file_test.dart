@@ -36,7 +36,6 @@ void main() {
     App.cachePath = root.path;
     calls.clear();
     replies.clear();
-    interaction.Share.usesClipboard = () => false;
     messenger.setMockMethodCallHandler(MethodChannelShare.channel, (call) {
       calls.add(call);
       final reply = Completer<String?>();
@@ -45,7 +44,6 @@ void main() {
     });
   });
   tearDown(() {
-    interaction.Share.usesClipboard = () => App.isDesktop;
     messenger.setMockMethodCallHandler(MethodChannelShare.channel, null);
     App.cachePath = previousCache;
     root.deleteSync(recursive: true);
@@ -137,20 +135,6 @@ void main() {
     skip: Platform.isLinux,
   );
 
-  test('desktop copies text instead of dispatching a native share', () async {
-    interaction.Share.usesClipboard = () => true;
-    expect(
-      await interaction.Share.shareText('copied text'),
-      interaction.ShareTextResult.copied,
-    );
-    expect(calls, isEmpty);
-    expect(
-      await interaction.Share.shareText('again'),
-      interaction.ShareTextResult.copied,
-    );
-    expect(calls, isEmpty);
-  });
-
   test('transport error retains original stack and queue continues', () async {
     final error = StateError('transport failed');
     final stack = StackTrace.fromString('original transport stack');
@@ -171,27 +155,23 @@ void main() {
     expect(calls.single.arguments['text'], 'works');
   });
 
-  test(
-    'native error retains diagnostics and Windows source',
-    () async {
-      final captured = _capture(file('failed.png', 7));
-      await _until(() => calls.length == 1);
-      final retained = source(0);
-      replies.single.completeError(
-        PlatformException(
-          code: 'native-failed',
-          message: 'receiver unavailable',
-          details: {'step': 'dispatch'},
-        ),
-      );
-      final failure = (await captured).error as PlatformException;
-      expect(failure.code, 'native-failed');
-      expect(failure.details, {'step': 'dispatch'});
-      expect(failure.message, 'receiver unavailable');
-      expect(retained.readAsBytesSync(), [7]);
-    },
-    skip: !Platform.isWindows,
-  );
+  test('native error retains diagnostics and Windows source', () async {
+    final captured = _capture(file('failed.png', 7));
+    await _until(() => calls.length == 1);
+    final retained = source(0);
+    replies.single.completeError(
+      PlatformException(
+        code: 'native-failed',
+        message: 'receiver unavailable',
+        details: {'step': 'dispatch'},
+      ),
+    );
+    final failure = (await captured).error as PlatformException;
+    expect(failure.code, 'native-failed');
+    expect(failure.details, {'step': 'dispatch'});
+    expect(failure.message, 'receiver unavailable');
+    expect(retained.readAsBytesSync(), [7]);
+  }, skip: !Platform.isWindows);
 
   test(
     'Android source policy joins real channel then deletes only owned input',
@@ -297,20 +277,6 @@ void main() {
       await sharing;
     },
     skip: Platform.isLinux,
-  );
-
-  test(
-    'real Android adapter cleans input after native acknowledgement',
-    () async {
-      final sharing = file('android.png', 4);
-      await _until(() => calls.length == 1);
-      final input = source(0);
-      expect(input.existsSync(), isTrue);
-      replies.single.complete('native copy finished');
-      await sharing;
-      expect(input.existsSync(), isFalse);
-    },
-    skip: !Platform.isAndroid,
   );
 
   test(

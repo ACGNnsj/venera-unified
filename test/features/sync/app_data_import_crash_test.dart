@@ -53,33 +53,29 @@ void main() {
     );
   }
 
-  test(
-    'recovery survives another process kill during rollback',
-    () async {
-      final fixture = _ImportFixture.create();
-      try {
-        final original = await _killAt(
-          fixture.root,
-          'apply',
-          'replaced:comic_source',
-        );
-        final rollback = await _killAt(fixture.root, 'recover', 'restored');
-        expect(rollback.id, original.id);
-        final receipts = await _runProbe(fixture.root, 'recover');
-        _expectReceipt(receipts, original.id, false);
-        fixture.expectImage(false);
-        expect(await _runProbe(fixture.root, 'recover'), receipts);
-        fixture.expectImage(false);
-        expect(
-          await _runProbe(fixture.root, 'acknowledge', original.id),
-          isEmpty,
-        );
-      } finally {
-        fixture.root.deleteSync(recursive: true);
-      }
-    },
-    timeout: const Timeout(Duration(seconds: 90)),
-  );
+  test('recovery survives another process kill during rollback', () async {
+    final fixture = _ImportFixture.create();
+    try {
+      final original = await _killAt(
+        fixture.root,
+        'apply',
+        'replaced:comic_source',
+      );
+      final rollback = await _killAt(fixture.root, 'recover', 'restored');
+      expect(rollback.id, original.id);
+      final receipts = await _runProbe(fixture.root, 'recover');
+      _expectReceipt(receipts, original.id, false);
+      fixture.expectImage(false);
+      expect(await _runProbe(fixture.root, 'recover'), receipts);
+      fixture.expectImage(false);
+      expect(
+        await _runProbe(fixture.root, 'acknowledge', original.id),
+        isEmpty,
+      );
+    } finally {
+      fixture.root.deleteSync(recursive: true);
+    }
+  }, timeout: const Timeout(Duration(seconds: 90)));
 
   test(
     'committed cleanup survives another kill and preserves later live writes',
@@ -343,7 +339,7 @@ Future<List<Object?>> _runProbe(
 }
 
 Future<Process> _startProbe(Directory root, String command, String argument) =>
-    startProbeProcess([
+    Process.start(dartExecutable(), [
       '--packages=${p.absolute('.dart_tool/package_config.json')}',
       'test/fixtures/app_data_import_crash_probe.dart',
       root.path,

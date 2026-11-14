@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_reorderable_grid_view/widgets/reorderable_builder.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqlite3/sqlite3.dart';
 import 'package:venera_unified/components/button.dart';
 import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
 import 'package:venera_unified/features/favorites/favorites.dart';
@@ -18,6 +17,8 @@ import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
+
+import '../../support/sqlite_test_environment.dart';
 
 List<String> _comicOrder(WidgetTester tester) {
   final builder = tester.widget<ReorderableBuilder<FavoriteItem>>(
@@ -42,16 +43,6 @@ Future<void> _openReorder(WidgetTester tester) async {
       .onClick();
   await tester.pumpAndSettle();
   expect(find.byType(ReorderableBuilder<FavoriteItem>), findsOneWidget);
-}
-
-bool _sqliteAvailable() {
-  try {
-    final database = sqlite3.openInMemory();
-    database.close();
-    return true;
-  } catch (_) {
-    return false;
-  }
 }
 
 void main() {
@@ -255,7 +246,7 @@ void main() {
           await tester.pumpWidget(const SizedBox.shrink());
           await tester.pump(const Duration(milliseconds: 300));
         },
-        skip: !_sqliteAvailable(),
+        skip: !sqliteTestAvailable(),
       );
     }
   }

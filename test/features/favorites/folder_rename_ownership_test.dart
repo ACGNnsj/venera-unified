@@ -1,5 +1,5 @@
-import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'package:venera_unified/features/favorites/favorite_folder.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -31,7 +31,7 @@ import 'package:venera_unified/foundation/selection_operation.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../../components/sidebar_presentation_test.dart'
+import '../../support/sidebar_test_support.dart'
     show pumpSidebar, settleSidebarWork, sidebarCauses;
 
 class _Manager extends Fake implements LocalFavoritesManager {
@@ -298,6 +298,27 @@ void main() {
       );
     });
   });
+
+  for (final name in ['oRIGINAL', 'oTHER']) {
+    testWidgets('rename validates case against the original folder: $name', (
+      tester,
+    ) async {
+      final host = _Host();
+      await host.mount(tester);
+      await _open(tester);
+      await tester.enterText(find.byType(TextField).last, name);
+      await settleSidebarWork(tester, () => _press(tester));
+      await pumpSidebar(tester);
+      if (name == 'oRIGINAL') {
+        expect(host.manager.renames, [('Original', name)]);
+        expect(host.selected, [name]);
+      } else {
+        expect(host.manager.renames, isEmpty);
+        expect(find.text('Folder already exists'), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   for (final reason in [
     'removed',

@@ -1,13 +1,15 @@
+import 'package:venera_unified/features/comic_source/types.dart';
 import 'package:venera_unified/features/comic_source/source.dart';
 import 'package:venera_unified/features/comic_source/source_data_storage.dart';
 
 class ComicSourceFixture extends ComicSource {
+  // ignore: use_super_parameters
   ComicSourceFixture({
     String key = 'fixture',
     AccountConfig? account,
     Map<String, Map<String, dynamic>>? settings,
-    super.initialData = const {},
-    super.dataStorage = const SourceDataStorage(),
+    Map<String, dynamic> initialData = const {},
+    SourceDataStorage dataStorage = const SourceDataStorage(),
   }) : super(
          'Fixture source',
          key,
@@ -42,5 +44,45 @@ class ComicSourceFixture extends ComicSource {
          false,
          null,
          null,
+         initialData: initialData,
+         dataStorage: dataStorage,
        );
+}
+
+ComicSource stubComicSource(String key, {LoadComicFunc? loadComicInfo}) {
+  return ComicSource(
+    'Test Source',
+    key,
+    null,
+    null,
+    null,
+    null,
+    const [],
+    null,
+    null,
+    loadComicInfo,
+    null,
+    null,
+    null,
+    null,
+    'test.js',
+    '',
+    '1.0.0',
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    false,
+    false,
+    null,
+    null,
+  );
 }

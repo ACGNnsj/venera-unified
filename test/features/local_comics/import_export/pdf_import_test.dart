@@ -19,6 +19,8 @@ import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
 import 'package:venera_unified/foundation/file_system.dart';
 
+import '../../../support/sqlite_test_environment.dart';
+
 void main() {
   const service = ComicImportService(
     localManager: LocalManager.new,
@@ -120,14 +122,14 @@ void main() {
         expect(manager.path, originalPath);
         expect(destination.listSync(), isEmpty);
         renderGate.complete();
-        final imported = await importing;
+        final migrated = await importing;
         expect(
-          await manager.getImages(imported.id, ComicType.local, 1),
+          await manager.getImages(migrated.id, ComicType.local, 1),
           hasLength(2),
         );
         expect(await manager.setNewPath(destination.path), isNull);
         expect(
-          await manager.getImages(imported.id, ComicType.local, 1),
+          await manager.getImages(migrated.id, ComicType.local, 1),
           hasLength(2),
         );
       },
@@ -194,20 +196,33 @@ void main() {
       () async {
         await withFavorites((favorites) async {
           final folder = await favorites.createFolder('PDFs');
+          final importedIds = <String>[];
           for (var index = 1; index <= 2; index++) {
             await PdfComicImporter.importDocument(
               _Document([_Page()]),
               title: 'Volume $index',
-              registerComic: (comic) =>
-                  service.registerComic(comic, folder: folder),
+              registerComic: (comic) async {
+                importedIds.add(comic.id);
+                await service.registerComic(comic, folder: folder);
+              },
             );
           }
-          final first = manager.findByName('Volume 1')!;
-          final second = manager.findByName('Volume 2')!;
-          expect(favorites.find(first.id, ComicType.local), contains(folder));
-          expect(favorites.find(second.id, ComicType.local), contains(folder));
-          expect(first.title, 'Volume 1');
-          expect(second.title, 'Volume 2');
+          expect(
+            favorites.find(importedIds[0], ComicType.local),
+            contains(folder),
+          );
+          expect(
+            favorites.find(importedIds[1], ComicType.local),
+            contains(folder),
+          );
+          expect(
+            manager.find(importedIds[0], ComicType.local)?.title,
+            'Volume 1',
+          );
+          expect(
+            manager.find(importedIds[1], ComicType.local)?.title,
+            'Volume 2',
+          );
         });
       },
     );
@@ -465,17 +480,7 @@ void main() {
       expect(document.disposed, isTrue);
       expect(manager.directory.listSync().whereType<Directory>(), isEmpty);
     });
-  }, skip: _sqliteAvailable() ? false : 'sqlite3 native library is unavailable');
-}
-
-bool _sqliteAvailable() {
-  try {
-    final database = sqlite3.openInMemory();
-    database.close();
-    return true;
-  } catch (_) {
-    return false;
-  }
+  }, skip: sqliteTestAvailable() ? false : 'sqlite3 native library is unavailable');
 }
 
 class _Document extends Fake implements PdfDocument {
@@ -514,12 +519,12 @@ class _Page extends Fake implements PdfPage {
     double? fullWidth,
     double? fullHeight,
     int? backgroundColor,
-    PdfPageRenderPriority? priority,
     PdfPageRotation? rotationOverride,
     PdfAnnotationRenderingMode annotationRenderingMode =
         PdfAnnotationRenderingMode.annotationAndForms,
     int flags = 0,
     PdfPageRenderCancellationToken? cancellationToken,
+    PdfPageRenderPriority? priority,
   }) async {
     renderCount++;
     await waitBeforeRender;

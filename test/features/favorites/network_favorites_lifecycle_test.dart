@@ -10,7 +10,7 @@ import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
 import 'package:venera_unified/components/window_selection_task.dart';
 import 'package:venera_unified/foundation/selection_operation.dart';
 
-import '../../components/sidebar_presentation_test.dart'
+import '../../support/sidebar_test_support.dart'
     show pumpSidebar, settleSidebarWork;
 
 FavoriteData data({

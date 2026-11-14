@@ -35,7 +35,7 @@ import 'package:venera_unified/foundation/res.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../../components/sidebar_presentation_test.dart'
+import '../../support/sidebar_test_support.dart'
     show pumpSidebar, settleSidebarWork, sidebarCauses;
 
 class _Source extends Fake implements ComicSource {

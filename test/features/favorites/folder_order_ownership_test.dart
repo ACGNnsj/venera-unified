@@ -1,5 +1,5 @@
-import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'package:venera_unified/features/favorites/favorite_folder.dart';
+import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -26,7 +26,7 @@ import 'package:venera_unified/foundation/selection_operation.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../../components/sidebar_presentation_test.dart'
+import '../../support/sidebar_test_support.dart'
     show pumpSidebar, settleSidebarWork, sidebarCauses;
 
 class _Manager extends Fake implements LocalFavoritesManager {
@@ -146,7 +146,7 @@ class _Host {
 
 ReorderCallback _reorder(WidgetTester tester) => tester
     .widget<ReorderableListView>(find.byType(ReorderableListView))
-    // TODO(venera-unified): 3.44 起 onReorder 弃用且可为空，锁定基线后改用 onReorderItem。
+    // TODO(venera-unified): 3.44 起 onReorder 弃用且可为空，锁定基线后改用 onReorderItem.
     // Nullable on the current SDK, non-nullable on the 3.41 rollback SDK.
     // ignore: deprecated_member_use, unnecessary_non_null_assertion
     .onReorder!;

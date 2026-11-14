@@ -1,6 +1,6 @@
+import 'package:venera_unified/features/favorites/favorite_folder.dart';
 import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'package:venera_unified/features/history/history_scope.dart';
-import 'package:venera_unified/features/favorites/favorite_folder.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -29,7 +29,7 @@ import 'package:venera_unified/foundation/selection_operation.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../../components/sidebar_presentation_test.dart'
+import '../../support/sidebar_test_support.dart'
     show pumpSidebar, settleSidebarWork, sidebarCauses;
 
 class _Navigator extends Navigator {

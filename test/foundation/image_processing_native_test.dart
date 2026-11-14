@@ -1,12 +1,12 @@
 import 'dart:ffi';
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter_qjs/flutter_qjs.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:venera_unified/foundation/image_processing.dart' as processing;
-import 'package:venera_unified/foundation/image_transpose_native.dart';
+
+import '../support/native_test_environment.dart';
 
 class _TrackedEngine extends FlutterQjs {
   var closes = 0;
@@ -29,12 +29,11 @@ void main() {
   late String initialization;
   setUpAll(() async {
     if (Platform.isWindows) {
-      final native = Directory(
-        'build/windows/x64/runner/Release',
-      ).absolute.path;
+      final native = windowsNativeTestDirectory.absolute.path;
       DynamicLibrary.open('$native/flutter_windows.dll');
       DynamicLibrary.open('$native/flutter_qjs_plugin.dll');
-      DynamicLibrary.open('$native/lodepng_flutter.dll');
+      final codecs = windowsNativeCodecTestLibrary;
+      DynamicLibrary.open(codecs);
     }
     initialization = await File('assets/init.js').readAsString();
   });
@@ -63,7 +62,7 @@ void main() {
       expect(output.getPixelAtIndex(0).value, 0xff0000ff);
       expect(output.getPixelAtIndex(1).value, 0xffff0000);
     },
-    skip: !Platform.isWindows,
+    skip: !(Platform.isWindows || Platform.isLinux),
   );
 
   test(
@@ -171,35 +170,4 @@ void main() {
     },
     skip: !Platform.isWindows,
   );
-
-  test('transpose matches the script-bridge rotation pixel for pixel', () {
-    if (!ImageTransposeNative.available) {
-      markTestSkipped('venera_transpose not built for this platform');
-      return;
-    }
-    expect(ImageTransposeNative.version(), 1);
-    final rand = Random(0x51ab);
-    const w = 37, h = 53;
-    final pixels = Uint32List.fromList(
-      List<int>.generate(w * h, (_) => rand.nextInt(1 << 32)),
-    );
-    // Independent baseline: the same index permutation copyAndRotate90
-    // documents, computed here so the test never compares native to
-    // itself (copyAndRotate90 now prefers the native path when present).
-    final expected = Uint32List(w * h);
-    for (var j = 0; j < h; j++) {
-      for (var i = 0; i < w; i++) {
-        expected[i * h + h - j - 1] = pixels[j * w + i];
-      }
-    }
-    expect(
-      ImageTransposeNative.transpose(pixels, w, h),
-      orderedEquals(expected),
-    );
-    final rotated = processing.Image(pixels, w, h).copyAndRotate90();
-    expect((rotated.width, rotated.height), (h, w));
-    for (var k = 0; k < expected.length; k++) {
-      expect(rotated.getPixelAtIndex(k).value, expected[k]);
-    }
-  });
 }

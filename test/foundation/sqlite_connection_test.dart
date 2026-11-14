@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:venera_unified/foundation/sqlite_connection.dart';
 
+import '../support/sqlite_test_environment.dart';
+
 void _initializeDatabase(String path) {
   final db = sqlite3.open(path);
   try {
@@ -11,16 +13,6 @@ void _initializeDatabase(String path) {
     db.execute("INSERT INTO items (value) VALUES ('seed');");
   } finally {
     db.close();
-  }
-}
-
-bool _sqliteAvailable() {
-  try {
-    final db = sqlite3.openInMemory();
-    db.close();
-    return true;
-  } catch (_) {
-    return false;
   }
 }
 
@@ -52,7 +44,7 @@ class _SetupDatabase implements Database {
   }
 
   @override
-  void close() {
+  void dispose() {
     disposeCalls++;
     delegate.close();
     if (cleanupError case final error?) {
@@ -61,96 +53,57 @@ class _SetupDatabase implements Database {
   }
 
   @override
-  void dispose() => close();
-
-  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
-  final sqliteAvailable = _sqliteAvailable();
+  final sqliteAvailable = sqliteTestAvailable();
 
-  group(
-    'connection setup ownership',
-    () {
-      test('successful setup transfers the live connection to the caller', () {
-        final native = sqlite3.openInMemory();
-        final database = _SetupDatabase(native);
-        var factoryCalls = 0;
-        final connection = openSqliteDatabase(
-          'requested-path',
-          databaseFactory: (path) {
-            factoryCalls++;
-            expect(path, 'requested-path');
-            return database;
-          },
-        );
-        try {
-          expect(factoryCalls, 1);
-          expect(connection, same(database));
-          expect(database.disposeCalls, 0);
-          expect(database.statements, [
-            'PRAGMA journal_mode = DELETE;',
-            'PRAGMA synchronous = NORMAL;',
-            'PRAGMA busy_timeout = 5000;',
-          ]);
-          expect(native.select('PRAGMA synchronous;').single['synchronous'], 1);
-          expect(native.select('PRAGMA busy_timeout;').single['timeout'], 5000);
-        } finally {
-          connection.close();
-        }
-        expect(database.disposeCalls, 1);
-        expect(() => native.execute('SELECT 1;'), throwsStateError);
-      });
-
-      test(
-        'setup failure preserves the original SQLite error and closes once',
-        () {
-          final native = sqlite3.openInMemory();
-          final database = _SetupDatabase(
-            native,
-            failStatement: 'PRAGMA synchronous = NORMAL;',
-          );
-          try {
-            openSqliteDatabase('unused', databaseFactory: (_) => database);
-            fail('Invalid setup SQL must fail');
-          } catch (error, stack) {
-            expect(error, isA<SqliteException>());
-            expect(error, same(database.operationError));
-            expect(stack.toString(), database.operationStack.toString());
-          }
-          expect(database.disposeCalls, 1);
-          expect(database.statements, [
-            'PRAGMA journal_mode = DELETE;',
-            'PRAGMA synchronous = NORMAL;',
-          ]);
-          expect(() => native.execute('SELECT 1;'), throwsStateError);
+  group('connection setup ownership', () {
+    test('successful setup transfers the live connection to the caller', () {
+      final native = sqlite3.openInMemory();
+      final database = _SetupDatabase(native);
+      var factoryCalls = 0;
+      final connection = openSqliteDatabase(
+        'requested-path',
+        databaseFactory: (path) {
+          factoryCalls++;
+          expect(path, 'requested-path');
+          return database;
         },
       );
+      try {
+        expect(factoryCalls, 1);
+        expect(connection, same(database));
+        expect(database.disposeCalls, 0);
+        expect(database.statements, [
+          'PRAGMA journal_mode = DELETE;',
+          'PRAGMA synchronous = NORMAL;',
+          'PRAGMA busy_timeout = 5000;',
+        ]);
+        expect(native.select('PRAGMA synchronous;').single['synchronous'], 1);
+        expect(native.select('PRAGMA busy_timeout;').single['timeout'], 5000);
+      } finally {
+        connection.close();
+      }
+      expect(database.disposeCalls, 1);
+      expect(() => native.execute('SELECT 1;'), throwsStateError);
+    });
 
-      test('setup and cleanup failures retain both causes and stacks', () {
+    test(
+      'setup failure preserves the original SQLite error and closes once',
+      () {
         final native = sqlite3.openInMemory();
-        final cleanupError = StateError('injected dispose failure');
         final database = _SetupDatabase(
           native,
           failStatement: 'PRAGMA synchronous = NORMAL;',
-          cleanupError: cleanupError,
         );
         try {
           openSqliteDatabase('unused', databaseFactory: (_) => database);
           fail('Invalid setup SQL must fail');
-        } on SqliteConnectionSetupFailure catch (error, stack) {
-          expect(error.operationError, isA<SqliteException>());
-          expect(error.operationError, same(database.operationError));
-          expect(
-            error.operationStack.toString(),
-            database.operationStack.toString(),
-          );
-          expect(error.cleanupError, same(cleanupError));
-          expect(
-            error.cleanupStack.toString(),
-            database.cleanupStack.toString(),
-          );
+        } catch (error, stack) {
+          expect(error, isA<SqliteException>());
+          expect(error, same(database.operationError));
           expect(stack.toString(), database.operationStack.toString());
         }
         expect(database.disposeCalls, 1);
@@ -159,30 +112,59 @@ void main() {
           'PRAGMA synchronous = NORMAL;',
         ]);
         expect(() => native.execute('SELECT 1;'), throwsStateError);
-      });
+      },
+    );
 
-      test('factory failures propagate before a connection is transferred', () {
-        final error = StateError('open failed');
-        final stack = StackTrace.fromString('injected open stack');
-        var calls = 0;
-        try {
-          openSqliteDatabase(
-            'unused',
-            databaseFactory: (_) {
-              calls++;
-              Error.throwWithStackTrace(error, stack);
-            },
-          );
-          fail('The factory must fail');
-        } catch (failure, failureStack) {
-          expect(failure, same(error));
-          expect(failureStack.toString(), stack.toString());
-        }
-        expect(calls, 1);
-      });
-    },
-    skip: sqliteAvailable ? false : 'sqlite3 native library is unavailable',
-  );
+    test('setup and cleanup failures retain both causes and stacks', () {
+      final native = sqlite3.openInMemory();
+      final cleanupError = StateError('injected dispose failure');
+      final database = _SetupDatabase(
+        native,
+        failStatement: 'PRAGMA synchronous = NORMAL;',
+        cleanupError: cleanupError,
+      );
+      try {
+        openSqliteDatabase('unused', databaseFactory: (_) => database);
+        fail('Invalid setup SQL must fail');
+      } on SqliteConnectionSetupFailure catch (error, stack) {
+        expect(error.operationError, isA<SqliteException>());
+        expect(error.operationError, same(database.operationError));
+        expect(
+          error.operationStack.toString(),
+          database.operationStack.toString(),
+        );
+        expect(error.cleanupError, same(cleanupError));
+        expect(error.cleanupStack.toString(), database.cleanupStack.toString());
+        expect(stack.toString(), database.operationStack.toString());
+      }
+      expect(database.disposeCalls, 1);
+      expect(database.statements, [
+        'PRAGMA journal_mode = DELETE;',
+        'PRAGMA synchronous = NORMAL;',
+      ]);
+      expect(() => native.execute('SELECT 1;'), throwsStateError);
+    });
+
+    test('factory failures propagate before a connection is transferred', () {
+      final error = StateError('open failed');
+      final stack = StackTrace.fromString('injected open stack');
+      var calls = 0;
+      try {
+        openSqliteDatabase(
+          'unused',
+          databaseFactory: (_) {
+            calls++;
+            Error.throwWithStackTrace(error, stack);
+          },
+        );
+        fail('The factory must fail');
+      } catch (failure, failureStack) {
+        expect(failure, same(error));
+        expect(failureStack.toString(), stack.toString());
+      }
+      expect(calls, 1);
+    });
+  }, skip: sqliteAvailable ? false : 'sqlite3 native library is unavailable');
 
   test('failed PRAGMA setup releases a corrupt database file', () {
     final dir = Directory.systemTemp.createTempSync('sqlite-corrupt-');
@@ -229,30 +211,26 @@ void main() {
     skip: sqliteAvailable ? false : 'sqlite3 native library is unavailable',
   );
 
-  test(
-    'withDatabase opens, executes, and disposes',
-    () async {
-      final dir = Directory.systemTemp.createTempSync('venera-sqlite-withdb-');
-      addTearDown(() {
-        if (dir.existsSync()) {
-          dir.deleteSync(recursive: true);
-        }
-      });
+  test('withDatabase opens, executes, and disposes', () async {
+    final dir = Directory.systemTemp.createTempSync('venera-sqlite-withdb-');
+    addTearDown(() {
+      if (dir.existsSync()) {
+        dir.deleteSync(recursive: true);
+      }
+    });
 
-      final dbPath = '${dir.path}/test.db';
-      _initializeDatabase(dbPath);
+    final dbPath = '${dir.path}/test.db';
+    _initializeDatabase(dbPath);
 
-      final count = await withDatabase<int>(dbPath, (db) async {
-        final res = db
-            .select('SELECT count(*) AS count FROM items;')
-            .first['count'];
-        return res as int;
-      });
+    final count = await withDatabase<int>(dbPath, (db) async {
+      final res = db
+          .select('SELECT count(*) AS count FROM items;')
+          .first['count'];
+      return res as int;
+    });
 
-      expect(count, 1);
-    },
-    skip: sqliteAvailable ? false : 'sqlite3 native library is unavailable',
-  );
+    expect(count, 1);
+  }, skip: sqliteAvailable ? false : 'sqlite3 native library is unavailable');
 
   test(
     'plain sqlite3 connections hit a read-then-write lock on the same file',

@@ -5,7 +5,8 @@ import 'package:venera_unified/components/scroll.dart';
 import 'package:venera_unified/features/history/history.dart';
 import 'package:venera_unified/features/image_favorites/image_favorites_summary.dart';
 import 'package:venera_unified/foundation/app.dart';
-import '../history/image_favorites_repository_test.dart' show comic;
+
+import '../../support/image_favorites_fixture.dart' show comic;
 
 void main() {
   late ImageFavoriteManager imageManager;

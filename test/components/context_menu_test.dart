@@ -7,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:venera_unified/components/menu.dart';
 import 'package:venera_unified/components/button.dart';
 
+import '../support/native_test_environment.dart';
+
 void main() {
   setUpAll(() async {
     final path = Platform.environment['WINDOW_OWNER_QA_FONT'];
@@ -16,7 +18,9 @@ void main() {
     )..addFont(File(path).readAsBytes().then(ByteData.sublistView))).load();
     await (FontLoader('MaterialIcons')..addFont(
           File(
-            'build/windows/x64/runner/Release/data/flutter_assets/fonts/MaterialIcons-Regular.otf',
+            windowsNativeTestFile(
+              'data/flutter_assets/fonts/MaterialIcons-Regular.otf',
+            ).path,
           ).readAsBytes().then(ByteData.sublistView),
         ))
         .load();
@@ -89,6 +93,47 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     entries.dispose();
     visible.dispose();
+  });
+
+  testWidgets('MenuButton keeps a stable owner and retires a changed owner', (
+    tester,
+  ) async {
+    final revision = ValueNotifier(0);
+    final calls = <int>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ValueListenableBuilder<int>(
+            valueListenable: revision,
+            builder: (_, value, _) => MenuButton(
+              menuIdentity: value ~/ 2,
+              entries: [
+                MenuEntry(
+                  text: 'Owned action',
+                  onClick: () => calls.add(value),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byType(MenuButton));
+    await tester.pumpAndSettle();
+    revision.value = 1;
+    await tester.pumpAndSettle();
+    expect(find.text('Owned action'), findsOneWidget);
+    await tester.tap(find.text('Owned action'));
+    await tester.pumpAndSettle();
+    expect(calls, [0]);
+    await tester.tap(find.byType(MenuButton));
+    await tester.pumpAndSettle();
+    revision.value = 2;
+    await tester.pumpAndSettle();
+    expect(find.text('Owned action'), findsNothing);
+    expect(calls, [0]);
+    await tester.pumpWidget(const SizedBox());
+    revision.dispose();
   });
 
   testWidgets(

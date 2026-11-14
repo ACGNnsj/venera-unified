@@ -20,7 +20,7 @@ import 'package:venera_unified/foundation/navigation_admission.dart';
 import 'package:venera_unified/foundation/res.dart';
 import 'package:venera_unified/foundation/selection_operation.dart';
 
-import 'archive_selection_ownership_test.dart'
+import '../../support/archive_test_support.dart'
     show drainArchiveWork, frames, option;
 
 class _Source extends Fake implements ComicSource {

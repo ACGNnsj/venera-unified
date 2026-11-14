@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:venera_unified/components/button.dart';
+import 'package:venera_unified/components/tv_navigation.dart';
 import 'package:venera_unified/components/window_selection_task.dart';
 import 'package:venera_unified/features/favorites/favorite_actions.dart';
 import 'package:venera_unified/features/favorites/favorite_folder_browser.dart';
@@ -25,7 +26,7 @@ import 'package:venera_unified/foundation/log.dart';
 import 'package:venera_unified/foundation/selection_operation.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 
-import '../../components/sidebar_presentation_test.dart'
+import '../../support/sidebar_test_support.dart'
     show pumpSidebar, settleSidebarWork;
 
 class _Host {
@@ -37,6 +38,7 @@ class _Host {
   int committed = 0;
   double textScale = 1;
   bool dark = false;
+  bool? tv;
   Widget content = const SizedBox();
 
   Future<void> mount(WidgetTester tester) async {
@@ -80,7 +82,13 @@ class _Host {
                 textScaler: TextScaler.linear(textScale),
                 disableAnimations: true,
               ),
-              child: child!,
+              child: TvNavigation(
+                enabled: tv,
+                onBack: () => unawaited(
+                  appNavigation.rootNavigatorKey.currentState!.maybePop(),
+                ),
+                child: child!,
+              ),
             ),
             navigatorKey: appNavigation.rootNavigatorKey,
             home: Builder(
@@ -102,6 +110,15 @@ class _Host {
     isCurrent: () => true,
     onCommitted: () => committed++,
   );
+}
+
+Future<void> _remoteActivate(WidgetTester tester, Finder target) async {
+  final focus = Focus.of(tester.element(target));
+  focus.requestFocus();
+  await pumpSidebar(tester);
+  expect(focus.hasPrimaryFocus, isTrue);
+  await tester.sendKeyEvent(LogicalKeyboardKey.select);
+  await pumpSidebar(tester);
 }
 
 void main() {
@@ -377,12 +394,7 @@ void main() {
     final rootList = tester.widget<ReorderableListView>(
       find.byType(ReorderableListView),
     );
-    // 本仓 folder_order_dialog.dart 刻意保留旧 onReorder（3.41.4 回退档仍要能编译），
-    // 那里的 newIndex 会自己先减一，所以这里按旧语义传 roots.length。
-    // The callback is nullable on the current SDK and non-nullable on the
-    // 3.41 rollback SDK, so the assertion is required on one and redundant
-    // on the other.
-    // ignore: deprecated_member_use, unnecessary_non_null_assertion
+    // ignore: deprecated_member_use, unnecessary_non_null_assert
     rootList.onReorder!(0, roots.length);
     await tester.pump();
     tester
@@ -402,6 +414,76 @@ void main() {
       'Second child',
       'First child',
     ]);
+    expect({for (final folder in tree.flattened) folder.name: folder.id}, ids);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('TV remote moves a child through its nested parent picker', (
+    tester,
+  ) async {
+    final host = _Host()..tv = true;
+    await host.mount(tester);
+    final parent = host.manager.folderTree.named('Parent')!;
+    await tester.runAsync(
+      () => host.manager.createChildFolder('Child', parent.id),
+    );
+    final original = host.manager.folderTree.named('Child')!;
+    final showing = host.move('Child');
+    await pumpSidebar(tester);
+    await _remoteActivate(tester, find.text('Parent'));
+    await _remoteActivate(tester, find.text('Other'));
+    await _remoteActivate(tester, find.text('Confirm'));
+    await settleSidebarWork(tester, () => showing);
+    final moved = host.manager.folderTree.named('Child')!;
+    expect(moved.id, original.id);
+    expect(moved.parentId, host.manager.folderTree.named('Other')!.id);
+    expect(host.committed, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('TV remote sorts siblings without dragging and saves on back', (
+    tester,
+  ) async {
+    final host = _Host()..tv = true;
+    await host.mount(tester);
+    final parent = host.manager.folderTree.named('Parent')!;
+    await tester.runAsync(() async {
+      await host.manager.createChildFolder('First child', parent.id);
+      await host.manager.createChildFolder('Second child', parent.id);
+    });
+    final roots = host.manager.folderTree.roots.map((folder) => folder.id);
+    final ids = {
+      for (final folder in host.manager.folderTree.flattened)
+        folder.name: folder.id,
+    };
+    final showing = sortFolders(host.context);
+    await pumpSidebar(tester);
+    await _remoteActivate(tester, find.text('First-level folder'));
+    await _remoteActivate(
+      tester,
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Parent'),
+      ),
+    );
+    await _remoteActivate(
+      tester,
+      find.descendant(
+        of: find.byTooltip('Move down').first,
+        matching: find.byIcon(Icons.arrow_downward),
+      ),
+    );
+    await tester.sendKeyEvent(
+      LogicalKeyboardKey.goBack,
+      physicalKey: PhysicalKeyboardKey.escape,
+    );
+    await settleSidebarWork(tester, () => showing);
+    final tree = host.manager.folderTree;
+    expect(tree.childrenOf(parent.id).map((folder) => folder.name), [
+      'Second child',
+      'First child',
+    ]);
+    expect(tree.roots.map((folder) => folder.id), roots);
     expect({for (final folder in tree.flattened) folder.name: folder.id}, ids);
     expect(tester.takeException(), isNull);
   });

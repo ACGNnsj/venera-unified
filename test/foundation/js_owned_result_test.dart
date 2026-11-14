@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:ffi';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show FlutterError;
@@ -9,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/js_engine.dart';
 import 'package:venera_unified/foundation/log.dart';
+
+import '../support/quickjs_test_environment.dart';
 
 class _Reference extends JSRef {
   _Reference({this.failure});
@@ -35,25 +35,6 @@ class _Callback extends JSInvokable {
   void destroy() {
     destroys++;
     if (failure != null) throw failure!;
-  }
-}
-
-bool _nativeAvailable() {
-  try {
-    if (Platform.isWindows) {
-      final directory = Directory('build/windows/x64/runner/Release').absolute;
-      DynamicLibrary.open('${directory.path}/flutter_windows.dll');
-      DynamicLibrary.open('${directory.path}/flutter_qjs_plugin.dll');
-    } else {
-      DynamicLibrary.open(
-        Platform.isLinux
-            ? 'libflutter_qjs_plugin.so'
-            : 'flutter_qjs.framework/flutter_qjs',
-      );
-    }
-    return true;
-  } catch (_) {
-    return false;
   }
 }
 
@@ -330,16 +311,14 @@ void main() {
     );
   });
 
-  group(
-    'native owned result lifecycle',
-    () {
-      test(
-        'callback arguments and receivers retain native function identity',
-        () async {
-          final engine = await _nativeEngine();
-          engine.runCode('globalThis.shared = () => 3; void 0;');
-          final accepts =
-              engine.runOwnedCode('''
+  group('native owned result lifecycle', () {
+    test(
+      'callback arguments and receivers retain native function identity',
+      () async {
+        final engine = await _nativeEngine();
+        engine.runCode('globalThis.shared = () => 3; void 0;');
+        final accepts =
+            engine.runOwnedCode('''
           (function (payload) {
             return payload.first === shared &&
               payload.alias === shared &&
@@ -348,113 +327,113 @@ void main() {
               this === shared;
           })
         ''')
-                  as JSInvokable;
-          final callback = engine.runOwnedCode('shared') as JSInvokable;
-          final payload = <String, dynamic>{
-            'first': callback,
-            'alias': callback,
-            'nested': [callback],
-          };
-          payload['self'] = payload;
-          expect(accepts.invoke([payload], callback), isTrue);
-          accepts.free();
-          expect(callback([]), 3);
-          callback.free();
-          expect(engine.debugOwnedReferenceCount, 0);
-          engine.dispose();
-        },
-      );
+                as JSInvokable;
+        final callback = engine.runOwnedCode('shared') as JSInvokable;
+        final payload = <String, dynamic>{
+          'first': callback,
+          'alias': callback,
+          'nested': [callback],
+        };
+        payload['self'] = payload;
+        expect(accepts.invoke([payload], callback), isTrue);
+        accepts.free();
+        expect(callback([]), 3);
+        callback.free();
+        expect(engine.debugOwnedReferenceCount, 0);
+        engine.dispose();
+      },
+    );
 
-      test(
-        'callback arguments do not allocate a leaking Dart callback bridge',
-        () async {
-          final engine = await _nativeEngine();
-          final accepts =
-              engine.runOwnedCode('(callback) => callback((value) => value)')
-                  as JSInvokable;
-          final callback =
-              engine.runOwnedCode('(argument) => argument(7)') as JSInvokable;
-          expect(accepts([callback]), 7);
-          accepts.free();
-          callback.free();
-          expect(engine.debugOwnedReferenceCount, 0);
-          // This previously reported a leaked raw wrapper for `(value) => value`
-          // even though both public owned wrappers had been released.
-          expect(engine.dispose, returnsNormally);
-        },
-      );
+    test(
+      'callback arguments do not allocate a leaking Dart callback bridge',
+      () async {
+        final engine = await _nativeEngine();
+        final accepts =
+            engine.runOwnedCode('(callback) => callback((value) => value)')
+                as JSInvokable;
+        final callback =
+            engine.runOwnedCode('(argument) => argument(7)') as JSInvokable;
+        expect(accepts([callback]), 7);
+        accepts.free();
+        callback.free();
+        expect(engine.debugOwnedReferenceCount, 0);
+        // This previously reported a leaked raw wrapper for `(value) => value`
+        // even though both public owned wrappers had been released.
+        expect(engine.dispose, returnsNormally);
+      },
+    );
 
-      test(
-        'invocation rejects foreign arguments and receivers before entering JS',
-        () async {
-          final engine = await _nativeEngine();
-          final foreignEngine = await _nativeEngine();
-          engine.runCode('globalThis.invocations = 0; void 0;');
-          final accepts =
-              engine.runOwnedCode('() => { invocations++; return 7; }')
-                  as JSInvokable;
-          final foreign = foreignEngine.runOwnedCode('() => 3') as JSInvokable;
-          final rejected = throwsA(
-            isA<StateError>().having(
-              (error) => error.message,
-              'runtime ownership failure',
-              contains('another runtime'),
-            ),
-          );
-          expect(
-            () => accepts([
-              {
-                'nested': [foreign],
-              },
-            ]),
-            rejected,
-          );
-          expect(() => accepts.invoke([], foreign), rejected);
-          expect(engine.runCode('invocations'), 0);
-          expect(foreign([]), 3);
-          expect(accepts([]), 7);
-          expect(engine.debugOwnedReferenceCount, 1);
-          expect(foreignEngine.debugOwnedReferenceCount, 1);
-          accepts.free();
-          foreign.free();
-        },
-      );
+    test(
+      'invocation rejects foreign arguments and receivers before entering JS',
+      () async {
+        final engine = await _nativeEngine();
+        final foreignEngine = await _nativeEngine();
+        engine.runCode('globalThis.invocations = 0; void 0;');
+        final accepts =
+            engine.runOwnedCode('() => { invocations++; return 7; }')
+                as JSInvokable;
+        final foreign = foreignEngine.runOwnedCode('() => 3') as JSInvokable;
+        final rejected = throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'runtime ownership failure',
+            contains('another runtime'),
+          ),
+        );
+        expect(
+          () => accepts([
+            {
+              'nested': [foreign],
+            },
+          ]),
+          rejected,
+        );
+        expect(() => accepts.invoke([], foreign), rejected);
+        expect(engine.runCode('invocations'), 0);
+        expect(foreign([]), 3);
+        expect(accepts([]), 7);
+        expect(engine.debugOwnedReferenceCount, 1);
+        expect(foreignEngine.debugOwnedReferenceCount, 1);
+        accepts.free();
+        foreign.free();
+      },
+    );
 
-      test(
-        'invocation rejects released arguments and receivers before entering JS',
-        () async {
-          final engine = await _nativeEngine();
-          engine.runCode('globalThis.invocations = 0; void 0;');
-          final accepts =
-              engine.runOwnedCode('() => { invocations++; return 7; }')
-                  as JSInvokable;
-          final released = engine.runOwnedCode('() => 3') as JSInvokable;
-          released.free();
-          expect(
-            () => accepts([
-              {
-                'nested': [released],
-              },
-            ]),
-            throwsA(isA<JsDisposedError>()),
-          );
-          expect(
-            () => accepts.invoke([], released),
-            throwsA(isA<JsDisposedError>()),
-          );
-          expect(engine.runCode('invocations'), 0);
-          expect(accepts([]), 7);
-          accepts.free();
-          expect(engine.debugOwnedReferenceCount, 0);
-        },
-      );
+    test(
+      'invocation rejects released arguments and receivers before entering JS',
+      () async {
+        final engine = await _nativeEngine();
+        engine.runCode('globalThis.invocations = 0; void 0;');
+        final accepts =
+            engine.runOwnedCode('() => { invocations++; return 7; }')
+                as JSInvokable;
+        final released = engine.runOwnedCode('() => 3') as JSInvokable;
+        released.free();
+        expect(
+          () => accepts([
+            {
+              'nested': [released],
+            },
+          ]),
+          throwsA(isA<JsDisposedError>()),
+        );
+        expect(
+          () => accepts.invoke([], released),
+          throwsA(isA<JsDisposedError>()),
+        );
+        expect(engine.runCode('invocations'), 0);
+        expect(accepts([]), 7);
+        accepts.free();
+        expect(engine.debugOwnedReferenceCount, 0);
+      },
+    );
 
-      test(
-        'argument unwrapping keeps byte buffers and nested container aliases',
-        () async {
-          final engine = await _nativeEngine();
-          final accepts =
-              engine.runOwnedCode('''
+    test(
+      'argument unwrapping keeps byte buffers and nested container aliases',
+      () async {
+        final engine = await _nativeEngine();
+        final accepts =
+            engine.runOwnedCode('''
           (payload) => {
             const bytes = new Uint8Array(payload.bytes);
             return bytes[0] === 2 && bytes[1] === 4 &&
@@ -462,63 +441,59 @@ void main() {
               payload.first[0] === payload.first;
           }
         ''')
-                  as JSInvokable;
-          final cycle = <dynamic>[];
-          cycle.add(cycle);
-          final bytes = Uint8List.fromList([2, 4]);
-          expect(
-            accepts([
-              {'first': cycle, 'alias': cycle, 'bytes': bytes},
-            ]),
-            isTrue,
-          );
-          expect(bytes, [2, 4]);
-          expect(cycle.single, same(cycle));
-          accepts.free();
-        },
-      );
+                as JSInvokable;
+        final cycle = <dynamic>[];
+        cycle.add(cycle);
+        final bytes = Uint8List.fromList([2, 4]);
+        expect(
+          accepts([
+            {'first': cycle, 'alias': cycle, 'bytes': bytes},
+          ]),
+          isTrue,
+        );
+        expect(bytes, [2, 4]);
+        expect(cycle.single, same(cycle));
+        accepts.free();
+      },
+    );
 
+    test(
+      'closing runtime settles never-ending callback Promise and late free is safe',
+      () async {
+        final engine = await _nativeEngine();
+        final callback =
+            engine.runOwnedCode('(() => new Promise(() => {}))') as JSInvokable;
+        final observed = expectLater(
+          callback([]) as Future,
+          throwsA(isA<JsDisposedError>()),
+        );
+        expect(engine.debugOwnedReferenceCount, 1);
+        engine.dispose();
+        await observed;
+        expect(engine.debugOwnedReferenceCount, 0);
+        callback.free();
+        callback.destroy();
+        expect(() => callback([]), throwsA(isA<JsDisposedError>()));
+      },
+    );
+
+    test('closing runtime settles a never-ending evaluation Promise', () async {
+      final engine = await _nativeEngine();
+      final observed = expectLater(
+        engine.runOwnedCode('new Promise(() => {})') as Future,
+        throwsA(isA<JsDisposedError>()),
+      );
+      engine.dispose();
+      await observed;
+    });
+
+    for (final asynchronous in [false, true]) {
       test(
-        'closing runtime settles never-ending callback Promise and late free is safe',
+        'nested callback results are adopted before delivery (async: $asynchronous)',
         () async {
           final engine = await _nativeEngine();
           final callback =
-              engine.runOwnedCode('(() => new Promise(() => {}))')
-                  as JSInvokable;
-          final observed = expectLater(
-            callback([]) as Future,
-            throwsA(isA<JsDisposedError>()),
-          );
-          expect(engine.debugOwnedReferenceCount, 1);
-          engine.dispose();
-          await observed;
-          expect(engine.debugOwnedReferenceCount, 0);
-          callback.free();
-          callback.destroy();
-          expect(() => callback([]), throwsA(isA<JsDisposedError>()));
-        },
-      );
-
-      test(
-        'closing runtime settles a never-ending evaluation Promise',
-        () async {
-          final engine = await _nativeEngine();
-          final observed = expectLater(
-            engine.runOwnedCode('new Promise(() => {})') as Future,
-            throwsA(isA<JsDisposedError>()),
-          );
-          engine.dispose();
-          await observed;
-        },
-      );
-
-      for (final asynchronous in [false, true]) {
-        test(
-          'nested callback results are adopted before delivery (async: $asynchronous)',
-          () async {
-            final engine = await _nativeEngine();
-            final callback =
-                engine.runOwnedCode('''
+              engine.runOwnedCode('''
           (${asynchronous ? 'async ' : ''}() => {
             const callback = () => new Uint8Array([2, 4]).buffer;
             const value = {nested: [callback], same: callback};
@@ -526,158 +501,153 @@ void main() {
             return value;
           })
         ''')
-                    as JSInvokable;
-            final graph = await callback([]) as Map;
-            expect(graph['self'], same(graph));
-            final first = (graph['nested'] as List).single as JSInvokable;
-            final second = graph['same'] as JSInvokable;
-            // QuickJS creates an independently duplicated wrapper at each field.
-            expect(engine.debugOwnedReferenceCount, 3);
-            expect(first([]), isA<Uint8List>());
-            expect(first([]), [2, 4]);
-            first.free();
-            expect(second([]), [2, 4]);
-            callback.free();
-            expect(engine.debugOwnedReferenceCount, 1);
-            engine.dispose();
-            second.free();
-          },
-        );
-      }
-
-      test(
-        'same JS function returned repeatedly retains independent native ownership',
-        () async {
-          final engine = await _nativeEngine();
-          engine.runCode('globalThis.sameFunction = () => 42; void 0;');
-          final first = engine.runOwnedCode('sameFunction') as JSInvokable;
-          final second = engine.runOwnedCode('sameFunction') as JSInvokable;
-          expect(first, isNot(same(second)));
-          expect(engine.debugOwnedReferenceCount, 2);
+                  as JSInvokable;
+          final graph = await callback([]) as Map;
+          expect(graph['self'], same(graph));
+          final first = (graph['nested'] as List).single as JSInvokable;
+          final second = graph['same'] as JSInvokable;
+          // QuickJS creates an independently duplicated wrapper at each field.
+          expect(engine.debugOwnedReferenceCount, 3);
+          expect(first([]), isA<Uint8List>());
+          expect(first([]), [2, 4]);
           first.free();
-          expect(second([]), 42);
-          expect(() => first([]), throwsA(isA<JsDisposedError>()));
-          second.free();
-          expect(engine.debugOwnedReferenceCount, 0);
-          final third = engine.runOwnedCode('sameFunction') as JSInvokable;
-          expect(third([]), 42);
-          third.dup();
+          expect(second([]), [2, 4]);
+          callback.free();
+          expect(engine.debugOwnedReferenceCount, 1);
           engine.dispose();
-          third.free();
-          third.free();
+          second.free();
         },
       );
+    }
 
-      for (final asynchronous in [false, true]) {
-        test(
-          'thrown callback containers remain owned and diagnostics do not leak (async: $asynchronous)',
-          () async {
-            final engine = await _nativeEngine();
-            final code =
-                '''
+    test(
+      'same JS function returned repeatedly retains independent native ownership',
+      () async {
+        final engine = await _nativeEngine();
+        engine.runCode('globalThis.sameFunction = () => 42; void 0;');
+        final first = engine.runOwnedCode('sameFunction') as JSInvokable;
+        final second = engine.runOwnedCode('sameFunction') as JSInvokable;
+        expect(first, isNot(same(second)));
+        expect(engine.debugOwnedReferenceCount, 2);
+        first.free();
+        expect(second([]), 42);
+        expect(() => first([]), throwsA(isA<JsDisposedError>()));
+        second.free();
+        expect(engine.debugOwnedReferenceCount, 0);
+        final third = engine.runOwnedCode('sameFunction') as JSInvokable;
+        expect(third([]), 42);
+        third.dup();
+        engine.dispose();
+        third.free();
+        third.free();
+      },
+    );
+
+    for (final asynchronous in [false, true]) {
+      test(
+        'thrown callback containers remain owned and diagnostics do not leak (async: $asynchronous)',
+        () async {
+          final engine = await _nativeEngine();
+          final code =
+              '''
           (${asynchronous ? 'async ' : ''}() => {
             const callback = () => 7;
             throw {callbacks: [callback, callback]};
           })()
         ''';
-            Object? caught;
-            try {
-              await engine.runOwnedCode(code);
-            } catch (error) {
-              caught = error;
-            }
-            expect(caught, isA<Map>());
-            final callbacks = (caught as Map)['callbacks'] as List;
-            expect((callbacks.first as JSInvokable)([]), 7);
-            expect(engine.debugOwnedReferenceCount, 2);
-            for (final callback in callbacks.cast<JSRef>()) {
-              callback.free();
-            }
-            expect(engine.debugOwnedReferenceCount, 0);
-            engine.dispose();
-          },
-        );
-      }
-
-      test(
-        'Promise rejection from an owned callback recursively owns its error',
-        () async {
-          final engine = await _nativeEngine();
-          final callback =
-              engine.runOwnedCode('''
-        (async () => { throw [() => 9]; })
-      ''')
-                  as JSInvokable;
           Object? caught;
           try {
-            await callback([]);
+            await engine.runOwnedCode(code);
           } catch (error) {
             caught = error;
           }
-          expect(caught, isA<List>());
-          final errorCallback = (caught as List).single as JSInvokable;
-          expect(errorCallback([]), 9);
+          expect(caught, isA<Map>());
+          final callbacks = (caught as Map)['callbacks'] as List;
+          expect((callbacks.first as JSInvokable)([]), 7);
           expect(engine.debugOwnedReferenceCount, 2);
-          engine.dispose();
-          callback.free();
-          errorCallback.free();
-        },
-      );
-
-      test(
-        'old wrappers cannot use or release a replacement runtime',
-        () async {
-          final old = await _nativeEngine();
-          final callback = old.runOwnedCode('(() => 1)') as JSInvokable;
-          old.dispose();
-          final replacement = await _nativeEngine();
-          final current = replacement.runOwnedCode('(() => 2)') as JSInvokable;
-          expect(() => callback([]), throwsA(isA<JsDisposedError>()));
-          callback.free();
-          callback.destroy();
-          old.dispose();
-          expect(replacement.debugOwnedReferenceCount, 1);
-          expect(current([]), 2);
-          expect(
-            () => replacement.debugOwnResult(callback),
-            throwsA(isA<StateError>()),
-          );
-          replacement.dispose();
-          current.free();
-        },
-      );
-
-      test(
-        'host Promise rejection keeps its diagnostic while freeing diagnostic refs',
-        () async {
-          final engine = await _nativeEngine();
-          Log.isMuted = false;
-          final previousLogs = Log.logs.length;
-          Object? caught;
-          try {
-            await engine.runOwnedCode('''
-          (async () => {
-            throw {kind: 'owned rejection diagnostic', callback: () => 42};
-          })()
-        ''');
-          } catch (error) {
-            caught = error;
+          for (final callback in callbacks.cast<JSRef>()) {
+            callback.free();
           }
-          expect(
-            Log.logs.skip(previousLogs).map((entry) => entry.content),
-            contains(
-              allOf(
-                contains('Unhandled promise rejection:'),
-                contains('owned rejection diagnostic'),
-              ),
-            ),
-          );
-          ((caught as Map)['callback'] as JSRef).free();
           expect(engine.debugOwnedReferenceCount, 0);
           engine.dispose();
         },
       );
-    },
-    skip: _nativeAvailable() ? false : 'QuickJS native library unavailable',
-  );
+    }
+
+    test(
+      'Promise rejection from an owned callback recursively owns its error',
+      () async {
+        final engine = await _nativeEngine();
+        final callback =
+            engine.runOwnedCode('''
+        (async () => { throw [() => 9]; })
+      ''')
+                as JSInvokable;
+        Object? caught;
+        try {
+          await callback([]);
+        } catch (error) {
+          caught = error;
+        }
+        expect(caught, isA<List>());
+        final errorCallback = (caught as List).single as JSInvokable;
+        expect(errorCallback([]), 9);
+        expect(engine.debugOwnedReferenceCount, 2);
+        engine.dispose();
+        callback.free();
+        errorCallback.free();
+      },
+    );
+
+    test('old wrappers cannot use or release a replacement runtime', () async {
+      final old = await _nativeEngine();
+      final callback = old.runOwnedCode('(() => 1)') as JSInvokable;
+      old.dispose();
+      final replacement = await _nativeEngine();
+      final current = replacement.runOwnedCode('(() => 2)') as JSInvokable;
+      expect(() => callback([]), throwsA(isA<JsDisposedError>()));
+      callback.free();
+      callback.destroy();
+      old.dispose();
+      expect(replacement.debugOwnedReferenceCount, 1);
+      expect(current([]), 2);
+      expect(
+        () => replacement.debugOwnResult(callback),
+        throwsA(isA<StateError>()),
+      );
+      replacement.dispose();
+      current.free();
+    });
+
+    test(
+      'host Promise rejection keeps its diagnostic while freeing diagnostic refs',
+      () async {
+        final engine = await _nativeEngine();
+        Log.isMuted = false;
+        final previousLogs = Log.logs.length;
+        Object? caught;
+        try {
+          await engine.runOwnedCode('''
+          (async () => {
+            throw {kind: 'owned rejection diagnostic', callback: () => 42};
+          })()
+        ''');
+        } catch (error) {
+          caught = error;
+        }
+        expect(
+          Log.logs.skip(previousLogs).map((entry) => entry.content),
+          contains(
+            allOf(
+              contains('Unhandled promise rejection:'),
+              contains('owned rejection diagnostic'),
+            ),
+          ),
+        );
+        ((caught as Map)['callback'] as JSRef).free();
+        expect(engine.debugOwnedReferenceCount, 0);
+        engine.dispose();
+      },
+    );
+  }, skip: quickJsTestAvailable() ? false : 'QuickJS native library unavailable');
 }
