@@ -1,6 +1,6 @@
 {
   "name": "Venera Unified",
-  "identifier": "com.github.cyrilpeng.veneranext.source",
+  "identifier": "io.github.venera.unified.source",
   "website": "https://github.com/ACGNnsj/venera-unified",
   "subtitle": "Venera Unified official AltStore Source.",
   "description": "This is the official AltStore Source for Venera Unified.\n\n A comic reader that supports reading local and network comics",
@@ -51,13 +51,13 @@
   ],
   "news": [
     {
-      "appID": "com.github.cyrilpeng.veneranext",
-      "caption": "Update of VeneraNext just got released!",
+      "appID": "io.github.venera.unified",
+      "caption": "Update of Venera Unified just got released!",
       "date": "2026-11-14T04:01:25Z",
       "identifier": "release-v1.22.0",
       "notify": true,
       "tintColor": "#0784FC",
-      "title": "v1.22.0 - VeneraNext  14/11/26",
+      "title": "v1.22.0 - Venera Unified  14/11/26",
       "url": "https://github.com/ACGNnsj/venera-unified/releases/tag/v1.22.0"
     }
   ]
