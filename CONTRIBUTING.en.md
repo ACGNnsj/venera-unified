@@ -2,7 +2,7 @@
 
 Default Chinese version: [CONTRIBUTING.md](CONTRIBUTING.md)
 
-Thank you for your interest in VeneraNext. This repository maintains the reader itself. It does not provide, maintain, or troubleshoot comic sources.
+Thank you for your interest in Venera Unified. This repository maintains the reader itself. It does not provide, maintain, or troubleshoot comic sources.
 
 ## What to Submit
 

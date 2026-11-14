@@ -26,7 +26,7 @@ void main() {
 
   test('records directory 404 before the WebDAV SDK throws', () async {
     final client = WebDavEndpoint(
-      url: 'https://example.com/dav/VeneraNext',
+      url: 'https://example.com/dav/VeneraUnified',
       user: 'account-secret',
       password: 'password-secret',
     ).createClient(logRequests: true);
@@ -50,13 +50,13 @@ void main() {
     expect(entries, hasLength(2));
     expect(
       entries.first.content,
-      contains('Request: PROPFIND https://example.com/dav/VeneraNext/'),
+      contains('Request: PROPFIND https://example.com/dav/VeneraUnified/'),
     );
     expect(entries.first.content, contains('Platform:'));
     expect(entries.first.content, contains('App: ${App.version}'));
     expect(
       entries.last.content,
-      contains('Response to: PROPFIND https://example.com/dav/VeneraNext/'),
+      contains('Response to: PROPFIND https://example.com/dav/VeneraUnified/'),
     );
     expect(entries.last.content, contains('HTTP status: 404'));
     expect(
@@ -99,7 +99,7 @@ void main() {
     );
 
     final log = Log.logs.map((entry) => entry.content).join('\n');
-    expect(log, contains('PUT https://example.com/dav/VeneraNext/%E4%B9%A6'));
+    expect(log, contains('PUT https://example.com/dav/VeneraUnified/%E4%B9%A6'));
     expect(log, contains('Location: https://example.org/Remote/VeneraNext'));
     for (final secret in [
       'url-user',
@@ -129,7 +129,7 @@ void main() {
     'records transport failure without logging raw exception secrets',
     () async {
       final client = WebDavEndpoint(
-        url: 'https://example.com/dav/VeneraNext',
+        url: 'https://example.com/dav/VeneraUnified',
         user: '',
         password: '',
       ).createClient(logRequests: true);
@@ -142,7 +142,7 @@ void main() {
       expect(
         log,
         contains(
-          'Request failed: PROPFIND https://example.com/dav/VeneraNext/',
+          'Request failed: PROPFIND https://example.com/dav/VeneraUnified/',
         ),
       );
       expect(log, contains('Error type: connectionError'));
@@ -177,7 +177,7 @@ void main() {
 
   test('request diagnostics are opt-in for other WebDAV consumers', () async {
     final client = WebDavEndpoint(
-      url: 'https://example.com/dav/VeneraNext',
+      url: 'https://example.com/dav/VeneraUnified',
       user: '',
       password: '',
     ).createClient();
