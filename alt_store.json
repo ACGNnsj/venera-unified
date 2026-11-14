@@ -1,6 +1,6 @@
 {
   "name": "Venera Unified",
-  "identifier": "com.github.cyrilpeng.veneranext.source",
+  "identifier": "io.github.venera.unified.source",
   "website": "https://github.com/ACGNnsj/venera-unified",
   "subtitle": "Venera Unified official AltStore Source.",
   "description": "This is the official AltStore Source for Venera Unified.\n\n A comic reader that supports reading local and network comics",
