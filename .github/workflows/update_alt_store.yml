@@ -59,16 +59,36 @@ jobs:
           python update_alt_store.py
           git config user.name 'GitHub Action'
           git config user.email 'action@github.com'
+          cp alt_store.json /tmp/alt_store.new.json
+          git checkout -- alt_store.json
+
+          branch_name="automation/update-altstore"
+          git fetch origin "$branch_name" 2>/dev/null || true
+          # 远端分支还在、但已没有 open PR（合并不删分支的残留）：删掉重建，
+          # 否则后面 gh pr create 会报重复
+          pr_open=$(gh pr list --head "$branch_name" --base main \
+            --state open --json number --jq 'length')
+          if git show-ref --verify --quiet "refs/remotes/origin/$branch_name"; then
+            if [[ "$pr_open" == "0" ]]; then
+              git push origin --delete "$branch_name"
+              git checkout -b "$branch_name"
+            else
+              # 接到旧分支头上：只追加提交，push 永远是 fast-forward，
+              # 仓库禁 force-push 也不影响
+              git checkout -B "$branch_name" "origin/$branch_name"
+            fi
+          else
+            git checkout -b "$branch_name"
+          fi
+
+          cp /tmp/alt_store.new.json alt_store.json
           git add alt_store.json
           if git diff --staged --quiet; then
             echo "changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-
-          branch_name="automation/update-altstore"
-          git checkout -B "$branch_name"
           git commit -m "chore(altstore): 更新源至最新稳定版"
-          git push --force-with-lease origin "$branch_name"
+          git push origin "$branch_name"
 
           pr_url=$(gh pr list \
             --head "$branch_name" \
