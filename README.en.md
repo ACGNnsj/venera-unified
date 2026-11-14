@@ -101,7 +101,13 @@ The package name is `io.github.venera.unified.tv`, so it coexists with the phone
 
 ### iOS
 
-Download the IPA from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest) and sideload it with AltStore.
+Download the IPA from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest) and sideload it with AltStore. The package is unsigned and requires no paid-only entitlements, so a free Apple ID is enough — no paid developer account needed.
+
+**Add the official source (recommended):** tap [Add AltStore Source in one tap](altstore://source?url=https%3A%2F%2Fraw.githubusercontent.com%2FACGNnsj%2Fvenera-unified%2Fmain%2Falt_store.json) on your phone, refresh, pick Venera Unified, and sign with your Apple ID when prompted. If the raw link fails to load, add the mirror URL manually:
+
+`https://cdn.jsdelivr.net/gh/ACGNnsj/venera-unified@main/alt_store.json`
+
+Note: free-account signatures expire every 7 days (AltStore refreshes them automatically on the same Wi-Fi); one Apple ID can keep 3 sideloaded apps at a time. Supported devices can also install without signing via TrollStore, depending on the iOS version.
 
 ### Windows
 
@@ -127,7 +133,7 @@ Download the package matching your distribution and architecture from the [lates
 | Arch Linux (x86_64) | `sudo pacman -U ./venera-unified-xxx-x86_64.pkg.tar.zst` |
 | AppImage (x86_64 / ARM64) | Run `chmod +x VeneraUnified-xxx-x86_64.AppImage`, then `./VeneraUnified-xxx-x86_64.AppImage` (use the `aarch64` file on ARM64) |
 
-Replace `xxx` with the actual version in the downloaded filename. The v1.20.0 stable release includes RPM and AppImage packages for both x86_64 and ARM64. Use `uname -m` to check your architecture.
+Replace `xxx` with the actual version in the downloaded filename. Current stable releases include RPM and AppImage packages for both x86_64 and ARM64. Use `uname -m` to check your architecture.
 
 Linux packages are built on Ubuntu 22.04 with a glibc 2.35 baseline. The current stable AppImage includes GTK 3 and WebKitGTK 4.1, so no separate GTK/WebKit installation is needed. It still requires host glibc 2.35 or newer and compatible OpenGL/EGL graphics drivers. See [Linux Installation and Distribution](doc/distribution/linux.en.md) for dependencies, FUSE troubleshooting, and distribution compatibility.
 
@@ -242,6 +248,10 @@ Select vertical continuous or waterfall reading in reader settings, then adjust 
 ### How do I update on Windows?
 
 Run `winget upgrade --id ACGNnsj.VeneraUnified --exact`. Public-source availability may lag behind GitHub Release; try `winget source update` first. Portable installations require downloading and applying an update manually.
+
+### What if iOS reports the app cannot be verified?
+
+Free Apple ID signatures expire every 7 days. Connect to your usual Wi-Fi and open AltStore — it refreshes them automatically. If too much time has passed, delete and reinstall. Switching Apple IDs also requires a reinstall.
 
 ## Developer resources
 

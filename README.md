@@ -100,7 +100,13 @@ TV 已进入主线：Android 构建同时产出手机版与 TV 版，新版本�
 
 ### iOS
 
-从 [最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest) 下载 ipa 安装包，使用 AltStore 旁加载。
+从[最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest)下载 ipa 安装包，使用 AltStore 旁加载。安装包为无签名包，且不含付费权限，免费 Apple ID 即可重签安装，无需付费开发者账号。
+
+**添加官方源（推荐）：** 在手机上点 [一键添加 AltStore 源](altstore://source?url=https%3A%2F%2Fraw.githubusercontent.com%2FACGNnsj%2Fvenera-unified%2Fmain%2Falt_store.json)，刷新后选择 Venera Unified 安装，按提示用 Apple ID 签名。如果 raw 链接打不开，手动添加镜像地址：
+
+`https://cdn.jsdelivr.net/gh/ACGNnsj/venera-unified@main/alt_store.json`
+
+注意：免费账号签名的应用每 7 天需要续签（同一 WiFi 下打开 AltStore 自动续）；同一 Apple ID 同时只能保留 3 个自签应用。支持的设备也可以用 TrollStore 免签安装（取决于系统版本）。
 
 ### Windows
 
@@ -126,7 +132,7 @@ Windows 安装器、便携包和 winget manifest 维护说明见 [doc/distributi
 | Arch Linux（x86_64） | `sudo pacman -U ./venera-unified-xxx-x86_64.pkg.tar.zst` |
 | AppImage（x86_64 / ARM64） | `chmod +x VeneraUnified-xxx-x86_64.AppImage`，再执行 `./VeneraUnified-xxx-x86_64.AppImage`（ARM64 选择 `aarch64` 文件） |
 
-`xxx` 请替换为下载文件中的实际版本号。v1.20.0 稳定版提供 x86_64 和 ARM64 的 RPM 与 AppImage；可用 `uname -m` 查看机器架构。
+`xxx` 请替换为下载文件中的实际版本号。当前稳定版提供 x86_64 和 ARM64 的 RPM 与 AppImage；可用 `uname -m` 查看机器架构。
 
 Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定版 AppImage 已包含 GTK 3 和 WebKitGTK 4.1，无需额外安装 GTK/WebKit；仍需系统提供 glibc 2.35 或更新版本及兼容的 OpenGL/EGL 显卡驱动。依赖安装、FUSE 问题及发行版兼容范围见 [Linux 安装与分发](doc/distribution/linux.zh.md)。
 
@@ -241,6 +247,10 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 ### Windows 怎样更新？
 
 使用 `winget upgrade --id ACGNnsj.VeneraUnified --exact`。公共源收录新版本可能晚于 GitHub Release，可先运行 `winget source update`。便携版需要下载新版本手动覆盖更新。
+
+### iOS 提示“无法验证应用完整性”怎么办？
+
+免费 Apple ID 的签名每 7 天过期。手机连上常用 WiFi 后打开 AltStore，它会自动续签；长期不续签就需要删除重装。更换 Apple ID 也需要删除后重新安装。
 
 ## 开发者入口
 
