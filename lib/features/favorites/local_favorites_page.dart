@@ -443,6 +443,26 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
     });
   }
 
+  bool _dismissLocalMode() {
+    if (!_canReadObservedFolder || _queryOwner?.canPresent != true) {
+      return false;
+    }
+    if (multiSelectMode) {
+      _cancel();
+      lastSelectedIndex = null;
+      return true;
+    }
+    if (searchMode) {
+      setState(() {
+        searchMode = false;
+        keyword = '';
+        updateComics();
+      });
+      return true;
+    }
+    return false;
+  }
+
   bool downloadComic(FavoriteItem c) {
     final library = LocalManager();
     var source = c.type.comicSource;
@@ -481,8 +501,31 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
   var scrollController = ScrollController();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => _build(context, constraints.maxWidth),
+  );
+
+  Widget _build(BuildContext context, double availableWidth) {
     final target = widget;
+    final canSelect =
+        _canReadObservedFolder && !isLoading && _visibleComics.isNotEmpty;
+    final compactActions = context.width < changePoint && !isAllFolder;
+    final inlineSelectionActions =
+        availableWidth >= 440 + MediaQuery.textScalerOf(context).scale(20) * 4;
+    void enterSelection() {
+      if (!_canReadObservedFolder ||
+          _queryOwner?.canPresent != true ||
+          widget.folder != target.folder ||
+          isLoading ||
+          _visibleComics.isEmpty) {
+        return;
+      }
+      setState(() {
+        selectedComics.clear();
+        lastSelectedIndex = null;
+        multiSelectMode = true;
+      });
+    }
     final selection = selectedComics.keys.cast<FavoriteItem>().toList();
     final selectedItems = selection.map((comic) => comic.detached()).toList();
     bool isCurrentSelection() =>
@@ -664,9 +707,31 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                   },
                 ),
               ),
+              if (!compactActions)
+                IconButton(
+                  tooltip: 'Select comics'.tl,
+                  icon: const Icon(Icons.checklist_rounded),
+                  onPressed: canSelect ? enterSelection : null,
+                ),
               if (!isAllFolder)
                 MenuButton(
+                  menuIdentity: (
+                    _observedManager,
+                    _observedGeneration,
+                    target.folder,
+                    currentFolder?.id,
+                    currentFolder?.parentId,
+                    childFolders.length,
+                    compactActions,
+                    canSelect,
+                  ),
                   entries: [
+                    if (compactActions && canSelect)
+                      MenuEntry(
+                        icon: Icons.checklist_rounded,
+                        text: 'Select comics'.tl,
+                        onClick: enterSelection,
+                      ),
                     if (currentFolder?.parentId == null)
                       MenuEntry(
                         icon: Icons.create_new_folder_outlined,
@@ -901,9 +966,35 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
               "Selected @c comics".tlParams({"c": selectedComics.length}),
             ),
             actions: [
+              if (inlineSelectionActions) ...[
+                IconButton(
+                  key: const ValueKey('favorites-select-all'),
+                  tooltip: 'Select All'.tl,
+                  icon: const Icon(Icons.select_all),
+                  onPressed: canSelect ? selectAll : null,
+                ),
+                IconButton(
+                  key: const ValueKey('favorites-invert-selection'),
+                  tooltip: 'Invert Selection'.tl,
+                  icon: const Icon(Icons.flip),
+                  onPressed: canSelect ? invertSelection : null,
+                ),
+                IconButton(
+                  key: const ValueKey('favorites-deselect'),
+                  tooltip: 'Deselect'.tl,
+                  icon: const Icon(Icons.deselect),
+                  onPressed: _cancel,
+                ),
+              ],
               MenuButton(
+                menuIdentity: (
+                  _observedManager,
+                  _observedGeneration,
+                  target.folder,
+                  Object.hashAll(selectedComics.keys),
+                ),
                 entries: [
-                  if (!isAllFolder)
+                  if (!isAllFolder && selectedComics.isNotEmpty)
                     MenuEntry(
                       icon: Icons.drive_file_move,
                       text: "Move to folder".tl,
@@ -923,7 +1014,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                         );
                       },
                     ),
-                  if (!isAllFolder)
+                  if (!isAllFolder && selectedComics.isNotEmpty)
                     MenuEntry(
                       icon: Icons.copy,
                       text: "Copy to folder".tl,
@@ -963,22 +1054,24 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                         );
                       },
                     ),
-                  MenuEntry(
-                    icon: Icons.select_all,
-                    text: "Select All".tl,
-                    onClick: selectAll,
-                  ),
-                  MenuEntry(
-                    icon: Icons.deselect,
-                    text: "Deselect".tl,
-                    onClick: _cancel,
-                  ),
-                  MenuEntry(
-                    icon: Icons.flip,
-                    text: "Invert Selection".tl,
-                    onClick: invertSelection,
-                  ),
-                  if (!isAllFolder)
+                  if (!inlineSelectionActions) ...[
+                    MenuEntry(
+                      icon: Icons.select_all,
+                      text: "Select All".tl,
+                      onClick: selectAll,
+                    ),
+                    MenuEntry(
+                      icon: Icons.deselect,
+                      text: "Deselect".tl,
+                      onClick: _cancel,
+                    ),
+                    MenuEntry(
+                      icon: Icons.flip,
+                      text: "Invert Selection".tl,
+                      onClick: invertSelection,
+                    ),
+                  ],
+                  if (!isAllFolder && selectedComics.isNotEmpty)
                     MenuEntry(
                       icon: Icons.delete_outline,
                       text: "Delete Comic".tl,
@@ -1233,7 +1326,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                       } else {
                         selectedComics[c] = true;
                       }
-                      lastSelectedIndex = comics.indexOf(c);
+                      lastSelectedIndex = _visibleComics.indexOf(c);
                     });
                   },
                 ),
@@ -1277,7 +1370,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                   } else {
                     selectedComics[c] = true;
                   }
-                  lastSelectedIndex = comics.indexOf(c);
+                  lastSelectedIndex = _visibleComics.indexOf(c);
                 });
               } else if (GlobalPreferenceStore(
                     appdata.settings,
@@ -1299,17 +1392,18 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
               }
             },
             onLongPressed: (c, heroID) {
+              final visible = _visibleComics;
               setState(() {
                 if (!multiSelectMode) {
                   multiSelectMode = true;
                   if (!selectedComics.containsKey(c as FavoriteItem)) {
                     selectedComics[c] = true;
                   }
-                  lastSelectedIndex = comics.indexOf(c);
+                  lastSelectedIndex = _visibleComics.indexOf(c);
                 } else {
                   if (lastSelectedIndex != null) {
                     int start = lastSelectedIndex!;
-                    int end = comics.indexOf(c as FavoriteItem);
+                    int end = visible.indexOf(c as FavoriteItem);
                     if (start > end) {
                       int temp = start;
                       start = end;
@@ -1319,7 +1413,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                     for (int i = start; i <= end; i++) {
                       if (i == lastSelectedIndex) continue;
 
-                      var comic = comics[i];
+                      var comic = visible[i];
                       if (selectedComics.containsKey(comic)) {
                         selectedComics.remove(comic);
                       } else {
@@ -1327,7 +1421,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                       }
                     }
                   }
-                  lastSelectedIndex = comics.indexOf(c as FavoriteItem);
+                  lastSelectedIndex = visible.indexOf(c as FavoriteItem);
                 }
                 _checkExitSelectMode();
               });
@@ -1344,22 +1438,19 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
         child: body,
       ),
     );
+    if (multiSelectMode || searchMode) {
+      body = CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.escape): _dismissLocalMode,
+        },
+        child: Focus(autofocus: true, child: body),
+      );
+    }
     return PopScope(
       canPop: !multiSelectMode && !searchMode && parentFolder == null,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (multiSelectMode) {
-          setState(() {
-            multiSelectMode = false;
-            selectedComics.clear();
-          });
-        } else if (searchMode) {
-          setState(() {
-            searchMode = false;
-            keyword = "";
-            updateComics();
-          });
-        } else {
+        if (!_dismissLocalMode()) {
           goToParent();
         }
       },
