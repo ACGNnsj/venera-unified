@@ -149,6 +149,17 @@ certificate-trust security updates remain unchanged. The locked native
 callback-drain tests and complete RustSec scan pass with this update; HTTP
 settings, streaming cancellation and generated bridge APIs are unchanged.
 
+## QUIC transport security updates (2026-11-14)
+
+The complete-lockfile audit reported two denial-of-service advisories in `quinn-proto` 0.11.18 and one in `quinn-udp` 0.5.14. Precise registry updates select the first patched releases:
+
+| Crate | Previous | Updated | RustSec advisories |
+|---|---|---|---|
+| quinn-proto | 0.11.18 | 0.11.19 | RUSTSEC-2026-0524 (Retry token panic/allocation), RUSTSEC-2026-0523 (bidirectional stream limit) |
+| quinn-udp | 0.5.14 | 0.5.16 | RUSTSEC-2026-0538 (truncated datagram receive loop on affected Apple/BSD receive paths) |
+
+Both versions come from the existing crates.io source. `quinn-proto` changes its version and checksum. The patched `quinn-udp` resolves against the already selected `windows-sys` 0.52.0 dependency graph, so Cargo also removes the now-unused `windows-sys` 0.60.x/0.61.x, `windows-targets` 0.52.6/0.53.5 and the 0.52.6/0.53.1 architecture packages. Only these crate versions, checksums and the pruned Windows graph change; the Rust 1.92.0 toolchain and existing pins remain unchanged.
+
 ## UI-agnostic core and a second host binding
 
 `rust/src/` no longer owns the HTTP transport. `rust/core/` (`rhttp-core`, no
