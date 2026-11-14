@@ -526,6 +526,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
         multiSelectMode = true;
       });
     }
+
     final selection = selectedComics.keys.cast<FavoriteItem>().toList();
     final selectedItems = selection.map((comic) => comic.detached()).toList();
     bool isCurrentSelection() =>
