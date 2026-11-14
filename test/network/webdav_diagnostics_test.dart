@@ -99,7 +99,10 @@ void main() {
     );
 
     final log = Log.logs.map((entry) => entry.content).join('\n');
-    expect(log, contains('PUT https://example.com/dav/VeneraUnified/%E4%B9%A6'));
+    expect(
+      log,
+      contains('PUT https://example.com/dav/VeneraUnified/%E4%B9%A6'),
+    );
     expect(log, contains('Location: https://example.org/Remote/VeneraNext'));
     for (final secret in [
       'url-user',
