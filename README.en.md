@@ -107,6 +107,12 @@ Download the IPA from the [latest stable release](https://github.com/ACGNnsj/ven
 
 `https://cdn.jsdelivr.net/gh/ACGNnsj/venera-unified@main/alt_store.json`
 
+**Set up AltStore itself first (needs a computer, one time only):**
+
+1. Install AltServer on a computer (download from [altstore.io](https://altstore.io), Windows or Mac); on Windows also install iTunes and iCloud from Apple’s site (not the Microsoft Store versions).
+2. Connect the phone by cable, join the same Wi-Fi, choose Install AltStore from the AltServer menu, and enter an Apple ID.
+3. On the phone, open Settings → General → VPN & Device Management and trust the developer.
+
 Note: free-account signatures expire every 7 days (AltStore refreshes them automatically on the same Wi-Fi); one Apple ID can keep 3 sideloaded apps at a time. Supported devices can also install without signing via TrollStore, depending on the iOS version.
 
 ### Windows

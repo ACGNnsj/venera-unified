@@ -106,6 +106,12 @@ TV 已进入主线：Android 构建同时产出手机版与 TV 版，新版本�
 
 `https://cdn.jsdelivr.net/gh/ACGNnsj/venera-unified@main/alt_store.json`
 
+**先装好 AltStore 本体（需电脑操作，一次即可）：**
+
+1. 电脑上装 AltServer（去 [altstore.io](https://altstore.io) 下载，Windows 或 Mac 均可）；Windows 还需从 Apple 官网安装 iTunes 与 iCloud（不要用微软商店版）。
+2. 手机连数据线、与电脑进同一 WiFi，点 AltServer 菜单里的 Install AltStore，按提示输入 Apple ID。
+3. 手机上打开 设置 → 通用 → VPN 与设备管理，信任该开发者。
+
 注意：免费账号签名的应用每 7 天需要续签（同一 WiFi 下打开 AltStore 自动续）；同一 Apple ID 同时只能保留 3 个自签应用。支持的设备也可以用 TrollStore 免签安装（取决于系统版本）。
 
 ### Windows
