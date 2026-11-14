@@ -2,7 +2,7 @@
 
 English version: [CONTRIBUTING.en.md](CONTRIBUTING.en.md)
 
-感谢你关注 VeneraNext。本仓库只维护阅读器本体，不维护、提供或排查任何漫画源。
+感谢你关注 Venera Unified。本仓库只维护阅读器本体，不维护、提供或排查任何漫画源。
 
 ## 可以提交什么
 

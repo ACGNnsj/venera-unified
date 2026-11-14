@@ -24,6 +24,7 @@ import 'package:venera_unified/foundation/widget_utils.dart';
 import 'package:venera_unified/features/reader/waterfall_controller.dart';
 
 import 'continuous_data.dart';
+import 'continuous_scroll.dart';
 import 'current_image.dart';
 import 'page_margin.dart';
 import 'display_image_provider.dart';
@@ -105,7 +106,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
   var photoViewController = PhotoViewController();
   StreamSubscription<PhotoViewControllerValue>? _photoPositionSubscription;
   bool _positionUpdateScheduled = false;
-  ScrollController? _scrollController;
+  ContinuousScrollController? _scrollController;
   bool _disposed = false;
   Timer? _initialCacheTimer;
   Timer? _scrollActivityTimer;
@@ -362,6 +363,14 @@ class ContinuousModeState extends State<ReaderContinuousView>
 
   @override
   void initState() {
+    _scrollController = ContinuousScrollController(
+      itemPositionsListener.itemPositions,
+      onPositionChanged: () {
+        _smoothPosition = null;
+        _smoothGeneration++;
+        _futurePosition = null;
+      },
+    )..addListener(onScroll);
     widget.onViewportChanged(this, true);
     _initSegments();
     itemPositionsListener.itemPositions.addListener(onPositionChanged);
@@ -410,6 +419,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
     _initialCacheTimer?.cancel();
     _scrollActivityTimer?.cancel();
     _scrollController?.removeListener(onScroll);
+    _scrollController?.dispose();
     _scrollController = null;
     widget.onViewportChanged(this, false);
     // A parent content reload may already have marked its replacement loading.
@@ -505,6 +515,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
 
   void onPositionChanged() {
     if (_disposed || !mounted) return;
+    _scrollController?.syncPosition();
     final viewport = context.findRenderObject();
     if (viewport is! RenderBox || !viewport.attached || !viewport.hasSize) {
       return;
@@ -986,34 +997,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
     return false;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    Widget widget = ScrollablePositionedList.builder(
-      initialScrollIndex: currentPage,
-      itemScrollController: itemScrollController,
-      itemPositionsListener: itemPositionsListener,
-      scrollControllerCallback: (scrollController) {
-        if (_disposed || !mounted) return;
-        if (identical(_scrollController, scrollController)) return;
-        if (_scrollController != null) {
-          _scrollController!.removeListener(onScroll);
-        }
-        _scrollController = scrollController;
-        _smoothPosition = null;
-        _smoothGeneration++;
-        _futurePosition = null;
-        _scrollController!.addListener(onScroll);
-      },
-      itemCount: _flowItemCount,
-      addSemanticIndexes: false,
-      scrollDirection: data.vertical ? Axis.vertical : Axis.horizontal,
-      reverse: data.reverse,
-      physics: isCTRLPressed || _isMouseScrolling || disableScroll
-          ? const NeverScrollableScrollPhysics()
-          : isZoomedIn
-          ? const ClampingScrollPhysics()
-          : const BouncingScrollPhysics(),
-      itemBuilder: (context, index) {
+  Widget _buildFlowItem(BuildContext context, int index) {
         if (index == 0) {
           return const SizedBox();
         }
@@ -1045,7 +1029,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
           imageRef.position.imageNumber,
           enableResize: true,
           decodePixelBudget: data.decodePixelBudget,
-          diagnostics: this.widget.imageWork.diagnostics,
+          diagnostics: widget.imageWork.diagnostics,
           translationKey: translation.key,
           translationConfig: translation.config,
           translated: translation.translated,
@@ -1054,7 +1038,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
         var comicImage = SizeChangedLayoutNotifier(
           child: ComicImage(
             filterQuality: FilterQuality.medium,
-            image: ReaderDisplayImageProvider(image, this.widget.imageWork),
+            image: ReaderDisplayImageProvider(image, widget.imageWork),
             width: width,
             height: height,
             fit: BoxFit.contain,
@@ -1078,11 +1062,38 @@ class ContinuousModeState extends State<ReaderContinuousView>
                 )
               : comicImage,
         );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget widget = ScrollablePositionedList.builder(
+      initialScrollIndex: currentPage,
+      itemScrollController: itemScrollController,
+      itemPositionsListener: itemPositionsListener,
+      itemCount: _flowItemCount,
+      addSemanticIndexes: false,
+      scrollDirection: data.vertical ? Axis.vertical : Axis.horizontal,
+      reverse: data.reverse,
+      physics: isCTRLPressed || _isMouseScrolling || disableScroll
+          ? const NeverScrollableScrollPhysics()
+          : isZoomedIn
+          ? const ClampingScrollPhysics()
+          : const BouncingScrollPhysics(),
+      itemBuilder: (context, index) {
+        return ContinuousScrollAnchor(
+          controller: _scrollController!,
+          index: index,
+          child: _buildFlowItem(context, index),
+        );
       },
-      scrollBehavior: const MaterialScrollBehavior().copyWith(
+    );
+
+    widget = ScrollConfiguration(
+      behavior: const MaterialScrollBehavior().copyWith(
         scrollbars: false,
         dragDevices: _kTouchLikeDeviceTypes,
       ),
+      child: widget,
     );
 
     widget = NotificationListener<SizeChangedLayoutNotification>(

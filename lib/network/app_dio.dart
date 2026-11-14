@@ -220,7 +220,10 @@ class AppDio with DioMixin {
 }
 
 class RHttpAdapter implements HttpClientAdapter {
-  RHttpAdapter({this._startStreamCall, this.allowImageHttp3Fallback = false});
+  RHttpAdapter({
+    RHttpStreamCallFactory? startStreamCall,
+    this.allowImageHttp3Fallback = false,
+  }) : _startStreamCall = startStreamCall;
 
   final RHttpStreamCallFactory? _startStreamCall;
   final bool allowImageHttp3Fallback;

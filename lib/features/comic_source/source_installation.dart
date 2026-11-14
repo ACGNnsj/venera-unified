@@ -116,8 +116,8 @@ class SourceInstallations implements Listenable {
   SourceInstallations({
     required this.manager,
     required this.repositories,
-    required this._createClient,
-  });
+    required Dio Function() createClient,
+  }) : _createClient = createClient;
 
   final ComicSourceManager manager;
   final SourceRepositories repositories;

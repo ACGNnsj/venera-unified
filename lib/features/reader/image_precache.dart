@@ -10,7 +10,7 @@ import 'package:venera_unified/foundation/image_work.dart';
 
 /// Decoded prefetch listeners belonging to one view and its reading session.
 class ReaderImagePrecache {
-  ReaderImagePrecache({required this._work});
+  ReaderImagePrecache({required ImageWork work}) : _work = work;
 
   final ImageWork _work;
   final _pending = <ReaderImageProvider, _ReaderPrecacheEntry>{};

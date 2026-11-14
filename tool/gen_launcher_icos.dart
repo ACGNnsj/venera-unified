@@ -10,20 +10,24 @@ import 'dart:io';
 import 'package:image/image.dart';
 
 void main() {
-  // preset PNG -> output .ico.
-  const jobs = {
-    'assets/launcher_icon_default.png': 'assets/launcher_icon_default.ico',
-    'assets/launcher_icon_purple.png': 'assets/launcher_icon_purple.ico',
-    'assets/launcher_icon_green.png': 'assets/launcher_icon_green.ico',
-    'assets/launcher_icon_orange.png': 'assets/launcher_icon_orange.ico',
-    'assets/launcher_icon_silver.png': 'assets/launcher_icon_silver.ico',
-  };
+  // [src, dst] pairs. tray_icon.ico follows the default preset so the
+  // Windows notification-area icon matches the launcher art.
+  const jobs = [
+    ['assets/launcher_icon_default.png', 'assets/tray_icon.ico'],
+    ['assets/launcher_icon_default.png', 'assets/launcher_icon_default.ico'],
+    ['assets/launcher_icon_purple.png', 'assets/launcher_icon_purple.ico'],
+    ['assets/launcher_icon_green.png', 'assets/launcher_icon_green.ico'],
+    ['assets/launcher_icon_orange.png', 'assets/launcher_icon_orange.ico'],
+    ['assets/launcher_icon_silver.png', 'assets/launcher_icon_silver.ico'],
+  ];
 
   // Sizes Windows picks between for title bar (16), taskbar button (32) and
   // higher-DPI / Alt-Tab surfaces.
   const sizes = [16, 32, 48, 64, 128, 256];
 
-  jobs.forEach((src, dst) {
+  for (final job in jobs) {
+    final src = job[0];
+    final dst = job[1];
     final decoded = decodePng(File(src).readAsBytesSync());
     if (decoded == null) {
       stderr.writeln('skip $src: not a PNG');
@@ -49,5 +53,5 @@ void main() {
     }
     File(dst).writeAsBytesSync(encodeIco(image));
     stdout.writeln('wrote $dst (${sizes.length} sizes)');
-  });
+  }
 }

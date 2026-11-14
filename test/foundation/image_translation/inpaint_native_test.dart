@@ -75,6 +75,7 @@ void main() {
   test('inpaint native matches Dart pixels and is >=2x faster', () {
     if (!InpaintNative.available) {
       markTestSkipped('venera_inpaint not built for this platform');
+      return;
     }
     expect(InpaintNative.version(), 1);
 

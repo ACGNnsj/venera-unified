@@ -10,8 +10,6 @@ import 'package:venera_unified/components/scroll.dart';
 import 'package:venera_unified/components/side_bar.dart';
 import 'package:venera_unified/features/comic_source/comic_source.dart';
 import 'package:venera_unified/foundation/appdata.dart';
-import 'package:venera_unified/foundation/application_preferences.dart';
-import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/keyword_filter.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/image_provider/cached_image.dart';
@@ -19,8 +17,9 @@ import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
 
 bool shouldBlockComment(Comment comment) {
-  return KeywordFilter(
-    GlobalPreferenceStore(appdata.settings).read(KeywordPreferences.comments),
+  return KeywordFilter.fromSettings(
+    appdata.settings,
+    comments: true,
   ).blocksComment(comment.content);
 }
 

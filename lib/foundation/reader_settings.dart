@@ -93,8 +93,7 @@ class ReaderSettings {
   double get autoPageTurningInterval =>
       _values['autoPageTurningInterval'] as double;
   double get autoScrollSpeed => _values['autoScrollSpeed'] as double;
-  bool get autoScrollSpeedPersist =>
-      _values['autoScrollSpeedPersist'] as bool;
+  bool get autoScrollSpeedPersist => _values['autoScrollSpeedPersist'] as bool;
   double get autoScrollFrequency => _values['autoScrollFrequency'] as double;
   double get autoScrollDistance => _values['autoScrollDistance'] as double;
   double get readerScrollSpeed => _values['readerScrollSpeed'] as double;
@@ -148,4 +147,5 @@ class ReaderSettings {
   String get eInkRippleSpeed => _values['eInkRippleSpeed'] as String;
   String get translationTargetLanguage =>
       _values['translationTargetLanguage'] as String;
+  bool get anime4KShader => _values['anime4KShader'] as bool;
 }

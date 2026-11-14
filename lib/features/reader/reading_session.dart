@@ -60,11 +60,14 @@ class _FailedDuration {
 
 class ReadingSessionTracker {
   ReadingSessionTracker({
-    required this._onDuration,
-    this._checkpointInterval = const Duration(minutes: 1),
+    required ReadingDurationWriter onDuration,
+    Duration checkpointInterval = const Duration(minutes: 1),
     Duration Function()? elapsedNow,
-    this._onError,
-  }) : _elapsedNow = elapsedNow ?? _defaultElapsedNow;
+    ReadingSessionErrorHandler? onError,
+  }) : _onDuration = onDuration,
+       _checkpointInterval = checkpointInterval,
+       _onError = onError,
+       _elapsedNow = elapsedNow ?? _defaultElapsedNow;
 
   static final Stopwatch _clock = Stopwatch()..start();
 

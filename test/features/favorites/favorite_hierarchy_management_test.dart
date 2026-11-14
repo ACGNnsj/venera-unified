@@ -379,7 +379,10 @@ void main() {
     );
     // 本仓 folder_order_dialog.dart 刻意保留旧 onReorder（3.41.4 回退档仍要能编译），
     // 那里的 newIndex 会自己先减一，所以这里按旧语义传 roots.length。
-    // ignore: deprecated_member_use
+    // The callback is nullable on the current SDK and non-nullable on the
+    // 3.41 rollback SDK, so the assertion is required on one and redundant
+    // on the other.
+    // ignore: deprecated_member_use, unnecessary_non_null_assertion
     rootList.onReorder!(0, roots.length);
     await tester.pump();
     tester

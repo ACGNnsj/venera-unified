@@ -31,13 +31,18 @@ class ReaderSessionFailure implements FailureDetails {
 /// events are adapted to foreground state; content readiness is independent.
 class ReaderSession {
   ReaderSession({
-    required this._durations,
-    required this._progress,
-    required this._pauseAutoReading,
-    required this._onClosed,
-    required this._foreground,
+    required ReadingSessionTracker durations,
+    required ReaderHistoryWriter progress,
+    required void Function(bool) pauseAutoReading,
+    required FutureOr<void> Function() onClosed,
+    required bool foreground,
     ImageWork? imageWork,
-  }) : _imageWork = imageWork ?? ImageWork();
+  }) : _durations = durations,
+       _progress = progress,
+       _pauseAutoReading = pauseAutoReading,
+       _onClosed = onClosed,
+       _foreground = foreground,
+       _imageWork = imageWork ?? ImageWork();
 
   final ReadingSessionTracker _durations;
   final ReaderHistoryWriter _progress;

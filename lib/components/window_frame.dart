@@ -47,7 +47,7 @@ class WindowFrameController extends InheritedWidget {
   final VoidCallback forceExit;
 
   const WindowFrameController._create({
-    required this._isClosing,
+    required bool Function() isClosing,
     required this.isWindowFrameHidden,
     required this.setWindowFrame,
     required this.addCloseListener,
@@ -61,7 +61,7 @@ class WindowFrameController extends InheritedWidget {
     required this.removeCloseFailureListener,
     required this.forceExit,
     required super.child,
-  });
+  }) : _isClosing = isClosing;
 
   @override
   bool updateShouldNotify(covariant InheritedWidget oldWidget) {

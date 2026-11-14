@@ -12,8 +12,8 @@ spec.loader.exec_module(alt_store)
 
 class AltStoreTest(unittest.TestCase):
     def test_update_removes_upstream_history_and_preserves_own_releases(self):
-        own = "https://github.com/CyrilPeng/Venera-Next/releases/download/v1.8.0/app.ipa"
-        upstream = "https://github.com/venera-app/venera/releases/download/v1.6.3/app.ipa"
+        own = "https://github.com/ACGNnsj/venera-unified/releases/download/v1.8.0/VeneraUnified-ios-1.8.0+1.ipa"
+        upstream = "https://github.com/CyrilPeng/Venera-Next/releases/download/v1.6.3/VeneraNext-ios-1.6.3+243.ipa"
         data = {"apps": [{"bundleIdentifier": "com.github.cyrilpeng.veneranext",
                           "versions": [{"version": "1.8.0", "downloadURL": own},
                                        {"version": "1.6.3", "downloadURL": upstream}]}],

@@ -83,6 +83,7 @@ void main() {
   test('ocr native matches Dart pixels and clears both gates', () {
     if (!OcrPreprocessNative.available) {
       markTestSkipped('venera_ocr_preprocess not built for this platform');
+      return;
     }
     expect(OcrPreprocessNative.version(), 1);
 

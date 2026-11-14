@@ -314,7 +314,11 @@ class _ComicCollectionEditPageState extends State<ComicCollectionEditPage> {
         padding: EdgeInsets.fromLTRB(0, 0, 0, context.padding.bottom + 8),
         buildDefaultDragHandles: false,
         header: _buildHeader(c),
-        onReorderItem: (oldIndex, newIndex) {
+        // Legacy callback for the 3.41 rollback SDK, which predates
+        // onReorderItem; account for the removal it does not apply.
+        // ignore: deprecated_member_use
+        onReorder: (oldIndex, newIndex) {
+          if (oldIndex < newIndex) newIndex--;
           ComicCollectionStore.reorderMember(c.id, oldIndex, newIndex);
           _applyChange();
         },

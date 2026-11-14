@@ -75,6 +75,28 @@ class Anime4KUpscaler {
 
       final int newWidth = (srcImage.width * params.scaleFactor).round();
       final int newHeight = (srcImage.height * params.scaleFactor).round();
+
+      // Native fusion fast path: 2x bilinear + Push in one FFI call, skipping
+      // the pure-Dart copyResize (~80 ms/page). Other scales use copyResize.
+      if (params.scaleFactor == 2.0) {
+        final Uint8List? fused = Anime4KNative.upscale2x(
+          srcImage.getBytes(order: img.ChannelOrder.rgba),
+          srcImage.width,
+          srcImage.height,
+          (params.pushStrength * 255).round().clamp(0, 0xFFFF),
+          (params.pushGradStrength * 255).round().clamp(0, 0xFFFF),
+        );
+        if (fused != null) {
+          final img.Image fusedImage = img.Image.fromBytes(
+            width: newWidth,
+            height: newHeight,
+            bytes: fused.buffer,
+            order: img.ChannelOrder.rgba,
+          );
+          return Uint8List.fromList(img.encodePng(fusedImage));
+        }
+      }
+
       final img.Image upscaled = img.copyResize(
         srcImage,
         width: newWidth,

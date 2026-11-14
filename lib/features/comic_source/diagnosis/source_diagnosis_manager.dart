@@ -146,10 +146,12 @@ class SourceDiagnosisProgress {
 /// disposed.
 class SourceDiagnosisManager extends ChangeNotifier {
   SourceDiagnosisManager({
-    this._runner,
-    this._lingerProbe,
+    SourceDiagnosisRoundRunner? runner,
+    SourceDiagnosisLingerProbe? lingerProbe,
     this.maxConcurrentRounds = 1,
-  }) : assert(maxConcurrentRounds >= 1, 'at least one round must be allowed');
+  }) : _runner = runner,
+       _lingerProbe = lingerProbe,
+       assert(maxConcurrentRounds >= 1, 'at least one round must be allowed');
 
   /// App-lifetime manager used by the diagnosis dialog.
   static final SourceDiagnosisManager instance = SourceDiagnosisManager();

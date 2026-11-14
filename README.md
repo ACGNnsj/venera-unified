@@ -11,18 +11,15 @@
   ![License](https://img.shields.io/badge/License-GPL--3.0-10B981?style=flat-square)
   <br>
   [![Downloads](https://img.shields.io/github/downloads/ACGNnsj/venera-unified/total?style=flat-square&color=2ea44f&logo=github)](https://tooomm.github.io/github-release-stats/?user=ACGNnsj&repo=venera-unified)
-  [![爱发电](https://img.shields.io/badge/爱发电-支持我-ff69b4?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyMS4zNWwtMS40NS0xLjMyQzUuNCAxNS4zNiAyIDEyLjI4IDIgOC41IDIgNS40MiA0LjQyIDMgNy41IDNjMS43NCAwIDMuNDEuODEgNC41IDIuMDlDMTMuMDkgMy44MSAxNC43NiAzIDE2LjUgMyAxOS41OCAzIDIyIDUuNDIgMjIgOC41YzAgMy43OC0zLjQgNi44Ni04LjU1IDExLjU0TDEyIDIxLjM1eiIvPjwvc3ZnPg==)](https://ifdian.net/a/ACGMN)
+  [![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness-sdk)
 
 </div>
-
-<!-- featured-sponsors:start -->
-<!-- featured-sponsors:end -->
 
 ---
 
 ## 项目介绍
 
-Venera Unified 是从 [VeneraNext](https://github.com/CyrilPeng/venera-next) 分叉、由本仓库独立维护的 Flutter 漫画阅读器，支持 **Android、iOS、Windows、Linux 和 macOS**。v1.20.0 新增嵌套收藏夹，阅读器本体与扩展接口与上游保持兼容。
+Venera Unified 是从 [VeneraNext](https://github.com/CyrilPeng/venera-next) 分叉、由本仓库独立维护的 Flutter 漫画阅读器，支持 **Android（含手机版与 TV 版）、iOS、Windows、Linux 和 macOS**，阅读器本体与扩展接口与上游保持兼容。自 v1.21 起 Android TV 已进入主线并随稳定版发布；HarmonyOS HAP 为未签名候选验证包，实机未验收（见 [HarmonyOS 阅读器](doc/distribution/harmonyos-reader.zh.md)）。
 
 本分支围绕“少一点打断，多一点阅读”打磨日常体验：瀑布流跨章连读不用退出，长按收藏省去选择收藏夹的步骤，夜间和墨水屏设备各有阅读设置。本地导入、离线下载、阅读统计与多设备同步，让找书、看漫画和追连载更方便。
 
@@ -36,17 +33,13 @@ Venera Unified 是从 [VeneraNext](https://github.com/CyrilPeng/venera-next) 分
 <div align="center">
   <a href="https://github.com/ACGNnsj/venera-unified">
     <img alt="GitHub 本仓库" src="https://img.shields.io/badge/GitHub-本仓库-181717?style=for-the-badge&logo=github&logoColor=white" /></a>
-  <a href="https://ifdian.net/a/ACGMN">
-    <img alt="爱发电" src="https://img.shields.io/badge/爱发电-支持我-ff69b4?style=for-the-badge" /></a>
 </div>
 
 ---
 
 ## 软件截图
 
-| 主页：阅读历史、稍后阅读与追更 | 漫画详情页 |
-|---|---|
-| <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg" alt="Venera Unified 主页，展示阅读历史、稍后阅读和追更" width="100%" /></a> | <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg" alt="Venera Unified 漫画详情页，展示阅读操作、作品信息和章节列表" width="100%" /></a> |
+新版截图正在拍摄中，稍后补上。
 
 ---
 
@@ -99,16 +92,11 @@ Venera Unified 是从 [VeneraNext](https://github.com/CyrilPeng/venera-next) 分
 
 **推荐**：如果不确定应该下载哪个，选择通用版 `VeneraUnified-xxx-android.apk`。
 
-### Android TV（实验版）
+### Android TV
 
-TV 版暂不随稳定版发布，需自行构建后旁加载：
+TV 已进入主线：Android 构建同时产出手机版与 TV 版，新版本发布时两者进入同一个 GitHub Release。从[最新稳定版](https://github.com/ACGNnsj/venera-unified/releases/latest)选择含 `android-tv` 的资产（通用版 `VeneraUnified-xxx-android-tv.apk`，以及 `arm64-v8a` / `armeabi-v7a` / `x86_64` 分包），传到电视/盒子后侧载即可。
 
-```powershell
-flutter build apk --release --flavor tv
-adb install -r build/app/outputs/apk/tv/release/app-tv-release.apk
-```
-
-包名为 `io.github.venera.unified.tv`，可与手机版共存。TV 版为实验性支持，暂无自动更新，升级需重新旁加载。
+包名为 `io.github.venera.unified.tv`，可与手机版（`io.github.venera.unified`）共存，数据相互独立。应用内更新检查只提示含已上传 TV 通用包的版本，TV 提示会明确要求选择 `android-tv` 包。构建与版本码、签名清单核验见 [Android TV 安装与分发](doc/distribution/android_tv.zh.md)。
 
 ### iOS
 
@@ -168,9 +156,6 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 - **继续阅读**：进度记录章节与页码，瀑布流记录实际正在读的章节；详情页的正序/倒序只影响章节列表显示。
 - **独立阅读设置**：可以为当前设备或某本漫画启用独立设置，不必每次重新调整。
 
-| 单页阅读模式 | 拆分双页模式 |
-|---|---|
-| <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Single%20Page%20View.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Single%20Page%20View.jpg" alt="未拆分的单页阅读画面" width="100%" /></a> | <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Double%20Page%20View.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Double%20Page%20View.jpg" alt="开启拆分双页后的阅读画面" width="100%" /></a> |
 
 ### 夜间与墨水屏阅读
 
@@ -268,11 +253,11 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 
 ## 星标历史
 
-<a href="https://www.star-history.com/?repos=CyrilPeng%2FVenera-Next&type=date&legend=top-left">
+<a href="https://www.star-history.com/?repos=ACGNnsj%2Fvenera-unified&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=CyrilPeng/Venera-Next&type=date&theme=dark&legend=top-left&sealed_token=oOpEg16aOzfNd-LxRdnNlKMFvVT7R4hxnX3R0_siwlG1kcvQby3KmHFNPHaH-dbuficb1pbCiQyzTRFVYt2oKGGfjghUgiIs1huNy1yZ1ffelz7owlDrYQ" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=CyrilPeng/Venera-Next&type=date&legend=top-left&sealed_token=oOpEg16aOzfNd-LxRdnNlKMFvVT7R4hxnX3R0_siwlG1kcvQby3KmHFNPHaH-dbuficb1pbCiQyzTRFVYt2oKGGfjghUgiIs1huNy1yZ1ffelz7owlDrYQ" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=CyrilPeng/Venera-Next&type=date&legend=top-left&sealed_token=oOpEg16aOzfNd-LxRdnNlKMFvVT7R4hxnX3R0_siwlG1kcvQby3KmHFNPHaH-dbuficb1pbCiQyzTRFVYt2oKGGfjghUgiIs1huNy1yZ1ffelz7owlDrYQ" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ACGNnsj/venera-unified&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=ACGNnsj/venera-unified&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ACGNnsj/venera-unified&type=Date" />
  </picture>
 </a>
 
@@ -287,30 +272,13 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 
 **请不要在本仓库提交与漫画源、源站内容、具体作品可用性或版权相关的问题，此类反馈会直接关闭。**
 
----
-
-## 赞助
-
-[![爱发电](https://img.shields.io/badge/爱发电-支持我-ff69b4?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyMS4zNWwtMS40NS0xLjMyQzUuNCAxNS4zNiAyIDEyLjI4IDIgOC41IDIgNS40MiA0LjQyIDMgNy41IDNjMS43NCAwIDMuNDEuODEgNC41IDIuMDlDMTMuMDkgMy44MSAxNC43NiAzIDE2LjUgMyAxOS41OCAzIDIyIDUuNDIgMjIgOC41YzAgMy43OC0zLjQgNi44Ni04LjU1IDExLjU0TDEyIDIxLjM1eiIvPjwvc3ZnPg==)](https://ifdian.net/a/ACGMN)
-
-本项目为个人兴趣维护，不以盈利为目的。如果 Venera Unified 对你的日常阅读有帮助，欢迎在[爱发电](https://ifdian.net/a/ACGMN)上支持作者的持续维护。
-
-赞助状态会通过爱发电 API 定期同步。需要公开鸣谢时，请在订单备注中填写“公开昵称：你的昵称”；未提供公开昵称的订单不会展示。
-
-赞助者名单见 [SPONSORS.md](SPONSORS.md)。
-
----
 
 ## 致谢
 
-感谢 [Venera](https://github.com/venera-app/venera) 提供的阅读器与扩展基础，以及 [EhTagTranslation](https://github.com/EhTagTranslation/Database) 的中文标签翻译数据。也感谢所有贡献者与赞助者。
+感谢 [Venera](https://github.com/venera-app/venera) 提供的阅读器与扩展基础、[venera-next](https://github.com/CyrilPeng/venera-next) 的分叉起点，以及 [EhTagTranslation](https://github.com/EhTagTranslation/Database) 的中文标签翻译数据；底层能力依赖 [flutter_qjs](https://github.com/CyrilPeng/flutter_qjs)、[flutter_inappwebview](https://github.com/pichillilorenzo/flutter_inappwebview) 与 [webdav_client](https://github.com/venera-app/webdav_client)。同源兄弟项目还有 [Venera-SSR](https://github.com/Kiastr/Venera-SSR)、[venera-miuix](https://github.com/w13630039663-bit/venera-miuix)、[haukuen/venera](https://github.com/haukuen/venera)、[VeneraX](https://github.com/Kyosee/VeneraX) 与 [venera-prime](https://github.com/venera-app/venera-prime)。
 
 ## 许可
 
 本项目遵循 GPL-3.0 许可。
 
----
-
-## 友情链接
-
-- [LINUX DO](https://linux.do/)
+[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)

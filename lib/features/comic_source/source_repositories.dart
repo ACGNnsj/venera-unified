@@ -95,7 +95,7 @@ class SourceUpdateCheck {
 /// Catalogs are loaded per operation, so editing a URL never leaves a stale base.
 class SourceRepositories extends ChangeNotifier {
   /// An injected client is borrowed; per-operation factories own their clients.
-  SourceRepositories({this._client});
+  SourceRepositories({Dio? client}) : _client = client;
 
   final Dio? _client;
   static final instance = SourceRepositories();
@@ -577,14 +577,17 @@ bool _sameRepository(SourceRepository? a, SourceRepository? b) =>
 /// partially saved creation reuses its ID and never overwrites later edits.
 class SourceRepositorySave {
   SourceRepositorySave._(
-    this._store, {
+    SourceRepositories store, {
     String? id,
     required String name,
     required String url,
-    this._catalogContents,
-    this._createClient,
-  }) : _editing = id != null,
-       _previous = id == null ? null : _store.find(id),
+    String? catalogContents,
+    Dio Function()? createClient,
+  }) : _store = store,
+       _catalogContents = catalogContents,
+       _createClient = createClient,
+       _editing = id != null,
+       _previous = id == null ? null : store.find(id),
        _path = App.dataPath,
        repository = SourceRepository(
          id: id ?? const Uuid().v4(),

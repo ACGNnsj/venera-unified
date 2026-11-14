@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/image_translation/hf_tokenizer.dart';
 import 'package:venera_unified/foundation/image_translation/ort_backend_check.dart';
+import 'package:venera_unified/foundation/image_translation/ocr_preprocess_native.dart';
 import 'package:venera_unified/foundation/image_translation/ort_ffi.dart';
 import 'package:venera_unified/foundation/image_translation/translation_types.dart';
 import 'package:venera_unified/foundation/image_translation/translation_performance_config.dart';
@@ -801,7 +802,14 @@ class _WorkerState {
           bottom * image.width * 4,
         ),
       );
-      var input = _detPreprocess(tile);
+      _DetInput input;
+      try {
+        final d = OcrPreprocessNative.detPreprocess(tile);
+        input = _DetInput(d.tensor, d.width, d.height);
+      } catch (_) {
+        // Native library not built for this platform; Dart fallback.
+        input = _detPreprocess(tile);
+      }
       var output = _run(
         paths.detector,
         (session) => {
@@ -813,13 +821,25 @@ class _WorkerState {
           ]),
         },
       ).values.first;
-      var tileBoxes = _detPostprocess(
-        output.data,
-        input.width,
-        input.height,
-        tile.width,
-        tile.height,
-      );
+      List<IntRect> tileBoxes;
+      try {
+        tileBoxes = OcrPreprocessNative.detPostprocess(
+          output.data,
+          input.width,
+          input.height,
+          tile.width,
+          tile.height,
+        );
+      } catch (_) {
+        // Native library missing or overflowed; Dart fallback.
+        tileBoxes = _detPostprocess(
+          output.data,
+          input.width,
+          input.height,
+          tile.width,
+          tile.height,
+        );
+      }
       for (var box in tileBoxes) {
         box.top += top;
         box.bottom += top;
@@ -938,11 +958,28 @@ class _WorkerState {
         960,
       );
       outW = (outW / 8).ceil() * 8;
-      var tensor = _normalize(
-        resizeTextLine(image, rect, outW, height, rotate: rotate),
-        outW,
-        height,
-      );
+      // Both paths try native first; missing library falls back to Dart.
+      Uint8List resized;
+      if (!rotate) {
+        try {
+          resized = OcrPreprocessNative.resizeRegion(image, rect, outW, height);
+        } catch (_) {
+          // Native library not built for this platform; Dart fallback.
+          resized = resizeTextLine(image, rect, outW, height);
+        }
+      } else {
+        try {
+          resized = OcrPreprocessNative.resizeTextLineRotated(
+            image,
+            rect,
+            outW,
+            height,
+          );
+        } catch (_) {
+          resized = resizeTextLine(image, rect, outW, height, rotate: true);
+        }
+      }
+      var tensor = _normalize(resized, outW, height);
       var output = _run(
         modelPath,
         (session) => {
@@ -963,6 +1000,11 @@ class _WorkerState {
   }
 
   String _ctcDecode(Float32List probs, int classes, List<String> charset) {
+    try {
+      return OcrPreprocessNative.ctcDecode(probs, classes, charset);
+    } catch (_) {
+      // Native library not built for this platform; Dart fallback below.
+    }
     var steps = probs.length ~/ classes;
     var buffer = StringBuffer();
     var prev = 0;

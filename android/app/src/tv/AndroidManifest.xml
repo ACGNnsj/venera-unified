@@ -3,7 +3,7 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <application
-        android:label="Venera Unified TV Alpha"
+        android:label="Venera Unified TV"
         android:banner="@drawable/tv_banner"
         tools:replace="android:label">
         <activity android:name=".MainActivity" android:screenOrientation="landscape">

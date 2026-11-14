@@ -22,9 +22,9 @@ class AppProfile {
   final String revision;
 
   bool get isTv => flavor == 'tv';
-  bool get applicationUpdatesEnabled => !isTv;
-  String get applicationTitle => isTv ? 'VeneraNext TV Alpha' : 'VeneraNext';
+  bool get applicationUpdatesEnabled => true;
+  String get applicationTitle => isTv ? 'Venera Unified TV' : 'Venera Unified';
 
   String displayVersion(String baseVersion) =>
-      isTv ? '$baseVersion / TV Alpha $build / $revision' : baseVersion;
+      isTv ? '$baseVersion / TV $build / $revision' : baseVersion;
 }

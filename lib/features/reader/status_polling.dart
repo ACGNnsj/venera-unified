@@ -13,9 +13,10 @@ typedef ReaderBatteryRead = Future<ReaderBatterySnapshot?> Function();
 class ReaderStatusPolling {
   ReaderStatusPolling({
     required this.readBattery,
-    required this._now,
-    required void Function() this._onChanged,
-  }) {
+    required DateTime Function() now,
+    required onChanged,
+  }) : _now = now,
+       _onChanged = onChanged {
     _updateClock();
   }
 

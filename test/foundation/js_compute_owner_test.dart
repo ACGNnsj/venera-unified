@@ -397,9 +397,10 @@ throw new Error('initialization failed');
 
 class _Worker implements JsPoolEngine {
   _Worker({
-    this._execute,
-    this._close,
-  });
+    FutureOr<dynamic> Function()? execute,
+    FutureOr<void> Function()? close,
+  }) : _execute = execute,
+       _close = close;
   final FutureOr<dynamic> Function()? _execute;
   final FutureOr<void> Function()? _close;
   final _pending = <Future<dynamic>>{};

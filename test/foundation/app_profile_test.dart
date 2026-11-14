@@ -7,13 +7,13 @@ void main() {
       final profile = AppProfile(flavor: flavor);
       expect(profile.isTv, isFalse);
       expect(profile.applicationUpdatesEnabled, isTrue);
-      expect(profile.applicationTitle, 'VeneraNext');
+      expect(profile.applicationTitle, 'Venera Unified');
       expect(profile.displayVersion('1.18.2-rc.1'), '1.18.2-rc.1');
     }
   });
 
   test(
-    'TV build identity is explicit and cannot use the mobile update channel',
+    'TV identity retains build provenance without an experimental title',
     () {
       const profile = AppProfile(
         flavor: 'tv',
@@ -21,11 +21,11 @@ void main() {
         revision: 'abc1234',
       );
       expect(profile.isTv, isTrue);
-      expect(profile.applicationUpdatesEnabled, isFalse);
-      expect(profile.applicationTitle, 'VeneraNext TV Alpha');
+      expect(profile.applicationUpdatesEnabled, isTrue);
+      expect(profile.applicationTitle, 'Venera Unified TV');
       expect(
         profile.displayVersion('1.18.2-rc.1'),
-        '1.18.2-rc.1 / TV Alpha 12 / abc1234',
+        '1.18.2-rc.1 / TV 12 / abc1234',
       );
     },
   );

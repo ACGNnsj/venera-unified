@@ -175,6 +175,7 @@ void main() {
   test('transpose matches the script-bridge rotation pixel for pixel', () {
     if (!ImageTransposeNative.available) {
       markTestSkipped('venera_transpose not built for this platform');
+      return;
     }
     expect(ImageTransposeNative.version(), 1);
     final rand = Random(0x51ab);

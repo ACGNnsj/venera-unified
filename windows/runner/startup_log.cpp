@@ -30,7 +30,7 @@ std::wstring LogDirectory() {
   }
   std::filesystem::path directory(local_app_data);
   CoTaskMemFree(local_app_data);
-  return (directory / L"com.github.cyrilpeng" / L"VeneraNext" / L"logs").wstring();
+  return (directory / L"io.github.venera.unified" / L"VeneraUnified" / L"logs").wstring();
 }
 
 bool WriteEntry(const std::wstring& directory, const std::string& entry) {

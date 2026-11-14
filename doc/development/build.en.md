@@ -67,7 +67,7 @@ git diff --check
 
 CI runs `flutter test --coverage`, publishes line coverage in the workflow summary, and uploads `coverage/lcov.info`. Coverage is currently a visible baseline rather than a repository-wide hard threshold. Changes to critical behavior still require focused tests.
 
-Pull requests also run `依赖安全审查` and `PR 平台冒烟构建`. Dependency review blocks newly introduced dependencies with high or critical vulnerabilities. Changes to Flutter code, native platform directories, dependencies, build scripts, or workflows run Android Debug and Windows Debug builds; documentation-only changes skip those platform jobs. Dart formatting is checked only for Dart files changed by the current PR, so historical formatting differences do not block new contributions. The `main` branch requires code analysis, dependency review, and the platform smoke-build gate to pass, and direct force-pushes or branch deletion are disabled.
+Pull requests also run `依赖安全审查` and `PR 平台冒烟构建`. Dependency review blocks newly introduced dependencies with high or critical vulnerabilities. Changes to Flutter code, native platform directories, dependencies, build scripts, or workflows run Android mobile/TV Debug and Windows Debug builds; documentation-only changes skip those platform jobs. Dart formatting is checked only for Dart files changed by the current PR, so historical formatting differences do not block new contributions. The `main` branch requires code analysis, dependency review, and the platform smoke-build gate to pass, and direct force-pushes or branch deletion are disabled.
 
 For release-related changes, also run:
 
@@ -98,6 +98,7 @@ Build the APK:
 ```bash
 flutter pub get --enforce-lockfile
 flutter build apk --release --flavor mobile
+flutter build apk --release --flavor tv --flavor mobile
 ```
 
 Artifacts are normally written to `build/app/outputs/apk/mobile/release/` (TV builds go to `tv/release/`).

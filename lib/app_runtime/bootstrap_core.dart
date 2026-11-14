@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:flutter_saf/flutter_saf.dart';
+import 'package:venera_saf/venera_saf.dart';
 import 'package:path/path.dart' as path;
-import 'package:rhttp/rhttp.dart';
+import 'package:venera_unified/foundation/harmonyos.dart';
 import 'package:venera_unified/features/comic_source/comic_source_api.dart';
 import 'package:venera_unified/features/comic_source/source_data_storage.dart';
 import 'package:venera_unified/features/comic_source/source_transaction_journal.dart';
@@ -137,8 +137,9 @@ CoreBootstrap createCoreBootstrap({
       await initializeCoreInfrastructure(
         directory: App.dataPath,
         services: [
-          Rhttp.init,
-          () => _optional('SAF worker', () => SAFTaskWorker().init()),
+          HarmonyOS.initializeHttp,
+          if (!App.isHarmonyOS)
+            () => _optional('SAF worker', () => SAFTaskWorker().init()),
           () => _optional('App translations', AppTranslation.init),
           () => _optional('Tag translations', TagsTranslation.readData),
           OpenCC.init,

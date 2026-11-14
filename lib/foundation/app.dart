@@ -6,6 +6,8 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:yaml/yaml.dart';
 
+import 'harmonyos.dart';
+
 class _App {
   String version = "0.0.0";
   String buildVersion = "0.0.0";
@@ -23,6 +25,8 @@ class _App {
   /// HarmonyOS NEXT (OpenHarmony). The Flutter OHOS fork reports it through
   /// [Platform.operatingSystem]; none of the `Platform.is*` getters match.
   bool get isOhos => Platform.operatingSystem == 'ohos';
+
+  bool get isHarmonyOS => HarmonyOS.isCurrent;
 
   bool get isDesktop =>
       Platform.isWindows || Platform.isLinux || Platform.isMacOS;

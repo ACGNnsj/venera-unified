@@ -9,6 +9,7 @@ import 'package:venera_unified/features/local_comics/local_storage_guard.dart';
 import 'package:venera_unified/features/local_comics/import_export/pdf_jpg_native.dart';
 import 'package:venera_unified/foundation/file_system.dart';
 import 'package:venera_unified/foundation/persistence_failure.dart';
+import 'package:venera_unified/foundation/harmonyos.dart';
 import 'comic_import_output.dart';
 
 const double _pdfRenderScale = 3;
@@ -78,6 +79,11 @@ abstract final class PdfComicImporter {
     Future<void> Function(LocalComic comic)? registerComic,
   }) async {
     cancellation?.throwIfCancelled();
+    if (HarmonyOS.isCurrent) {
+      throw UnsupportedError(
+        'PDFium is not available in this HarmonyOS experiment. Use CBZ/ZIP/EPUB instead.',
+      );
+    }
     await pdfrxFlutterInitialize();
     late final PdfDocument document;
     try {

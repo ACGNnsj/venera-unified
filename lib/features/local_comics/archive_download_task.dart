@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
 
-import 'package:flutter_saf/flutter_saf.dart';
+import 'package:venera_saf/venera_saf.dart';
 import 'package:venera_unified/features/comic_storage/comic_storage.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/features/comic_source/comic_source_api.dart';
@@ -31,10 +31,11 @@ class ArchiveDownloadTask extends DownloadTask {
   ArchiveDownloadTask(
     this.archiveUrl,
     this.comic, {
-    required this._storage,
+    required DownloadTaskStorage storage,
     FileDownloader Function(String, String)? createDownloader,
     Future<void> Function(String, String)? extractArchive,
-  }) : _createDownloader =
+  }) : _storage = storage,
+       _createDownloader =
            createDownloader ?? ((url, path) => FileDownloader(url, path)),
        _extract = extractArchive ?? _extractArchive {
     source = ComicSource.find(comic.sourceKey)!;

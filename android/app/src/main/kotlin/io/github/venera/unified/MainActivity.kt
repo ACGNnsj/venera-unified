@@ -1,0 +1,724 @@
+package io.github.venera.unified
+
+import android.Manifest
+import android.app.Activity
+import android.content.ComponentName
+import android.content.ContentResolver
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
+import android.util.Log
+import android.view.KeyEvent
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
+import dev.flutter.packages.file_selector_android.FileUtils
+import io.flutter.embedding.android.FlutterFragmentActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.EventChannel
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugins.GeneratedPluginRegistrant
+import io.github.venera.unified.upscale.UpscalePlugin
+import java.io.File
+import java.io.FileOutputStream
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
+
+class MainActivity : FlutterFragmentActivity() {
+    private val volumeSubscriptions = VolumeKeySubscriptions()
+    private var volumeChannel: MethodChannel? = null
+    private var downloadBridge: DownloadBridge? = null
+    private var keepAliveBridge: KeepAliveBridge? = null
+    private var upscaleBridge: UpscalePlugin? = null
+
+    private val storageRequestCode = 0x10
+    private var storagePermissionRequest: ((Boolean) -> Unit)? = null
+
+    private val notificationRequestCode = 0x11
+    private var notificationPermissionRequest: ((Boolean) -> Unit)? = null
+
+    private val nextLocalRequestCode = AtomicInteger()
+
+    private val sharedTexts = ArrayList<String>()
+
+    private var textShareHandler: ((String) -> Unit)? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        if (intent?.action == Intent.ACTION_SEND) {
+            if (intent.type == "text/plain") {
+                val text = intent.getStringExtra(Intent.EXTRA_TEXT)
+                if (text != null)
+                    handleSharedText(text)
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.action == Intent.ACTION_SEND) {
+            if (intent.type == "text/plain") {
+                val text = intent.getStringExtra(Intent.EXTRA_TEXT)
+                if (text != null)
+                    handleSharedText(text)
+            }
+        }
+    }
+
+    private fun handleSharedText(text: String) {
+        if (textShareHandler != null) {
+            textShareHandler?.invoke(text)
+        } else {
+            sharedTexts.add(text)
+        }
+    }
+
+    private fun <I, O> startContractForResult(
+        contract: ActivityResultContract<I, O>,
+        input: I,
+        callback: ActivityResultCallback<O>
+    ) {
+        val key = "activity_rq_for_result#${nextLocalRequestCode.getAndIncrement()}"
+        val registry = activityResultRegistry
+        var launcher: ActivityResultLauncher<I>? = null
+        val observer = object : LifecycleEventObserver {
+            override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+                if (Lifecycle.Event.ON_DESTROY == event) {
+                    launcher?.unregister()
+                    lifecycle.removeObserver(this)
+                }
+            }
+        }
+        lifecycle.addObserver(observer)
+        val newCallback = ActivityResultCallback<O> {
+            launcher?.unregister()
+            lifecycle.removeObserver(observer)
+            callback.onActivityResult(it)
+        }
+        launcher = registry.register(key, contract, newCallback)
+        launcher.launch(input)
+    }
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        GeneratedPluginRegistrant.registerWith(flutterEngine)
+        downloadBridge?.close()
+        downloadBridge = DownloadBridge(
+            this, flutterEngine.dartExecutor.binaryMessenger,
+            isVisible = { lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) },
+            requestNotifications = ::requestDownloadNotifications,
+        )
+        keepAliveBridge?.close()
+        keepAliveBridge = KeepAliveBridge(
+            this, flutterEngine.dartExecutor.binaryMessenger,
+            isNotificationGranted = ::isNotificationGranted,
+            requestNotificationPermission = ::requestNotificationPermission,
+        )
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "venera/method_channel"
+        ).setMethodCallHandler { call, res ->
+            when (call.method) {
+                "getProxy" -> res.success(getProxy())
+                "getSupportedAbis" -> res.success(Build.SUPPORTED_ABIS.toList())
+                "validateUpdate" -> Thread {
+                    try {
+                        validateUpdate(call.argument<String>("path"))
+                        runOnUiThread { res.success(null) }
+                    } catch (e: Exception) {
+                        runOnUiThread { res.error("invalid_update", e.message, null) }
+                    }
+                }.start()
+                "installUpdate" -> installUpdate(call.argument<String>("path"), res)
+                "setScreenOn" -> {
+                    val set = call.argument<Boolean>("set") ?: false
+                    if (set) {
+                        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    } else {
+                        window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    }
+                    res.success(null)
+                }
+
+                // 桌面图标切换：立即启用目标 activity-alias、停用其余，用
+                // DONT_KILL_APP 保证不重启进程。所有 alias 都指向同一个
+                // MainActivity，运行中的组件不受影响，故可安全即时生效。
+                "setLauncherIcon" -> {
+                    val target = call.argument<String>("alias")
+                    if (target.isNullOrEmpty()) {
+                        res.error("INVALID_ARGUMENT", "alias is required", null)
+                        return@setMethodCallHandler
+                    }
+                    val ok = runCatching { applyLauncherIcon(target) }
+                        .onFailure { Log.w("VeneraUnified", "set launcher icon failed: ${it.message}") }
+                        .getOrDefault(false)
+                    res.success(ok)
+                }
+
+                "getDirectoryPath" -> {
+                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+                    startContractForResult(ActivityResultContracts.StartActivityForResult(), intent) { activityResult ->
+                        if (activityResult.resultCode != Activity.RESULT_OK) {
+                            res.success(null)
+                            return@startContractForResult
+                        }
+                        val pickedDirectoryUri = activityResult.data?.data
+                        if (pickedDirectoryUri == null)
+                            res.success(null)
+                        else
+                            onPickedDirectory(pickedDirectoryUri, res)
+                    }
+                }
+
+                else -> res.notImplemented()
+            }
+        }
+
+        clearVolumeChannel()
+        volumeChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "venera/volume").also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                if (call.method != "listen" && call.method != "cancel") {
+                    result.notImplemented()
+                } else {
+                    val token = call.argument<String>("token")
+                    if (token.isNullOrBlank()) {
+                        result.error("invalid_token", "A volume subscription token is required", null)
+                    } else {
+                        if (call.method == "listen") volumeSubscriptions.listen(token)
+                        else volumeSubscriptions.cancel(token)
+                        result.success(null)
+                    }
+                }
+            }
+        }
+
+        val storageChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "venera/storage")
+        storageChannel.setMethodCallHandler { _, res ->
+            requestStoragePermission { result ->
+                res.success(result)
+            }
+        }
+
+        val selectFileChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "venera/select_file")
+        selectFileChannel.setMethodCallHandler { req, res ->
+            when (req.method) {
+                "selectFile" -> openFile(res, req.arguments<String>() ?: "*/*")
+                "selectFiles" -> openFiles(res, req.arguments<String>() ?: "*/*")
+                "prepareFile" -> prepareSelectedFile(res, req.arguments<String>()!!)
+                "releaseFile" -> releaseSelectedFile(res, req.arguments<Map<String, String>>()!!)
+                else -> res.notImplemented()
+            }
+        }
+
+        val shareTextChannel = EventChannel(flutterEngine.dartExecutor.binaryMessenger, "venera/text_share")
+        shareTextChannel.setStreamHandler(
+            object : EventChannel.StreamHandler {
+                override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+                    textShareHandler = {text ->
+                        events.success(text)
+                    }
+                    if (sharedTexts.isNotEmpty()) {
+                        for (text in sharedTexts) {
+                            events.success(text)
+                        }
+                        sharedTexts.clear()
+                    }
+                }
+
+                override fun onCancel(arguments: Any?) {
+                    textShareHandler = null
+                }
+            })
+
+        upscaleBridge?.close()
+        upscaleBridge = UpscalePlugin.registerWith(this, flutterEngine.dartExecutor.binaryMessenger)
+
+        // iReader page-turn ripple (ported from VeneraX). The Dart side arms
+        // one command code per display rotation; native picks by rotation.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "venera/eink")
+            .setMethodCallHandler { call, res ->
+                when (call.method) {
+                    "rippleSupported" -> res.success(EinkPanel.rippleSupported)
+                    "queueRipple" -> {
+                        val codes = (call.arguments as? List<*>)
+                            ?.mapNotNull { (it as? Number)?.toInt() }
+                        res.success(
+                            codes != null && codes.size == 4 &&
+                                EinkPanel.queueRipple(codes, this)
+                        )
+                    }
+                    else -> res.notImplemented()
+                }
+            }
+    }
+
+    // In-app updates: validates the downloaded APK (private cache path,
+    // package identity, newer version, identical signing certificates) and
+    // hands it to the system installer through a FileProvider URI.
+    // Ported from venera-prime's MainActivity.
+    @Suppress("DEPRECATION")
+    private fun validateUpdate(path: String?): File {
+        requireNotNull(path) { "Missing update path" }
+        val apk = File(path).canonicalFile
+        val updateDir = File(cacheDir, "updates").canonicalFile
+        require(apk.parentFile == updateDir && apk.isFile && apk.extension == "apk") {
+            "Invalid update path"
+        }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+            PackageManager.GET_SIGNING_CERTIFICATES else PackageManager.GET_SIGNATURES
+        val candidate = packageManager.getPackageArchiveInfo(apk.path, flags)
+            ?: throw IllegalArgumentException("Invalid APK")
+        val installed = packageManager.getPackageInfo(packageName, flags)
+        require(candidate.packageName == packageName) { "Update package does not match this app" }
+        val candidateVersion = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+            candidate.longVersionCode else candidate.versionCode.toLong()
+        val installedVersion = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+            installed.longVersionCode else installed.versionCode.toLong()
+        require(candidateVersion > installedVersion) { "Update is not newer than this app" }
+        val signaturesMatch = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val signers = candidate.signingInfo?.apkContentsSigners
+            // hasSigningCertificate also accepts historical certificates and
+            // does not establish equality for a multi-signer installation.
+            // This updater supports the exact current signing identity.
+            !signers.isNullOrEmpty() &&
+                signers.toSet() == installed.signingInfo?.apkContentsSigners?.toSet()
+        } else {
+            val signers = candidate.signatures
+            !signers.isNullOrEmpty() && signers.toSet() == installed.signatures?.toSet()
+        }
+        require(signaturesMatch) { "Update signing certificate does not match this app" }
+
+        return apk
+    }
+
+    private fun installUpdate(path: String?, result: MethodChannel.Result) {
+        Thread {
+            try {
+                val apk = validateUpdate(path)
+                runOnUiThread { launchUpdateInstaller(apk, result) }
+            } catch (e: Exception) {
+                runOnUiThread { result.error("install_update_failed", e.message, null) }
+            }
+        }.start()
+    }
+
+    private fun launchUpdateInstaller(apk: File, result: MethodChannel.Result) {
+        try {
+            fun launchInstaller() {
+                try {
+                    check(!isFinishing && !isDestroyed) { "Update activity is no longer available" }
+                    val uri = FileProvider.getUriForFile(this, "$packageName.updates", apk)
+                    val intent = Intent(Intent.ACTION_VIEW)
+                        .setDataAndType(uri, "application/vnd.android.package-archive")
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    startActivity(intent)
+                    result.success(true)
+                } catch (e: Exception) {
+                    result.error("install_update_failed", e.message, null)
+                }
+            }
+
+            check(!isFinishing && !isDestroyed) { "Update activity is no longer available" }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                !packageManager.canRequestPackageInstalls()) {
+                val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:$packageName"))
+                startContractForResult(ActivityResultContracts.StartActivityForResult(), intent) {
+                    if (packageManager.canRequestPackageInstalls()) {
+                        // Permission UI can remain open while the cached file
+                        // changes. Recheck its current bytes off the UI thread
+                        // before handing the URI to Android's installer.
+                        Thread {
+                            try {
+                                val checked = validateUpdate(apk.path)
+                                runOnUiThread { launchUpdateInstaller(checked, result) }
+                            } catch (e: Exception) {
+                                runOnUiThread {
+                                    result.error("install_update_failed", e.message, null)
+                                }
+                            }
+                        }.start()
+                    } else {
+                        result.success(false)
+                    }
+                }
+            } else {
+                launchInstaller()
+            }
+        } catch (e: Exception) {
+            result.error("install_update_failed", e.message, null)
+        }
+    }
+
+    private fun getProxy(): String {
+        val host = System.getProperty("http.proxyHost")
+        val port = System.getProperty("http.proxyPort")
+        return if (host != null && port != null) {
+            "$host:$port"
+        } else {
+            "No Proxy"
+        }
+    }
+
+    // 与 AndroidManifest 中声明的 5 个 activity-alias 一一对应，短名与 Dart
+    // 侧 LauncherIconPreset.androidAlias 一致。切换时启用目标、停用其余，
+    // 任何时刻只有一个入口处于启用态（launcher 里就不会出现重复图标）。
+    private val launcherAliases =
+        listOf("IconDefault", "IconPurple", "IconGreen", "IconOrange", "IconSilver")
+
+    private fun applyLauncherIcon(alias: String): Boolean {
+        if (alias !in launcherAliases) return false
+        val pm = packageManager
+        fun setState(name: String, enabled: Boolean) {
+            pm.setComponentEnabledSetting(
+                ComponentName(this, "$packageName.$name"),
+                if (enabled) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP,
+            )
+        }
+        // Enable the target first, then disable the rest, so there is never a
+        // moment with zero enabled launcher entries (which could drop the app
+        // from the home screen on some launchers).
+        setState(alias, true)
+        for (name in launcherAliases) {
+            if (name != alias) setState(name, false)
+        }
+        return true
+    }
+
+    private fun clearVolumeChannel() {
+        volumeSubscriptions.clear()
+        volumeChannel?.setMethodCallHandler(null)
+        volumeChannel = null
+    }
+
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        downloadBridge?.close()
+        downloadBridge = null
+        keepAliveBridge?.close()
+        keepAliveBridge = null
+        upscaleBridge?.close()
+        upscaleBridge = null
+        clearVolumeChannel()
+        super.cleanUpFlutterEngine(flutterEngine)
+    }
+
+    override fun onDestroy() {
+        downloadBridge?.close()
+        downloadBridge = null
+        keepAliveBridge?.close()
+        keepAliveBridge = null
+        upscaleBridge?.close()
+        upscaleBridge = null
+        clearVolumeChannel()
+        super.onDestroy()
+    }
+
+    private fun requestDownloadNotifications() {
+        requestNotificationPermission { _ -> }
+    }
+
+    private fun isNotificationGranted(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return ContextCompat.checkSelfPermission(
+            this, Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    // Shared one-shot notification permission prompt for both keep-alive
+    // bridges. Honors the choice recorded by earlier versions under the
+    // download preferences key; reports the outcome to the caller.
+    private fun requestNotificationPermission(callback: (Boolean) -> Unit) {
+        if (isNotificationGranted()) {
+            callback(true)
+            return
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            callback(true)
+            return
+        }
+        val preferences = getSharedPreferences("download_service", MODE_PRIVATE)
+        if (preferences.getBoolean("notification_requested", false)) {
+            callback(false)
+            return
+        }
+        preferences.edit().putBoolean("notification_requested", true).apply()
+        notificationPermissionRequest?.invoke(false)
+        notificationPermissionRequest = callback
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+            notificationRequestCode,
+        )
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val value = when (keyCode) {
+            KeyEvent.KEYCODE_VOLUME_UP -> 1
+            KeyEvent.KEYCODE_VOLUME_DOWN -> 2
+            else -> null
+        }
+        val channel = volumeChannel
+        if (value != null && channel != null && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            if (volumeSubscriptions.dispatch(value) { token, key ->
+                channel.invokeMethod("event", mapOf("token" to token, "value" to key))
+            }) return true
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    /// Ensure that the directory is accessible by dart:io
+    private fun onPickedDirectory(uri: Uri, result: MethodChannel.Result) {
+        if (hasStoragePermission()) {
+            var plain = uri.toString()
+            if(plain.contains("%3A")) {
+                plain = Uri.decode(plain)
+            }
+            val externalStoragePrefix = "content://com.android.externalstorage.documents/tree/primary:";
+            if(plain.startsWith(externalStoragePrefix)) {
+                val path = plain.substring(externalStoragePrefix.length)
+                result.success(Environment.getExternalStorageDirectory().absolutePath + "/" + path)
+            }
+            // The uri cannot be parsed to plain path, use copy method
+        }
+        // dart:io cannot access the directory without permission.
+        // so we need to copy the directory to cache directory
+        val contentResolver = contentResolver
+        var tmp = cacheDir
+        val dirName = DocumentFile.fromTreeUri(this, uri)?.name
+        if (dirName == null) {
+            result.error("invalid_directory", "Cannot resolve directory name", null)
+            return
+        }
+        tmp = File(tmp, dirName)
+        if(tmp.exists()) {
+            tmp.deleteRecursively()
+        }
+        tmp.mkdir()
+        Thread {
+            try {
+                copyDirectory(contentResolver, uri, tmp)
+                result.success(tmp.absolutePath)
+            }
+            catch (e: Exception) {
+                result.error("copy error", e.message, null)
+            }
+        }.start()
+
+    }
+
+    private fun copyDirectory(resolver: ContentResolver, srcUri: Uri, destDir: File) {
+        val src = DocumentFile.fromTreeUri(this, srcUri) ?: return
+        for (file in src.listFiles()) {
+            if (file.isDirectory) {
+                val newDir = File(destDir, file.name!!)
+                newDir.mkdir()
+                copyDirectory(resolver, file.uri, newDir)
+            } else {
+                val newFile = File(destDir, file.name!!)
+                resolver.openInputStream(file.uri)?.use { input ->
+                    FileOutputStream(newFile).use { output ->
+                        input.copyTo(output, bufferSize = DEFAULT_BUFFER_SIZE)
+                        output.flush()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun hasStoragePermission(): Boolean {
+        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            Environment.isExternalStorageManager()
+        }
+    }
+
+    private fun requestStoragePermission(result: (Boolean) -> Unit) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            val readPermission = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+
+            val writePermission = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!readPermission || !writePermission) {
+                storagePermissionRequest = result
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    ),
+                    storageRequestCode
+                )
+            } else {
+                result(true)
+            }
+        } else {
+            if (!Environment.isExternalStorageManager()) {
+                try {
+                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                    intent.addCategory("android.intent.category.DEFAULT")
+                    intent.data = Uri.parse("package:$packageName")
+                    startContractForResult(ActivityResultContracts.StartActivityForResult(), intent){ _ ->
+                        result(Environment.isExternalStorageManager())
+                    }
+                } catch (e: Exception) {
+                    result(false)
+                }
+            } else {
+                result(true)
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == storageRequestCode) {
+            storagePermissionRequest?.invoke(grantResults.all {
+                it == PackageManager.PERMISSION_GRANTED
+            })
+            storagePermissionRequest = null
+        } else if (requestCode == notificationRequestCode) {
+            notificationPermissionRequest?.invoke(grantResults.all {
+                it == PackageManager.PERMISSION_GRANTED
+            })
+            notificationPermissionRequest = null
+        }
+    }
+
+    private fun openFiles(result: MethodChannel.Result, mimeType: String) {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = mimeType
+            putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+        }
+        startContractForResult(ActivityResultContracts.StartActivityForResult(), intent) { activityResult ->
+            if (activityResult.resultCode != Activity.RESULT_OK) {
+                result.success(emptyList<Any>())
+                return@startContractForResult
+            }
+            val data = activityResult.data
+            val clip = data?.clipData
+            val uris = if (clip != null) {
+                (0 until clip.itemCount).map { clip.getItemAt(it).uri }
+            } else {
+                listOfNotNull(data?.data)
+            }
+            try {
+                result.success(uris.distinct().map { uri ->
+                    val document = DocumentFile.fromSingleUri(this, uri)
+                    mapOf("uri" to uri.toString(), "name" to (document?.name ?: "document.pdf"))
+                })
+            } catch (e: Exception) {
+                result.error("selection_error", e.message, null)
+            }
+        }
+    }
+
+    private val selectedFileStorage by lazy { SelectedFileStorage(File(cacheDir, "selected_files")) }
+
+    private fun prepareSelectedFile(result: MethodChannel.Result, source: String) {
+        Thread {
+            var copy: SelectedFileStorage.Copy? = null
+            try {
+                val uri = Uri.parse(source)
+                if (hasStoragePermission()) {
+                    val path = try { FileUtils.getPathFromUri(this, uri) } catch (_: Exception) { null }
+                    if (path != null && File(path).isFile && File(path).canRead()) {
+                        runOnUiThread { result.success(mapOf("path" to path, "temporary" to false)) }
+                        return@Thread
+                    }
+                }
+                val document = DocumentFile.fromSingleUri(this, uri)
+                    ?: throw IllegalArgumentException("Cannot open selected document")
+                val owned = selectedFileStorage.create(document.name ?: "document.pdf")
+                copy = owned
+                val input = contentResolver.openInputStream(uri)
+                    ?: throw IllegalArgumentException("Cannot read selected document")
+                input.use { sourceStream ->
+                    FileOutputStream(owned.file).use { output -> sourceStream.copyTo(output) }
+                }
+                runOnUiThread { result.success(mapOf("path" to owned.file.absolutePath, "temporary" to true, "token" to owned.token)) }
+            } catch (error: Exception) {
+                var retained: Map<String, String>? = null
+                if (error is SelectedFileStorage.CreationFailure) copy = error.copy
+                copy?.let { owned ->
+                    try {
+                        selectedFileStorage.release(owned.file.absolutePath, owned.token)
+                    } catch (cleanup: Exception) {
+                        error.addSuppressed(cleanup)
+                        retained = mapOf("path" to owned.file.absolutePath, "token" to owned.token, "cleanupError" to cleanup.toString())
+                    }
+                }
+                val details = retained
+                runOnUiThread { result.error("prepare_error", error.toString(), details) }
+            }
+        }.start()
+    }
+
+    private fun releaseSelectedFile(result: MethodChannel.Result, receipt: Map<String, String>) {
+        Thread {
+            try {
+                selectedFileStorage.release(receipt.getValue("path"), receipt.getValue("token"))
+                runOnUiThread { result.success(null) }
+            } catch (error: Exception) {
+                runOnUiThread { result.error("release_error", error.toString(), receipt) }
+            }
+        }.start()
+    }
+
+    private fun openFile(result: MethodChannel.Result, mimeType: String) {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        intent.type = mimeType
+        startContractForResult(ActivityResultContracts.StartActivityForResult(), intent){ activityResult ->
+            if (activityResult.resultCode != Activity.RESULT_OK) {
+                result.success(null)
+                return@startContractForResult
+            }
+            val uri = activityResult.data?.data
+            if (uri == null) {
+                result.success(null)
+                return@startContractForResult
+            }
+            try {
+                val document = DocumentFile.fromSingleUri(this, uri)
+                    ?: throw IllegalArgumentException("Cannot open selected document")
+                result.success(mapOf("uri" to uri.toString(), "name" to (document.name ?: "document")))
+            } catch (error: Exception) {
+                result.error("selection_error", error.message, null)
+            }
+        }
+    }
+}

@@ -106,9 +106,10 @@ class ReaderChapterEntry {
 class ReaderChapterMenuRequest {
   ReaderChapterMenuRequest({
     required this.data,
-    required this._isCurrent,
-    required this._select,
-  });
+    required bool Function() isCurrent,
+    required bool Function(int) select,
+  }) : _isCurrent = isCurrent,
+       _select = select;
   final ReaderChapterMenuData data;
   final bool Function() _isCurrent;
   final bool Function(int) _select;

@@ -62,6 +62,7 @@ void main() {
   test('jpg native matches Dart quality and is >=2x faster', () {
     if (!JpgEncodeNative.available) {
       markTestSkipped('venera_jpg_encode not built for this platform');
+      return;
     }
     expect(JpgEncodeNative.version(), 1);
 

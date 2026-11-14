@@ -47,10 +47,12 @@ class ReaderProgressFailure implements FailureDetails {
 /// regardless of the order in which their futures complete.
 class ReaderHistoryWriter {
   ReaderHistoryWriter({
-    required this._write,
-    required this._onError,
-    this._delay = const Duration(seconds: 1),
-  });
+    required Future<void> Function() write,
+    required void Function(Object, StackTrace) onError,
+    Duration delay = const Duration(seconds: 1),
+  }) : _write = write,
+       _onError = onError,
+       _delay = delay;
 
   final Future<void> Function() _write;
   final void Function(Object, StackTrace) _onError;

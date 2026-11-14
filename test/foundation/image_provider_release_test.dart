@@ -10,7 +10,7 @@ import 'package:venera_unified/foundation/image_provider/image_provider_lifecycl
 import 'package:venera_unified/foundation/log.dart';
 
 class _Provider extends BaseImageProvider<_Provider> {
-  _Provider(this.read, {this._cacheKey});
+  _Provider(this.read, {String? cacheKey}) : _cacheKey = cacheKey;
 
   final Future<Uint8List> Function() read;
   final String? _cacheKey;

@@ -16,7 +16,8 @@ class SelectionCancelled implements Exception {
 /// cancellation. Closing joins the actual operation; retry only releases its
 /// remaining handles and never repeats a picker, import or committed write.
 class SelectionOperation {
-  SelectionOperation({this._checkActive});
+  SelectionOperation({void Function()? checkActive})
+    : _checkActive = checkActive;
 
   final void Function()? _checkActive;
   final _resources = <Object, Future<void> Function()>{};

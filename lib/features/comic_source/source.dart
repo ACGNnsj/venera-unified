@@ -791,16 +791,27 @@ class ComicSource {
     this.enableTagsTranslate,
     this.starRatingFunc,
     this.archiveDownloader, {
-    this._runtimeCallbacks,
-    this._runtimeContext,
+    JsCallbackScope? runtimeCallbacks,
+    SourceParserContext? runtimeContext,
     Map<String, dynamic> initialData = const {},
-    this._dataStorage = const SourceDataStorage(),
-  }) : _data = _snapshot(initialData);
+    SourceDataStorage dataStorage = const SourceDataStorage(),
+  }) : _runtimeCallbacks = runtimeCallbacks,
+       _runtimeContext = runtimeContext,
+       _dataStorage = dataStorage,
+       _data = _snapshot(initialData);
 }
 
 /// One draft application with retryable persistence in its original source.
 class SourceDataEdit {
-  SourceDataEdit._(this._source, this._path, this._epoch, this._edit);
+  SourceDataEdit._(
+    ComicSource source,
+    String path,
+    int epoch,
+    void Function(Map<String, dynamic>) edit,
+  ) : _source = source,
+      _path = path,
+      _epoch = epoch,
+      _edit = edit;
   final ComicSource _source;
   final String _path;
   final int _epoch;
@@ -904,11 +915,14 @@ class SourceLoginAttempt {
 /// A reversible owner for one source's admitted-write drain and data snapshot.
 class SourceDataWriteFreeze {
   SourceDataWriteFreeze._(
-    this._source,
-    this._epoch,
-    this._snapshot,
-    this._settled,
-  );
+    ComicSource source,
+    int epoch,
+    String? snapshot,
+    Future<void> settled,
+  ) : _source = source,
+      _epoch = epoch,
+      _snapshot = snapshot,
+      _settled = settled;
   final ComicSource _source;
   final int _epoch;
   final String? _snapshot;

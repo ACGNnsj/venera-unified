@@ -8,9 +8,10 @@ typedef SourceScriptReplacement =
 /// The injected replacement owns admission, serialization and persistence.
 class SourceScriptSession {
   SourceScriptSession({
-    required this._source,
-    required this._replace,
-  });
+    required ComicSource source,
+    required SourceScriptReplacement replace,
+  }) : _source = source,
+       _replace = replace;
 
   ComicSource _source;
   final SourceScriptReplacement _replace;

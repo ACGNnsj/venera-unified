@@ -194,10 +194,12 @@ void main() {
 
 class _ControlledFile extends Fake implements File {
   _ControlledFile({
-    this._exists,
-    this._length,
-    this._read,
-  });
+    Completer<bool>? exists,
+    Completer<int>? length,
+    Completer<Uint8List>? read,
+  }) : _exists = exists,
+       _length = length,
+       _read = read;
 
   final Completer<bool>? _exists;
   final Completer<int>? _length;
@@ -229,8 +231,9 @@ class _ControlledFile extends Fake implements File {
 }
 
 class _CachedProvider extends CachedImageProvider {
-  _CachedProvider(this.file, {this._fallbackResult})
-    : super('file://${file.path}');
+  _CachedProvider(this.file, {Future<Uint8List?>? fallbackResult})
+    : _fallbackResult = fallbackResult,
+      super('file://${file.path}');
 
   final File file;
   final Future<Uint8List?>? _fallbackResult;

@@ -5,7 +5,7 @@
 //   flutter build apk --debug --target-platform android-arm64 --no-pub
 //     -t tool/avif_device_probe.dart
 //   adb install -r build/app/outputs/flutter-apk/app-arm64-v8a-debug.apk
-//   adb shell am start -n io.github.venera.unified/com.github.cyrilpeng.veneranext.MainActivity
+//   adb shell am start -n io.github.venera.unified/io.github.venera.unified.MainActivity
 //   adb logcat -s flutter | grep AVIF_PROBE
 //
 // Results are printed as one AVIF_PROBE json line per sample plus a final

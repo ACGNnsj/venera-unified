@@ -30,7 +30,7 @@ def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
-    namespace = "com.github.cyrilpeng.veneranext"
+    namespace = "io.github.venera.unified"
     compileSdk = flutter.compileSdkVersion
     ndkVersion "28.0.13004108"
 
@@ -90,6 +90,8 @@ android {
         tv {
             dimension "device"
             applicationIdSuffix ".tv"
+            // Keep upgrades above the retired Alpha sequence (100000 + run).
+            versionCode = flutterVersionCode.toInteger() + 200000
         }
     }
 

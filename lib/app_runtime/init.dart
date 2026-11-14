@@ -15,11 +15,13 @@ import 'package:venera_unified/features/comic_widgets/comic_widgets.dart';
 import 'package:venera_unified/features/favorites/favorites.dart';
 import 'package:venera_unified/features/history/history.dart';
 import 'package:venera_unified/features/local_comics/local_comics.dart';
+import 'package:venera_unified/features/settings/settings.dart';
 import 'package:venera_unified/foundation/image_provider/cached_image.dart';
 import 'package:venera_unified/foundation/log.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
+import 'package:venera_unified/foundation/keyword_settings_store.dart';
 
 import 'core_bootstrap.dart';
 
@@ -42,6 +44,11 @@ Future<void> init(CoreBootstrap core) async {
           heroID: heroID,
         ),
     addFavorite: addFavorite,
+    keywordRuleEditor: (context, rule) => showKeywordRuleEditor(
+      context,
+      target: BlockedKeywordList.comics,
+      rule: rule,
+    ),
     addToCollection: showAddToCollectionDialog,
     tileStateResolver: _resolveComicTileState,
     tileImageProviderResolver: _resolveComicTileImageProvider,

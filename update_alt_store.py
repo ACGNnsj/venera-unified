@@ -13,7 +13,7 @@ def is_project_release_url(url):
     return (
         parsed.scheme == "https"
         and parsed.netloc.lower() == "github.com"
-        and parsed.path.lower().startswith("/cyrilpeng/venera-next/releases/")
+        and parsed.path.lower().startswith("/acgnnsj/venera-unified/releases/")
     )
 
 
@@ -76,7 +76,7 @@ def find_ipa_asset(assets, version):
     ]
 
     expected_name = re.compile(
-        rf"^VeneraNext-ios-{re.escape(version)}(?:\+\d+)?\.ipa$",
+        rf"^(?:VeneraNext|VeneraUnified)-ios-{re.escape(version)}(?:\+\d+)?\.ipa$",
         re.IGNORECASE,
     )
     for asset in ipa_assets:
@@ -85,7 +85,7 @@ def find_ipa_asset(assets, version):
 
     for asset in ipa_assets:
         name = asset["name"].lower()
-        if name.startswith("veneranext-ios-") and version in name:
+        if name.startswith(("veneranext-ios-", "veneraunified-ios-")) and version in name:
             return asset
 
     if len(ipa_assets) == 1:
@@ -129,7 +129,7 @@ def update_json_file_release(json_file, latest_release):
     asset = find_ipa_asset(assets, version)
     download_url = asset["browser_download_url"]
     if not is_project_release_url(download_url):
-        raise RuntimeError("IPA download URL must belong to VeneraNext releases")
+        raise RuntimeError("IPA download URL must belong to project releases")
     size = asset["size"]
 
     clean_release_history(data)
@@ -163,14 +163,14 @@ def update_json_file_release(json_file, latest_release):
     news_identifier = f"release-{full_version}"
     date_string = date_obj.strftime("%d/%m/%y")
     news_entry = {
-        "appID": "com.github.cyrilpeng.veneranext",
-        "caption": "Update of VeneraNext just got released!",
+        "appID": "io.github.venera.unified",
+        "caption": "Update of Venera Unified just got released!",
         "date": latest_release["published_at"],
         "identifier": news_identifier,
         "notify": True,
         "tintColor": "#0784FC",
-        "title": f"{full_version} - VeneraNext  {date_string}",
-        "url": f"https://github.com/CyrilPeng/venera-next/releases/tag/{tag}"
+        "title": f"{full_version} - Venera Unified  {date_string}",
+        "url": f"https://github.com/ACGNnsj/venera-unified/releases/tag/{tag}"
     }
 
     news_entry_exists = any(
@@ -188,7 +188,7 @@ def update_json_file_release(json_file, latest_release):
         raise
 
 def main():
-    repo_url = "CyrilPeng/venera-next"
+    repo_url = "ACGNnsj/venera-unified"
 
     try:
         fetched_data_latest = fetch_latest_release(repo_url)

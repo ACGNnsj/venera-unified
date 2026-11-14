@@ -100,7 +100,7 @@ class _AboutSettingsState extends State<AboutSettings> {
               textAlign: TextAlign.center,
             ),
             Text(
-              "Venera Unified is a free and open-source app for comic reading."
+              "Venera Unified is a free and open-source comic reader for Android (mobile and TV), iOS, Windows, Linux and macOS."
                   .tl,
             ),
             const SizedBox(height: 8),
@@ -137,9 +137,9 @@ class _AboutSettingsState extends State<AboutSettings> {
         if (AppProfile.current.isTv)
           ListTile(
             leading: const Icon(Icons.tv),
-            title: const Text('TV Alpha'),
+            title: const Text('Android TV'),
             subtitle: Text(
-              'Experimental build. Install updates manually from the android-tv branch. Source updates remain available. Real-device compatibility is not yet verified.'
+              'TV updates are published alongside mobile releases. Choose an android-tv APK; mobile and TV apps keep separate data.'
                   .tl,
             ),
           ).toSliver(),
@@ -147,7 +147,7 @@ class _AboutSettingsState extends State<AboutSettings> {
           title: const Text("Github"),
           trailing: const Icon(Icons.open_in_new),
           onTap: () {
-            launchUrlString("https://github.com/CyrilPeng/venera-next");
+            launchUrlString("https://github.com/ACGNnsj/venera-unified");
           },
         ).toSliver(),
         ListTile(

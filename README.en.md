@@ -11,18 +11,15 @@
   ![License](https://img.shields.io/badge/License-GPL--3.0-10B981?style=flat-square)
   <br>
   [![Downloads](https://img.shields.io/github/downloads/ACGNnsj/venera-unified/total?style=flat-square&color=2ea44f&logo=github)](https://tooomm.github.io/github-release-stats/?user=ACGNnsj&repo=venera-unified)
-  [![Afdian](https://img.shields.io/badge/Afdian-Sponsor-ff69b4?style=flat-square)](https://ifdian.net/a/ACGMN)
+  [![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness-sdk)
 
 </div>
-
-<!-- featured-sponsors:start -->
-<!-- featured-sponsors:end -->
 
 ---
 
 ## Introduction
 
-Venera Unified is a community fork of [VeneraNext](https://github.com/CyrilPeng/venera-next), maintained in this repository — a Flutter comic reader for **Android, iOS, Windows, Linux, and macOS**. v1.20.0 adds nested favorites while keeping reader and extension compatibility with upstream.
+Venera Unified is a community fork of [VeneraNext](https://github.com/CyrilPeng/venera-next), maintained in this repository — a Flutter comic reader for **Android (mobile + TV), iOS, Windows, Linux, and macOS**, keeping reader and extension compatibility with upstream. Since v1.21 Android TV has graduated to mainline and ships with stable releases; the HarmonyOS HAP is an unsigned candidate pending on-device acceptance (see [HarmonyOS Reader](doc/distribution/harmonyos-reader.en.md)).
 
 This fork focuses on fewer interruptions and more reading: Waterfall mode scrolls across chapters without leaving the reader, long-pressing Favorite skips the folder picker, and nighttime and E-Ink devices get their own reading adjustments. Local import, offline downloads, reading statistics, and multi-device sync make finding comics, reading them, and following ongoing series easier.
 
@@ -37,18 +34,13 @@ Venera's JavaScript extensions, local reading, search and categories, favorites,
   <a href="https://github.com/ACGNnsj/venera-unified">
     <img alt="GitHub repository" src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white" />
   </a>
-  <a href="https://ifdian.net/a/ACGMN">
-    <img alt="Afdian" src="https://img.shields.io/badge/Afdian-Sponsor-ff69b4?style=for-the-badge" />
-  </a>
 </div>
 
 ---
 
 ## Screenshots
 
-| Home: history, Read Later, and update tracking | Comic details |
-|---|---|
-| <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Home.jpg" alt="Venera Unified home page with reading history, Read Later, and update tracking" width="100%" /></a> | <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Details.jpg" alt="Venera Unified comic details page with reading actions, comic information, and chapters" width="100%" /></a> |
+Fresh screenshots are on the way.
 
 ---
 
@@ -101,16 +93,11 @@ Download an APK from the [latest stable release](https://github.com/ACGNnsj/vene
 
 When in doubt, use the universal `VeneraUnified-xxx-android.apk` package.
 
-### Android TV (experimental)
+### Android TV
 
-The TV build does not ship with stable releases yet. Build it yourself and sideload it:
+TV has graduated to mainline: Android builds produce both mobile and TV APKs, and both ship in the same GitHub Release. Pick an `android-tv` asset from the [latest stable release](https://github.com/ACGNnsj/venera-unified/releases/latest) (universal `VeneraUnified-xxx-android-tv.apk`, plus `arm64-v8a` / `armeabi-v7a` / `x86_64` splits) and sideload it onto your TV/box.
 
-```powershell
-flutter build apk --release --flavor tv
-adb install -r build/app/outputs/apk/tv/release/app-tv-release.apk
-```
-
-The package name is `io.github.venera.unified.tv`, so it coexists with the phone build. TV support is experimental with no auto-update; sideload again to upgrade.
+The package name is `io.github.venera.unified.tv`, so it coexists with the phone build (`io.github.venera.unified`) with separate data. The in-app update check only offers releases that already contain the TV universal package, and the TV prompt explicitly asks for an `android-tv` APK. See [Android TV Installation and Distribution](doc/distribution/android_tv.en.md) for build and version-code/signature-manifest verification.
 
 ### iOS
 
@@ -170,9 +157,6 @@ Download `VeneraUnified-xxx.dmg` from the [latest stable release](https://github
 - **Resume:** progress stores the chapter and page, and Waterfall records the chapter you are actually reading. Ascending/descending on the details page only changes the list display.
 - **Separate reader settings:** enable device-specific or per-comic settings so you do not have to readjust them each time.
 
-| Single-page view | Split double-page view |
-|---|---|
-| <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Single%20Page%20View.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Single%20Page%20View.jpg" alt="A wide page before splitting" width="100%" /></a> | <a href="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Double%20Page%20View.jpg"><img src="https://git-pictures.cyrilworkshop.dpdns.org/veneranext/Double%20Page%20View.jpg" alt="The same spread with double-page splitting enabled" width="100%" /></a> |
 
 ### Nighttime and E-Ink reading
 
@@ -270,11 +254,11 @@ Run `winget upgrade --id ACGNnsj.VeneraUnified --exact`. Public-source availabil
 
 ## Star history
 
-<a href="https://www.star-history.com/?repos=CyrilPeng%2Fvenera-next&type=date&legend=top-left">
+<a href="https://www.star-history.com/?repos=ACGNnsj%2Fvenera-unified&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=CyrilPeng/venera-next&type=date&theme=dark&legend=top-left&sealed_token=2JdfPV5RItrAVJNxNXhSHVr6mVbj9H_y_YMHJio2smj8uoRHGQKgrtY9k0PmbxUf6q0P-dR90ZWZSKlDDaygMd90LT7F0xI-2Bbtiq5muew1iXUSEFJzfouyqu70BiWT-hUeD9BKbFsdVr1knEJDWBqAArkJYIJcJCOYLZ5rUdpFdQ2aBIhT8wTQnOED" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=CyrilPeng/venera-next&type=date&legend=top-left&sealed_token=2JdfPV5RItrAVJNxNXhSHVr6mVbj9H_y_YMHJio2smj8uoRHGQKgrtY9k0PmbxUf6q0P-dR90ZWZSKlDDaygMd90LT7F0xI-2Bbtiq5muew1iXUSEFJzfouyqu70BiWT-hUeD9BKbFsdVr1knEJDWBqAArkJYIJcJCOYLZ5rUdpFdQ2aBIhT8wTQnOED" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=CyrilPeng/venera-next&type=date&legend=top-left&sealed_token=2JdfPV5RItrAVJNxNXhSHVr6mVbj9H_y_YMHJio2smj8uoRHGQKgrtY9k0PmbxUf6q0P-dR90ZWZSKlDDaygMd90LT7F0xI-2Bbtiq5muew1iXUSEFJzfouyqu70BiWT-hUeD9BKbFsdVr1knEJDWBqAArkJYIJcJCOYLZ5rUdpFdQ2aBIhT8wTQnOED" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ACGNnsj/venera-unified&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=ACGNnsj/venera-unified&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ACGNnsj/venera-unified&type=Date" />
  </picture>
 </a>
 
@@ -288,28 +272,12 @@ Network reading uses extensions compatible with the JavaScript API. Users are re
 
 **Do not submit issues about comic sources, source-site content, specific title availability, or copyright. Such reports will be closed.**
 
----
-
-## Sponsors
-
-Venera Unified is maintained as a personal-interest project and is not operated for profit. If it helps with your daily reading, you can support ongoing maintenance through [Afdian](https://ifdian.net/a/ACGMN).
-
-Sponsorship status is synchronized periodically through the Afdian API. To request public acknowledgement, put `公开昵称：Your name` in the order remark. Orders without an explicit public name are not displayed.
-
-See [SPONSORS.md](SPONSORS.md) for the sponsor list and display policy.
-
----
-
 ## Acknowledgements
 
-Thanks to [Venera](https://github.com/venera-app/venera) for the reader and extension foundation, and [EhTagTranslation](https://github.com/EhTagTranslation/Database) for Chinese tag translations. Thanks also to all contributors and sponsors.
+Thanks to [Venera](https://github.com/venera-app/venera) for the reader and extension foundation, [venera-next](https://github.com/CyrilPeng/venera-next) as the fork starting point, and [EhTagTranslation](https://github.com/EhTagTranslation/Database) for Chinese tag translations; underlying capabilities rely on [flutter_qjs](https://github.com/CyrilPeng/flutter_qjs), [flutter_inappwebview](https://github.com/pichillilorenzo/flutter_inappwebview) and [webdav_client](https://github.com/venera-app/webdav_client). Sibling projects from the same origin include [Venera-SSR](https://github.com/Kiastr/Venera-SSR), [venera-miuix](https://github.com/w13630039663-bit/venera-miuix), [haukuen/venera](https://github.com/haukuen/venera), [VeneraX](https://github.com/Kyosee/VeneraX) and [venera-prime](https://github.com/venera-app/venera-prime).
 
 ## License
 
 This project is licensed under GPL-3.0.
 
----
-
-## Community Links
-
-- [LINUX DO](https://linux.do/)
+[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)

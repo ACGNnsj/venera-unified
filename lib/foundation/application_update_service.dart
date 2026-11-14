@@ -27,14 +27,19 @@ typedef InstallableApplicationRelease = ({
 /// Owns actual HTTP completion independently of the page showing its result.
 class ApplicationUpdateService {
   ApplicationUpdateService({
-    required this._createClient,
-    required this._currentVersion,
+    required Dio Function() createClient,
+    required String Function() currentVersion,
     this.enabled = true,
-  });
+    this.forHarmonyOS = false,
+    this.forAndroidTv = false,
+  }) : _createClient = createClient,
+       _currentVersion = currentVersion;
 
   final Dio Function() _createClient;
   final String Function() _currentVersion;
   final bool enabled;
+  final bool forHarmonyOS;
+  final bool forAndroidTv;
   final _pending = <RequestScope, Future<void>>{};
   final _cleanupFailures = <ApplicationUpdateCleanupFailure>[];
   bool _closed = false;
@@ -124,7 +129,11 @@ class ApplicationUpdateService {
         }
       }
       final latest = selectPublishedReleaseVersion(
-        data,
+        forAndroidTv
+            ? releases.where(_hasTvPackage).toList()
+            : forHarmonyOS
+            ? releases.where(_hasHarmonyPackage).toList()
+            : data,
         includePrerelease: includePrerelease,
       );
       available = latest != null && shouldNotifyRelease(latest, version)
@@ -210,7 +219,7 @@ class ApplicationUpdateService {
         }
       }
       final latest = selectPublishedReleaseVersion(
-        data,
+        forHarmonyOS ? releases.where(_hasHarmonyPackage).toList() : data,
         includePrerelease: includePrerelease,
       );
       if (latest != null && shouldNotifyRelease(latest, version)) {
@@ -274,6 +283,41 @@ class ApplicationUpdateService {
     }
     scope.check();
     return installable;
+  }
+
+  static bool _hasHarmonyPackage(Object? release) {
+    if (release is! Map || release['assets'] is! List) return false;
+    final version = (release['tag_name'] as String).replaceFirst(
+      RegExp(r'^[vV]'),
+      '',
+    );
+    final uploaded = (release['assets'] as List).whereType<Map>().where(
+      (asset) =>
+          asset['state'] == 'uploaded' &&
+          asset['size'] is num &&
+          (asset['size'] as num) > 0,
+    );
+    return [
+      'VeneraNext-$version-harmonyos-arm64-unsigned.hap',
+      'harmonyos-manifest.json',
+    ].every((name) => uploaded.any((asset) => asset['name'] == name));
+  }
+
+  static bool _hasTvPackage(Object? release) {
+    if (release is! Map || release['assets'] is! List) return false;
+    final version = (release['tag_name'] as String).replaceFirst(
+      RegExp(r'^[vV]'),
+      '',
+    );
+    // Updates open the release page, never download a guessed mobile APK.
+    // Require the universal TV package so the offered release is installable.
+    return (release['assets'] as List).whereType<Map>().any(
+      (asset) =>
+          asset['name'] == 'VeneraUnified-$version-android-tv.apk' &&
+          asset['state'] == 'uploaded' &&
+          asset['size'] is num &&
+          (asset['size'] as num) > 0,
+    );
   }
 
   Future<void> closeAndWait() {

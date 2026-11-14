@@ -269,11 +269,21 @@ class BackupResult {
 class ComicBackupManager {
   ComicBackupManager({
     ComicBackupWebDavOps? operations,
-    this._readConfig = BackupConfig.fromSettings,
-    this._exportComic = CBZ.export,
-    this._importComic = CBZ.import,
-    this._registerImportedComic,
-  }) : _operations = operations ?? WebDavComicBackupOps();
+    BackupConfig Function() readConfig = BackupConfig.fromSettings,
+    Future<void> Function(LocalComic comic, String outputPath) exportComic =
+        CBZ.export,
+    Future<LocalComic> Function(
+          File file, {
+          Future<void> Function(LocalComic comic)? registerComic,
+        })
+        importComic =
+        CBZ.import,
+    Future<void> Function(LocalComic comic)? registerImportedComic,
+  }) : _readConfig = readConfig,
+       _exportComic = exportComic,
+       _importComic = importComic,
+       _registerImportedComic = registerImportedComic,
+       _operations = operations ?? WebDavComicBackupOps();
 
   static final instance = ComicBackupManager();
 

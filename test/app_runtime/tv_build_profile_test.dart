@@ -19,7 +19,8 @@ void main() {
     () async {
       expect(AppProfile.current.isTv, _expectTv);
       final updates = createApplicationUpdates();
-      expect(updates.enabled, !_expectTv);
+      expect(updates.enabled, isTrue);
+      expect(updates.forAndroidTv, _expectTv);
       if (_expectTv) {
         expect(AppProfile.current.build, 'ci-test');
         expect(AppProfile.current.revision, 'tv-test');

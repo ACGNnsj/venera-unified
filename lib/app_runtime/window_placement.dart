@@ -29,10 +29,12 @@ Future<void> showStartupFailureWindow() async {
 class WindowPlacementHost {
   WindowPlacementHost({
     required Future<void> Function() initialize,
-    required this._read,
-    required this._save,
+    required Future<WindowPlacement?> Function() read,
+    required Future<void> Function(WindowPlacement placement) save,
     this.onError = _logError,
-  }) : _initializeWindow = initialize {
+  }) : _read = read,
+       _save = save,
+       _initializeWindow = initialize {
     // Initialization can fail before a widget has attached. Keep the original
     // failure for initialize()/trackers without creating an unobserved Future.
     unawaited(_ready.future.then<void>((_) {}, onError: (Object _) {}));

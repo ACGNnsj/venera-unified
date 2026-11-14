@@ -151,6 +151,14 @@ jobs:
             echo "vendoring plugin crate: $crate_dir"
             ( cd "$crate_dir" && cargo vendor --no-delete --versioned-dirs "$VENDOR_DIR" ) >> "$RUNNER_TEMP/plugin-vendor-config.txt"
           done
+          # venera 自家的 native/* C-ABI 小库也要离线 vendor（jpg_encode 依赖
+          # jpeg-encoder，零依赖的几家 vendor 出空配置但无害），沙箱里
+          # build_venera_native.py 才能 --locked 编过。
+          for manifest in "$APP_DIR"/native/*/Cargo.toml; do
+            crate_dir=$(dirname "$manifest")
+            echo "vendoring venera native crate: $crate_dir"
+            ( cd "$crate_dir" && cargo vendor --no-delete --versioned-dirs "$VENDOR_DIR" ) >> "$RUNNER_TEMP/plugin-vendor-config.txt"
+          done
           python3 "$GITHUB_WORKSPACE/.github/scripts/merge_vendor_config.py" \
             "$RUNNER_TEMP/vendor-config-merged.txt" \
             "$RUNNER_TEMP/vendor-config.txt" "$RUNNER_TEMP/plugin-vendor-config.txt"

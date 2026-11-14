@@ -72,3 +72,4 @@ export 'src/model/response.dart'
         HttpStreamResponse,
         HttpVersion;
 export 'src/rhttp.dart' show Rhttp;
+export 'src/rust/frb_generated.dart' show RustLib;

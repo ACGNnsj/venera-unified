@@ -11,10 +11,7 @@ from urllib.request import url2pathname
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PACKAGES = ("flutter_qjs", "zip_flutter", "flutter_7zip", "lodepng_flutter")
-# Hand-rolled Rust crates with dart:ffi bindings; their tests assert speedup
-# gates, so CI must build them instead of skipping on missing libraries.
-CRATES = ("native/inpaint", "native/ocr_preprocess", "native/jpg_encode", "native/image_transpose", "native/anime4k")
+PACKAGES = ("flutter_qjs", "zip_flutter", "venera_native")
 
 
 def package_paths(config: Path) -> dict[str, Path]:
@@ -52,6 +49,7 @@ def main() -> None:
         [
             "cmake", "-S", str(Path(__file__).with_name("native_test_libraries")),
             "-B", str(build), "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release",
+            "-DVENERA_NATIVE_BUILD_TESTS=ON",
             *[f"-D{name.upper()}_ROOT={path}" for name, path in paths.items()],
         ],
         check=True,
@@ -60,23 +58,12 @@ def main() -> None:
         ["cmake", "--build", str(build), "--parallel", str(os.cpu_count() or 2)],
         check=True,
     )
+    subprocess.run(["ctest", "--test-dir", str(build), "--output-on-failure"], check=True)
     for name in PACKAGES:
         library = "flutter_qjs_plugin" if name == "flutter_qjs" else name
         path = build / "lib" / f"lib{library}.so"
         ctypes.CDLL(str(path))  # Fail here on unresolved symbols, before tests hang.
         print(f"Ready: {path}", flush=True)
-    libdir = build / "lib"
-    for crate in CRATES:
-        subprocess.run(
-            ["cargo", "build", "--locked", "--release",
-             "--manifest-path", str(ROOT / crate / "Cargo.toml")],
-            check=True,
-        )
-        built = next((ROOT / crate / "target/release").glob("libvenera_*.so"))
-        target = libdir / built.name
-        target.write_bytes(built.read_bytes())
-        ctypes.CDLL(str(target))  # Fail here on unresolved symbols, before tests hang.
-        print(f"Ready: {target}", flush=True)
 
 
 if __name__ == "__main__":
