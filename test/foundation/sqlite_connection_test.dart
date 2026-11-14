@@ -44,13 +44,16 @@ class _SetupDatabase implements Database {
   }
 
   @override
-  void dispose() {
+  void close() {
     disposeCalls++;
     delegate.close();
     if (cleanupError case final error?) {
       Error.throwWithStackTrace(error, cleanupStack);
     }
   }
+
+  @override
+  void dispose() => close();
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

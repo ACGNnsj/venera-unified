@@ -394,7 +394,7 @@ void main() {
     final rootList = tester.widget<ReorderableListView>(
       find.byType(ReorderableListView),
     );
-    // ignore: deprecated_member_use, unnecessary_non_null_assert
+    // ignore: deprecated_member_use, unnecessary_non_null_assertion
     rootList.onReorder!(0, roots.length);
     await tester.pump();
     tester
