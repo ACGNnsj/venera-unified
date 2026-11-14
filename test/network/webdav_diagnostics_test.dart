@@ -87,7 +87,7 @@ void main() {
     client.c.httpClientAdapter = adapter;
     addTearDown(() => client.c.close(force: true));
     const url =
-        'https://url-user:url-pass@example.com/dav/VeneraNext/%E4%B9%A6'
+        'https://url-user:url-pass@example.com/dav/VeneraUnified/%E4%B9%A6'
         '?token=query-secret#fragment-secret';
     final response = await client.c.request<String>(
       url,

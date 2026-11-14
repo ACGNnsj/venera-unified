@@ -11,13 +11,9 @@
   ![License](https://img.shields.io/badge/License-GPL--3.0-10B981?style=flat-square)
   <br>
   [![Downloads](https://img.shields.io/github/downloads/ACGNnsj/venera-unified/total?style=flat-square&color=2ea44f&logo=github)](https://tooomm.github.io/github-release-stats/?user=ACGNnsj&repo=venera-unified)
-  [![Afdian](https://img.shields.io/badge/Afdian-Sponsor-ff69b4?style=flat-square)](https://ifdian.net/a/ACGMN)
   [![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness-sdk)
 
 </div>
-
-<!-- featured-sponsors:start -->
-<!-- featured-sponsors:end -->
 
 ---
 
@@ -37,9 +33,6 @@ Venera's JavaScript extensions, local reading, search and categories, favorites,
 <div align="center">
   <a href="https://github.com/ACGNnsj/venera-unified">
     <img alt="GitHub repository" src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white" />
-  </a>
-  <a href="https://ifdian.net/a/ACGMN">
-    <img alt="Afdian" src="https://img.shields.io/badge/Afdian-Sponsor-ff69b4?style=for-the-badge" />
   </a>
 </div>
 
@@ -279,32 +272,12 @@ Network reading uses extensions compatible with the JavaScript API. Users are re
 
 **Do not submit issues about comic sources, source-site content, specific title availability, or copyright. Such reports will be closed.**
 
----
-
-## Sponsors
-
-Venera Unified is maintained as a personal-interest project and is not operated for profit. If it helps with your daily reading, you can support ongoing maintenance through [Afdian](https://ifdian.net/a/ACGMN).
-
-Sponsorship status is synchronized periodically through the Afdian API. To request public acknowledgement, put `公开昵称：Your name` in the order remark. Orders without an explicit public name are not displayed.
-
-See [SPONSORS.md](SPONSORS.md) for the sponsor list and display policy.
-
----
-
 ## Acknowledgements
 
-Thanks to [Venera](https://github.com/venera-app/venera) for the reader and extension foundation, and [EhTagTranslation](https://github.com/EhTagTranslation/Database) for Chinese tag translations. Thanks also to all contributors and sponsors.
+Thanks to [Venera](https://github.com/venera-app/venera) for the reader and extension foundation, and [EhTagTranslation](https://github.com/EhTagTranslation/Database) for Chinese tag translations.
 
 ## License
 
 This project is licensed under GPL-3.0.
-
----
-
-## Community Links
-
-- [LINUX DO](https://linux.do/)
-
----
 
 [![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)

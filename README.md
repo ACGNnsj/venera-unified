@@ -11,13 +11,9 @@
   ![License](https://img.shields.io/badge/License-GPL--3.0-10B981?style=flat-square)
   <br>
   [![Downloads](https://img.shields.io/github/downloads/ACGNnsj/venera-unified/total?style=flat-square&color=2ea44f&logo=github)](https://tooomm.github.io/github-release-stats/?user=ACGNnsj&repo=venera-unified)
-  [![爱发电](https://img.shields.io/badge/爱发电-支持我-ff69b4?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyMS4zNWwtMS40NS0xLjMyQzUuNCAxNS4zNiAyIDEyLjI4IDIgOC41IDIgNS40MiA0LjQyIDMgNy41IDNjMS43NCAwIDMuNDEuODEgNC41IDIuMDlDMTMuMDkgMy44MSAxNC43NiAzIDE2LjUgMyAxOS41OCAzIDIyIDUuNDIgMjIgOC41YzAgMy43OC0zLjQgNi44Ni04LjU1IDExLjU0TDEyIDIxLjM1eiIvPjwvc3ZnPg==)](https://ifdian.net/a/ACGMN)
   [![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness-sdk)
 
 </div>
-
-<!-- featured-sponsors:start -->
-<!-- featured-sponsors:end -->
 
 ---
 
@@ -37,8 +33,6 @@ Venera Unified 是从 [VeneraNext](https://github.com/CyrilPeng/venera-next) 分
 <div align="center">
   <a href="https://github.com/ACGNnsj/venera-unified">
     <img alt="GitHub 本仓库" src="https://img.shields.io/badge/GitHub-本仓库-181717?style=for-the-badge&logo=github&logoColor=white" /></a>
-  <a href="https://ifdian.net/a/ACGMN">
-    <img alt="爱发电" src="https://img.shields.io/badge/爱发电-支持我-ff69b4?style=for-the-badge" /></a>
 </div>
 
 ---
@@ -278,34 +272,13 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 
 **请不要在本仓库提交与漫画源、源站内容、具体作品可用性或版权相关的问题，此类反馈会直接关闭。**
 
----
-
-## 赞助
-
-[![爱发电](https://img.shields.io/badge/爱发电-支持我-ff69b4?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyMS4zNWwtMS40NS0xLjMyQzUuNCAxNS4zNiAyIDEyLjI4IDIgOC41IDIgNS40MiA0LjQyIDMgNy41IDNjMS43NCAwIDMuNDEuODEgNC41IDIuMDlDMTMuMDkgMy44MSAxNC43NiAzIDE2LjUgMyAxOS41OCAzIDIyIDUuNDIgMjIgOC41YzAgMy43OC0zLjQgNi44Ni04LjU1IDExLjU0TDEyIDIxLjM1eiIvPjwvc3ZnPg==)](https://ifdian.net/a/ACGMN)
-
-本项目为个人兴趣维护，不以盈利为目的。如果 Venera Unified 对你的日常阅读有帮助，欢迎在[爱发电](https://ifdian.net/a/ACGMN)上支持作者的持续维护。
-
-赞助状态会通过爱发电 API 定期同步。需要公开鸣谢时，请在订单备注中填写“公开昵称：你的昵称”；未提供公开昵称的订单不会展示。
-
-赞助者名单见 [SPONSORS.md](SPONSORS.md)。
-
----
 
 ## 致谢
 
-感谢 [Venera](https://github.com/venera-app/venera) 提供的阅读器与扩展基础，以及 [EhTagTranslation](https://github.com/EhTagTranslation/Database) 的中文标签翻译数据。也感谢所有贡献者与赞助者。
+感谢 [Venera](https://github.com/venera-app/venera) 提供的阅读器与扩展基础，以及 [EhTagTranslation](https://github.com/EhTagTranslation/Database) 的中文标签翻译数据。
 
 ## 许可
 
 本项目遵循 GPL-3.0 许可。
-
----
-
-## 友情链接
-
-- [LINUX DO](https://linux.do/)
-
----
 
 [![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
