@@ -121,6 +121,7 @@ class ReaderSettings {
   bool get readerBrightnessEnabled =>
       _values['readerBrightnessEnabled'] as bool;
   bool get eInkRefreshEnabled => _values['eInkRefreshEnabled'] as bool;
+  bool get cropWhiteBorders => _values['cropWhiteBorders'] as bool;
   bool get limitImageWidth => _values['limitImageWidth'] as bool;
   bool get enableTurnPageByVolumeKey =>
       _values['enableTurnPageByVolumeKey'] as bool;

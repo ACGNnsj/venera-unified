@@ -191,6 +191,7 @@ abstract final class ReaderPreferences {
     false,
   );
   static const eInkRefreshEnabled = BoolPreference('eInkRefreshEnabled', false);
+  static const cropWhiteBorders = BoolPreference('cropWhiteBorders', false);
   static const limitImageWidth = BoolPreference('limitImageWidth', true);
   static const enableTurnPageByVolumeKey = BoolPreference(
     'enableTurnPageByVolumeKey',
@@ -303,6 +304,7 @@ abstract final class ReaderPreferences {
     enablePageAnimation,
     readerBrightnessEnabled,
     eInkRefreshEnabled,
+    cropWhiteBorders,
     limitImageWidth,
     enableTurnPageByVolumeKey,
     enableClockAndBatteryInfoInReader,

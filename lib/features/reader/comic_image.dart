@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -6,10 +7,12 @@ import 'package:flutter/scheduler.dart';
 import 'package:venera_unified/features/reader/reader_tap_scope.dart';
 import 'package:venera_unified/features/reader/image_position.dart';
 import 'package:venera_unified/foundation/context.dart';
+import 'package:venera_unified/foundation/image_provider/base_image_provider.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'image_dimensions.dart';
 import 'anime4k_shader.dart';
 import 'auto_reading.dart';
+import 'white_border_crop.dart';
 
 class ComicImage extends StatefulWidget {
   /// Modified from flutter Image
@@ -35,6 +38,8 @@ class ComicImage extends StatefulWidget {
     this.splitWideImage = false,
     this.splitWideImageInvert = false,
     this.showImageDimensions = false,
+    this.whiteBorderCrop,
+    this.cropIdentity,
     Map<String, String>? headers,
     int? cacheWidth,
     int? cacheHeight,
@@ -80,6 +85,8 @@ class ComicImage extends StatefulWidget {
 
   final bool splitWideImageInvert;
   final bool showImageDimensions;
+  final ReaderWhiteBorderCrop? whiteBorderCrop;
+  final Object? cropIdentity;
 
   final void Function(State<ComicImage> state)? onInit;
 
@@ -128,6 +135,9 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
   late DisposableBuildContext<State<ComicImage>> _scrollAwareContext;
   Object? _lastException;
   ImageStreamCompleterHandle? _completerHandle;
+  ui.Rect? _cropRect;
+  int _cropGeneration = 0;
+  bool _cropPending = false;
 
   AutoReadingImageState get autoReadingImageState => _lastException != null
       ? AutoReadingImageState.failed
@@ -160,6 +170,7 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _scrollAwareContext = DisposableBuildContext<State<ComicImage>>(this);
+    widget.whiteBorderCrop?.addListener(_requestCrop);
     widget.onInit?.call(this);
   }
 
@@ -170,6 +181,8 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
     _stopListeningToStream();
     _completerHandle?.dispose();
     _scrollAwareContext.dispose();
+    widget.whiteBorderCrop?.removeListener(_requestCrop);
+    _cropGeneration++;
     _replaceImage(info: null);
     widget.onDispose?.call(this);
     super.dispose();
@@ -194,6 +207,15 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
     super.didUpdateWidget(oldWidget);
     if (widget.image != oldWidget.image) {
       _resolveImage();
+    }
+    if (widget.whiteBorderCrop != oldWidget.whiteBorderCrop ||
+        widget.cropIdentity != oldWidget.cropIdentity) {
+      oldWidget.whiteBorderCrop?.removeListener(_requestCrop);
+      widget.whiteBorderCrop?.addListener(_requestCrop);
+      _cropGeneration++;
+      _cropPending = false;
+      _cropRect = null;
+      _requestCrop();
     }
   }
 
@@ -269,12 +291,70 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
       _frameNumber = _frameNumber == null ? 0 : _frameNumber! + 1;
       _wasSynchronouslyLoaded = _wasSynchronouslyLoaded | synchronousCall;
     });
+    _requestCrop();
   }
 
   void _handleImageChunk(ImageChunkEvent event) {
     setState(() {
       _loadingProgress = event;
       _lastException = null;
+    });
+  }
+
+  Rect _sourceRect(Size imageSize) {
+    final crop = _cropRect;
+    if (crop == null) return Offset.zero & imageSize;
+    if (widget.splitWideImage && shouldSplitWideImage(imageSize)) {
+      final margin = math.min(crop.left, imageSize.width - crop.right);
+      return Rect.fromLTRB(
+        margin,
+        0,
+        imageSize.width - margin,
+        imageSize.height,
+      );
+    }
+    return crop;
+  }
+
+  void _requestCrop() {
+    final crop = widget.whiteBorderCrop;
+    final image = _imageInfo?.image;
+    final completer = _imageStream?.completer;
+    final decoded = completer is ImageDecodeInfo
+        ? completer as ImageDecodeInfo
+        : null;
+    final decodeIdentity = decoded?.decodeIdentity;
+    if (!mounted ||
+        crop == null ||
+        image == null ||
+        _bakedImage != null ||
+        _cropPending ||
+        _cropRect != null ||
+        decoded?.frameCount != 1 ||
+        decodeIdentity == null) {
+      return;
+    }
+    final generation = ++_cropGeneration;
+    final retryRevision = crop.retryRevision;
+    _cropPending = true;
+    final result = crop.detect(image, (
+      widget.cropIdentity ?? widget.image,
+      decodeIdentity,
+    ));
+    Future<ui.Rect?>.value(result).then((rect) {
+      if (!mounted ||
+          generation != _cropGeneration ||
+          widget.whiteBorderCrop != crop ||
+          _imageInfo?.image != image) {
+        return;
+      }
+      setState(() {
+        _cropPending = false;
+        _cropRect = rect;
+      });
+      if (rect == null && retryRevision != crop.retryRevision) {
+        _requestCrop();
+      }
     });
   }
 
@@ -297,6 +377,9 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
       setState(() {
         _bakedImage?.dispose();
         _bakedImage = baked;
+        _cropGeneration++;
+        _cropPending = false;
+        _cropRect = null;
       });
     });
   }
@@ -308,10 +391,14 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
     if (old != null) {
       SchedulerBinding.instance.addPostFrameCallback((_) => old.dispose());
     }
+    _requestCrop();
   }
 
   void _replaceImage({required ImageInfo? info}) {
     _discardBaked();
+    _cropGeneration++;
+    _cropPending = false;
+    _cropRect = null;
     final ImageInfo? oldImageInfo = _imageInfo;
     SchedulerBinding.instance.addPostFrameCallback(
       (_) => oldImageInfo?.dispose(),
@@ -448,9 +535,11 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
 
         Size? cacheSize = _cache[widget.image.hashCode];
         if (cacheSize != null) {
-          final displaySize = widget.splitWideImage
-              ? splitWideImageDisplaySize(cacheSize)
-              : cacheSize;
+          final sourceSize = _sourceRect(cacheSize).size;
+          final displaySize =
+              widget.splitWideImage && shouldSplitWideImage(cacheSize)
+              ? Size(sourceSize.width / 2, sourceSize.height * 2)
+              : sourceSize;
           if (width == double.infinity) {
             width = constrains.maxWidth;
             height = width * displaySize.height / displaySize.width;
@@ -476,9 +565,15 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
           final shouldSplit =
               widget.splitWideImage && shouldSplitWideImage(imageSize);
           // build image
-          Widget result = shouldSplit
+          final sourceRect = _bakedImage == null
+              ? _sourceRect(imageSize)
+              : Offset.zero & imageSize;
+          Widget result = shouldSplit || sourceRect != Offset.zero & imageSize
               ? _SplitWideImage(
                   image: _bakedImage ?? _imageInfo!.image,
+                  sourceRect: sourceRect,
+                  split: shouldSplit,
+                  scale: _imageInfo!.scale,
                   width: width,
                   height: height,
                   color: widget.color,
@@ -583,6 +678,9 @@ class ComicImageState extends State<ComicImage> with WidgetsBindingObserver {
 class _SplitWideImage extends StatelessWidget {
   const _SplitWideImage({
     required this.image,
+    required this.sourceRect,
+    required this.split,
+    required this.scale,
     required this.width,
     required this.height,
     required this.color,
@@ -598,6 +696,12 @@ class _SplitWideImage extends StatelessWidget {
   });
 
   final ui.Image image;
+
+  final Rect sourceRect;
+
+  final bool split;
+
+  final double scale;
 
   final double? width;
 
@@ -627,11 +731,14 @@ class _SplitWideImage extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget result = CustomPaint(
       size: Size(
-        width ?? image.width.toDouble() / 2,
-        height ?? image.height * 2,
+        width ?? sourceRect.width / scale / (split ? 2 : 1),
+        height ?? sourceRect.height / scale * (split ? 2 : 1),
       ),
       painter: _SplitWideImagePainter(
         image: image,
+        sourceRect: sourceRect,
+        split: split,
+        scale: scale,
         color: color,
         colorBlendMode: colorBlendMode,
         fit: fit,
@@ -654,6 +761,9 @@ class _SplitWideImage extends StatelessWidget {
 class _SplitWideImagePainter extends CustomPainter {
   const _SplitWideImagePainter({
     required this.image,
+    required this.sourceRect,
+    required this.split,
+    required this.scale,
     required this.color,
     required this.colorBlendMode,
     required this.fit,
@@ -667,6 +777,12 @@ class _SplitWideImagePainter extends CustomPainter {
   });
 
   final ui.Image image;
+
+  final Rect sourceRect;
+
+  final bool split;
+
+  final double scale;
 
   final Color? color;
 
@@ -692,8 +808,10 @@ class _SplitWideImagePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
 
-    final imageSize = Size(image.width.toDouble(), image.height.toDouble());
-    final displaySize = splitWideImageDisplaySize(imageSize);
+    final imageSize = sourceRect.size;
+    final displaySize =
+        (split ? Size(imageSize.width / 2, imageSize.height * 2) : imageSize) /
+        scale;
     final fitted = applyBoxFit(fit ?? BoxFit.scaleDown, displaySize, size);
     final destination = alignment.inscribe(
       fitted.destination,
@@ -715,10 +833,22 @@ class _SplitWideImagePainter extends CustomPainter {
       );
     }
 
+    if (!split) {
+      final source = alignment.inscribe(fitted.source * scale, sourceRect);
+      final flip = matchTextDirection && textDirection == TextDirection.rtl;
+      canvas.save();
+      if (flip) {
+        canvas.translate(size.width, 0);
+        canvas.scale(-1, 1);
+      }
+      canvas.drawImageRect(image, source, destination, paint);
+      canvas.restore();
+      return;
+    }
     for (final slice in slices) {
       final source = Rect.fromLTWH(
-        imageSize.width * slice.sourceLeft,
-        0,
+        sourceRect.left + imageSize.width * slice.sourceLeft,
+        sourceRect.top,
         imageSize.width * slice.sourceWidth,
         imageSize.height,
       );
@@ -735,6 +865,9 @@ class _SplitWideImagePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _SplitWideImagePainter oldDelegate) {
     return oldDelegate.image != image ||
+        oldDelegate.sourceRect != sourceRect ||
+        oldDelegate.split != split ||
+        oldDelegate.scale != scale ||
         oldDelegate.color != color ||
         oldDelegate.colorBlendMode != colorBlendMode ||
         oldDelegate.fit != fit ||

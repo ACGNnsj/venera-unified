@@ -670,6 +670,22 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
               useDeviceSettings: useDeviceSpecificSettings,
             ),
           ),
+          SliverAnimatedVisibility(
+            visible: _isVerticalFlowMode,
+            child: SwitchSetting.reader(
+              title: 'Crop white side borders'.tl,
+              subtitle:
+                  'Only changes Continuous and Waterfall display. Original images are kept.'
+                      .tl,
+              preference: ReaderPreferences.cropWhiteBorders,
+              onChanged: () => widget.onChanged?.call('cropWhiteBorders'),
+              comicId: isEnabledSpecificSettings ? widget.comicId : null,
+              comicSource: isEnabledSpecificSettings
+                  ? widget.comicSource
+                  : null,
+              useDeviceSettings: useDeviceSpecificSettings,
+            ),
+          ),
           SwitchSetting.reader(
             title: 'Page margin'.tl,
             subtitle:

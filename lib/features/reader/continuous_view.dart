@@ -28,6 +28,7 @@ import 'continuous_scroll.dart';
 import 'current_image.dart';
 import 'page_margin.dart';
 import 'display_image_provider.dart';
+import 'white_border_crop.dart';
 import 'reader_controller.dart';
 import 'reader_viewport.dart';
 import 'package:venera_unified/network/request_scope.dart';
@@ -89,6 +90,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
         AutoReadingViewport,
         AutoReadingImageViewport {
   late var _imageDownloads = ReaderImageDownloads(work: widget.imageWork);
+  late var _whiteBorderCrop = ReaderWhiteBorderCrop(widget.imageWork);
   late var _imagePrecache = ReaderImagePrecache(work: widget.imageWork);
 
   @override
@@ -398,6 +400,8 @@ class ContinuousModeState extends State<ReaderContinuousView>
       unawaited(_imagePrecache.dispose());
       _imageDownloads = ReaderImageDownloads(work: widget.imageWork);
       _imagePrecache = ReaderImagePrecache(work: widget.imageWork);
+      _whiteBorderCrop.dispose();
+      _whiteBorderCrop = ReaderWhiteBorderCrop(widget.imageWork);
       unawaited(_waterfall.dispose());
       _waterfall = _createWaterfall();
       _isRestoringPrependedSegmentPosition = false;
@@ -414,6 +418,7 @@ class ContinuousModeState extends State<ReaderContinuousView>
   @override
   void dispose() {
     _disposed = true;
+    _whiteBorderCrop.dispose();
     _smoothGeneration++;
     _smoothPosition = null;
     _initialCacheTimer?.cancel();
@@ -998,70 +1003,71 @@ class ContinuousModeState extends State<ReaderContinuousView>
   }
 
   Widget _buildFlowItem(BuildContext context, int index) {
-        if (index == 0) {
-          return const SizedBox();
-        }
-        if (index == _flowImageCount + 1) {
-          return _buildFlowEnd(context);
-        }
-        var imageRef = _imageRefAt(index);
-        if (imageRef == null) {
-          return const SizedBox();
-        }
-        double? width, height;
-        if (!data.vertical) {
-          height = double.infinity;
-        } else {
-          width = double.infinity;
-        }
+    if (index == 0) {
+      return const SizedBox();
+    }
+    if (index == _flowImageCount + 1) {
+      return _buildFlowEnd(context);
+    }
+    var imageRef = _imageRefAt(index);
+    if (imageRef == null) {
+      return const SizedBox();
+    }
+    double? width, height;
+    if (!data.vertical) {
+      height = double.infinity;
+    } else {
+      width = double.infinity;
+    }
 
-        final translation = ReaderImageProvider.translationFor(
-          sourceKey: data.sourceKey,
-          cid: data.comicId,
-          eid: imageRef.position.chapterId,
-          page: imageRef.position.imageNumber,
-        );
-        final image = ReaderImageProvider(
-          imageRef.imageKey,
-          data.sourceKey,
-          data.comicId,
-          imageRef.position.chapterId,
-          imageRef.position.imageNumber,
-          enableResize: true,
-          decodePixelBudget: data.decodePixelBudget,
-          diagnostics: widget.imageWork.diagnostics,
-          translationKey: translation.key,
-          translationConfig: translation.config,
-          translated: translation.translated,
-        );
+    final translation = ReaderImageProvider.translationFor(
+      sourceKey: data.sourceKey,
+      cid: data.comicId,
+      eid: imageRef.position.chapterId,
+      page: imageRef.position.imageNumber,
+    );
+    final image = ReaderImageProvider(
+      imageRef.imageKey,
+      data.sourceKey,
+      data.comicId,
+      imageRef.position.chapterId,
+      imageRef.position.imageNumber,
+      enableResize: true,
+      decodePixelBudget: data.decodePixelBudget,
+      diagnostics: widget.imageWork.diagnostics,
+      translationKey: translation.key,
+      translationConfig: translation.config,
+      translated: translation.translated,
+    );
 
-        var comicImage = SizeChangedLayoutNotifier(
-          child: ComicImage(
-            filterQuality: FilterQuality.medium,
-            image: ReaderDisplayImageProvider(image, widget.imageWork),
-            width: width,
-            height: height,
-            fit: BoxFit.contain,
-            splitWideImage: _splitWideImages,
-            splitWideImageInvert: _splitWideImagesInvert,
-            showImageDimensions: data.showImageDimensions,
-            onInit: (state) => imageStates.add(state),
-            onDispose: (state) => imageStates.remove(state),
-          ),
-        );
+    var comicImage = SizeChangedLayoutNotifier(
+      child: ComicImage(
+        filterQuality: FilterQuality.medium,
+        image: ReaderDisplayImageProvider(image, widget.imageWork),
+        width: width,
+        height: height,
+        fit: BoxFit.contain,
+        splitWideImage: _splitWideImages,
+        splitWideImageInvert: _splitWideImagesInvert,
+        showImageDimensions: data.showImageDimensions,
+        whiteBorderCrop: data.vertical && data.cropWhiteBorders
+            ? _whiteBorderCrop
+            : null,
+        cropIdentity: image.key,
+        onInit: (state) => imageStates.add(state),
+        onDispose: (state) => imageStates.remove(state),
+      ),
+    );
 
-        return ColoredBox(
-          color: context.colorScheme.surface,
-          child: data.vertical
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildChapterDivider(context, imageRef),
-                    comicImage,
-                  ],
-                )
-              : comicImage,
-        );
+    return ColoredBox(
+      color: context.colorScheme.surface,
+      child: data.vertical
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [_buildChapterDivider(context, imageRef), comicImage],
+            )
+          : comicImage,
+    );
   }
 
   @override
