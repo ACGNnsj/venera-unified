@@ -275,7 +275,7 @@ Linux 安装包基于 Ubuntu 22.04 构建，glibc 基线为 2.35。当前稳定�
 
 ## 致谢
 
-感谢 [Venera](https://github.com/venera-app/venera) 提供的阅读器与扩展基础、[venera-next](https://github.com/CyrilPeng/venera-next) 的分叉起点，以及 [EhTagTranslation](https://github.com/EhTagTranslation/Database) 的中文标签翻译数据；底层能力依赖 [flutter_qjs](https://github.com/CyrilPeng/flutter_qjs)、[flutter_inappwebview](https://github.com/pichillilorenzo/flutter_inappwebview) 与 [webdav_client](https://github.com/venera-app/webdav_client)。
+感谢 [Venera](https://github.com/venera-app/venera) 提供的阅读器与扩展基础、[venera-next](https://github.com/CyrilPeng/venera-next) 的分叉起点，以及 [EhTagTranslation](https://github.com/EhTagTranslation/Database) 的中文标签翻译数据；底层能力依赖 [flutter_qjs](https://github.com/CyrilPeng/flutter_qjs)、[flutter_inappwebview](https://github.com/pichillilorenzo/flutter_inappwebview) 与 [webdav_client](https://github.com/venera-app/webdav_client)。同源兄弟项目还有 [Venera-SSR](https://github.com/Kiastr/Venera-SSR)、[venera-miuix](https://github.com/w13630039663-bit/venera-miuix)、[haukuen/venera](https://github.com/haukuen/venera)、[VeneraX](https://github.com/Kyosee/VeneraX) 与 [venera-prime](https://github.com/venera-app/venera-prime)。
 
 ## 许可
 
