@@ -33,21 +33,22 @@ void main() {
         try {
           available = await updates.check();
         } catch (error) {
+          if (_isUpdateEndpointInfrastructureError(error)) {
+            markTestSkipped('update endpoint unreachable from CI');
+          }
+          // The --machine runner drops print events, so the cause chain
+          // travels inside the failure message until the skip set is exact.
           Object? node = error;
           final chain = <String>[];
           while (node is OperationFailure && node.cause != null) {
             chain.add(node.runtimeType.toString());
             node = node.cause;
           }
-          chain.add(node.runtimeType.toString());
-          // Temporary CI diagnostics: log the exact cause chain so the
-          // skip predicate can be keyed on evidence, then remove.
-          // ignore: avoid_print
-          print('TV-DEBUG update error chain ${chain.join(" -> ")}: $error');
-          if (_isUpdateEndpointInfrastructureError(error)) {
-            markTestSkipped('update endpoint unreachable from CI');
-          }
-          rethrow;
+          chain.add('${node.runtimeType}: $node');
+          Error.throwWithStackTrace(
+            TestFailure('TV-DEBUG update error chain ${chain.join(" <- ")}'),
+            StackTrace.current,
+          );
         }
         expect(available, isNull);
       }
