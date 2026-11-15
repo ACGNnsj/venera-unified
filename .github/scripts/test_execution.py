@@ -129,5 +129,10 @@ def validate_skips(summary: dict, policy: dict, platform: str, expected: list[st
     # A documented platform/privilege limitation may become executable on a
     # capable host. More execution is accepted; stale case names still fail.
     executed = sorted(key for key in allowed if key in observed and key not in skipped)
-    return {'unexpected': unexpected, 'stale': stale, 'documented': documented,
-            'documented_cases_executed': executed}
+    # JSON-stable lists of lists: the runner embeds this dict into
+    # summary.json (tuples would serialize as arrays and never equal a
+    # recomputed value), and the aggregator compares the full dict.
+    return {'unexpected': [list(key) for key in unexpected],
+            'stale': [list(key) for key in stale],
+            'documented': documented,
+            'documented_cases_executed': [list(key) for key in executed]}
