@@ -1,4 +1,5 @@
 import 'package:venera_unified/features/history/history_scope.dart';
+import 'package:venera_unified/features/history/history_manager.dart';
 import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
@@ -50,7 +51,7 @@ import 'package:venera_unified/foundation/app_locale.dart';
 import 'package:venera_unified/foundation/log.dart';
 import 'package:venera_unified/foundation/navigation_admission.dart';
 import 'package:venera_unified/foundation/appdata.dart';
-import 'package:venera_unified/foundation/comic_type.dart';
+
 import 'package:venera_unified/foundation/consts.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/layout_policy.dart';
@@ -140,6 +141,23 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
 
   late String readFilterSelect;
 
+  HistoryManager? _history;
+  List<FavoriteItem>? _displayedCache;
+  List<FavoriteItem>? _visibleCache;
+  late var _keywordFilter = KeywordFilter.fromSettings(appdata.settings);
+
+  bool get _usesReadingFilter =>
+      !searchMode &&
+      (readFilterSelect == 'UnCompleted' || readFilterSelect == 'Completed');
+
+  void _invalidateDisplay() {
+    _displayedCache = null;
+    _visibleCache = null;
+  }
+
+  List<FavoriteItem> get _displayedComics =>
+      _displayedCache ??= searchMode ? searchResults : filterComics(comics);
+
   var searchResults = <FavoriteItem>[];
 
   void updateSearchResult() {
@@ -147,14 +165,26 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
   }
 
   void _refreshSearchResults() {
+    _invalidateDisplay();
     if (keyword.trim().isEmpty) {
       searchResults = comics;
     } else {
+      final variants =
+          <String>{
+                keyword,
+                if (OpenCC.hasChineseSimplified(keyword))
+                  OpenCC.simplifiedToTraditional(keyword),
+                if (OpenCC.hasChineseTraditional(keyword))
+                  OpenCC.traditionalToSimplified(keyword),
+              }
+              .map(
+                (value) =>
+                    value.split(' ').where((word) => word.isNotEmpty).toList(),
+              )
+              .toList();
       searchResults = [];
       for (var comic in comics) {
-        if (matchKeyword(keyword, comic) ||
-            matchKeywordT(keyword, comic) ||
-            matchKeywordS(keyword, comic)) {
+        if (variants.any((words) => _matchSearchWords(words, comic))) {
           searchResults.add(comic);
         }
       }
@@ -163,14 +193,15 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
 
   void _replaceComics(List<FavoriteItem> value) {
     comics = value;
+    _invalidateDisplay();
     if (searchMode) _refreshSearchResults();
     _reconcileSelection();
   }
 
   List<FavoriteItem> get _visibleComics {
-    final filter = KeywordFilter.fromSettings(appdata.settings);
-    return (searchMode ? searchResults : filterComics(comics))
-        .where((comic) => isBlocked(comic, filter: filter) == null)
+    if (_visibleCache case final cached?) return cached;
+    return _visibleCache = _displayedComics
+        .where((comic) => isBlocked(comic, filter: _keywordFilter) == null)
         .toList();
   }
 
@@ -185,7 +216,24 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
   }
 
   void _onSettingsChanged() {
-    if (_canReadObservedFolder) setState(_reconcileSelection);
+    final filter = KeywordFilter.fromSettings(appdata.settings);
+    if (_canReadObservedFolder &&
+        !listEquals(filter.rules, _keywordFilter.rules)) {
+      _keywordFilter = filter;
+      setState(() {
+        _invalidateDisplay();
+        _reconcileSelection();
+      });
+    }
+  }
+
+  void _onHistoryChanged() {
+    if (_canReadObservedFolder && _usesReadingFilter) {
+      setState(() {
+        _invalidateDisplay();
+        _reconcileSelection();
+      });
+    }
   }
 
   /// Persists the fallback to the overview after the open folder disappears.
@@ -272,22 +320,25 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
   }
 
   List<FavoriteItem> filterComics(List<FavoriteItem> curComics) {
+    if (curComics.isEmpty || !_usesReadingFilter) return curComics;
+    final historyManager = _history;
+    final completed = historyManager?.isInitialized == true
+        ? historyManager!.completedAmong(
+            curComics.map((comic) => (comic.id, comic.type.value)),
+          )
+        : const <(String, int)>{};
     return curComics.where((comic) {
-      var history = HistoryScope.read(
-        context,
-      ).find(comic.id, ComicType(comic.sourceKey.hashCode));
       if (readFilterSelect == "UnCompleted") {
-        return history == null || history.page != history.maxPage;
+        return !completed.contains((comic.id, comic.type.value));
       } else if (readFilterSelect == "Completed") {
-        return history != null && history.page == history.maxPage;
+        return completed.contains((comic.id, comic.type.value));
       }
       return true;
     }).toList();
   }
 
-  bool matchKeyword(String keyword, FavoriteItem comic) {
-    var list = keyword.split(" ");
-    for (var k in list) {
+  bool _matchSearchWords(Iterable<String> words, FavoriteItem comic) {
+    for (var k in words) {
       if (k.isEmpty) continue;
       if (checkKeyWordMatch(k, comic.title, false)) {
         continue;
@@ -327,24 +378,6 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
     return temp.contains(keyword);
   }
 
-  // Convert keyword to traditional Chinese to match comics
-  bool matchKeywordT(String keyword, FavoriteItem comic) {
-    if (!OpenCC.hasChineseSimplified(keyword)) {
-      return false;
-    }
-    keyword = OpenCC.simplifiedToTraditional(keyword);
-    return matchKeyword(keyword, comic);
-  }
-
-  // Convert keyword to simplified Chinese to match comics
-  bool matchKeywordS(String keyword, FavoriteItem comic) {
-    if (!OpenCC.hasChineseTraditional(keyword)) {
-      return false;
-    }
-    keyword = OpenCC.traditionalToSimplified(keyword);
-    return matchKeyword(keyword, comic);
-  }
-
   @override
   void initState() {
     super.initState();
@@ -364,6 +397,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
       networkFolder = null;
     }
     comics = [];
+    _keywordFilter = KeywordFilter.fromSettings(appdata.settings);
     _observedManager.addListener(updateComics);
     appdata.settings.addListener(_onSettingsChanged);
   }
@@ -371,6 +405,15 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final history =
+        context.dependOnInheritedWidgetOfExactType<HistoryScope>()?.manager ??
+        HistoryScope.read(context);
+    if (!identical(history, _history)) {
+      _history?.removeListener(_onHistoryChanged);
+      _history = history..addListener(_onHistoryChanged);
+      _invalidateDisplay();
+      _reconcileSelection();
+    }
     if (_queryOwner != null) return;
     _queryOwner = WindowSelectionTask(context);
     updateComics();
@@ -417,6 +460,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
     _cancelMetadataUpdates();
     _retireUpdateFlyout();
     _observedManager.removeListener(updateComics);
+    _history?.removeListener(_onHistoryChanged);
     appdata.settings.removeListener(_onSettingsChanged);
     scrollController.dispose();
     super.dispose();
@@ -456,7 +500,8 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
       setState(() {
         searchMode = false;
         keyword = '';
-        updateComics();
+        _invalidateDisplay();
+        _reconcileSelection();
       });
       return true;
     }
@@ -567,7 +612,7 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
       target.onFolderSelected(false, parent.name);
     }
 
-    final displayedComics = searchMode ? searchResults : filterComics(comics);
+    final displayedComics = _displayedComics;
 
     Widget body = SmoothCustomScrollView(
       controller: scrollController,
@@ -686,8 +731,9 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                             }
                             setState(() {
                               readFilterSelect = readFilter;
+                              _invalidateDisplay();
+                              _reconcileSelection();
                             });
-                            updateComics();
                           },
                         );
                       },
@@ -702,8 +748,9 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                   onPressed: () {
                     setState(() {
                       keyword = "";
+                      searchHasUpper = false;
                       searchMode = true;
-                      updateSearchResult();
+                      _refreshSearchResults();
                     });
                   },
                 ),
@@ -1182,9 +1229,10 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
                 icon: const Icon(Icons.close),
                 onPressed: () {
                   setState(() {
-                    setState(() {
-                      searchMode = false;
-                    });
+                    searchMode = false;
+                    keyword = '';
+                    _invalidateDisplay();
+                    _reconcileSelection();
                   });
                 },
               ),
@@ -1440,11 +1488,17 @@ class _LocalFavoritesPageState extends State<LocalFavoritesPage> {
       ),
     );
     if (multiSelectMode || searchMode) {
-      body = CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.escape): _dismissLocalMode,
+      body = Focus(
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.escape &&
+              _dismissLocalMode()) {
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
         },
-        child: Focus(autofocus: true, child: body),
+        child: body,
       );
     }
     return PopScope(

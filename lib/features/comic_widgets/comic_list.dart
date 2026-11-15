@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:collection';
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/keyword_filter.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/services.dart';
 import 'package:venera_unified/components/button.dart';
 import 'package:venera_unified/components/gesture.dart';
@@ -61,22 +63,43 @@ class SliverGridComics extends StatefulWidget {
 class _SliverGridComicsState extends State<SliverGridComics> {
   List<Comic> comics = [];
   List<int> heroIDs = [];
+  List<Comic> _inputSnapshot = [];
+  late var _filter = KeywordFilter.fromSettings(appdata.settings);
+  late var _presentation = _readPresentation();
+
+  Object _readPresentation() {
+    final preferences = GlobalPreferenceStore(appdata.settings);
+    final favorite = comicFavoriteDisplayState();
+    return (
+      preferences.read(DiscoveryPreferences.comicDisplayMode),
+      preferences.read(DiscoveryPreferences.comicTileScale),
+      preferences.read(DiscoveryPreferences.showFavoriteStatusOnTile),
+      preferences.read(DiscoveryPreferences.showHistoryStatusOnTile),
+      preferences.read(DiscoveryPreferences.showDetailedReadingProgress),
+      preferences.read(DiscoveryPreferences.showUpdateStatusOnTile),
+      appdata.settings['language'],
+      favorite.isGallery,
+      favorite.galleryColumns,
+    );
+  }
 
   static int _nextHeroID = 0;
 
   void _refreshComics() {
-    final previousIDs = <(String, String), List<int>>{};
+    _inputSnapshot = List.of(widget.comics);
+    final previousIDs = <(String, String), Queue<int>>{};
     for (var i = 0; i < comics.length; i++) {
-      (previousIDs[(comics[i].sourceKey, comics[i].id)] ??= []).add(heroIDs[i]);
+      (previousIDs[(comics[i].sourceKey, comics[i].id)] ??= Queue<int>()).add(
+        heroIDs[i],
+      );
     }
-    final filter = KeywordFilter.fromSettings(appdata.settings);
     comics = widget.comics
-        .where((comic) => isBlocked(comic, filter: filter) == null)
+        .where((comic) => isBlocked(comic, filter: _filter) == null)
         .toList();
     heroIDs = [
       for (final comic in comics)
         switch (previousIDs[(comic.sourceKey, comic.id)]) {
-          final ids? when ids.isNotEmpty => ids.removeAt(0),
+          final ids? when ids.isNotEmpty => ids.removeFirst(),
           _ => _nextHeroID++,
         },
     ];
@@ -84,29 +107,52 @@ class _SliverGridComicsState extends State<SliverGridComics> {
 
   @override
   void didUpdateWidget(covariant SliverGridComics oldWidget) {
-    _refreshComics();
     super.didUpdateWidget(oldWidget);
+    // Equality on Comic only compares identity, so replacement metadata must
+    // refresh too. Keep a snapshot to detect callers mutating the input list.
+    if (widget.comics.length != _inputSnapshot.length ||
+        Iterable<int>.generate(widget.comics.length).any(
+          (index) => !identical(widget.comics[index], _inputSnapshot[index]),
+        )) {
+      _refreshComics();
+    }
   }
 
   @override
   void initState() {
     _refreshComics();
-    addComicWidgetStateListener(update);
+    _presentation = _readPresentation();
+    addComicWidgetStateListener(_onComicStatusChanged);
     appdata.settings.addListener(_onSettingsChanged);
     super.initState();
   }
 
   @override
   void dispose() {
-    removeComicWidgetStateListener(update);
+    removeComicWidgetStateListener(_onComicStatusChanged);
     appdata.settings.removeListener(_onSettingsChanged);
     super.dispose();
   }
 
   void _onSettingsChanged() {
-    if (mounted) {
-      update();
-    }
+    if (!mounted) return;
+    final filter = KeywordFilter.fromSettings(appdata.settings);
+    final presentation = _readPresentation();
+    final rulesChanged = !listEquals(filter.rules, _filter.rules);
+    if (!rulesChanged && presentation == _presentation) return;
+    setState(() {
+      _presentation = presentation;
+      if (rulesChanged) {
+        _filter = filter;
+        _refreshComics();
+      }
+    });
+  }
+
+  void _onComicStatusChanged() {
+    // Favorite/history badges change independently of list membership. The
+    // caller supplies replacement metadata through didUpdateWidget.
+    if (mounted) setState(() {});
   }
 
   void update() {
