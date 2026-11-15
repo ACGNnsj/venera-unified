@@ -7,7 +7,7 @@
       "checkout_commit": "29c3b0202b01d06f849fc0f0eec1cca3bce52d1f",
       "source_tree_sha": "e88f2572ce359b4af8d2cb5859fa902aad249ebe",
       "quality_run": "43434471214",
-      "expected_skips": 169
+      "expected_skips": 170
     },
     "windows": {
       "kind": "executed",
@@ -410,6 +410,13 @@
           "ocr native matches Dart pixels and clears both gates"
         ],
         "reason": "venera_ocr_preprocess 未为此平台构建；测试按设计 skip。"
+      },
+      {
+        "path": "test/foundation/image_translation/inpaint_native_test.dart",
+        "cases": [
+          "inpaint native matches Dart pixels and is >=2x faster"
+        ],
+        "reason": "venera_inpaint 未为此平台构建（InpaintNative.available 为假）；测试按设计 skip，本地 Windows 有库时实际执行。"
       },
       {
         "path": "test/features/comic_source/source_selfhost_test.dart",

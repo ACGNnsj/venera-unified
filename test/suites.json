@@ -336,29 +336,29 @@
         "test/native/*_test.kt"
       ],
       "kind": "native-jvm",
-      "entry": "python .github/scripts/run_android_jvm_tests.py (Linux / Java 17 / Kotlin 2.1.0)",
+      "entry": "python .github/scripts/run_android_jvm_tests.py (Linux / Java 17 / Kotlin 2.2.20)",
       "ci": ".github/workflows/analyze.yml / android-jvm",
       "jvm_groups": [
         {
           "test": "test/native/download_session_state_test.kt",
           "sources": [
-            "android/app/src/main/kotlin/com/github/cyrilpeng/veneranext/DownloadSessionState.kt"
+            "android/app/src/main/kotlin/io/github/venera/unified/DownloadSessionState.kt"
           ],
-          "main": "com.github.cyrilpeng.veneranext.Download_session_state_testKt"
+          "main": "io.github.venera.unified.Download_session_state_testKt"
         },
         {
           "test": "test/native/selected_file_storage_test.kt",
           "sources": [
-            "android/app/src/main/kotlin/com/github/cyrilpeng/veneranext/SelectedFileStorage.kt"
+            "android/app/src/main/kotlin/io/github/venera/unified/SelectedFileStorage.kt"
           ],
           "main": "Selected_file_storage_testKt"
         },
         {
           "test": "test/native/volume_key_subscriptions_test.kt",
           "sources": [
-            "android/app/src/main/kotlin/com/github/cyrilpeng/veneranext/VolumeKeySubscriptions.kt"
+            "android/app/src/main/kotlin/io/github/venera/unified/VolumeKeySubscriptions.kt"
           ],
-          "main": "com.github.cyrilpeng.veneranext.Volume_key_subscriptions_testKt"
+          "main": "io.github.venera.unified.Volume_key_subscriptions_testKt"
         }
       ]
     },

@@ -109,7 +109,20 @@ bool _isUpdateEndpointInfrastructureError(Object error) {
   while (current is OperationFailure) {
     current = current.cause;
   }
+  // Any dart:io transport failure (socket reset, TLS handshake, redirect
+  // loop, proxy close) says nothing about the flavor wiring under test.
+  if (current is IOException) return true;
   if (current is SocketException || current is TimeoutException) return true;
+  if (current is FormatException) {
+    // The service surfaces non-200 update-endpoint answers as
+    // FormatException('Unexpected release status: N'). Rate-limit and
+    // shared-egress answers (403/429/5xx) are infrastructure; anything else
+    // (404 included) still fails: the endpoint itself is wrong.
+    final status = RegExp(r'\b(40[39]|42[49]|50[0234])\b')
+        .firstMatch(current.message)
+        ?.group(1);
+    return status != null;
+  }
   if (current is DioException) {
     switch (current.type) {
       case DioExceptionType.connectionTimeout:
