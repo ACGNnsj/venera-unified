@@ -75,7 +75,7 @@ Future<void> _renameFavoriteFolder(
     final error = validateFolderName(
       name,
       folders: manager.folderNames,
-      renaming: folder,
+      currentName: folder,
     );
     if (error != null) return error;
     try {

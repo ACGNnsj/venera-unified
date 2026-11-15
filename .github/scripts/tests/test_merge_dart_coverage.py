@@ -1,57 +1,64 @@
+from pathlib import Path
+import sys
 import tempfile
 import unittest
-import sys
-from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(SCRIPT_DIR))
-
-from merge_dart_coverage import merge_reports, write_report
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from merge_dart_coverage import merge, source_path
 
 
-class MergeDartCoverageTest(unittest.TestCase):
-    def _write(self, temp_dir, name, body):
-        path = Path(temp_dir) / name
-        path.write_text(body, encoding="utf-8")
+def record(source, counts):
+    return '\n'.join([f'SF:{source}', *[f'DA:{line},{count}' for line, count in counts],
+                      f'LF:{len(counts)}', f'LH:{sum(count > 0 for _, count in counts)}', 'end_of_record']) + '\n'
+
+
+class DartCoverageMergeTest(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.output = self.root / 'coverage/lcov.info'
+
+    def write(self, name, text):
+        path = self.root / name
+        path.write_text(text, encoding='utf-8')
         return path
 
-    def test_takes_max_hit_count_for_lines_covered_by_both_shards(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            first = self._write(temp_dir, "a.info", "SF:lib/a.dart\nDA:1,3\nDA:2,0\nend_of_record\n")
-            second = self._write(temp_dir, "b.info", "SF:lib/a.dart\nDA:1,1\nDA:2,2\nend_of_record\n")
+    def test_overlapping_paths_and_lines_share_one_denominator_and_sum_counts(self):
+        first = self.write('first.info', record('lib\\reader.dart', [(1, 2), (2, 0)]))
+        second = self.write('second.info', record(str(self.root / 'lib/reader.dart'), [(1, 3), (2, 1), (3, 0)])
+                            + record('lib/other.dart', [(8, 1)]))
+        result = merge([first, second], self.output, root=self.root)
+        self.assertEqual((result['files'], result['recorded_lines'], result['hit_lines']), (2, 4, 3))
+        contents = self.output.read_text(encoding='utf-8')
+        self.assertEqual(contents.count('SF:lib/reader.dart'), 1)
+        self.assertIn('DA:1,5\nDA:2,1\nDA:3,0\nLF:3\nLH:2', contents)
 
-            merged = merge_reports([first, second])
+    def test_empty_truncated_duplicate_and_invalid_line_reports_fail(self):
+        invalid = ['', 'SF:lib/a.dart\nDA:1,1\n',
+                   record('lib/a.dart', [(1, -1)]),
+                   'SF:lib/a.dart\nDA:1,1\nDA:1,2\nLF:2\nLH:2\nend_of_record\n',
+                   'SF:lib/a.dart\nDA:1,1\nLF:99\nLH:1\nend_of_record\n']
+        for index, text in enumerate(invalid):
+            with self.subTest(index=index):
+                path = self.write(f'invalid-{index}.info', text)
+                with self.assertRaises(ValueError):
+                    merge([path], self.output, root=self.root)
+        valid = self.write('valid.info', record('lib/a.dart', [(1, 1)]))
+        with self.assertRaises(ValueError):
+            merge([valid, valid], self.output, root=self.root)
 
-            self.assertEqual(merged, {"lib/a.dart": {1: 3, 2: 2}})
+    def test_different_source_checksums_cannot_be_combined(self):
+        first = self.write('first.info', 'SF:lib/a.dart\nDA:1,1,abc\nLF:1\nLH:1\nend_of_record\n')
+        second = self.write('second.info', 'SF:lib/a.dart\nDA:1,2,def\nLF:1\nLH:1\nend_of_record\n')
+        with self.assertRaisesRegex(ValueError, 'Different source checksums'):
+            merge([first, second], self.output, root=self.root)
 
-    def test_merges_disjoint_files_and_writes_sorted_output(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            first = self._write(temp_dir, "a.info", "SF:lib/b.dart\nDA:5,1\nend_of_record\n")
-            second = self._write(temp_dir, "b.info", "SF:lib/a.dart\nDA:2,0\nDA:1,1\nend_of_record\n")
-            output = Path(temp_dir) / "out" / "lcov.info"
-
-            write_report(merge_reports([first, second]), output)
-
-            self.assertEqual(
-                output.read_text(encoding="utf-8"),
-                "SF:lib/a.dart\nDA:1,1\nDA:2,0\nend_of_record\n"
-                "SF:lib/b.dart\nDA:5,1\nend_of_record\n",
-            )
-
-    def test_rejects_line_records_outside_a_source_block(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            path = self._write(temp_dir, "a.info", "DA:1,1\n")
-
-            with self.assertRaisesRegex(ValueError, "outside a source file"):
-                merge_reports([path])
-
-    def test_rejects_report_without_line_records(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            output = Path(temp_dir) / "lcov.info"
-
-            with self.assertRaisesRegex(ValueError, "line coverage records"):
-                write_report({"lib/a.dart": {}}, output)
+    def test_sources_cannot_escape_the_checkout(self):
+        for value in ['../outside.dart', '/outside.dart', 'Z:/another/checkout.dart']:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                source_path(value, self.root)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

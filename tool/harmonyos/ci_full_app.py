@@ -17,75 +17,18 @@ from prepare_probe import LIBRARIES
 from sideload import audit_device_types
 from release_context import build_inputs
 
+sys.path.insert(0, str(ROOT / ".github/scripts"))
+from test_suites import application_tests, load_manifest, paths, select_suite
+from run_flutter_tests import run as run_flutter
+from test_execution import load_skip_policy
+
 
 ASSET_PREFIX = "resources/rawfile/flutter_assets/"
 METADATA_ASSET = ASSET_PREFIX + "assets/harmonyos-app-build.json"
-TESTS = (
-    "test/components/context_menu_test.dart",
-    "test/components/application_update_prompt_test.dart",
-        "test/foundation/application_update_service_test.dart",
-    "test/foundation/harmonyos_test.dart",
-    "test/foundation/directory_selection_test.dart",
-    "test/foundation/selection_operation_test.dart",
-    "test/foundation/file_selection_test.dart",
-    "test/foundation/file_selection_lifecycle_test.dart",
-    "test/foundation/image_processing_test.dart",
-    "test/foundation/image_processing_native_test.dart",
-    "test/foundation/native_codecs_test.dart",
-    "test/foundation/js_native_contract_test.dart",
-    "test/foundation/js_engine_lifecycle_test.dart",
-    "test/foundation/js_owned_result_test.dart",
-    "test/foundation/js_result_descendants_test.dart",
-        "test/features/local_comics/import_export/directory_copy_test.dart",
-        "test/features/favorites/favorite_folder_path_test.dart",
-    "test/features/favorites/favorite_folder_browser_test.dart",
-    "test/features/sync/app_data_archive_test.dart",
-    "test/features/sync/favorite_hierarchy_transfer_test.dart",
-    "test/features/favorites/favorite_hierarchy_test.dart",
-    "test/features/favorites/favorites_manager_test.dart",
-        "test/features/favorites/folder_creation_presentation_test.dart",
-    "test/features/favorites/folder_rename_ownership_test.dart",
-    "test/features/favorites/favorite_folder_import_test.dart",
-    "test/features/favorites/read_later_service_test.dart",
-    "test/features/comic_source/source_web_login_test.dart",
-    "test/routing/webview_menu_test.dart",
-    "test/routing/windows_webview_environment_test.dart",
-    "test/routing/windows_webview_proxy_test.dart",
-    "test/features/sync/comic_archive_batch_test.dart",
-    "test/features/sync/comic_archive_transfer_dialog_test.dart",
-    "test/features/sync/comic_backup_test.dart",
-    "test/features/sync/comic_backup_transport_test.dart",
-    "test/features/sync/comic_backup_i18n_test.dart",
-    "test/features/local_comics/import_export/cbz_compatibility_test.dart",
-    "test/features/local_comics/import_export/cbz_import_lifecycle_test.dart",
-    "test/features/local_comics/import_export/epub_import_test.dart",
-    "test/features/local_comics/import_export/comic_import_service_test.dart",
-    # import_registration_failure_test and pdf_import_test override a pdfrx
-    # member (PdfPageRenderPriority) that the pinned HAP dependency set does
-    # not provide; they are host-only and never packaged, so the HAP subset
-    # leaves them out and the repository runs them on the main SDK.
-    # See HAP_PDFRX_208_TESTS in prepare_full_app.py.
-    "test/features/local_comics/import_export/comic_collection_archive_test.dart",
-    "test/features/local_comics/import_export/collection_layout_dialog_test.dart",
-    "test/features/local_comics/import_export/copy_cleanup_test.dart",
-    "test/features/local_comics/import_export/import_presentation_test.dart",
-    "test/features/local_comics/harmonyos_import_test.dart",
-    "test/features/local_comics/local_archive_visibility_test.dart",
-    "test/features/local_comics/local_registration_storage_test.dart",
-    "test/features/local_comics/local_repository_test.dart",
-        "test/features/comic_widgets/reading_progress_test.dart",
-    "test/features/comic_widgets/detailed_reading_progress_test.dart",
-    "test/features/settings/local_storage_settings_test.dart",
-    "test/features/settings/app_controls_persistence_test.dart",
-    "test/features/comic_details/share_lifecycle_test.dart",
-    "test/features/reader/bottom_actions_test.dart",
-    "test/features/reader/platform_effects_controller_test.dart",
-    "test/features/reader/platform_effects_test.dart",
-    "test/features/reader/reader_exit_integration_test.dart",
-    "test/features/reader/continuous_input_test.dart",
-    "test/features/reader/display_image_provider_test.dart",
-    "test/features/reader/scroll_aware_display_image_test.dart",
-)
+def host_tests():
+    manifest = load_manifest(ROOT / "test/suites.json")
+    sources = {path: (ROOT / path).read_text(encoding="utf-8") for path in application_tests(paths(ROOT))}
+    return select_suite(manifest, "harmonyos-host", sources, root=ROOT)
 
 
 def audit_full_hap(hap, metadata, expected_assets):
@@ -132,12 +75,14 @@ def audit_full_hap(hap, metadata, expected_assets):
         for name, checksum in expected_assets.items():
             if hashlib.sha256(archive.read(ASSET_PREFIX + name)).hexdigest() != checksum:
                 raise ValueError(f"Rewritten/missing real application asset: {name}")
-        return {"bundle_name": app["bundleName"], "version_name": app["versionName"], "version_code": app["versionCode"],
+        return {"bundle_name": app["bundleName"], "app_label": app_label, "version_name": app["versionName"], "version_code": app["versionCode"],
                 "minimum_api": app["minAPIVersion"], "target_api": app["targetAPIVersion"],
                 "device_types": metadata["device_types"], "libraries": records, "asset_count": len(expected_assets)}
 
 
 def check_real_source(metadata):
+    if metadata["source_files"].get(LABEL_SOURCE) != digest(ROOT / LABEL_SOURCE):
+        raise ValueError("Prepared native launcher label policy differs")
     for name, checksum in metadata["source_files"].items():
         if name.startswith("lib/") and digest(PROJECT / name) != checksum:
             raise ValueError(f"Prepared application Dart source differs: {name}")
@@ -168,9 +113,6 @@ def build(flutter_sdk):
             if native["sdk_profile"] != "harmony-ci" or native["sdk_api"] != 26:
                 raise ValueError("Cloud reader HAP requires fresh API 26 libraries")
         flutter = flutter_sdk / "bin/flutter"
-        # Integration tests are host-side and never packaged, but test/ imports
-        # shared fixtures from integration_test/, so the prepared tree is
-        # analyzed with that directory present and its sources left alone.
         run_logged([flutter, "analyze", "--no-pub", "--fatal-infos", "--fatal-warnings"], "full-app-analyze", PROJECT)
         host = require_within(BASE / "full-host", BASE)
         host_sources = {"flutter_qjs": BASE / "deps/flutter_qjs", "zip_flutter": DEPS / "zip_flutter",
@@ -179,14 +121,26 @@ def build(flutter_sdk):
                     "-DCMAKE_BUILD_TYPE=Release", *[f"-D{name.upper()}_ROOT={path}" for name, path in host_sources.items()]], "full-app-host-prepare")
         run_logged(["cmake", "--build", host, "--parallel", "2"], "full-app-host-build")
         previous_path = os.environ.get("LD_LIBRARY_PATH", "")
+        previous_required = os.environ.get("VENERA_REQUIRE_NATIVE_TEST_LIBRARIES")
         os.environ["LD_LIBRARY_PATH"] = str(host / "lib") + (":" + previous_path if previous_path else "")
+        os.environ["VENERA_REQUIRE_NATIVE_TEST_LIBRARIES"] = "1"
         try:
-            run_logged([flutter, "test", "--no-pub", "--concurrency", "2", "--reporter", "expanded", *TESTS], "full-app-test", PROJECT)
+            tests = host_tests()
+            command = [str(flutter), "test", "--no-pub", "--concurrency", "2", "--machine", *tests]
+            code = run_flutter(command, CI / "full-app-tests", root=PROJECT, expected=tests,
+                               execution_group="harmonyos-host",
+                               skip_policy=load_skip_policy(load_manifest(ROOT / "test/suites.json"), root=ROOT))
+            if code:
+                raise subprocess.CalledProcessError(code, command)
         finally:
             if previous_path:
                 os.environ["LD_LIBRARY_PATH"] = previous_path
             else:
                 os.environ.pop("LD_LIBRARY_PATH", None)
+            if previous_required is None:
+                os.environ.pop("VENERA_REQUIRE_NATIVE_TEST_LIBRARIES", None)
+            else:
+                os.environ["VENERA_REQUIRE_NATIVE_TEST_LIBRARIES"] = previous_required
         run_logged([flutter, "build", "hap", "--release", "--no-codesign", "--target-platform", "ohos-arm64", "--no-pub", "--target", "lib/main.dart",
                     "--build-name", metadata["hap_version_name"], "--build-number", str(metadata["version_code"])], "full-app-build", PROJECT)
         check_real_source(metadata)
@@ -199,7 +153,7 @@ def build(flutter_sdk):
         release = metadata.get("release") is not None
         artifacts = CI / ("release-artifacts" if release else "full-app-artifacts")
         artifacts.mkdir(parents=True, exist_ok=True)
-        exported = artifacts / f"VeneraUnified-{metadata['version_name']}-harmonyos-arm64-unsigned.hap"
+        exported = artifacts / f"VeneraNext-{metadata['version_name']}-harmonyos-arm64-unsigned.hap"
         shutil.copy2(haps[0], exported)
         if digest(exported) != digest(haps[0]):
             raise ValueError("Exported reader HAP differs from the audited bytes")

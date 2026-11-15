@@ -31,7 +31,7 @@ class _App {
   bool get isDesktop =>
       Platform.isWindows || Platform.isLinux || Platform.isMacOS;
 
-  bool get isMobile => Platform.isAndroid || Platform.isIOS;
+  bool get isMobile => Platform.isAndroid || Platform.isIOS || isHarmonyOS;
 
   // Whether the app has been initialized.
   // If current Isolate is main Isolate, this value is always true.

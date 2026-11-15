@@ -18,18 +18,26 @@ void main() {
 
   test('a rename may change only the letter case of its own name', () {
     expect(
-      validateFolderName('books', folders: const ['Books'], renaming: 'Books'),
+      validateFolderName(
+        'books',
+        folders: const ['Books'],
+        currentName: 'Books',
+      ),
       isNull,
     );
     expect(
-      validateFolderName('BOOKS', folders: const ['Books'], renaming: 'Books'),
+      validateFolderName(
+        'BOOKS',
+        folders: const ['Books'],
+        currentName: 'Books',
+      ),
       isNull,
     );
     expect(
       validateFolderName(
         'Books',
         folders: const ['Books', 'other'],
-        renaming: 'other',
+        currentName: 'other',
       ),
       isNotNull,
     );
@@ -40,7 +48,7 @@ void main() {
       validateFolderName(
         'books',
         folders: const ['Books', 'other'],
-        renaming: 'other',
+        currentName: 'other',
       ),
       isNotNull,
     );
@@ -48,7 +56,7 @@ void main() {
       validateFolderName(
         'other',
         folders: const ['Books', 'other'],
-        renaming: 'other',
+        currentName: 'other',
       ),
       isNull,
     );
