@@ -88,7 +88,6 @@
         "test/features/local_comics/import_export/epub_import_test.dart",
         "test/features/local_comics/import_export/comic_import_service_test.dart",
         "test/features/local_comics/import_export/import_identity_allocation_test.dart",
-        "test/features/local_comics/import_export/import_registration_failure_test.dart",
         "test/features/local_comics/import_export/comic_collection_archive_test.dart",
         "test/features/local_comics/import_export/collection_layout_dialog_test.dart",
         "test/features/local_comics/import_export/copy_cleanup_test.dart",

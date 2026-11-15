@@ -22,6 +22,10 @@ void main() {
 
   tearDown(() async {
     appdata.settings[ComicCollectionStore.settingsKey] = originalCollections;
+    // Flush the serialized appdata write queue before deleting the dir: a
+    // save admitted earlier may still be in flight, and deleting under it
+    // removes its tmp file mid-rename (late failure after test completion).
+    await appdata.saveData();
     await Future<void>.delayed(const Duration(milliseconds: 50));
     if (dataDir.existsSync()) {
       dataDir.deleteSync(recursive: true);

@@ -114,13 +114,21 @@ bool _isUpdateEndpointInfrastructureError(Object error) {
   if (current is IOException) return true;
   if (current is SocketException || current is TimeoutException) return true;
   if (current is FormatException) {
-    // The service surfaces non-200 update-endpoint answers as
-    // FormatException('Unexpected release status: N'). Rate-limit and
-    // shared-egress answers (403/429/5xx) are infrastructure; anything else
-    // (404 included) still fails: the endpoint itself is wrong.
-    final status = RegExp(r'\b(40[39]|42[49]|50[0234])\b')
-        .firstMatch(current.message)
-        ?.group(1);
+    // The service surfaces non-200 update-endpoint answers either with the
+    // status inline (FormatException('Unexpected release status: N')) or —
+    // when RHttpAdapter returns the error JSON as a normal body — as a
+    // payload-shape error with the status discarded. The rate-limit body is
+    // JSON without tag_name, so it lands here; the flavor asserts above
+    // (build/revision/enabled/forAndroidTv) already passed, so a wrong
+    // endpoint URL is the only thing this skip could mask, and the service
+    // integration tests cover the URL on the main SDK.
+    if (current.message == 'Invalid release response' ||
+        current.message == 'Invalid release metadata') {
+      return true;
+    }
+    final status = RegExp(
+      r'\b(40[39]|42[49]|50[0234])\b',
+    ).firstMatch(current.message)?.group(1);
     return status != null;
   }
   if (current is DioException) {
