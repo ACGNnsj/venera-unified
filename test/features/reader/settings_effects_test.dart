@@ -1,156 +1,352 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:venera_unified/features/reader/settings_effects.dart';
+import 'package:venera_unified/components/message.dart';
+import 'package:venera_unified/components/window_frame.dart';
+import 'package:venera_unified/features/settings/setting_components.dart';
+import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/routing/app_navigation.dart';
+import 'package:venera_unified/foundation/app_data_operations.dart';
+import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/reader_preferences.dart';
+import 'package:venera_unified/foundation/application_preferences.dart';
+import 'package:venera_unified/foundation/preferences.dart';
+import 'package:window_manager/window_manager.dart';
+
+Future<void> _flush(WidgetTester tester, Future<void> operation) async {
+  var finished = false;
+  Object? failure;
+  operation.then(
+    (_) => finished = true,
+    onError: (Object error) {
+      failure = error;
+      finished = true;
+    },
+  );
+  for (var i = 0; i < 500 && !finished; i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 10)),
+    );
+    await tester.pump();
+  }
+  expect(finished, isTrue, reason: 'The real save must finish');
+  expect(failure, isNull);
+  await operation;
+  await tester.pump();
+}
+
+Directory _prepare() {
+  final root = Directory.systemTemp.createTempSync('settings-persistence-');
+  App.dataPath = root.path;
+  final previous = jsonDecode(jsonEncode(appdata.toJson()['settings'])) as Map;
+  appdata.settings['showPageNumberInReader'] = true;
+  appdata.settings['readerSideMargin'] = 0;
+  appdata.settings['deviceSpecificSettings'] = <String, dynamic>{};
+  appdata.settings['disableSyncFields'] = '';
+  registerShowMessageHandler(
+    (context, message) => showToast(message: message, context: context),
+  );
+  addTearDown(() {
+    registerShowMessageHandler((context, message) {});
+    previous.forEach((key, value) => appdata.settings[key] = value);
+    root.deleteSync(recursive: true);
+  });
+  return root;
+}
+
+Widget _host(Widget child) =>
+    MaterialApp(home: OverlayWidget(Scaffold(body: child)));
 
 void main() {
-  test('settings request keeps ordered reader and shell effects', () {
-    final effects = <String>[];
-    final request = ReaderSettingsRequest(
-      comicId: 'book',
-      sourceKey: 'source',
-      isCurrent: () => true,
-      currentMode: () => 'galleryLeftToRight',
-      isDetectingLayout: () => false,
-      detectLayout: () async {},
-      applyReaderEffect: (effect) => effects.add('reader:${effect.name}'),
-    );
-    void apply(String key) => request.apply(
-      key,
-      applyShellEffect: (effect) => effects.add('shell:${effect.name}'),
-    );
-    apply('readerMode');
-    expect(effects, [
-      'reader:applyMode',
-      'shell:rebindImageGesture',
-      'reader:detectLayout',
-      'reader:rebuildReader',
-    ]);
-    effects.clear();
-    apply('showSystemStatusBar');
-    expect(effects, [
-      'shell:updateSystemUi',
-      'shell:rebuildShell',
-      'reader:rebuildReader',
-    ]);
-    effects.clear();
-    apply('enableTurnPageByVolumeKey');
-    apply('futureReaderOption');
-    expect(effects, [
-      'reader:updateVolumeListener',
-      'reader:rebuildReader',
-      'reader:rebuildReader',
-    ]);
-  });
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-  for (final invalidateAt in [0, 1]) {
-    test(
-      'settings request stops after adapter $invalidateAt changes target',
-      () {
-        final effects = <ReaderSettingEffect>[];
-        var current = true;
-        void record(ReaderSettingEffect effect) {
-          effects.add(effect);
-          if (effects.length == invalidateAt + 1) current = false;
-        }
+  testWidgets(
+    'switch waits for admission and reports success only after persistence',
+    (tester) async {
+      final root = _prepare();
+      var callbacks = 0;
+      await tester.pumpWidget(
+        _host(
+          SwitchSetting.reader(
+            title: 'Page number',
+            preference: ReaderPreferences.showPageNumberInReader,
+            onChanged: () => callbacks++,
+          ),
+        ),
+      );
+      final release = Completer<void>();
+      final exclusive = AppDataOperations.instance.run(() => release.future);
+      final switchBounds = tester.getRect(find.byType(Switch));
+      final titleBounds = tester.getRect(find.text('Page number'));
+      await tester.tap(find.byType(Switch));
+      await tester.pump();
+      expect(appdata.settings['showPageNumberInReader'], isTrue);
+      expect(callbacks, 0);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(Switch), findsOneWidget);
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+      expect(tester.getRect(find.byType(Switch)), switchBounds);
+      expect(tester.getRect(find.text('Page number')), titleBounds);
+      release.complete();
+      await _flush(tester, Future.wait([exclusive, appdata.saveData(false)]));
+      expect(callbacks, 1);
+      expect(
+        jsonDecode(
+          File('${root.path}/appdata.json').readAsStringSync(),
+        )['settings']['showPageNumberInReader'],
+        isFalse,
+      );
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
-        final request = ReaderSettingsRequest(
-          comicId: 'book',
-          sourceKey: 'source',
-          isCurrent: () => current,
-          currentMode: () => 'galleryLeftToRight',
-          isDetectingLayout: () => false,
-          detectLayout: () async {},
-          applyReaderEffect: record,
+  testWidgets(
+    'rapid slider changes keep the final value and window owns unmounted saves',
+    (tester) async {
+      final root = _prepare();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            const MethodChannel('window_manager'),
+            (call) async => false,
+          );
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+              const MethodChannel('window_manager'),
+              null,
+            ),
+      );
+      var showing = true;
+      var exits = 0;
+      var callbacks = 0;
+      late StateSetter updateHost;
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: appNavigation.rootNavigatorKey,
+          builder: (_, child) => WindowFrame(child!, onExit: () => exits++),
+          home: StatefulBuilder(
+            builder: (context, setState) {
+              updateHost = setState;
+              return Scaffold(
+                body: showing
+                    ? SliderSetting.reader(
+                        title: 'Margin',
+                        preference: ReaderPreferences.readerSideMargin,
+                        onChanged: () => callbacks++,
+                      )
+                    : const Text('Closed settings'),
+              );
+            },
+          ),
+        ),
+      );
+      final release = Completer<void>();
+      final exclusive = AppDataOperations.instance.run(() => release.future);
+      final change = tester.widget<Slider>(find.byType(Slider)).onChanged!;
+      change(5);
+      change(10);
+      change(20);
+      await tester.pump();
+      expect(tester.widget<Slider>(find.byType(Slider)).value, 20);
+      expect(appdata.settings['readerSideMargin'], 0);
+      updateHost(() => showing = false);
+      await tester.pump();
+      (tester.state(find.byType(WindowFrame)) as WindowListener)
+          .onWindowClose();
+      await tester.pump();
+      expect(exits, 0);
+      release.complete();
+      await _flush(tester, Future.wait([exclusive, appdata.saveData(false)]));
+      for (var i = 0; i < 10 && exits == 0; i++) {
+        await tester.pump(const Duration(milliseconds: 10));
+      }
+      expect(exits, 1);
+      expect(callbacks, 0);
+      final value = jsonDecode(
+        File('${root.path}/appdata.json').readAsStringSync(),
+      )['settings']['readerSideMargin'];
+      expect(value, 20);
+      expect(value, isA<int>());
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  for (final (width, typed) in [
+    for (final width in [360.0, 600.0])
+      for (final typed in [false, true]) (width, typed),
+  ]) {
+    testWidgets(
+      'nullable selector rejects a late selection for a replaced field at $width (typed=$typed)',
+      (tester) async {
+        _prepare();
+        tester.view.physicalSize = Size(width, 720);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        appdata.settings['defaultSearchTarget'] = null;
+        appdata.settings['initialPage'] = '0';
+        var key = 'defaultSearchTarget';
+        late StateSetter updateHost;
+        await tester.pumpWidget(
+          _host(
+            StatefulBuilder(
+              builder: (context, setState) {
+                updateHost = setState;
+                if (typed) {
+                  return SelectSetting.preference(
+                    title: 'Choose target',
+                    preference: key == 'defaultSearchTarget'
+                        ? DiscoveryPreferences.defaultSearchTarget
+                        : const StringPreference('initialPage', '0'),
+                    optionTranslation: const {
+                      '0': 'Default option',
+                      'other': 'Other option',
+                    },
+                  );
+                }
+                return SelectSetting(
+                  title: 'Choose target',
+                  settingKey: key,
+                  optionTranslation: const {
+                    '0': 'Default option',
+                    'other': 'Other option',
+                  },
+                );
+              },
+            ),
+          ),
         );
-        request.apply('readerMode', applyShellEffect: record);
-        expect(effects, [
-          ReaderSettingEffect.applyMode,
-          if (invalidateAt == 1) ReaderSettingEffect.rebindImageGesture,
-        ]);
-        request.apply('readerMode', applyShellEffect: record);
-        expect(effects.length, invalidateAt + 1);
+        expect(tester.takeException(), isNull);
+        await tester.tap(
+          width < 450
+              ? find.byType(ListTile)
+              : find.byIcon(Icons.arrow_drop_down),
+        );
+        await tester.pumpAndSettle();
+        updateHost(() => key = 'initialPage');
+        await tester.pump();
+        await tester.tap(find.text('Other option').last);
+        await tester.pumpAndSettle();
+        await _flush(tester, appdata.saveData(false));
+        expect(appdata.settings['initialPage'], '0');
+        expect(appdata.settings['defaultSearchTarget'], isNull);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
       },
     );
   }
 
-  test(
-    'retired settings do not read new state or restart actual detection',
-    () async {
-      var current = true;
-      var mode = 'galleryLeftToRight';
-      var started = 0;
-      final detection = Completer<void>();
-      final request = ReaderSettingsRequest(
-        comicId: 'book',
-        sourceKey: 'source',
-        isCurrent: () => current,
-        currentMode: () => mode,
-        isDetectingLayout: () => true,
-        detectLayout: () {
-          started++;
-          return detection.future;
-        },
-        applyReaderEffect: (_) => fail('Retired settings applied an effect'),
-      );
-      expect(request.isDetectingLayout, isTrue);
-      var finished = false;
-      final pending = request.detectLayout().then((_) => finished = true);
-      current = false;
-      mode = 'continuousTopToBottom';
-      expect(request.currentMode, 'galleryLeftToRight');
-      expect(request.isDetectingLayout, isFalse);
-      await request.detectLayout();
-      expect(started, 1);
-      expect(finished, isFalse);
-      request.apply(
-        'readerMode',
-        applyShellEffect: (_) => fail('Shell effect'),
-      );
-      detection.complete();
-      await pending;
-      expect(finished, isTrue);
-    },
-  );
-
-  test(
-    'every registered and unknown setting refreshes view inputs exactly once',
-    () {
-      for (final key in [
-        ...ReaderPreferences.all.map((preference) => preference.key),
-        'futureReaderOption',
-        'readerBrightnessFutureOption',
-        'eInkRefreshFutureOption',
-      ]) {
-        final effects = readerSettingEffects(key).toList();
-        expect(effects.last, ReaderSettingEffect.rebuildReader, reason: key);
-        expect(effects.toSet().length, effects.length, reason: key);
-        if (effects.contains(ReaderSettingEffect.updateSystemUi)) {
-          expect(
-            effects.indexOf(ReaderSettingEffect.updateSystemUi),
-            lessThan(effects.indexOf(ReaderSettingEffect.rebuildShell)),
+  for (final width in [360.0, 600.0]) {
+    testWidgets(
+      'selector remains stable and accepts the latest edit while saving at $width',
+      (tester) async {
+        final root = _prepare();
+        tester.view.physicalSize = Size(width, 720);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        appdata.settings['initialPage'] = '0';
+        var callbacks = 0;
+        await tester.pumpWidget(
+          _host(
+            MediaQuery(
+              data: MediaQueryData(
+                size: Size(width, 720),
+                textScaler: TextScaler.linear(1.8),
+              ),
+              child: SelectSetting.preference(
+                title: 'Layout',
+                preference: const StringPreference('initialPage', '0'),
+                optionTranslation: const {'0': 'One', '1': 'Two'},
+                onChanged: () => callbacks++,
+              ),
+            ),
+          ),
+        );
+        final tileBounds = tester.getRect(find.byType(ListTile));
+        final titleBounds = tester.getRect(find.text('Layout'));
+        final release = Completer<void>();
+        final exclusive = AppDataOperations.instance.run(() => release.future);
+        Future<void> choose(String value) async {
+          await tester.tap(
+            width < 450
+                ? find.byType(ListTile)
+                : find.byIcon(Icons.arrow_drop_down),
           );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 400));
+          await tester.tap(find.text(value).last);
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 400));
         }
-      }
-    },
-  );
 
-  test('mode change applies before gesture rebinding and layout detection', () {
-    final effects = readerSettingEffects(
-      ReaderPreferences.readerMode.key,
-    ).toList();
-    expect(effects, [
-      ReaderSettingEffect.applyMode,
-      ReaderSettingEffect.rebindImageGesture,
-      ReaderSettingEffect.detectLayout,
-      ReaderSettingEffect.rebuildReader,
-    ]);
-    // A gesture-only change must not restart detection or change the mode.
-    final gesture = readerSettingEffects(
-      ReaderPreferences.quickCollectImage.key,
+        await choose('Two');
+        expect(find.byIcon(Icons.arrow_drop_down), findsOneWidget);
+        expect(tester.getRect(find.byType(ListTile)), tileBounds);
+        expect(tester.getRect(find.text('Layout')), titleBounds);
+        expect(callbacks, 0);
+        await choose('One');
+        release.complete();
+        await _flush(tester, Future.wait([exclusive, appdata.saveData(false)]));
+        expect(callbacks, 1);
+        expect(tester.getRect(find.byType(ListTile)), tileBounds);
+        expect(
+          jsonDecode(
+            File('${root.path}/appdata.json').readAsStringSync(),
+          )['settings']['initialPage'],
+          '0',
+        );
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      },
     );
-    expect(gesture, isNot(contains(ReaderSettingEffect.applyMode)));
-    expect(gesture, isNot(contains(ReaderSettingEffect.detectLayout)));
+  }
+
+  testWidgets('failed save has no success callback and can be saved again', (
+    tester,
+  ) async {
+    final root = _prepare();
+    final blockedFile = Directory('${root.path}/appdata.json')..createSync();
+    var callbacks = 0;
+    await tester.pumpWidget(
+      _host(
+        SwitchSetting.reader(
+          title: 'Page number',
+          preference: ReaderPreferences.showPageNumberInReader,
+          onChanged: () => callbacks++,
+        ),
+      ),
+    );
+    await tester.tap(find.byType(Switch));
+    await tester.pump();
+    for (
+      var i = 0;
+      i < 500 && find.byType(CircularProgressIndicator).evaluate().isNotEmpty;
+      i++
+    ) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump();
+    }
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(callbacks, 0);
+    expect(find.textContaining('appdata.json'), findsWidgets);
+    expect(tester.takeException(), isNull);
+    blockedFile.deleteSync();
+    await tester.tap(find.byType(Switch));
+    await tester.pump();
+    await _flush(tester, appdata.saveData(false));
+    expect(callbacks, 1);
+    expect(File('${root.path}/appdata.json').existsSync(), isTrue);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 }

@@ -43,6 +43,7 @@ import 'package:venera_unified/features/reader/settings_panel.dart';
 import 'package:venera_unified/features/reader/image_selection.dart';
 import 'package:venera_unified/features/reader/image_picker.dart';
 import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/reader_settings.dart' as preferences;
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/routing/settings.dart';
 
@@ -69,6 +70,8 @@ class ReaderScaffold extends StatefulWidget {
     required this.createChapterComments,
     required this.chapterNavigation,
     required this.child,
+    this.readBrightnessSettings,
+    this.brightnessChanges,
     this.onDiagnostics,
     this.onScaffoldChanged,
     this.onTranslatePage,
@@ -96,6 +99,8 @@ class ReaderScaffold extends StatefulWidget {
   final ReaderChapterCommentsRequest? Function() createChapterComments;
   final ReaderChapterNavigationAction? chapterNavigation;
   final Widget child;
+  final preferences.ReaderSettings Function()? readBrightnessSettings;
+  final Listenable? brightnessChanges;
   final VoidCallback? onDiagnostics;
   final ValueChanged<KeyEvent>? onRemoteKey;
   final VoidCallback? onCancelRemoteKeys;
@@ -113,6 +118,9 @@ class ReaderScaffold extends StatefulWidget {
 
 class ReaderScaffoldState extends State<ReaderScaffold> {
   var _brightnessPreview = ReaderBrightnessPreview();
+
+  preferences.ReaderSettings get _brightnessSettings =>
+      widget.readBrightnessSettings?.call() ?? widget.data.preferences;
 
   bool _isOpen = false;
 
@@ -155,7 +163,6 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
   @override
   void initState() {
     super.initState();
-    _brightnessPreview.addListener(update);
     widget.favoriteChanges.addListener(_imageFavoritesChanged);
     widget.onScaffoldChanged?.call(this);
   }
@@ -206,7 +213,7 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
   void _replaceBrightnessPreview() {
     _sidebarBinding.close();
     _brightnessPreview.dispose();
-    _brightnessPreview = ReaderBrightnessPreview()..addListener(update);
+    _brightnessPreview = ReaderBrightnessPreview();
   }
 
   void _applySystemUiMode() {
@@ -348,13 +355,25 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
           ),
           if (!isOnChapterCommentsPage)
             Positioned.fill(
-              child: ReaderBrightnessOverlay(
-                enabled:
-                    _brightnessPreview.enabled ??
-                    widget.data.preferences.readerBrightnessEnabled,
-                brightness:
-                    _brightnessPreview.brightness ??
-                    widget.data.preferences.readerBrightness,
+              child: ListenableBuilder(
+                listenable: Listenable.merge([
+                  _brightnessPreview,
+                  widget.brightnessChanges,
+                ]),
+                builder: (context, _) {
+                  // Persistence can finish without a page report. Releasing
+                  // the preview must reveal the current value, not the last
+                  // immutable page snapshot.
+                  final settings = _brightnessSettings;
+                  return ReaderBrightnessOverlay(
+                    enabled:
+                        _brightnessPreview.enabled ??
+                        settings.readerBrightnessEnabled,
+                    brightness:
+                        _brightnessPreview.brightness ??
+                        settings.readerBrightness,
+                  );
+                },
               ),
             ),
           if (!isOnChapterCommentsPage) _buildInformation(),
@@ -379,7 +398,16 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
                       MediaQuery.of(context).padding.bottom),
             left: 0,
             right: 0,
-            child: _menuRegion(visible: _isOpen, child: buildBottom()),
+            child: _menuRegion(
+              visible: _isOpen,
+              child: ListenableBuilder(
+                listenable: Listenable.merge([
+                  _brightnessPreview,
+                  widget.brightnessChanges,
+                ]),
+                builder: (context, _) => buildBottom(),
+              ),
+            ),
           ),
           AnimatedPositioned(
             duration: menuDuration,
@@ -586,7 +614,7 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
       onRotate: widget.onRotate,
       brightnessEnabled:
           _brightnessPreview.enabled ??
-          widget.data.preferences.readerBrightnessEnabled,
+          _brightnessSettings.readerBrightnessEnabled,
       onBrightness: () =>
           setState(() => _brightnessPanelOpen = !_brightnessPanelOpen),
       automaticReading: ReaderAutomaticReadingAction(

@@ -130,7 +130,7 @@ class CacheManager {
 
   /// Write cache to disk.
   Future<void> writeCache(String key, List<int> data, [int? duration]) {
-    final bytes = List<int>.of(data);
+    final bytes = Uint8List.fromList(data);
     return _enqueue(() => _writeCache(key, bytes, duration));
   }
 
