@@ -1,8 +1,11 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:venera_unified/components/appbar.dart';
 import 'package:venera_unified/components/scroll.dart';
 import 'package:venera_unified/components/settings_save_state.dart';
 import 'package:venera_unified/features/settings/setting_components.dart';
+import 'package:venera_unified/features/settings/upscale_preview.dart';
 import 'package:venera_unified/foundation/image_provider/upscale/anime4k_v4_model_manager.dart';
 import 'package:venera_unified/foundation/reader_preferences.dart';
 import 'package:venera_unified/foundation/translations.dart';
@@ -14,7 +17,11 @@ import 'package:venera_unified/foundation/widget_utils.dart';
 /// 模型选择/强度调节留待后续阶段；英文文案先行，
 /// translation.json 登记由 lead 统一处理。
 class UpscaleSetting extends StatefulWidget {
-  const UpscaleSetting({super.key});
+  const UpscaleSetting({super.key, this.pageImage});
+
+  /// Decoded page under the screen center when opened from the reader; null
+  /// elsewhere, and the preview falls back to a built-in sample.
+  final Future<ui.Image?> Function()? pageImage;
 
   @override
   State<UpscaleSetting> createState() => _UpscaleSettingState();
@@ -38,6 +45,12 @@ class _UpscaleSettingState extends SettingsSaveState<UpscaleSetting> {
             subtitle: "Also process images saved to downloads".tl,
             preference: ReaderPreferences.upscaleApplyToDownloads,
           ).toSliver(),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: UpscalePreview(pageImage: widget.pageImage),
+            ),
+          ),
           SwitchSetting.reader(
             title: "Anime4K shader sharpening".tl,
             subtitle:

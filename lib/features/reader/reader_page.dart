@@ -1,6 +1,7 @@
 import 'package:venera_unified/features/history/history_scope.dart';
 import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show listEquals;
@@ -221,6 +222,26 @@ class ReaderState extends State<Reader>
       images: currentImages,
       chapter: chapter,
     );
+  }
+
+  /// Caller-owned copy of the decoded page nearest the screen center, for
+  /// the upscaling preview. Null when no page has been decoded yet.
+  Future<ui.Image?> snapshotCurrentPageImage() async {
+    if (!mounted || _stateDisposed || _sessionFrozen || _session.isHeld) {
+      return null;
+    }
+    final viewport = imageViewController;
+    if (viewport == null) return null;
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return null;
+    final center = box.localToGlobal(box.size.center(Offset.zero));
+    try {
+      final bytes = await viewport.getImageByOffset(center);
+      if (bytes == null) return null;
+      return await decodeImageFromList(bytes);
+    } catch (_) {
+      return null;
+    }
   }
 
   bool _translatingPage = false;
@@ -577,6 +598,7 @@ class ReaderState extends State<Reader>
           cid == comic &&
           type == comicType &&
           identical(ComicSource.find(sourceKey), source),
+      currentPageImage: snapshotCurrentPageImage,
       currentMode: () => mode.key,
       isDetectingLayout: () => isDetectingLayout,
       detectLayout: () => detectLayout(force: true),
