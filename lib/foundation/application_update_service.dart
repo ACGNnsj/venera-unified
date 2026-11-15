@@ -26,6 +26,12 @@ typedef InstallableApplicationRelease = ({
 
 /// Owns actual HTTP completion independently of the page showing its result.
 class ApplicationUpdateService {
+  /// Public release-metadata endpoint shared by [check] and
+  /// [checkInstallableRelease]. A named constant so flavor tests can pin
+  /// the URL deterministically without hitting the live network.
+  static const releasesApiBase =
+      'https://api.github.com/repos/CyrilPeng/venera-next/releases';
+
   ApplicationUpdateService({
     required Dio Function() createClient,
     required String Function() currentVersion,
@@ -103,8 +109,8 @@ class ApplicationUpdateService {
       final includePrerelease = allowsPrereleaseUpdates(version);
       final response = await dio.get<Object?>(
         includePrerelease
-            ? 'https://api.github.com/repos/CyrilPeng/venera-next/releases?per_page=20'
-            : 'https://api.github.com/repos/CyrilPeng/venera-next/releases/latest',
+            ? '$releasesApiBase?per_page=20'
+            : '$releasesApiBase/latest',
         cancelToken: scope.cancelToken,
         options: Options(headers: {'Accept': 'application/vnd.github+json'}),
       );
@@ -193,8 +199,8 @@ class ApplicationUpdateService {
       final includePrerelease = allowsPrereleaseUpdates(version);
       final response = await dio.get<Object?>(
         includePrerelease
-            ? 'https://api.github.com/repos/CyrilPeng/venera-next/releases?per_page=20'
-            : 'https://api.github.com/repos/CyrilPeng/venera-next/releases/latest',
+            ? '$releasesApiBase?per_page=20'
+            : '$releasesApiBase/latest',
         cancelToken: scope.cancelToken,
         options: Options(headers: {'Accept': 'application/vnd.github+json'}),
       );
