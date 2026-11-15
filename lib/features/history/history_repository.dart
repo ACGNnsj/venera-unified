@@ -62,11 +62,14 @@ class HistoryRepository {
 
   /// Bounded window read in history-page order (newest first).
   List<History> readRange(int offset, int limit) {
-    var res = db.select("""
+    var res = db.select(
+      """
       select * from $_table
       order by time DESC
       limit ? offset ?;
-    """, [limit, offset]);
+    """,
+      [limit, offset],
+    );
     return res.map((element) => historyFromRow(element)).toList();
   }
 

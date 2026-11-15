@@ -157,8 +157,9 @@ class _FavoriteFolderBrowserState extends State<FavoriteFolderBrowser> {
                                     }),
                                   ),
                           ),
-                          onChanged: (value) =>
-                              setState(() => _query = value.trim().toLowerCase()),
+                          onChanged: (value) => setState(
+                            () => _query = value.trim().toLowerCase(),
+                          ),
                         ),
                       );
                       if (!TvNavigation.enabledOf(context)) return field;
