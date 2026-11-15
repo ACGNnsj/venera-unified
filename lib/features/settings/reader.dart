@@ -808,6 +808,19 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
             comicSource: isEnabledSpecificSettings ? widget.comicSource : null,
             useDeviceSettings: useDeviceSpecificSettings,
           ).toSliver(),
+          if (App.isMobile)
+            SwitchSetting.reader(
+              title: "Keep screen on while reading".tl,
+              preference: ReaderPreferences.readerKeepScreenOn,
+              onChanged: () {
+                widget.onChanged?.call("readerKeepScreenOn");
+              },
+              comicId: isEnabledSpecificSettings ? widget.comicId : null,
+              comicSource: isEnabledSpecificSettings
+                  ? widget.comicSource
+                  : null,
+              useDeviceSettings: useDeviceSpecificSettings,
+            ).toSliver(),
           SelectSetting.reader(
             title: "Quick collect image".tl,
             preference: ReaderPreferences.quickCollectImage,

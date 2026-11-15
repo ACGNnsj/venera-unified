@@ -188,6 +188,12 @@ final settingsSearchIndex = <SettingsSearchEntry>[
     keywords: const ['auto', 'screen'],
     visible: () => App.isMobile,
   ),
+  SettingsSearchEntry(
+    'Keep screen on while reading',
+    1,
+    keywords: const ['screen', 'awake', 'sleep'],
+    visible: () => App.isMobile,
+  ),
   const SettingsSearchEntry(
     'The number of pic in screen for landscape (Only Gallery Mode)',
     1,

@@ -1120,8 +1120,9 @@ class ReaderState extends State<Reader>
     effects.setScreenAwake(
       !_sessionFrozen &&
           !_screenAwakePaused &&
-          autoReading.isActive &&
-          preferences.read(ReaderPreferences.autoReadingKeepScreenOn),
+          (autoReading.isActive &&
+                  preferences.read(ReaderPreferences.autoReadingKeepScreenOn) ||
+              preferences.read(ReaderPreferences.readerKeepScreenOn)),
     );
   }
 

@@ -158,6 +158,7 @@ abstract final class ReaderPreferences {
     'autoReadingKeepScreenOn',
     true,
   );
+  static const readerKeepScreenOn = BoolPreference('readerKeepScreenOn', false);
   static const autoReadingSkipUnavailableImages = BoolPreference(
     'autoReadingSkipUnavailableImages',
     false,
@@ -296,6 +297,7 @@ abstract final class ReaderPreferences {
     preloadImageCount,
     autoReadingAcrossChapters,
     autoReadingKeepScreenOn,
+    readerKeepScreenOn,
     autoReadingSkipUnavailableImages,
     autoReadingImageWaitSeconds,
     autoReadingPauseOnLongPress,
