@@ -569,22 +569,22 @@ class _EndSelectorSelectSettingState
                 unawaited(change(selected));
               }
             }) ??
-                  Select(
-                    current: options[value] ?? options[widget.defaultValue],
-                    values: options.values.toList(),
-                    minWidth: 64,
-                    onTap: (index) {
-                      if (mounted &&
-                          target.matches(field) &&
-                          index >= 0 &&
-                          index < options.length) {
-                        final selected = options.keys.elementAt(index);
-                        if (widget.optionTranslation.containsKey(selected)) {
-                          unawaited(change(selected));
-                        }
-                      }
-                    },
-                  ),
+            Select(
+              current: options[value] ?? options[widget.defaultValue],
+              values: options.values.toList(),
+              minWidth: 64,
+              onTap: (index) {
+                if (mounted &&
+                    target.matches(field) &&
+                    index >= 0 &&
+                    index < options.length) {
+                  final selected = options.keys.elementAt(index);
+                  if (widget.optionTranslation.containsKey(selected)) {
+                    unawaited(change(selected));
+                  }
+                }
+              },
+            ),
       ),
     );
   }

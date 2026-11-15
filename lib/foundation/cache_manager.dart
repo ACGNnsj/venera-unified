@@ -349,10 +349,9 @@ class CacheManager {
       }
       removed++;
     }
-    _db.execute(
-      'DELETE FROM cache WHERE key LIKE ? ESCAPE \'\\\'',
-      ['${_escapeLike(prefix)}%'],
-    );
+    _db.execute('DELETE FROM cache WHERE key LIKE ? ESCAPE \'\\\'', [
+      '${_escapeLike(prefix)}%',
+    ]);
     return removed;
   }
 
