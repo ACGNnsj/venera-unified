@@ -327,6 +327,8 @@ jobs:
       - name: 核对实际库文件与摘要并加载必需 ABI
         run: python3 .github/scripts/prepare_linux_test_libraries.py --verify-only
       - name: 运行完整分片并保留独立覆盖率
+        env:
+          LD_PRELOAD: ${{ github.workspace }}/build/test-native/lib/libsqlite3.so
         run: >-
           python3 .github/scripts/run_flutter_tests.py --partition "${{ matrix.partition }}" --concurrency 4
           --coverage --coverage-path "build/test-audit/${{ matrix.partition }}/lcov.info"
@@ -364,6 +366,8 @@ jobs:
       - name: 核对实际库文件与摘要并加载必需 ABI
         run: python3 .github/scripts/prepare_linux_test_libraries.py --verify-only
       - name: 使用真实 TV flavor 及清单参数执行
+        env:
+          LD_PRELOAD: ${{ github.workspace }}/build/test-native/lib/libsqlite3.so
         run: python3 .github/scripts/run_flutter_tests.py --suite tv --output build/test-audit/tv
       - name: 保存独立 TV 运行证据
         if: ${{ always() }}

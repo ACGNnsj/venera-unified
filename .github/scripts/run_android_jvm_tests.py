@@ -16,8 +16,8 @@ from pathlib import Path
 
 from test_suites import ROOT, load_manifest, matches, paths
 
-KOTLIN_VERSION = "2.1.0"
-COMPILER_SHA256 = "b6698d5728ad8f9edcdd01617d638073191d8a03139cc538a391b4e3759ad297"
+KOTLIN_VERSION = "2.2.20"
+COMPILER_SHA256 = "81f0264c9073b5cbbdb3ff8418cf2c5dac076879fc156fa1a6462f5a5acc4420"
 PROFILES = {
     "android-jvm": (KOTLIN_VERSION, COMPILER_SHA256, "android/settings.gradle",
                     r'id "org.jetbrains.kotlin.android" version "([^"]+)"'),

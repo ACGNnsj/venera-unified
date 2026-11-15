@@ -75,7 +75,7 @@ def audit_full_hap(hap, metadata, expected_assets):
         for name, checksum in expected_assets.items():
             if hashlib.sha256(archive.read(ASSET_PREFIX + name)).hexdigest() != checksum:
                 raise ValueError(f"Rewritten/missing real application asset: {name}")
-        return {"bundle_name": app["bundleName"], "app_label": app_label, "version_name": app["versionName"], "version_code": app["versionCode"],
+        return {"bundle_name": app["bundleName"], "version_name": app["versionName"], "version_code": app["versionCode"],
                 "minimum_api": app["minAPIVersion"], "target_api": app["targetAPIVersion"],
                 "device_types": metadata["device_types"], "libraries": records, "asset_count": len(expected_assets)}
 

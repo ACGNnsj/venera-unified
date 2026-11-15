@@ -7,7 +7,7 @@
       "checkout_commit": "29c3b0202b01d06f849fc0f0eec1cca3bce52d1f",
       "source_tree_sha": "e88f2572ce359b4af8d2cb5859fa902aad249ebe",
       "quality_run": "43434471214",
-      "expected_skips": 154
+      "expected_skips": 169
     },
     "windows": {
       "kind": "executed",
@@ -384,6 +384,69 @@
           "unmount during creation does not publish a controller or hold a lease"
         ],
         "reason": "源码明确限定 Windows host 的 Windows WebView 创建、代理和实例所有权 回归，由 Windows 清单实际执行；此平台不适用。"
+      },
+      {
+        "path": "test/features/local_comics/import_export/pdf_import_engine_test.dart",
+        "cases": [
+          "real PDF import lifecycle failed conversion keeps the existing folder and retry dedupes",
+          "real PDF import lifecycle imports pages in reader order with cover and unified caliber",
+          "real PDF import lifecycle rejects damaged and empty PDFs without leaving output",
+          "real engine rendering openFile rejects damaged bytes",
+          "real engine rendering renders rotated and oversized pages with exact pixels"
+        ],
+        "reason": "Linux CI 无 libpdfium.so（flutter test 下测试执行文件旁无此库）；测试按设计在缺库时 skip。"
+      },
+      {
+        "path": "test/foundation/image_provider/upscale/anime4k_native_test.dart",
+        "cases": [
+          "native matches Dart pipeline byte for byte",
+          "native wins the pipeline race"
+        ],
+        "reason": "venera_anime4k 未为此平台构建；测试按设计 skip。"
+      },
+      {
+        "path": "test/foundation/image_translation/ocr_preprocess_native_test.dart",
+        "cases": [
+          "ocr native matches Dart pixels and clears both gates"
+        ],
+        "reason": "venera_ocr_preprocess 未为此平台构建；测试按设计 skip。"
+      },
+      {
+        "path": "test/features/comic_source/source_selfhost_test.dart",
+        "cases": [
+          "parseCatalog (selfhost) real configs checkout parses when present (local only)"
+        ],
+        "reason": "需本机真实配置检出（local only）；CI 无此检出，按设计 skip。"
+      },
+      {
+        "path": "test/foundation/avif_system_decoder_test.dart",
+        "cases": [
+          "decodes every AVIF fixture through the system libavif",
+          "decodes the 1x1 sample to near-white pixels"
+        ],
+        "reason": "主 analyze 门运行机无系统 libavif（由 avif-probe.yml 另行安装验证）；测试按设计在缺库时 skip。"
+      },
+      {
+        "path": "test/foundation/avif_wic_decoder_test.dart",
+        "cases": [
+          "decodes every AVIF fixture through WIC",
+          "reports the 1x1 sample as undecodable"
+        ],
+        "reason": "WIC 为 Windows 专属解码路径；Linux 按设计 skip。"
+      },
+      {
+        "path": "test/foundation/image_translation/jpg_encode_native_test.dart",
+        "cases": [
+          "jpg native matches Dart quality and is >=2x faster"
+        ],
+        "reason": "venera_jpg_encode 未为此平台构建；测试按设计 skip。"
+      },
+      {
+        "path": "test/app_runtime/tv_build_profile_test.dart",
+        "cases": [
+          "the compiled flavor controls the actual application update service"
+        ],
+        "reason": "用例在 _expectTv 时做真实更新端点检查；CI 共享出口遇 api.github.com 限流/不可达时按设计 skip，产品侧解析失败仍会失败。"
       }
     ],
     "windows": [

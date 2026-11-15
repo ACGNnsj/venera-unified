@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:venera_unified/app_runtime/application_updates.dart';
@@ -7,6 +9,7 @@ import 'package:venera_unified/components/tv_navigation.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/app_profile.dart';
 import 'package:venera_unified/foundation/appdata.dart';
+import 'package:venera_unified/foundation/operation_failure.dart';
 import 'package:venera_unified/foundation/tv_reader_policy.dart';
 
 const _expectTv = bool.fromEnvironment('EXPECT_TV');
@@ -19,14 +22,23 @@ void main() {
     () async {
       expect(AppProfile.current.isTv, _expectTv);
       final updates = createApplicationUpdates();
+      addTearDown(updates.closeAndWait);
       expect(updates.enabled, isTrue);
       expect(updates.forAndroidTv, _expectTv);
       if (_expectTv) {
         expect(AppProfile.current.build, 'ci-test');
         expect(AppProfile.current.revision, 'tv-test');
-        expect(await updates.check(), isNull);
+        String? available;
+        try {
+          available = await updates.check();
+        } catch (error) {
+          if (_isUpdateEndpointInfrastructureError(error)) {
+            markTestSkipped('update endpoint unreachable from CI');
+          }
+          rethrow;
+        }
+        expect(available, isNull);
       }
-      await updates.closeAndWait();
     },
   );
 
@@ -88,4 +100,32 @@ void main() {
       expect(media.padding.left, _expectTv ? 24 : 0);
     },
   );
+}
+
+/// The live update endpoint (api.github.com) is rate-limited per runner IP;
+/// transport-level failures say nothing about the flavor wiring under test.
+bool _isUpdateEndpointInfrastructureError(Object error) {
+  Object? current = error;
+  while (current is OperationFailure) {
+    current = current.cause;
+  }
+  if (current is SocketException || current is TimeoutException) return true;
+  if (current is DioException) {
+    switch (current.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+      case DioExceptionType.transformTimeout:
+      case DioExceptionType.connectionError:
+      case DioExceptionType.unknown:
+        return true;
+      case DioExceptionType.badResponse:
+        final status = current.response?.statusCode;
+        return status == 403 || status == 429;
+      case DioExceptionType.cancel:
+      case DioExceptionType.badCertificate:
+        return false;
+    }
+  }
+  return false;
 }

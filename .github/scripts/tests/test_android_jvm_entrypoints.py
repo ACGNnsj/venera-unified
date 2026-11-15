@@ -21,7 +21,7 @@ class JvmEntrypointTest(unittest.TestCase):
         ]
         for path in self.files:
             self.write(path, '// fixture')
-        self.write('android/settings.gradle', 'id "org.jetbrains.kotlin.android" version "2.1.0"')
+        self.write('android/settings.gradle', 'id "org.jetbrains.kotlin.android" version "2.2.20"')
         self.write('packages/share_plus/android/build.gradle', "ext.kotlin_version = '2.2.0'")
         self.manifest = {'external': [
             {'id': 'android-jvm', 'include': ['test/native/*.kt'], 'jvm_groups': [

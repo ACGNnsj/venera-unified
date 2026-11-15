@@ -67,17 +67,19 @@ flutter:
             ET.SubElement(queries, tag, {key: value})
     ET.indent(manifest, space="    ")
     manifest.write(application_manifest, encoding="utf-8", xml_declaration=False)
-    write(consumer / "android/app/build.gradle.kts", """plugins {
+    write(consumer / "android/app/build.gradle.kts", """import com.android.build.api.dsl.ApplicationExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
-android {
+configure<ApplicationExtension> {
     namespace = "com.cyrilpeng.venera_saf_probe"
     compileSdk = 36
     ndkVersion = "28.0.13004108"
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
-    kotlinOptions { jvmTarget = "17" }
     defaultConfig {
         applicationId = "com.cyrilpeng.venera_saf_probe"
         minSdk = 24
@@ -95,6 +97,7 @@ android {
         }
     }
 }
+kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 flutter { source = "../.." }
 """)
     write(provider / "settings.gradle", """pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
