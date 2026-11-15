@@ -6,6 +6,7 @@ import 'package:venera_unified/components/message.dart';
 import 'package:venera_unified/components/scroll.dart';
 import 'package:venera_unified/components/settings_save_state.dart';
 import 'package:venera_unified/features/settings/setting_components.dart';
+import 'package:venera_unified/features/settings/translation_languages.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/image_translation/llm_translator.dart';
@@ -89,6 +90,9 @@ class _ImageTranslationSettingsState
     options.putIfAbsent(current, () => current);
     return options;
   }
+
+  int _customLanguageCount() =>
+      TranslationSources.custom.length + TranslationTargets.custom.length;
 
   Map<String, String> _inpaintOptions() {
     final options = <String, String>{
@@ -226,6 +230,19 @@ class _ImageTranslationSettingsState
             settingKey: TranslationConfig.targetKeyName,
             optionTranslation: _targetOptions(),
             defaultValue: TranslationConfig.global.targetLang,
+          ).toSliver(),
+          CallbackSetting(
+            title: 'Custom languages'.tl,
+            subtitle: _customLanguageCount() == 0
+                ? 'Add source or target languages that are not in the list'.tl
+                : '@count added'.tlParams({
+                    'count': _customLanguageCount(),
+                  }),
+            actionTitle: 'Manage'.tl,
+            callback: () async {
+              await context.to(() => const TranslationLanguagesPage());
+              if (mounted) setState(() {});
+            },
           ).toSliver(),
           SelectSetting(
             title: 'Text removal'.tl,

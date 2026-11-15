@@ -34,7 +34,8 @@ void main() {
     expect(find.text('Image Translation'), findsWidgets);
     expect(find.text('Language & text removal'), findsOneWidget);
     expect(find.text('Translation providers'), findsOneWidget);
-    expect(find.text('Glossary'), findsOneWidget);
+    expect(find.text('Glossary', skipOffstage: false), findsOneWidget);
+    expect(find.text('Custom languages', skipOffstage: false), findsOneWidget);
     expect(
       find.text('Translation models', skipOffstage: false),
       findsOneWidget,

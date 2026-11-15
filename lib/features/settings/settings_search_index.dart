@@ -255,6 +255,7 @@ final settingsSearchIndex = <SettingsSearchEntry>[
   const SettingsSearchEntry('Translation providers', 1, keywords: ['translation', 'llm']),
   const SettingsSearchEntry('Translation glossary', 1, keywords: ['translation', 'glossary']),
   const SettingsSearchEntry('Translation models', 1, keywords: ['translation', 'model', 'ocr']),
+  const SettingsSearchEntry('Custom languages', 1, keywords: ['language', 'OCR', 'model']),
   const SettingsSearchEntry(
     'Number of images preloaded',
     1,
