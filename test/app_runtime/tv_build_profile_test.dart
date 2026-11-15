@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:rhttp/rhttp.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:venera_unified/app_runtime/application_updates.dart';
 import 'package:venera_unified/components/tv_navigation.dart';
@@ -106,8 +107,39 @@ void main() {
 /// transport-level failures say nothing about the flavor wiring under test.
 bool _isUpdateEndpointInfrastructureError(Object error) {
   Object? current = error;
-  while (current is OperationFailure) {
-    current = current.cause;
+  // Unwrap both the service wrapper and interceptor wrappers; either layer
+  // can nest (interceptor errors surface as the interceptor exception
+  // carrying the transport error).
+  var progressed = true;
+  while (progressed) {
+    progressed = false;
+    if (current is OperationFailure && current.cause != null) {
+      current = current.cause;
+      progressed = true;
+    } else if (current is RhttpInterceptorException) {
+      current = current.error;
+      progressed = true;
+    }
+  }
+  // RHttpAdapter surfaces transport failures as raw rhttp exceptions (Dio
+  // only wraps what its own stack throws): connection/timeout/redirect/
+  // unknown are runner-egress weather and skip. Status-code errors skip
+  // only for rate-limit/server answers; 404 still fails (wrong URL is a
+  // real wiring bug). Cancel/certificate/disposed are real signals.
+  if (current is RhttpTimeoutException ||
+      current is RhttpConnectionException ||
+      current is RhttpRedirectException ||
+      current is RhttpUnknownException) {
+    return true;
+  }
+  if (current is RhttpStatusCodeException) {
+    final status = current.statusCode;
+    return status == 403 || status == 429 || (status >= 500 && status <= 504);
+  }
+  if (current is RhttpCancelException ||
+      current is RhttpInvalidCertificateException ||
+      current is RhttpClientDisposedException) {
+    return false;
   }
   // Any dart:io transport failure (socket reset, TLS handshake, redirect
   // loop, proxy close) says nothing about the flavor wiring under test.

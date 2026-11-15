@@ -153,7 +153,7 @@ def build(flutter_sdk):
         release = metadata.get("release") is not None
         artifacts = CI / ("release-artifacts" if release else "full-app-artifacts")
         artifacts.mkdir(parents=True, exist_ok=True)
-        exported = artifacts / f"VeneraNext-{metadata['version_name']}-harmonyos-arm64-unsigned.hap"
+        exported = artifacts / f"VeneraUnified-{metadata['version_name']}-harmonyos-arm64-unsigned.hap"
         shutil.copy2(haps[0], exported)
         if digest(exported) != digest(haps[0]):
             raise ValueError("Exported reader HAP differs from the audited bytes")
