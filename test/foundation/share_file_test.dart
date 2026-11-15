@@ -136,6 +136,11 @@ void main() {
   );
 
   test('transport error retains original stack and queue continues', () async {
+    // Our shareText takes a clipboard shortcut on desktop; pin the transport
+    // path this regression covers.
+    final previousUsesClipboard = interaction.Share.usesClipboard;
+    interaction.Share.usesClipboard = () => false;
+    addTearDown(() => interaction.Share.usesClipboard = previousUsesClipboard);
     final error = StateError('transport failed');
     final stack = StackTrace.fromString('original transport stack');
     messenger.setMockMessageHandler(
