@@ -103,4 +103,47 @@ void main() {
 
     expect(delayCount, 0);
   });
+
+  test('throttle gate spaces batches with capped backoff delays', () async {
+    final delays = <Duration>[];
+    await runThrottledTasks<int>(
+      List.generate(12, (index) => index),
+      concurrency: 1,
+      throttleEvery: 1,
+      delay: (duration) {
+        delays.add(duration);
+        return Future<void>.value();
+      },
+      run: (_) async {},
+    );
+    expect(delays, [
+      for (var i = 1; i <= 11; i++)
+        Duration(seconds: i < 10 ? i + 1 : 10),
+    ]);
+  });
+
+  test('throttle gate holds later batches until the wait elapses', () async {
+    final gate = Completer<void>();
+    final delays = <Duration>[];
+    final started = <int>[];
+    final pending = runThrottledTasks<int>(
+      [0, 1, 2, 3],
+      concurrency: 2,
+      throttleEvery: 2,
+      delay: (duration) {
+        delays.add(duration);
+        return gate.future;
+      },
+      run: (task) async {
+        started.add(task);
+      },
+    );
+    await pumpEventQueue();
+    await pumpEventQueue();
+    expect(started, [0, 1]);
+    expect(delays, [const Duration(seconds: 3)]);
+    gate.complete();
+    await pending;
+    expect(started, [0, 1, 2, 3]);
+  });
 }
