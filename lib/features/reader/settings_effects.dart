@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:venera_unified/foundation/reader_preferences.dart';
 
 /// Ordered effects of the settings form's legacy string-key notification.
@@ -24,6 +26,7 @@ class ReaderSettingsRequest {
     required bool Function() isDetectingLayout,
     required Future<void> Function() detectLayout,
     required void Function(ReaderSettingEffect) applyReaderEffect,
+    this.currentPageImage,
   }) : _isDetectingLayout = isDetectingLayout,
        _detectLayout = detectLayout,
        _applyReaderEffect = applyReaderEffect,
@@ -33,6 +36,10 @@ class ReaderSettingsRequest {
   final String comicId;
   final String sourceKey;
   final bool Function() isCurrent;
+
+  /// Decoded page under the screen center for the upscaling preview; null
+  /// outside the reader (the preview falls back to a built-in sample).
+  final Future<ui.Image?> Function()? currentPageImage;
   final String _initialMode;
   final String Function() _currentMode;
   final bool Function() _isDetectingLayout;

@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/preferences.dart';
@@ -34,6 +36,7 @@ class ReaderSettings extends StatefulWidget {
     this.isDetectingLayout,
     this.onDetectLayout,
     this.brightnessPreview,
+    this.pageImage,
   });
 
   final void Function(String key)? onChanged;
@@ -43,6 +46,7 @@ class ReaderSettings extends StatefulWidget {
   final bool Function()? isDetectingLayout;
   final Future<void> Function()? onDetectLayout;
   final ReaderBrightnessPreview? brightnessPreview;
+  final Future<ui.Image?> Function()? pageImage;
 
   @override
   State<ReaderSettings> createState() => _ReaderSettingsState();
@@ -838,7 +842,8 @@ class _ReaderSettingsState extends SettingsSaveState<ReaderSettings> {
           ).toSliver(),
           CallbackSetting(
             title: "Image Upscaling".tl,
-            callback: () => context.to(() => const UpscaleSetting()),
+            callback: () =>
+                context.to(() => UpscaleSetting(pageImage: widget.pageImage)),
             actionTitle: "Edit".tl,
           ).toSliver(),
           SliderSetting.reader(

@@ -29,6 +29,7 @@ class ReaderSettingsPanel extends StatelessWidget {
     child: ReaderSettings(
       comicId: request.comicId,
       comicSource: request.sourceKey,
+      pageImage: request.currentPageImage,
       currentReaderMode: () => request.currentMode,
       isDetectingLayout: () => isCurrent() && request.isDetectingLayout,
       onDetectLayout: () =>

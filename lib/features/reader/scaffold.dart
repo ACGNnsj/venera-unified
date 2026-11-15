@@ -835,8 +835,11 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
   final _selectionOverlay = ReaderImageSelectionOverlay();
 
   Future<Offset?> _showSelectImageOverlay() {
+    // The menu (and its sidebar pause) is already closed here, so hold auto
+    // reading across the overlay the same way the sidebar does.
+    final releasePause = widget.acquireSidebarPause();
     if (_isOpen) openOrClose();
-    return _selectionOverlay.show(context);
+    return _selectionOverlay.show(context).whenComplete(releasePause);
   }
 }
 
