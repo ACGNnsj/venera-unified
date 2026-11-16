@@ -29,6 +29,7 @@ import 'package:venera_unified/foundation/widget_utils.dart';
 import 'package:venera_unified/features/comic_details/comic_details.dart';
 import 'aggregated_search_page.dart';
 import 'search_discovery_shortcuts.dart';
+import 'search_history_entry.dart';
 import 'search_result_page.dart';
 import 'search_shortcuts.dart';
 
@@ -75,6 +76,27 @@ class _SearchPageState extends State<SearchPage> {
       return tagToken;
     }
     return "$keyword $tagToken";
+  }
+
+  /// Open a detailed-history record (new mode) with its saved source,
+  /// filter options and page. Falls back to a keyword re-search when the
+  /// saved source is gone.
+  void openHistoryEntry(SearchHistoryEntry entry) {
+    final source = ComicSource.find(entry.sourceKey);
+    if (source?.searchPageData == null) {
+      search(entry.keyword);
+    } else {
+      context
+          .to(
+            () => SearchResultPage(
+              text: entry.keyword,
+              sourceKey: entry.sourceKey,
+              options: List<String>.from(entry.options),
+              historyEntry: entry,
+            ),
+          )
+          .then((_) => update());
+    }
   }
 
   void search([String? text]) {
@@ -291,7 +313,7 @@ class _SearchPageState extends State<SearchPage> {
       yield buildTagInput();
       yield const SearchDiscoveryShortcutsSliver();
       yield const SearchShortcutsSliver();
-      yield _SearchHistory(search);
+      yield _SearchHistory(search, openEntry: openHistoryEntry);
     }
   }
 
@@ -639,9 +661,10 @@ class SearchOptionWidget extends StatelessWidget {
 }
 
 class _SearchHistory extends StatefulWidget {
-  const _SearchHistory(this.search);
+  const _SearchHistory(this.search, {required this.openEntry});
 
   final void Function(String) search;
+  final void Function(SearchHistoryEntry) openEntry;
 
   @override
   State<_SearchHistory> createState() => _SearchHistoryState();
@@ -677,7 +700,20 @@ class _SearchHistoryState extends State<_SearchHistory> {
             leading: const Icon(Icons.history),
             contentPadding: EdgeInsets.zero,
             title: Text("Search History".tl),
-            trailing: Flyout(
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Tooltip(
+                  message: "Detailed search history".tl,
+                  child: IconButton(
+                    icon: Icon(
+                      _detailed ? Icons.manage_history : Icons.history,
+                    ),
+                    onPressed: () => _setDetailed(!_detailed),
+                  ),
+                ),
+                if (_showClear)
+                  Flyout(
               flyoutBuilder: (context) {
                 var saving = false;
                 return StatefulBuilder(
@@ -690,9 +726,7 @@ class _SearchHistoryState extends State<_SearchHistory> {
                             : () async {
                                 final route = ModalRoute.of(context);
                                 update(() => saving = true);
-                                final saved = await _editHistory(
-                                  appdata.clearSearchHistory,
-                                );
+                                final saved = await _editHistory(_clearAll);
                                 if (saved &&
                                     context.mounted &&
                                     route?.isCurrent != false) {
@@ -728,12 +762,119 @@ class _SearchHistoryState extends State<_SearchHistory> {
                   );
                 },
               ),
+                  ),
+              ],
             ),
           );
         }
+        if (_detailed) {
+          return buildEntryItem(_entries[index - 2]);
+        }
         return buildItem(index - 2);
-      }, childCount: 2 + appdata.searchHistory.length),
+      }, childCount: 2 + _itemCount),
     ).sliverPaddingHorizontal(16);
+  }
+
+  bool get _detailed => GlobalPreferenceStore(
+    appdata.settings,
+  ).read(DiscoveryPreferences.searchHistoryDetailedMode);
+
+  bool get _showClear => GlobalPreferenceStore(
+    appdata.settings,
+  ).read(DiscoveryPreferences.showClearSearchHistoryButton);
+
+  int get _itemCount => _detailed
+      ? readSearchHistoryEntries().length
+      : appdata.searchHistory.length;
+
+  List<SearchHistoryEntry> get _entries => readSearchHistoryEntries();
+
+  Future<void> _setDetailed(bool value) async {
+    await appdata.updateSettings((settings) {
+      settings[DiscoveryPreferences.searchHistoryDetailedMode.key] = value;
+    });
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _clearAll() async {
+    await appdata.clearSearchHistory();
+    await clearSearchHistoryEntries();
+  }
+
+  Widget buildEntryItem(SearchHistoryEntry entry) {
+    final sourceLabel = entry.sourceName.isNotEmpty
+        ? entry.sourceName
+        : entry.sourceKey;
+    final subtitle = entry.page > 1
+        ? '$sourceLabel · P${entry.page}'
+        : sourceLabel;
+    void showMenu(
+      BuildContext context,
+      MenuRouteController menus,
+      Offset offset,
+    ) {
+      menus.show(context, offset, [
+        MenuEntry(
+          icon: Icons.copy,
+          text: 'Copy'.tl,
+          onClick: () {
+            Clipboard.setData(ClipboardData(text: entry.keyword));
+          },
+        ),
+        MenuEntry(
+          icon: Icons.delete,
+          text: 'Delete'.tl,
+          onClick: () async {
+            await _editHistory(() => removeSearchHistoryEntry(entry));
+          },
+        ),
+      ]);
+    }
+
+    return ContextMenuRegion(
+      identity: entry.identity,
+      builder: (context, menus) {
+        return ClickInkWell(
+          onTap: () {
+            widget.openEntry(entry);
+          },
+          onLongPress: () {
+            var renderBox = context.findRenderObject() as RenderBox;
+            var offset = renderBox.localToGlobal(Offset.zero);
+            showMenu(
+              context,
+              menus,
+              Offset(
+                offset.dx + renderBox.size.width / 2 - 121,
+                offset.dy + renderBox.size.height - 8,
+              ),
+            );
+          },
+          onSecondaryTapUp: (details) {
+            showMenu(context, menus, details.globalPosition);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(
+                  color: context.colorScheme.outlineVariant,
+                  width: 2,
+                ),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(entry.keyword, style: ts.s14),
+                const SizedBox(height: 2),
+                Text(subtitle, style: ts.s12),
+              ],
+            ),
+          ),
+        ).paddingBottom(8).paddingHorizontal(4);
+      },
+    );
   }
 
   Widget buildItem(int index) {

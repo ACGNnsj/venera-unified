@@ -19,6 +19,7 @@ import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'search_filter.dart';
+import 'search_history_entry.dart';
 import 'search_page.dart';
 import 'search_query.dart';
 
@@ -28,6 +29,7 @@ class SearchResultPage extends StatefulWidget {
     required this.text,
     required this.sourceKey,
     this.options,
+    this.historyEntry,
   });
 
   final String text;
@@ -35,6 +37,10 @@ class SearchResultPage extends StatefulWidget {
   final String sourceKey;
 
   final List<String>? options;
+
+  /// Detailed-history record to reopen (new mode): carries the saved source,
+  /// filter options and page. Null means a fresh search.
+  final SearchHistoryEntry? historyEntry;
 
   @override
   State<SearchResultPage> createState() => _SearchResultPageState();
@@ -49,6 +55,10 @@ class _SearchResultPageState extends State<SearchResultPage> {
 
   late String text;
 
+  SearchHistoryEntry? _entry;
+
+  int _initialPage = 1;
+
   OverlayEntry? get suggestionOverlay => suggestionsController.entry;
 
   late _SuggestionsController suggestionsController;
@@ -62,6 +72,7 @@ class _SearchResultPageState extends State<SearchResultPage> {
       setState(() {
         this.text = text!;
       });
+      _initialPage = 1;
       unawaited(_recordSearchHistory(text));
       controller.currentText = text;
     }
@@ -69,6 +80,22 @@ class _SearchResultPageState extends State<SearchResultPage> {
 
   Future<void> _recordSearchHistory(String text) async {
     try {
+      final detailed = GlobalPreferenceStore(
+        appdata.settings,
+      ).read(DiscoveryPreferences.searchHistoryDetailedMode);
+      final source = ComicSource.find(sourceKey);
+      if (detailed && source != null) {
+        _entry = SearchHistoryEntry(
+          keyword: text,
+          sourceKey: sourceKey,
+          sourceName: source.name,
+          options: List<String>.from(options),
+          page: _initialPage,
+        );
+        await rememberSearchHistoryEntry(_entry!);
+        return;
+      }
+      _entry = null;
       await appdata.addSearchHistory(text);
     } catch (error, stack) {
       Log.error('Search history', error, stack);
@@ -125,11 +152,15 @@ class _SearchResultPageState extends State<SearchResultPage> {
 
   @override
   void initState() {
-    sourceKey = widget.sourceKey;
+    sourceKey = widget.historyEntry?.sourceKey ?? widget.sourceKey;
     text = _applyConfiguredLanguageFilter(widget.text);
     controller = SearchBarController(currentText: text, onSearch: search);
-    options = widget.options ?? const [];
+    options = widget.historyEntry != null
+        ? List<String>.from(widget.historyEntry!.options)
+        : (widget.options ?? const []);
     validateOptions();
+    _initialPage = widget.historyEntry?.page ?? 1;
+    if (_initialPage < 1) _initialPage = 1;
     unawaited(_recordSearchHistory(text));
     suggestionsController = _SuggestionsController(controller, sourceKey);
     super.initState();
@@ -155,6 +186,14 @@ class _SearchResultPageState extends State<SearchResultPage> {
     final query = SearchQuery.parse(text);
     return ComicList(
       key: Key(text + options.toString() + sourceKey),
+      initialPage: _initialPage,
+      onPageChanged: (page) {
+        _initialPage = page;
+        final entry = _entry;
+        if (entry != null) {
+          unawaited(updateSearchHistoryEntryPage(entry.identity, page));
+        }
+      },
       errorLeading: AppSearchBar(controller: controller, action: buildAction()),
       leadingSliver: SliverSearchBar(
         controller: controller,

@@ -31,6 +31,7 @@ import 'dart:async';
 import 'package:venera_unified/app_runtime/sync_window_binding.dart';
 import 'package:desktop_webview_window/desktop_webview_window.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:venera_unified/foundation/theme_colors.dart';
 import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -352,17 +353,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   Color translateColorSetting() {
-    return switch (GlobalPreferenceStore(appdata.settings).appearance.color) {
-      'red' => Colors.red,
-      'pink' => Colors.pink,
-      'purple' => Colors.purple,
-      'green' => Colors.green,
-      'orange' => Colors.orange,
-      'blue' => Colors.blue,
-      'yellow' => Colors.yellow,
-      'cyan' => Colors.cyan,
-      _ => Colors.blue,
-    };
+    final appearance = GlobalPreferenceStore(appdata.settings).appearance;
+    if (appearance.color == 'custom') {
+      return resolveThemeColor('custom', appearance.customThemeColor);
+    }
+    return resolveThemeColor(appearance.color, null);
   }
 
   ThemeData getTheme(

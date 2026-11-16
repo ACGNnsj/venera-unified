@@ -63,6 +63,20 @@ class _ExploreSettingsState extends State<ExploreSettings> {
           preference: DiscoveryPreferences.showHistoryStatusOnTile,
         ).toSliver(),
         SwitchSetting.preference(
+          title: "Show search history clear button".tl,
+          subtitle:
+              'Show the clear (trash) button on the search history header.'
+                  .tl,
+          preference: DiscoveryPreferences.showClearSearchHistoryButton,
+        ).toSliver(),
+        SwitchSetting.preference(
+          title: "Detailed search history".tl,
+          subtitle:
+              'Record each search with its source, filters and page, and reopen entries where you left off.'
+                  .tl,
+          preference: DiscoveryPreferences.searchHistoryDetailedMode,
+        ).toSliver(),
+        SwitchSetting.preference(
           title: 'Show detailed reading progress'.tl,
           subtitle:
               'Show saved chapter totals and pages in the current chapter. No extra network requests.'
