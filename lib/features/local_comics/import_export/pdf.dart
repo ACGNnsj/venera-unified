@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
+
 import 'package:venera_saf/venera_saf.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/features/local_comics/local.dart';
 import 'package:venera_unified/foundation/image_processing.dart';
 import 'package:venera_unified/foundation/file_interaction.dart';
+import 'package:venera_unified/foundation/saf_directories.dart';
+
 import 'comic_export_service.dart';
 
 typedef DecodeImage = Future<Image> Function(Uint8List data);
@@ -18,9 +21,9 @@ Future<void> _createPdfFromComic({
 }) async {
   var images = <String>[];
 
-  var baseDir = comic.directory.contains('/') || comic.directory.contains('\\')
-      ? comic.directory
-      : FilePath.join(localPath, comic.directory);
+  // Shared generic-SAF/local resolution: `android://` document-ID paths and
+  // plain names share one chain (overrideIO + SAFTaskWorker + copy).
+  var baseDir = resolveComicDirectory(comic.directory, localPath);
 
   // add cover
   images.add(FilePath.join(baseDir, comic.cover));
