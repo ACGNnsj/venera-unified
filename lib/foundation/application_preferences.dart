@@ -95,19 +95,39 @@ abstract final class AppearancePreferences {
     'light',
     'dark',
   ]);
-  // Yellow and cyan are supported by existing saved configurations even though
-  // the current selector does not offer them.
+  // The 18 presets mirror venera-prime's themeColors plus a custom slot.
   static const color = ChoicePreference('color', 'system', [
     'system',
     'red',
     'pink',
     'purple',
-    'green',
-    'orange',
+    'deepPurple',
+    'indigo',
     'blue',
-    'yellow',
+    'lightBlue',
     'cyan',
+    'teal',
+    'green',
+    'lightGreen',
+    'lime',
+    'yellow',
+    'amber',
+    'orange',
+    'deepOrange',
+    'brown',
+    'blueGrey',
+    'custom',
   ]);
+  // Custom theme color as an opaque ARGB int (see themeColorHex). Only read
+  // when [color] is 'custom'.
+  static const customThemeColor = NumericPreference(
+    'customThemeColor',
+    0xFF2196F3,
+    min: 0,
+    max: 4294967295,
+    step: 1,
+    integer: true,
+  );
   // 评论正文的字号。只影响评论卡片里的文字，正文与阅读器等其它排版各有
   // 自己的设置，彼此不联动。
   static const commentFontSize = NumericPreference(
@@ -140,6 +160,7 @@ abstract final class AppearancePreferences {
     nightMode,
     uiFontScale,
     convertTraditionalToSimplified,
+    customThemeColor,
   ];
 }
 
@@ -205,6 +226,23 @@ abstract final class DiscoveryPreferences {
     'searchDiscoveryShortcuts',
     false,
   );
+  // New (detailed) search-history mode, ported from venera-prime: each record
+  // keeps its source, filter options and page. Off (old mode) keeps the
+  // legacy keyword-only history whose tap re-searches with current settings.
+  // Persisted in settings, so it survives restarts.
+  static const searchHistoryDetailedMode = BoolPreference(
+    'searchHistoryDetailedMode',
+    false,
+  );
+  // Whether the history header offers the clear button.
+  static const showClearSearchHistoryButton = BoolPreference(
+    'showClearSearchHistoryButton',
+    true,
+  );
+  // JSON-encoded [SearchHistoryEntry] records, newest first, capped at 50.
+  static const searchHistoryEntries = StringListPreference(
+    'searchHistoryEntries',
+  );
   static const all = <Preference<Object?>>[
     comicDisplayMode,
     comicTileScale,
@@ -221,6 +259,9 @@ abstract final class DiscoveryPreferences {
     searchSources,
     defaultSearchTarget,
     searchDiscoveryShortcuts,
+    searchHistoryDetailedMode,
+    showClearSearchHistoryButton,
+    searchHistoryEntries,
   ];
 }
 

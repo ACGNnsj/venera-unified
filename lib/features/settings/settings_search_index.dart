@@ -58,6 +58,16 @@ final settingsSearchIndex = <SettingsSearchEntry>[
   const SettingsSearchEntry('Show favorite status on comic tile', 0),
   const SettingsSearchEntry('Show history on comic tile', 0),
   const SettingsSearchEntry(
+    'Show search history clear button',
+    0,
+    keywords: ['search', 'history', 'clear'],
+  ),
+  const SettingsSearchEntry(
+    'Detailed search history',
+    0,
+    keywords: ['search', 'history'],
+  ),
+  const SettingsSearchEntry(
     'Show detailed reading progress',
     0,
     keywords: ['chapter', 'progress'],

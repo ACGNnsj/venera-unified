@@ -313,6 +313,8 @@ class ComicList extends StatefulWidget {
     this.reloadHandlerCallback,
     this.enablePageStorage = false,
     this.useFavoriteDisplaySettings = false,
+    this.initialPage = 1,
+    this.onPageChanged,
   });
 
   final Future<Res<List<Comic>>> Function(int page)? loadPage;
@@ -337,6 +339,13 @@ class ComicList extends StatefulWidget {
 
   final bool useFavoriteDisplaySettings;
 
+  /// First page to show; search history entries reopen at their saved page.
+  /// Defaults to 1, preserving existing behavior everywhere else.
+  final int initialPage;
+
+  /// Fired on page jumps in paging mode so callers can persist the page.
+  final ValueChanged<int>? onPageChanged;
+
   @override
   State<ComicList> createState() => ComicListState();
 }
@@ -358,6 +367,16 @@ class ComicListState extends State<ComicList> {
   String? _nextUrl;
 
   late bool enablePageStorage = widget.enablePageStorage;
+
+  @override
+  void initState() {
+    super.initState();
+    // ponytail: restore loads the saved page directly without backfilling
+    // earlier pages; full continuity would need multi-page preloading.
+    if (widget.initialPage > 1) {
+      _page = widget.initialPage;
+    }
+  }
 
   void _restoreState(Object? state) {
     if (state is! _ComicListSnapshot || !enablePageStorage) {
@@ -518,6 +537,7 @@ class ComicListState extends State<ComicList> {
                                     _error = null;
                                     _page = page;
                                   });
+                                  widget.onPageChanged?.call(page);
                                 } else {
                                   context.showMessage(
                                     message: "Invalid page".tl,

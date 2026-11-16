@@ -40,10 +40,14 @@ class AppearanceConfiguration {
       color = AppearancePreferences.color.normalize(
         read(AppearancePreferences.color.key),
       ),
+      customThemeColor = AppearancePreferences.customThemeColor
+          .normalize(read(AppearancePreferences.customThemeColor.key))
+          .toInt(),
       uiFontScale = AppearancePreferences.uiFontScale
           .normalize(read(AppearancePreferences.uiFontScale.key))
           .toDouble();
   final String themeMode;
   final String color;
+  final int customThemeColor;
   final double uiFontScale;
 }
