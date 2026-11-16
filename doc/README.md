@@ -25,6 +25,7 @@ English index: [README.en.md](README.en.md)
 ## 开发和构建
 
 - [构建与开发](development/build.zh.md) / [Build and Development](development/build.en.md)
+- [测试执行与维护](development/testing.zh.md) / [Running and Maintaining Tests](development/testing.en.md)
 - [漫画源本地调试](development/source_debugging.zh.md) / [Local Source Debugging](development/source_debugging.en.md)
 - [磁盘日志](development/logging.zh.md) / [Disk logs](development/logging.en.md)
 - [依赖治理](development/dependencies.zh.md) / [Dependency Governance](development/dependencies.en.md)

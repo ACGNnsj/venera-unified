@@ -28,13 +28,18 @@ English version: [CONTRIBUTING.en.md](CONTRIBUTING.en.md)
 flutter pub get --enforce-lockfile
 ```
 
+先按[测试执行与维护](doc/development/testing.zh.md)准备适用 host 的原生库，再按完整清单执行并核对 CI 证据。新增平台／原生用例同步执行归属和已审查的跳过声明；合并／删除说明替代保障。
+
 提交前至少运行：
 
 ```bash
+python .github/scripts/release_version.py --check
 python .github/scripts/check_structure_imports.py
+python .github/scripts/check_architecture_dependencies.py
+python .github/scripts/test_suites.py --strict-imports --output build/test-audit/inventory.json
 python -m unittest discover -s .github/scripts/tests -p "test_*.py"
-flutter analyze --no-pub
-flutter test --no-pub
+flutter analyze --no-pub --fatal-infos --fatal-warnings
+python .github/scripts/run_flutter_tests.py --suite default --coverage --output build/test-audit/default
 git diff --check
 ```
 
