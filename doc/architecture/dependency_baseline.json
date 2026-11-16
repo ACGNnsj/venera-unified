@@ -817,6 +817,7 @@
     "routing/ohos_path_prompt.dart",
     "routing/page_jump_target.dart",
     "routing/page_replacement.dart",
+    "routing/pending_app_links.dart",
     "routing/settings.dart",
     "routing/webview.dart",
     "routing/windows_webview_environment.dart"
@@ -1229,6 +1230,7 @@
     "foundation/reader_settings.dart",
     "foundation/release_version.dart",
     "foundation/res.dart",
+    "foundation/saf_directories.dart",
     "foundation/selection_operation.dart",
     "foundation/share_file_operation.dart",
     "foundation/sqlite_connection.dart",

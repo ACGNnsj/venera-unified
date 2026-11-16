@@ -1,5 +1,6 @@
 import 'package:venera_unified/foundation/operation_failure.dart';
 import 'package:venera_unified/foundation/missing_download_page.dart';
+
 import 'local_comic_model.dart';
 import 'local_repository.dart';
 import 'local_chapter_storage.dart';
@@ -7,14 +8,17 @@ import 'local_deletion_paths.dart';
 import 'local_related_data.dart';
 import 'local_deletion_journal.dart';
 import 'local_registration_storage.dart';
+
 import 'package:venera_unified/features/favorites/favorites_api.dart';
 import 'package:venera_unified/foundation/persistence_failure.dart';
 import 'package:venera_unified/foundation/sqlite_transaction.dart';
+
 import 'download_task_store.dart';
 import 'download_directory_allocator.dart';
 import 'local_sort_type.dart';
 export 'local_sort_type.dart';
 export 'local_comic_model.dart';
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -27,15 +31,21 @@ import 'package:venera_unified/features/comic_storage/comic_storage.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
 import 'package:venera_unified/foundation/log.dart';
 import 'package:venera_unified/foundation/sqlite_connection.dart';
+
 import 'download_task.dart';
 import 'download_task_storage.dart';
 import 'download_queue.dart';
 import 'download_task_codec.dart';
+
 import 'package:venera_unified/foundation/file_interaction.dart';
 
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/features/history/history_api.dart';
+
+import 'package:venera_unified/foundation/saf_directories.dart'
+    as saf_dirs
+    show resolveComicDirectory;
 
 import 'local_storage_guard.dart';
 import 'local_storage_migration.dart';
@@ -75,10 +85,10 @@ class _ComicStorageAccess {
   }
 }
 
+/// Shared with pdf export: generic `android://` document-ID locations and
+/// plain relative names resolve through one chain.
 String _resolveComicDirectory(String directory, String libraryPath) =>
-    (directory.contains('/') || directory.contains('\\'))
-    ? directory
-    : FilePath.join(libraryPath, directory);
+    saf_dirs.resolveComicDirectory(directory, libraryPath);
 
 class LocalManager with ChangeNotifier implements DownloadTaskStorage {
   static LocalManager? _instance;

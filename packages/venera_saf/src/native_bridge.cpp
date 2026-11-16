@@ -22,6 +22,12 @@ struct Environment {
   JavaVM *vm = runtime_vm.load(std::memory_order_acquire);
   JNIEnv *env = nullptr;
   bool attached = false;
+  // Ported from prime `pathwrapper.cpp` ScopedJniEnv: Dart's worker pool
+  // retires idle threads, so only detach threads we attached (leaving them
+  // attached can make ART abort when a worker exits). The local frame bounds
+  // per-call local references the same way prime's PushLocalFrame(32) does;
+  // handle bytes themselves are copied into malloc'd arrays before release
+  // (see handles.cpp retain/release + native_bridge outputs), never shared.
   Environment() {
     if (!vm) return;
     const jint result = vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6);
@@ -31,8 +37,12 @@ struct Environment {
     } else if (result != JNI_OK) {
       env = nullptr;
     }
+    if (env && env->PushLocalFrame(32) != 0) env = nullptr;
   }
-  ~Environment() { if (attached) vm->DetachCurrentThread(); }
+  ~Environment() {
+    if (env) env->PopLocalFrame(nullptr);
+    if (attached) vm->DetachCurrentThread();
+  }
 };
 
 template<class T> struct LocalReference {
