@@ -76,7 +76,7 @@
       "path": "lib/venera_saf.dart",
       "origin": "project",
       "sha256": "31d95d620cf3d5143a2680640055a3901982d56f2b43d9229d7b8423aac2d4a8",
-      "local_sha256": "31d95d620cf3d5143a2680640055a3901982d56f2b43d9229d7b8423aac2d4a8"
+      "local_sha256": "bc9df93106cca96f330df9a190127785ed70a9235c7abb2c02cacb51dbb70cb9"
     },
     {
       "path": "LICENSE",
@@ -124,7 +124,7 @@
       "path": "src/native_bridge.cpp",
       "origin": "project",
       "sha256": "32282d14228e63f52b66d7922463b1d33ee45f27fae72aa632055b17fbef4c15",
-      "local_sha256": "32282d14228e63f52b66d7922463b1d33ee45f27fae72aa632055b17fbef4c15"
+      "local_sha256": "fa09acda36603e1d136ad0503e83b93a52b4aabd16c1f73c23b2b6ff26701b09"
     },
     {
       "path": "test/descriptor_test.cpp",
