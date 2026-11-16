@@ -1,5 +1,6 @@
 import 'package:venera_unified/features/history/history_scope.dart';
 import 'package:venera_unified/features/favorites/favorites_scope.dart';
+
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -29,7 +30,9 @@ import 'package:venera_unified/foundation/image_work.dart';
 import 'package:venera_unified/foundation/reader_diagnostics.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/application_preferences.dart';
+
 import 'diagnostics_dialog.dart';
+
 import 'package:venera_unified/foundation/selection_operation.dart';
 import 'package:venera_unified/features/reader/history_writer.dart';
 import 'package:venera_unified/features/reader/exit_guard.dart';
@@ -37,8 +40,10 @@ import 'package:venera_unified/features/reader/reader_controller.dart';
 import 'package:venera_unified/features/reader/reader_viewport.dart';
 import 'package:venera_unified/features/reader/page_order_migration.dart';
 import 'package:venera_unified/features/reader/chapter_menu.dart';
+
 import 'chapter_loader.dart';
 import 'chapter_request.dart';
+
 import 'package:venera_unified/features/reader/image_favorite_controller.dart';
 import 'package:venera_unified/features/reader/image_export.dart';
 import 'package:venera_unified/features/reader/settings_effects.dart';
@@ -49,9 +54,11 @@ import 'package:venera_unified/features/reader/page_translation.dart';
 import 'package:venera_unified/features/reader/page_layout.dart';
 import 'package:venera_unified/features/reader/history_progress.dart';
 import 'package:venera_unified/features/reader/scaffold.dart';
+
 import 'shell_host.dart';
 import 'progress_navigation.dart';
 import 'image_picker.dart';
+
 import 'package:venera_unified/features/reader/volume.dart';
 import 'package:venera_unified/features/reader/volume_controller.dart';
 import 'package:venera_unified/features/reader/window_controller.dart';
@@ -191,9 +198,8 @@ class ReaderState extends State<Reader>
           : mode.isWaterfall
           ? ReaderDiagnosticMode.waterfall
           : ReaderDiagnosticMode.continuous,
-      processingEnabled: GlobalPreferenceStore(
-        appdata.settings,
-      ).read(ImageProcessingPreferences.enabled),
+      processingEnabled: GlobalPreferenceStore(appdata.settings)
+          .read(ImageProcessingPreferences.enabled),
       appVersion: App.buildVersion,
       refreshRate: View.of(context).display.refreshRate,
     );
@@ -892,6 +898,7 @@ class ReaderState extends State<Reader>
 
   @override
   int get page => controller.state.page;
+  int get _targetPage => controller.state.pendingPage ?? page;
   @override
   set page(int value) => controller.setPage(value);
   int get chapter => controller.state.chapter;
@@ -906,8 +913,11 @@ class ReaderState extends State<Reader>
   bool get isPageAnimating => controller.state.isAnimating;
   bool toPage(int page, {bool animated = true}) =>
       controller.toPage(page, animated: animated);
-  bool toNextPage() => toPage(page + 1);
-  bool toPrevPage() => toPage(page - 1);
+  bool toNextPage() => toPage(_targetPage + 1);
+  bool toPrevPage() => toPage(_targetPage - 1);
+
+  /// Consecutive turns chain from the in-flight target, not the settled page,
+  /// so rapid volume-key presses advance instead of re-requesting one step.
   bool toChapter(int chapter, {bool toLastPage = false}) =>
       controller.toChapter(chapter, toLastPage: toLastPage);
   bool toNextChapter() => toChapter(chapter + 1);
