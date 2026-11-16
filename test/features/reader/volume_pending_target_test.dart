@@ -26,9 +26,9 @@ void main() {
   testWidgets('consecutive turns chain from the in-flight target', (
     tester,
   ) async {
-    final previous = jsonDecode(
-      jsonEncode(appdata.toJson()['settings']),
-    ) as Map<String, dynamic>;
+    final previous =
+        jsonDecode(jsonEncode(appdata.toJson()['settings']))
+            as Map<String, dynamic>;
     final previousFavorites = _favoritesOwner;
     final previousHistory = _historyOwner;
     final directory = Directory.systemTemp.createTempSync('volume-pending-');
@@ -54,8 +54,9 @@ void main() {
       LocalManager(initializeSources: () async {});
       await tester.runAsync(() async {
         Directory('${directory.path}/comics').createSync();
-        File('${directory.path}/local_path')
-            .writeAsStringSync('${directory.path}/comics');
+        File(
+          '${directory.path}/local_path',
+        ).writeAsStringSync('${directory.path}/comics');
         _historyOwner = _TestHistory();
         await _historyForView().init();
         await LocalManager().init();

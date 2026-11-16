@@ -714,54 +714,58 @@ class _SearchHistoryState extends State<_SearchHistory> {
                 ),
                 if (_showClear)
                   Flyout(
-              flyoutBuilder: (context) {
-                var saving = false;
-                return StatefulBuilder(
-                  builder: (context, update) => FlyoutContent(
-                    title: "Clear Search History".tl,
-                    actions: [
-                      FilledButton(
-                        onPressed: saving
-                            ? null
-                            : () async {
-                                final route = ModalRoute.of(context);
-                                update(() => saving = true);
-                                final saved = await _editHistory(_clearAll);
-                                if (saved &&
-                                    context.mounted &&
-                                    route?.isCurrent != false) {
-                                  context.pop();
-                                }
-                                if (context.mounted) {
-                                  update(() => saving = false);
-                                }
-                              },
-                        child: saving
-                            ? const SizedBox.square(
-                                dimension: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text("Clear".tl),
-                      ),
-                    ],
-                  ),
-                );
-              },
-              child: Builder(
-                builder: (context) {
-                  return Tooltip(
-                    message: "Clear".tl,
-                    child: IconButton(
-                      icon: const Icon(Icons.clear_all),
-                      onPressed: () {
-                        context.findAncestorStateOfType<FlyoutState>()!.show();
+                    flyoutBuilder: (context) {
+                      var saving = false;
+                      return StatefulBuilder(
+                        builder: (context, update) => FlyoutContent(
+                          title: "Clear Search History".tl,
+                          actions: [
+                            FilledButton(
+                              onPressed: saving
+                                  ? null
+                                  : () async {
+                                      final route = ModalRoute.of(context);
+                                      update(() => saving = true);
+                                      final saved = await _editHistory(
+                                        _clearAll,
+                                      );
+                                      if (saved &&
+                                          context.mounted &&
+                                          route?.isCurrent != false) {
+                                        context.pop();
+                                      }
+                                      if (context.mounted) {
+                                        update(() => saving = false);
+                                      }
+                                    },
+                              child: saving
+                                  ? const SizedBox.square(
+                                      dimension: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text("Clear".tl),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: Builder(
+                      builder: (context) {
+                        return Tooltip(
+                          message: "Clear".tl,
+                          child: IconButton(
+                            icon: const Icon(Icons.clear_all),
+                            onPressed: () {
+                              context
+                                  .findAncestorStateOfType<FlyoutState>()!
+                                  .show();
+                            },
+                          ),
+                        );
                       },
                     ),
-                  );
-                },
-              ),
                   ),
               ],
             ),

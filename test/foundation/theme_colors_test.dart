@@ -4,26 +4,29 @@ import 'package:venera_unified/foundation/theme_colors.dart';
 
 void main() {
   test('all 18 prime presets are registered', () {
-    expect(themeColors.keys, containsAll([
-      'red',
-      'pink',
-      'purple',
-      'deepPurple',
-      'indigo',
-      'blue',
-      'lightBlue',
-      'cyan',
-      'teal',
-      'green',
-      'lightGreen',
-      'lime',
-      'yellow',
-      'amber',
-      'orange',
-      'deepOrange',
-      'brown',
-      'blueGrey',
-    ]));
+    expect(
+      themeColors.keys,
+      containsAll([
+        'red',
+        'pink',
+        'purple',
+        'deepPurple',
+        'indigo',
+        'blue',
+        'lightBlue',
+        'cyan',
+        'teal',
+        'green',
+        'lightGreen',
+        'lime',
+        'yellow',
+        'amber',
+        'orange',
+        'deepOrange',
+        'brown',
+        'blueGrey',
+      ]),
+    );
     expect(themeColors, hasLength(18));
   });
 
@@ -35,15 +38,9 @@ void main() {
   });
 
   test('resolveThemeColor honors a valid custom ARGB int', () {
-    expect(
-      resolveThemeColor('custom', 0xFF2196F3),
-      const Color(0xFF2196F3),
-    );
+    expect(resolveThemeColor('custom', 0xFF2196F3), const Color(0xFF2196F3));
     // Alpha bits are forced opaque, out-of-range input is rejected.
-    expect(
-      resolveThemeColor('custom', 0x002196F3).a,
-      1.0,
-    );
+    expect(resolveThemeColor('custom', 0x002196F3).a, 1.0);
     expect(resolveThemeColor('custom', -1), Colors.blue);
     expect(resolveThemeColor('custom', 0x100000000), Colors.blue);
     expect(resolveThemeColor('custom', 'red'), Colors.blue);

@@ -65,8 +65,7 @@ class _ExploreSettingsState extends State<ExploreSettings> {
         SwitchSetting.preference(
           title: "Show search history clear button".tl,
           subtitle:
-              'Show the clear (trash) button on the search history header.'
-                  .tl,
+              'Show the clear (trash) button on the search history header.'.tl,
           preference: DiscoveryPreferences.showClearSearchHistoryButton,
         ).toSliver(),
         SwitchSetting.preference(

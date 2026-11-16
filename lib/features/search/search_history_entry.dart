@@ -120,8 +120,9 @@ Future<void> rememberSearchHistoryEntry(SearchHistoryEntry entry) {
     ..removeWhere((e) => e.identity == entry.identity);
   entries.insert(0, entry);
   if (entries.length > 50) entries.removeRange(50, entries.length);
-  return SearchHistoryEntry.writeStored(entries)
-      .then((_) => appdata.addSearchHistory(entry.keyword));
+  return SearchHistoryEntry.writeStored(
+    entries,
+  ).then((_) => appdata.addSearchHistory(entry.keyword));
 }
 
 /// Update the saved page of one record (identified by [identity]).
@@ -139,8 +140,9 @@ Future<void> removeSearchHistoryEntry(SearchHistoryEntry entry) {
   final entries = SearchHistoryEntry.readStored()
     ..removeWhere((e) => e.identity == entry.identity);
   return SearchHistoryEntry.writeStored(entries).then((_) async {
-    if (!SearchHistoryEntry.readStored()
-        .any((e) => e.keyword == entry.keyword)) {
+    if (!SearchHistoryEntry.readStored().any(
+      (e) => e.keyword == entry.keyword,
+    )) {
       await appdata.removeSearchHistory(entry.keyword);
     }
   });

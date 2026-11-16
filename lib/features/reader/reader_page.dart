@@ -198,8 +198,9 @@ class ReaderState extends State<Reader>
           : mode.isWaterfall
           ? ReaderDiagnosticMode.waterfall
           : ReaderDiagnosticMode.continuous,
-      processingEnabled: GlobalPreferenceStore(appdata.settings)
-          .read(ImageProcessingPreferences.enabled),
+      processingEnabled: GlobalPreferenceStore(
+        appdata.settings,
+      ).read(ImageProcessingPreferences.enabled),
       appVersion: App.buildVersion,
       refreshRate: View.of(context).display.refreshRate,
     );
