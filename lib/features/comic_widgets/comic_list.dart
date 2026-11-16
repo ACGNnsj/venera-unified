@@ -281,8 +281,9 @@ class _SliverGridComics extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           decoration: BoxDecoration(
             color: isSelected
-                ? Theme.of(context).colorScheme.secondaryContainer
-                      .toOpacity(0.72)
+                ? Theme.of(
+                    context,
+                  ).colorScheme.secondaryContainer.toOpacity(0.72)
                 : null,
             borderRadius: BorderRadius.circular(12),
           ),
@@ -673,8 +674,9 @@ class ComicListState extends State<ComicList> {
 
   @override
   Widget build(BuildContext context) {
-    final type = GlobalPreferenceStore(appdata.settings)
-        .read(DiscoveryPreferences.comicListDisplayMode);
+    final type = GlobalPreferenceStore(
+      appdata.settings,
+    ).read(DiscoveryPreferences.comicListDisplayMode);
     return type == 'paging' ? buildPagingMode() : buildContinuousMode();
   }
 

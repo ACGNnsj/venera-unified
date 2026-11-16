@@ -40,8 +40,9 @@ Future<File> createEpubComic(
 
     // META-INF
     Directory(FilePath.join(workingDir.path, 'META-INF')).createSync();
-    File(FilePath.join(workingDir.path, 'META-INF', 'container.xml'))
-        .writeAsStringSync('''
+    File(
+      FilePath.join(workingDir.path, 'META-INF', 'container.xml'),
+    ).writeAsStringSync('''
 <?xml version="1.0"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
   <rootfiles>

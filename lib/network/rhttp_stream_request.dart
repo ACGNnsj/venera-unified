@@ -52,11 +52,12 @@ class RHttpStreamCall {
   final Future<void> Function() cancel;
 }
 
-typedef RHttpStreamCallFactory = Future<RHttpStreamCall> Function(
-  RequestOptions options,
-  rhttp.ClientSettings settings,
-  Stream<Uint8List>? upload,
-);
+typedef RHttpStreamCallFactory =
+    Future<RHttpStreamCall> Function(
+      RequestOptions options,
+      rhttp.ClientSettings settings,
+      Stream<Uint8List>? upload,
+    );
 
 /// Owns a streaming request independently of Dio's early cancellation result.
 class RHttpStreamRequest {
