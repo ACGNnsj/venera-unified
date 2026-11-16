@@ -27,10 +27,7 @@ Widget _host(List<Comic> comics, {void Function()? onLastItemBuild}) =>
       home: Scaffold(
         body: CustomScrollView(
           slivers: [
-            SliverGridComics(
-              comics: comics,
-              onLastItemBuild: onLastItemBuild,
-            ),
+            SliverGridComics(comics: comics, onLastItemBuild: onLastItemBuild),
           ],
         ),
       ),

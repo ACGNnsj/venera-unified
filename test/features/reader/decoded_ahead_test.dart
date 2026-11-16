@@ -188,11 +188,11 @@ void main() {
     await _expectAhead(tester, _Fixture(), 8);
   });
 
-  testWidgets('tv low-memory budget precaches one decoded neighbour per side',
-    (tester) async {
-      await _expectAhead(tester, _Fixture(decodePixelBudget: 1), 4);
-    },
-  );
+  testWidgets('tv low-memory budget precaches one decoded neighbour per side', (
+    tester,
+  ) async {
+    await _expectAhead(tester, _Fixture(decodePixelBudget: 1), 4);
+  });
 
   testWidgets('zero preload disables decoded prefetch', (tester) async {
     await _expectAhead(tester, _Fixture(preloadCount: 0), 0);
