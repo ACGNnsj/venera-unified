@@ -6,7 +6,7 @@ English version: [build.en.md](build.en.md)
 
 ## 环境要求
 
-- Flutter `3.41.4`
+- Flutter `3.47.8`
 - Dart `>=3.8.0 <4.0.0`
 - JDK `17`，用于 Android 构建
 - Rust 工具链；Android 构建需要安装对应 Android targets
