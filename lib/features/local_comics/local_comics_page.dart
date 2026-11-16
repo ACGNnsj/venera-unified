@@ -1,4 +1,5 @@
 import 'import_export/comic_export_service.dart';
+
 import 'package:venera_unified/components/window_selection_task.dart';
 import 'package:venera_unified/foundation/selection_operation.dart';
 import 'package:flutter/material.dart';
@@ -49,6 +50,8 @@ class _LocalComicsPageState extends State<LocalComicsPage> {
 
   Map<LocalComic, bool> selectedComics = {};
 
+  final _sizes = <String, Future<int>>{};
+
   List<LocalComic> get visibleComics {
     final filter = KeywordFilter.fromSettings(appdata.settings);
     return comics
@@ -81,6 +84,7 @@ class _LocalComicsPageState extends State<LocalComicsPage> {
           ? LocalManager().getComics(sortType)
           : LocalManager().search(keyword);
       reconcileSelection();
+      _sizes.clear();
     });
   }
 
@@ -366,6 +370,30 @@ class _LocalComicsPageState extends State<LocalComicsPage> {
             ),
           SliverGridComics(
             comics: comics,
+            itemWrapper: (c, child) {
+              final comic = c as LocalComic;
+              return Column(
+                children: [
+                  Expanded(child: child),
+                  FutureBuilder<int>(
+                    future: _sizes.putIfAbsent(
+                      comic.baseDir,
+                      () => localComicDirectorySize(comic),
+                    ),
+                    builder: (context, snapshot) => Text(
+                      '${"Local".tl} · ${snapshot.hasData
+                          ? bytesToReadableString(snapshot.data!)
+                          : snapshot.hasError
+                          ? "Unavailable".tl
+                          : "…"}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  ),
+                ],
+              );
+            },
             badgeBuilder: (comic) => comic is LocalComic && comic.isIncomplete
                 ? 'Incomplete: @a missing pages'.tlParams({
                     'a': comic.missingImageCount,

@@ -1,6 +1,8 @@
 import 'package:venera_unified/foundation/global_preference_store.dart';
+
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
@@ -219,6 +221,20 @@ class AppDio with DioMixin {
   }
 }
 
+/// Fail fast on custom DNS overrides that the native transport cannot use.
+/// An unparseable IP would otherwise surface as an obscure native error.
+void validateCustomDnsOverrides(Map<String, List<String>> overrides) {
+  for (final entry in overrides.entries) {
+    for (final ip in entry.value) {
+      if (entry.key.isEmpty || InternetAddress.tryParse(ip) == null) {
+        throw ArgumentError(
+          'Invalid custom DNS override for ${entry.key}: $ip',
+        );
+      }
+    }
+  }
+}
+
 class RHttpAdapter implements HttpClientAdapter {
   RHttpAdapter({
     RHttpStreamCallFactory? startStreamCall,
@@ -235,6 +251,7 @@ class RHttpAdapter implements HttpClientAdapter {
   Future<rhttp.ClientSettings> get settings async {
     var proxy = await getProxy();
     final network = GlobalPreferenceStore(appdata.settings).network;
+    validateCustomDnsOverrides(network.effectiveDnsOverrides);
 
     return rhttp.ClientSettings(
       proxySettings: proxy == null
@@ -328,7 +345,13 @@ class RHttpAdapter implements HttpClientAdapter {
         });
     _streamPending.add(pending);
     if (cancelFuture != null) {
-      unawaited(cancelFuture.then((_) => request.cancel()));
+      // A timeout settles the request before Dio reports it; a late
+      // callback after full native exit must not touch the settled request.
+      unawaited(
+        cancelFuture.then((_) {
+          if (!request.isDone) request.cancel();
+        }),
+      );
     }
     return request.response;
   }
@@ -351,8 +374,7 @@ class RHttpAdapter implements HttpClientAdapter {
       302 => "Found",
       400 => "Invalid Status Code 400: The Request is invalid.",
       401 => "Invalid Status Code 401: The Request is unauthorized.",
-      403 =>
-        "Invalid Status Code 403: No permission to access the resource. Check your account or network.",
+      403 => "Invalid Status Code 403: No permission to access the resource. Check your account or network.",
       404 => "Invalid Status Code 404: Not found.",
       429 =>
         "Invalid Status Code 429: Too many requests. Please try again later.",
