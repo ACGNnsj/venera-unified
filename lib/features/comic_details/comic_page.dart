@@ -75,11 +75,16 @@ class ComicPage extends StatefulWidget {
     this.cover,
     this.title,
     this.heroID,
+    this.initialPage,
   });
 
   final String id;
 
   final String sourceKey;
+
+  /// Open the reader at this page once details land (external-link
+  /// page-forward; null keeps the details page without auto-reading).
+  final int? initialPage;
 
   final String? cover;
 
@@ -116,6 +121,9 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
 
   @override
   History? history;
+
+  /// One-shot: external-link page-forward fires only for the first load.
+  bool _pageForwarded = false;
 
   bool showAppbarTitle = false;
 
@@ -180,6 +188,7 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.id != widget.id || oldWidget.sourceKey != widget.sourceKey) {
       isFirst = true;
+      _pageForwarded = false;
       _recommendVisible = _recommendWindow;
       _armComments();
       retry();
@@ -364,6 +373,13 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
 
   @override
   Future<void> onDataLoaded(RequestScope scope) async {
+    final forwardedPage = widget.initialPage;
+    if (forwardedPage != null && !_pageForwarded) {
+      _pageForwarded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) read(null, forwardedPage);
+      });
+    }
     isLiked = comic.isLiked ?? false;
     isFavorite = comic.isFavorite ?? false;
     // For sources with multi-folder favorites, prefer querying folders to get accurate favorite status

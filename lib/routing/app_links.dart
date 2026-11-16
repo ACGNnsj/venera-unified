@@ -135,13 +135,16 @@ Future<bool> handleAppLink(Uri uri, {bool Function()? isActive}) async {
           // Reader/settings routes live above the nested home navigator; open
           // above the visible route instead of behind that overlay.
           // comicLinkTarget strips nhentai/e-hentai trailing page numbers for
-          // id resolution; ComicPage takes no reader-page parameter, so the
-          // page itself is intentionally not forwarded.
+          // id resolution; the page itself is forwarded into the reader.
           (appNavigation.rootNavigatorKey.currentState?.canPop() == true
                   ? appNavigation.rootNavigatorKey.currentContext
                   : appNavigation.mainNavigatorKey?.currentContext)
               ?.to(() {
-                return ComicPage(id: id!, sourceKey: source.key);
+                return ComicPage(
+                  id: id!,
+                  sourceKey: source.key,
+                  initialPage: target.page,
+                );
               });
           return true;
         }
