@@ -22,6 +22,11 @@ import 'comic_copy_metadata.dart';
 import 'comic_copy_record.dart';
 import 'cbz.dart';
 
+/// Filesystems can report an unknown mtime as epoch zero; fall back to now
+/// so refresh/restore metadata never records a bogus creation time.
+DateTime validLocalModifiedTime(DateTime modified) =>
+    modified.millisecondsSinceEpoch > 0 ? modified : DateTime.now();
+
 void _checkCopyLocation(String directoryPath, String libraryPath) {
   final directory = Directory(directoryPath);
   final library = Directory(libraryPath);
@@ -462,7 +467,7 @@ class ComicImportOperation {
             ));
             final comic = await _checkSingleComic(
               entry,
-              createTime: (await entry.stat()).modified,
+              createTime: validLocalModifiedTime((await entry.stat()).modified),
               useRelativePath: true,
             );
             if (comic != null) {
@@ -592,7 +597,7 @@ class ComicImportOperation {
         final entry = Directory(directory);
         final comic = await _checkSingleComic(
           entry,
-          createTime: (await entry.stat()).modified,
+          createTime: validLocalModifiedTime((await entry.stat()).modified),
           useRelativePath: true,
         );
         final verified = await compute(_unverifiedCopyDigest, (

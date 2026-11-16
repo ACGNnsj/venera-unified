@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+
 import 'package:venera_unified/foundation/application_preferences.dart';
 import 'package:venera_unified/foundation/global_preference_store.dart';
 import 'package:venera_unified/foundation/keyword_filter.dart';
@@ -31,6 +32,7 @@ class SliverGridComics extends StatefulWidget {
     required this.comics,
     this.onLastItemBuild,
     this.badgeBuilder,
+    this.itemWrapper,
     this.menuBuilder,
     this.onTap,
     this.onLongPressed,
@@ -46,6 +48,9 @@ class SliverGridComics extends StatefulWidget {
   final void Function()? onLastItemBuild;
 
   final String? Function(Comic)? badgeBuilder;
+
+  /// Wraps each tile, e.g. to append a size footer below the cover.
+  final Widget Function(Comic comic, Widget child)? itemWrapper;
 
   final List<MenuEntry> Function(Comic)? menuBuilder;
 
@@ -173,6 +178,7 @@ class _SliverGridComicsState extends State<SliverGridComics> {
       selection: widget.selections,
       onLastItemBuild: widget.onLastItemBuild,
       badgeBuilder: widget.badgeBuilder,
+      itemWrapper: widget.itemWrapper,
       menuBuilder: widget.menuBuilder,
       onTap: widget.onTap,
       onLongPressed: widget.onLongPressed,
@@ -204,6 +210,7 @@ class _SliverGridComics extends StatelessWidget {
     required this.heroIDs,
     this.onLastItemBuild,
     this.badgeBuilder,
+    this.itemWrapper,
     this.menuBuilder,
     this.onTap,
     this.onLongPressed,
@@ -222,6 +229,8 @@ class _SliverGridComics extends StatelessWidget {
   final void Function()? onLastItemBuild;
 
   final String? Function(Comic)? badgeBuilder;
+
+  final Widget Function(Comic comic, Widget child)? itemWrapper;
 
   final List<MenuEntry> Function(Comic)? menuBuilder;
 
@@ -246,7 +255,7 @@ class _SliverGridComics extends StatelessWidget {
         var isSelected = selection == null
             ? false
             : selection![comics[index]] ?? false;
-        var comic = ComicTile(
+        Widget comic = ComicTile(
           comic: comics[index],
           badge: badge,
           menuOptions: menuBuilder?.call(comics[index]),
@@ -260,6 +269,10 @@ class _SliverGridComics extends StatelessWidget {
           heroID: heroIDs[index],
           displayMode: favoriteDisplayMode,
         );
+        final wrapper = itemWrapper;
+        if (wrapper != null) {
+          comic = wrapper(comics[index], comic);
+        }
         if (selection == null) {
           return comic;
         }

@@ -82,9 +82,14 @@ class RHttpStreamRequest {
   final _response = Completer<ResponseBody>();
   _RHttpStreamAttempt? _attempt;
   bool _cancelled = false;
+  bool _done = false;
   late final Future<void> done;
 
   Future<ResponseBody> get response => _response.future;
+
+  /// True once the native request has fully exited. A late cancellation
+  /// callback (e.g. after a timeout settled the request) must not touch it.
+  bool get isDone => _done;
 
   void cancel() {
     _cancelled = true;
@@ -203,6 +208,8 @@ class RHttpStreamRequest {
     } catch (error, stack) {
       if (!_response.isCompleted) _response.completeError(error, stack);
       if (error is RHttpCleanupFailure) rethrow;
+    } finally {
+      _done = true;
     }
   }
 }
@@ -363,11 +370,30 @@ class _JoiningHandler extends BaseHandler {
   }
 }
 
+/// RFC 9110 token: the native transport accepts any token method, including
+/// WebDAV verbs, but fails obscurely on empty or whitespace-bearing methods.
+final _httpMethodToken = RegExp(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$");
+
 Future<RHttpStreamCall> _startNativeCall(
   RequestOptions options,
   rhttp.ClientSettings settings,
   Stream<Uint8List>? upload,
 ) async {
+  // Fail fast with a diagnosable error instead of an obscure native failure.
+  if (!_httpMethodToken.hasMatch(options.method)) {
+    throw DioException(
+      requestOptions: options,
+      error: 'Invalid HTTP method: ${options.method}',
+      type: DioExceptionType.unknown,
+    );
+  }
+  if (options.data != null && upload == null) {
+    throw DioException(
+      requestOptions: options,
+      error: 'Request carries upload data but no upload stream was provided',
+      type: DioExceptionType.unknown,
+    );
+  }
   // These accesses deliberately bind this shim to the locked rhttp/FRB codegen.
   // ignore: invalid_use_of_internal_member
   final original = RustLib.instance.api as RustLibApiImpl;

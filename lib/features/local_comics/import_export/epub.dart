@@ -6,6 +6,7 @@ import 'package:venera_unified/features/local_comics/local.dart';
 import 'package:venera_unified/foundation/file_type.dart';
 import 'package:venera_unified/foundation/file_interaction.dart';
 import 'package:venera_unified/foundation/zip_writer.dart';
+
 import 'comic_export_service.dart';
 
 class EpubData {
@@ -30,20 +31,18 @@ Future<File> createEpubComic(
   String cacheDir,
   String outFilePath,
 ) async {
-  final workingDir = Directory(FilePath.join(cacheDir, 'epub'));
-  if (workingDir.existsSync()) {
-    workingDir.deleteSync(recursive: true);
-  }
-  workingDir.createSync(recursive: true);
+  // A private temp directory keeps concurrent exports from deleting each
+  // other's staging files.
+  final workingDir = await Directory(cacheDir).createTemp('epub-');
+  try {
+    // mimetype
+    workingDir.joinFile('mimetype').writeAsStringSync('application/epub+zip');
 
-  // mimetype
-  workingDir.joinFile('mimetype').writeAsStringSync('application/epub+zip');
-
-  // META-INF
-  Directory(FilePath.join(workingDir.path, 'META-INF')).createSync();
-  File(
-    FilePath.join(workingDir.path, 'META-INF', 'container.xml'),
-  ).writeAsStringSync('''
+    // META-INF
+    Directory(FilePath.join(workingDir.path, 'META-INF')).createSync();
+    File(
+      FilePath.join(workingDir.path, 'META-INF', 'container.xml'),
+    ).writeAsStringSync('''
 <?xml version="1.0"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
   <rootfiles>
@@ -52,43 +51,45 @@ Future<File> createEpubComic(
 </container>
   ''');
 
-  Directory(FilePath.join(workingDir.path, 'OEBPS')).createSync();
+    Directory(FilePath.join(workingDir.path, 'OEBPS')).createSync();
 
-  // copy images, create html files
-  final imageDir = Directory(FilePath.join(workingDir.path, 'OEBPS', 'images'));
-  imageDir.createSync();
-  final coverExt = data.cover.extension;
-  final coverMime = FileType.fromExtension(coverExt).mime;
-  imageDir
-      .joinFile('cover.$coverExt')
-      .writeAsBytesSync(data.cover.readAsBytesSync());
-  int imgIndex = 0;
-  int chapterIndex = 0;
-  var manifestStrBuilder = StringBuffer();
-  manifestStrBuilder.writeln(
-    '        <item id="cover_image" href="OEBPS/images/cover.$coverExt" media-type="$coverMime"/>',
-  );
-  manifestStrBuilder.writeln(
-    '        <item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/>',
-  );
-  for (final chapter in data.chapters.keys) {
-    var images = <String>[];
-    for (final image in data.chapters[chapter]!) {
-      final ext = image.extension;
-      imageDir
-          .joinFile('img$imgIndex.$ext')
-          .writeAsBytesSync(image.readAsBytesSync());
-      images.add('images/img$imgIndex.$ext');
-      var mime = FileType.fromExtension(ext).mime;
-      manifestStrBuilder.writeln(
-        '        <item id="img$imgIndex" href="OEBPS/images/img$imgIndex.$ext" media-type="$mime"/>',
-      );
-      imgIndex++;
-    }
-    var html = File(
-      FilePath.join(workingDir.path, 'OEBPS', '$chapterIndex.html'),
+    // copy images, create html files
+    final imageDir = Directory(
+      FilePath.join(workingDir.path, 'OEBPS', 'images'),
     );
-    html.writeAsStringSync('''
+    imageDir.createSync();
+    final coverExt = data.cover.extension;
+    final coverMime = FileType.fromExtension(coverExt).mime;
+    imageDir
+        .joinFile('cover.$coverExt')
+        .writeAsBytesSync(data.cover.readAsBytesSync());
+    int imgIndex = 0;
+    int chapterIndex = 0;
+    var manifestStrBuilder = StringBuffer();
+    manifestStrBuilder.writeln(
+      '        <item id="cover_image" href="OEBPS/images/cover.$coverExt" media-type="$coverMime"/>',
+    );
+    manifestStrBuilder.writeln(
+      '        <item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/>',
+    );
+    for (final chapter in data.chapters.keys) {
+      var images = <String>[];
+      for (final image in data.chapters[chapter]!) {
+        final ext = image.extension;
+        imageDir
+            .joinFile('img$imgIndex.$ext')
+            .writeAsBytesSync(image.readAsBytesSync());
+        images.add('images/img$imgIndex.$ext');
+        var mime = FileType.fromExtension(ext).mime;
+        manifestStrBuilder.writeln(
+          '        <item id="img$imgIndex" href="OEBPS/images/img$imgIndex.$ext" media-type="$mime"/>',
+        );
+        imgIndex++;
+      }
+      var html = File(
+        FilePath.join(workingDir.path, 'OEBPS', '$chapterIndex.html'),
+      );
+      html.writeAsStringSync('''
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" 
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -113,21 +114,21 @@ ${images.map((e) => '        <img src="$e" alt="$e"/>').join('\n')}
 </body>
 </html>
     ''');
-    manifestStrBuilder.writeln(
-      '        <item id="chapter$chapterIndex" href="OEBPS/$chapterIndex.html" media-type="application/xhtml+xml"/>',
-    );
-    chapterIndex++;
-  }
+      manifestStrBuilder.writeln(
+        '        <item id="chapter$chapterIndex" href="OEBPS/$chapterIndex.html" media-type="application/xhtml+xml"/>',
+      );
+      chapterIndex++;
+    }
 
-  // content.opf
-  final contentOpf = File(FilePath.join(workingDir.path, 'content.opf'));
-  final uuid = const Uuid().v4();
-  var spineStrBuilder = StringBuffer();
-  for (var i = 0; i < chapterIndex; i++) {
-    var idRef = 'idref="chapter$i"';
-    spineStrBuilder.writeln('        <itemref $idRef/>');
-  }
-  contentOpf.writeAsStringSync('''
+    // content.opf
+    final contentOpf = File(FilePath.join(workingDir.path, 'content.opf'));
+    final uuid = const Uuid().v4();
+    var spineStrBuilder = StringBuffer();
+    for (var i = 0; i < chapterIndex; i++) {
+      var idRef = 'idref="chapter$i"';
+      spineStrBuilder.writeln('        <itemref $idRef/>');
+    }
+    contentOpf.writeAsStringSync('''
 <?xml version="1.0" encoding="UTF-8"?>
 <package version="3.0" 
     xmlns="http://www.idpf.org/2007/opf"
@@ -147,24 +148,24 @@ ${spineStrBuilder.toString()}
 </package>
   ''');
 
-  // toc.ncx
-  final tocNcx = File(FilePath.join(workingDir.path, 'toc.ncx'));
-  var navMapStrBuilder = StringBuffer();
-  var playOrder = 2;
-  final chapterNames = data.chapters.keys.toList();
-  for (var i = 0; i < chapterIndex; i++) {
-    navMapStrBuilder.writeln(
-      '        <navPoint id="chapter$i" playOrder="$playOrder">',
-    );
-    navMapStrBuilder.writeln(
-      '            <navLabel><text>${_escapeEpubXml(chapterNames[i])}</text></navLabel>',
-    );
-    navMapStrBuilder.writeln('            <content src="OEBPS/$i.html"/>');
-    navMapStrBuilder.writeln('        </navPoint>');
-    playOrder++;
-  }
+    // toc.ncx
+    final tocNcx = File(FilePath.join(workingDir.path, 'toc.ncx'));
+    var navMapStrBuilder = StringBuffer();
+    var playOrder = 2;
+    final chapterNames = data.chapters.keys.toList();
+    for (var i = 0; i < chapterIndex; i++) {
+      navMapStrBuilder.writeln(
+        '        <navPoint id="chapter$i" playOrder="$playOrder">',
+      );
+      navMapStrBuilder.writeln(
+        '            <navLabel><text>${_escapeEpubXml(chapterNames[i])}</text></navLabel>',
+      );
+      navMapStrBuilder.writeln('            <content src="OEBPS/$i.html"/>');
+      navMapStrBuilder.writeln('        </navPoint>');
+      playOrder++;
+    }
 
-  tocNcx.writeAsStringSync('''
+    tocNcx.writeAsStringSync('''
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx" version="2005-1">
@@ -183,11 +184,12 @@ ${navMapStrBuilder.toString()}
 </ncx>
   ''');
 
-  await writeZipFromDirectory(workingDir.path, outFilePath);
+    await writeZipFromDirectory(workingDir.path, outFilePath);
 
-  workingDir.deleteSync(recursive: true);
-
-  return File(outFilePath);
+    return File(outFilePath);
+  } finally {
+    await workingDir.delete(recursive: true);
+  }
 }
 
 String _escapeEpubXml(String value) {
@@ -204,34 +206,54 @@ Future<File> createEpubWithLocalComic(
   String outFilePath,
 ) async {
   requireCompleteComicForExport(comic);
-  var chapters = <String, List<File>>{};
+  // Transfer paths only: File objects own native handles and must not cross
+  // the isolate boundary. Fresh handles are acquired inside the worker.
+  var chapters = <String, List<String>>{};
   if (comic.chapters == null) {
-    chapters[comic.title] = (await LocalManager().getImages(
+    chapters[comic.title] = await LocalManager().getImages(
       comic.id,
       comic.comicType,
       0,
-    )).map((e) => File(e)).toList();
+    );
   } else {
     for (var chapter in comic.downloadedChapters) {
-      chapters[comic.chapters![chapter]!] = (await LocalManager().getImages(
+      chapters[comic.chapters![chapter]!] = await LocalManager().getImages(
         comic.id,
         comic.comicType,
         chapter,
-      )).map((e) => File(e)).toList();
+      );
     }
   }
-  var data = EpubData(
-    title: comic.title,
-    author: comic.subtitle,
-    cover: comic.coverFile,
-    chapters: chapters,
-  );
-
+  final title = comic.title;
+  final author = comic.subtitle;
+  final coverPath = comic.coverFile.path;
   final cacheDir = App.cachePath;
 
   return Isolate.run(
     () => overrideIO(() async {
+      final data = EpubData(
+        title: title,
+        author: author,
+        cover: _imageFileFromUri(coverPath),
+        chapters: chapters.map(
+          (name, paths) =>
+              MapEntry(name, paths.map(_imageFileFromUri).toList()),
+        ),
+      );
       return createEpubComic(data, cacheDir, outFilePath);
     }),
   );
 }
+
+/// Total on-disk size of a local comic, used for export size stats.
+Future<int> localComicDirectorySize(LocalComic comic) async {
+  var bytes = 0;
+  await for (final entity in Directory(
+    comic.baseDir,
+  ).list(recursive: true, followLinks: false)) {
+    if (entity is File) bytes += await entity.length();
+  }
+  return bytes;
+}
+
+File _imageFileFromUri(String uri) => File(uri.replaceFirst('file://', ''));
