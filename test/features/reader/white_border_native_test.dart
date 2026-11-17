@@ -25,16 +25,18 @@ Uint8List _rgba(int width, int height, {int left = 0, int right = 0}) {
   return pixels;
 }
 
-void _requireNative() {
+bool _requireNative() {
   if (!WhiteBorderNative.available) {
     markTestSkipped('venera_white_border not built for this platform');
+    return false;
   }
+  return true;
 }
 
 void main() {
   group('WhiteBorderNative parity with horizontalWhiteBorderInsets', () {
     test('bordered, dark, over-wide and wide pages', () {
-      _requireNative();
+      if (!_requireNative()) return;
       final cases = <(Uint8List, int, int)>[
         (_rgba(100, 160, left: 10, right: 12), 100, 160),
         (_rgba(100, 160), 100, 160),
@@ -52,7 +54,7 @@ void main() {
     });
 
     test('length mismatch mirrors the Dart (0, 0) guard', () {
-      _requireNative();
+      if (!_requireNative()) return;
       final pixels = _rgba(100, 160, left: 10, right: 12);
       final short = pixels.sublist(0, 100);
       expect(WhiteBorderNative.insetsOrNull(short, 100, 160), (0, 0));

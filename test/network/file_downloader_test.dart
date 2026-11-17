@@ -9,7 +9,7 @@ import 'package:venera_unified/network/file_downloader.dart';
 
 void main() {
   setUpAll(() async {
-    if (Platform.isWindows) await rhttp.Rhttp.init();
+    await rhttp.Rhttp.init();
   });
 
   setUp(() {
