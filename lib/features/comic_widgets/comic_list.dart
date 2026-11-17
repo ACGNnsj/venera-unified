@@ -24,6 +24,7 @@ import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
 
 import 'comic_tile.dart';
+import 'cover_hero_ids.dart';
 import 'keyword_hidden_notice.dart';
 
 class SliverGridComics extends StatefulWidget {
@@ -88,8 +89,6 @@ class _SliverGridComicsState extends State<SliverGridComics> {
     );
   }
 
-  static int _nextHeroID = 0;
-
   void _refreshComics() {
     _inputSnapshot = List.of(widget.comics);
     final previousIDs = <(String, String), Queue<int>>{};
@@ -105,7 +104,7 @@ class _SliverGridComicsState extends State<SliverGridComics> {
       for (final comic in comics)
         switch (previousIDs[(comic.sourceKey, comic.id)]) {
           final ids? when ids.isNotEmpty => ids.removeFirst(),
-          _ => _nextHeroID++,
+          _ => ComicCoverHeroIds.allocate(),
         },
     ];
   }
