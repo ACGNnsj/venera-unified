@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:venera_unified/foundation/image_work.dart';
+import 'package:venera_unified/foundation/white_border_native.dart';
 import 'package:venera_unified/foundation/log.dart';
 
 /// Only complete near-white columns qualify. A single dark/text pixel stops
@@ -129,13 +130,19 @@ class ReaderWhiteBorderCrop extends ChangeNotifier {
         );
         task.check();
         if (bytes == null) throw StateError('Image pixels are unavailable');
-        final (left, right) = await compute(_scan, (
-          pixels: TransferableTypedData.fromList([
-            bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
-          ]),
-          width: key.$2,
-          height: key.$3,
-        ));
+        final raw = bytes.buffer.asUint8List(
+          bytes.offsetInBytes,
+          bytes.lengthInBytes,
+        );
+        // Rust fast path (native/white_border): same scan, no isolate hop.
+        // Null means the library is unavailable or rejected the buffer.
+        final (left, right) =
+            WhiteBorderNative.insetsOrNull(raw, key.$2, key.$3) ??
+            await compute(_scan, (
+              pixels: TransferableTypedData.fromList([raw]),
+              width: key.$2,
+              height: key.$3,
+            ));
         task.check();
         result = ui.Rect.fromLTRB(
           left.toDouble(),

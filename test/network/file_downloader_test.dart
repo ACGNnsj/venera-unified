@@ -3,10 +3,15 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rhttp/rhttp.dart' as rhttp;
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/network/file_downloader.dart';
 
 void main() {
+  setUpAll(() async {
+    if (Platform.isWindows) await rhttp.Rhttp.init();
+  });
+
   setUp(() {
     appdata.settings['proxy'] = 'direct';
   });

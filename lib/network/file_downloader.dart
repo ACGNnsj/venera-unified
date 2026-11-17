@@ -2,9 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:dio/io.dart';
 import 'package:venera_unified/network/app_dio.dart';
-import 'package:venera_unified/network/proxy.dart';
 import 'package:venera_unified/foundation/extensions.dart';
 
 class FileDownloader {
@@ -128,13 +126,8 @@ class FileDownloader {
   void _download(StreamController<DownloadingStatus> resultStream) async {
     Timer? statusTimer;
     try {
-      var proxy = await getProxy();
-      _dio.httpClientAdapter = IOHttpClientAdapter(
-        createHttpClient: () {
-          return HttpClient()
-            ..findProxy = (uri) => proxy == null ? "DIRECT" : "PROXY $proxy";
-        },
-      );
+      // Pooled rhttp client: proxy/DNS/TLS come from RHttpAdapter.settings.
+      _dio.httpClientAdapter = RHttpAdapter();
 
       // get file size
       await _createTasks();

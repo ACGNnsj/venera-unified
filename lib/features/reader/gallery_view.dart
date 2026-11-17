@@ -125,6 +125,7 @@ class GalleryModeState extends State<ReaderGalleryView>
       data.comicId,
       data.chapterId,
       page,
+      enableResize: true,
       decodePixelBudget: data.decodePixelBudget,
       diagnostics: widget.imageWork.diagnostics,
       translationKey: translation.key,

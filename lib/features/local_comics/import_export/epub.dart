@@ -36,13 +36,13 @@ Future<File> createEpubComic(
   final workingDir = await Directory(cacheDir).createTemp('epub-');
   try {
     // mimetype
-    workingDir.joinFile('mimetype').writeAsStringSync('application/epub+zip');
+    await workingDir.joinFile('mimetype').writeAsString('application/epub+zip');
 
     // META-INF
-    Directory(FilePath.join(workingDir.path, 'META-INF')).createSync();
-    File(
+    await Directory(FilePath.join(workingDir.path, 'META-INF')).create();
+    await File(
       FilePath.join(workingDir.path, 'META-INF', 'container.xml'),
-    ).writeAsStringSync('''
+    ).writeAsString('''
 <?xml version="1.0"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
   <rootfiles>
@@ -51,18 +51,18 @@ Future<File> createEpubComic(
 </container>
   ''');
 
-    Directory(FilePath.join(workingDir.path, 'OEBPS')).createSync();
+    await Directory(FilePath.join(workingDir.path, 'OEBPS')).create();
 
     // copy images, create html files
     final imageDir = Directory(
       FilePath.join(workingDir.path, 'OEBPS', 'images'),
     );
-    imageDir.createSync();
+    await imageDir.create();
     final coverExt = data.cover.extension;
     final coverMime = FileType.fromExtension(coverExt).mime;
-    imageDir
+    await imageDir
         .joinFile('cover.$coverExt')
-        .writeAsBytesSync(data.cover.readAsBytesSync());
+        .writeAsBytes(await data.cover.readAsBytes());
     int imgIndex = 0;
     int chapterIndex = 0;
     var manifestStrBuilder = StringBuffer();
@@ -76,9 +76,9 @@ Future<File> createEpubComic(
       var images = <String>[];
       for (final image in data.chapters[chapter]!) {
         final ext = image.extension;
-        imageDir
+        await imageDir
             .joinFile('img$imgIndex.$ext')
-            .writeAsBytesSync(image.readAsBytesSync());
+            .writeAsBytes(await image.readAsBytes());
         images.add('images/img$imgIndex.$ext');
         var mime = FileType.fromExtension(ext).mime;
         manifestStrBuilder.writeln(
@@ -89,7 +89,7 @@ Future<File> createEpubComic(
       var html = File(
         FilePath.join(workingDir.path, 'OEBPS', '$chapterIndex.html'),
       );
-      html.writeAsStringSync('''
+      await html.writeAsString('''
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" 
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -128,7 +128,7 @@ ${images.map((e) => '        <img src="$e" alt="$e"/>').join('\n')}
       var idRef = 'idref="chapter$i"';
       spineStrBuilder.writeln('        <itemref $idRef/>');
     }
-    contentOpf.writeAsStringSync('''
+    await contentOpf.writeAsString('''
 <?xml version="1.0" encoding="UTF-8"?>
 <package version="3.0" 
     xmlns="http://www.idpf.org/2007/opf"
@@ -165,7 +165,7 @@ ${spineStrBuilder.toString()}
       playOrder++;
     }
 
-    tocNcx.writeAsStringSync('''
+    await tocNcx.writeAsString('''
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx" version="2005-1">

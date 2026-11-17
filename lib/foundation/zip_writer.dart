@@ -28,7 +28,8 @@ Future<void> writeZipFromDirectory(
   } catch (_) {
     _deletePartialArchive(destinationPath);
   }
-  // The fallback reads every file synchronously, so keep it off the UI isolate.
+  // The fallback keeps file IO off the UI isolate; reads stay async inside
+  // the worker so one slow file never blocks the isolate event loop.
   await Isolate.run(() => _encodeDirectory(sourceDirectory, destinationPath));
 }
 
@@ -42,24 +43,26 @@ void _deletePartialArchive(String destinationPath) {
   }
 }
 
-void _encodeDirectory(String sourceDirectory, String destinationPath) {
+Future<void> _encodeDirectory(
+  String sourceDirectory,
+  String destinationPath,
+) async {
   final root = Directory(sourceDirectory);
+  final files = await root.list(recursive: true).where((e) => e is File).cast<File>().toList();
   final entries =
-      root
-          .listSync(recursive: true)
-          .whereType<File>()
+      files
           .map((file) => MapEntry(_archivePath(file.path, root.path), file))
           .toList()
         ..sort((a, b) => _compareArchivePaths(a.key, b.key));
   final archive = archive_io.Archive();
   for (final entry in entries) {
     archive.addFile(
-      archive_io.ArchiveFile.bytes(entry.key, entry.value.readAsBytesSync()),
+      archive_io.ArchiveFile.bytes(entry.key, await entry.value.readAsBytes()),
     );
   }
-  File(
+  await File(
     destinationPath,
-  ).writeAsBytesSync(archive_io.ZipEncoder().encodeBytes(archive));
+  ).writeAsBytes(archive_io.ZipEncoder().encodeBytes(archive));
 }
 
 String _archivePath(String filePath, String rootPath) =>

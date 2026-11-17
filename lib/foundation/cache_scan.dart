@@ -17,23 +17,22 @@ Future<CacheScanResult> scanCacheDirectory(String dbPath, String dir) async {
     List<String> unmanagedFiles = [];
     var db = openSqliteDatabase(dbPath);
     try {
+      // One SELECT for the whole table replaces the per-file query (N+1
+      // becomes 1); (dir, name) pairs are tiny strings held in a set.
+      final managed = <String>{
+        for (final row in db.select('SELECT dir, name FROM cache'))
+          '${row['dir']}\x00${row['name']}',
+      };
       await for (var file in Directory(dir).list(recursive: true)) {
         if (file is File) {
           var size = await file.length();
           var segments = file.uri.pathSegments;
           var name = segments.last;
           var dir = segments.elementAtOrNull(segments.length - 2) ?? "*";
-          var res = db.select(
-            '''
-              SELECT * FROM cache
-              WHERE dir = ? AND name = ?
-            ''',
-            [dir, name],
-          );
-          if (res.isEmpty) {
-            unmanagedFiles.add(file.path);
-          } else {
+          if (managed.contains('$dir\x00$name')) {
             totalSize += size;
+          } else {
+            unmanagedFiles.add(file.path);
           }
         }
       }

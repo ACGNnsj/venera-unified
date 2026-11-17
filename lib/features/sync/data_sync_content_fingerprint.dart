@@ -11,18 +11,18 @@ import 'package:venera_unified/foundation/app_data_sync_fields.dart';
 /// export. SQLite headers, WAL layout and ZIP metadata are not business changes.
 /// The application caller must hold its existing exclusive data admission.
 abstract final class DataSyncContentFingerprint {
-  static String capture(
+  static Future<String> capture(
     String root, {
     required String excludedFields,
     String? memorySettingsJson,
     bool? archiveSyncEnabled,
     bool importGuard = false,
-  }) {
+  }) async {
     final parts = <String, Object?>{'version': 1};
     final metadata = File(p.join(root, 'appdata.json'));
-    final disk = metadata.existsSync()
+    final disk = await metadata.exists()
         ? settings(
-            metadata.readAsStringSync(),
+            await metadata.readAsString(),
             excludedFields,
             archiveSyncEnabled: archiveSyncEnabled,
             importGuard: importGuard,
@@ -41,16 +41,17 @@ abstract final class DataSyncContentFingerprint {
       if (memory != disk) parts['unpersistedSettings'] = memory;
     }
     for (final name in ['history.db', 'local_favorite.db', 'cookie.db']) {
-      parts[name] = _database(p.join(root, name));
+      parts[name] = await _database(p.join(root, name));
     }
     final sources = Directory(p.join(root, 'comic_source'));
-    parts['sources'] = <String, String>{
-      if (sources.existsSync())
-        for (final file in sources.listSync().whereType<File>())
-          p.basename(file.path): sha256
-              .convert(file.readAsBytesSync())
-              .toString(),
-    };
+    final sourceHashes = <String, String>{};
+    if (await sources.exists()) {
+      await for (final file in sources.list().where((e) => e is File).cast<File>()) {
+        sourceHashes[p.basename(file.path)] =
+            (await sha256.bind(file.openRead()).first).toString();
+      }
+    }
+    parts['sources'] = sourceHashes;
     return _hash(parts);
   }
 
@@ -85,8 +86,8 @@ abstract final class DataSyncContentFingerprint {
     return _hash(document);
   }
 
-  static String? _database(String path) {
-    if (!File(path).existsSync()) return null;
+  static Future<String?> _database(String path) async {
+    if (!await File(path).exists()) return null;
     final db = sqlite3.open(path, mode: OpenMode.readOnly);
     try {
       db.execute('PRAGMA busy_timeout = 5000; BEGIN;');

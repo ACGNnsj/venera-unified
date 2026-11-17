@@ -16,6 +16,12 @@ class LocalComicImageProvider
 
   final LocalComic comic;
 
+  /// Covers are display-only: clamp giant files at decode time through the
+  /// existing base maxImagePixel gate. The key carries no resize flag, so
+  /// stored entries are unaffected.
+  @override
+  bool get enableResize => true;
+
   @protected
   File get coverFile => comic.coverFile;
 

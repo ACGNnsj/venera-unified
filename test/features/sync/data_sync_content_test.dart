@@ -54,76 +54,83 @@ void main() {
     }
   });
   tearDown(() => root.deleteSync(recursive: true));
-  String capture({String? memory}) => DataSyncContentFingerprint.capture(
-    root.path,
-    excludedFields: scope.excludedFields,
-    memorySettingsJson: memory,
-    archiveSyncEnabled: false,
-  );
+  Future<String> capture({String? memory}) =>
+      DataSyncContentFingerprint.capture(
+        root.path,
+        excludedFields: scope.excludedFields,
+        memorySettingsJson: memory,
+        archiveSyncEnabled: false,
+      );
 
   test(
     'comparison ignores transport fields and filtered values but retains business edits',
-    () {
-      final before = capture();
+    () async {
+      final before = await capture();
       File(
         '${root.path}/appdata.json',
       ).writeAsStringSync(metadata(version: 99, language: 'zh-CN'));
-      expect(capture(), before);
+      expect(await capture(), before);
       File(
         '${root.path}/appdata.json',
       ).writeAsStringSync(metadata(theme: 'light'));
-      expect(capture(), isNot(before));
+      expect(await capture(), isNot(before));
     },
   );
 
-  test('object ordering is stable while history order remains significant', () {
-    final before = capture();
-    final doc = jsonDecode(metadata()) as Map<String, dynamic>;
-    final settings = doc['settings'] as Map<String, dynamic>;
-    doc['settings'] = {
-      for (final entry in settings.entries.toList().reversed)
-        entry.key: entry.value,
-    };
-    File('${root.path}/appdata.json').writeAsStringSync(jsonEncode(doc));
-    expect(capture(), before);
-    doc['searchHistory'] = ['two', 'one'];
-    File('${root.path}/appdata.json').writeAsStringSync(jsonEncode(doc));
-    expect(capture(), isNot(before));
-  });
+  test(
+    'object ordering is stable while history order remains significant',
+    () async {
+      final before = await capture();
+      final doc = jsonDecode(metadata()) as Map<String, dynamic>;
+      final settings = doc['settings'] as Map<String, dynamic>;
+      doc['settings'] = {
+        for (final entry in settings.entries.toList().reversed)
+          entry.key: entry.value,
+      };
+      File('${root.path}/appdata.json').writeAsStringSync(jsonEncode(doc));
+      expect(await capture(), before);
+      doc['searchHistory'] = ['two', 'one'];
+      File('${root.path}/appdata.json').writeAsStringSync(jsonEncode(doc));
+      expect(await capture(), isNot(before));
+    },
+  );
 
   for (final name in ['history.db', 'local_favorite.db', 'cookie.db']) {
-    test('unannounced committed $name writes change content including WAL', () {
-      final before = capture();
-      final db = sqlite3.open('${root.path}/$name');
-      try {
-        db.execute('PRAGMA journal_mode = WAL');
-        expect(capture(), before);
-        db.execute("UPDATE records SET value = 'later' WHERE id = 1");
-        expect(capture(), isNot(before));
-        final changed = capture();
-        db.execute('PRAGMA wal_checkpoint(TRUNCATE)');
-        db.execute('VACUUM');
-        expect(capture(), changed);
-      } finally {
-        db.close();
-      }
-    });
+    test(
+      'unannounced committed $name writes change content including WAL',
+      () async {
+        final before = await capture();
+        final db = sqlite3.open('${root.path}/$name');
+        try {
+          db.execute('PRAGMA journal_mode = WAL');
+          expect(await capture(), before);
+          db.execute("UPDATE records SET value = 'later' WHERE id = 1");
+          expect(await capture(), isNot(before));
+          final changed = await capture();
+          db.execute('PRAGMA wal_checkpoint(TRUNCATE)');
+          db.execute('VACUUM');
+          expect(await capture(), changed);
+        } finally {
+          db.close();
+        }
+      },
+    );
   }
 
-  test('source files and unsaved memory are independently visible', () {
-    final before = capture();
-    expect(capture(memory: metadata()), before);
-    expect(capture(memory: metadata(theme: 'unsaved')), isNot(before));
+  test('source files and unsaved memory are independently visible', () async {
+    final before = await capture();
+    expect(await capture(memory: metadata()), before);
+    expect(await capture(memory: metadata(theme: 'unsaved')), isNot(before));
     File(
       '${root.path}/comic_source/one.data',
     ).writeAsStringSync('{"token":"new"}');
-    expect(capture(), isNot(before));
+    expect(await capture(), isNot(before));
     File(
       '${root.path}/comic_source/one.data',
     ).writeAsStringSync('{"token":"old"}');
-    expect(capture(), before);
+    expect(await capture(), before);
     File('${root.path}/comic_source/one.js').deleteSync();
-    expect(capture(), isNot(before));
+    expect(await capture(), isNot(before));
   });
 
   test('staged database backups match live logical content', () async {
@@ -134,41 +141,44 @@ void main() {
       settingsJson: metadata(),
     );
     expect(
-      DataSyncContentFingerprint.capture(
+      await DataSyncContentFingerprint.capture(
         staging.path,
         excludedFields: scope.excludedFields,
       ),
-      capture(),
+      await capture(),
     );
   });
 
-  test('user tables with sqlite prefixes and shadowed rowids are included', () {
-    final db = sqlite3.open('${root.path}/history.db');
-    try {
-      db.execute('CREATE TABLE sqliteXuser (ROWID TEXT, value BLOB)');
-      db.execute("INSERT INTO sqliteXuser VALUES ('key', X'0102')");
-      final before = capture();
-      db.execute("UPDATE sqliteXuser SET value = X'0103'");
-      expect(capture(), isNot(before));
-      db.execute(
-        'CREATE TABLE keyed (k TEXT PRIMARY KEY, value) WITHOUT ROWID',
-      );
-      db.execute("INSERT INTO keyed VALUES ('key', 1)");
-      final number = capture();
-      db.execute("UPDATE keyed SET value = '1'");
-      expect(capture(), isNot(number));
-    } finally {
-      db.close();
-    }
-  });
+  test(
+    'user tables with sqlite prefixes and shadowed rowids are included',
+    () async {
+      final db = sqlite3.open('${root.path}/history.db');
+      try {
+        db.execute('CREATE TABLE sqliteXuser (ROWID TEXT, value BLOB)');
+        db.execute("INSERT INTO sqliteXuser VALUES ('key', X'0102')");
+        final before = await capture();
+        db.execute("UPDATE sqliteXuser SET value = X'0103'");
+        expect(await capture(), isNot(before));
+        db.execute(
+          'CREATE TABLE keyed (k TEXT PRIMARY KEY, value) WITHOUT ROWID',
+        );
+        db.execute("INSERT INTO keyed VALUES ('key', 1)");
+        final number = await capture();
+        db.execute("UPDATE keyed SET value = '1'");
+        expect(await capture(), isNot(number));
+      } finally {
+        db.close();
+      }
+    },
+  );
 
   test(
     'invalid scope and mismatched snapshot directions never become evidence',
-    () {
+    () async {
       final journal = DataSyncContentJournal.open(root.path);
       try {
         expect(
-          () => journal.begin(
+          () async => journal.begin(
             id: first,
             direction: 'download',
             scope: DataSyncContentScope(
@@ -176,7 +186,7 @@ void main() {
               excludedFields: '',
               archiveSyncEnabled: false,
             ),
-            before: capture(),
+            before: await capture(),
           ),
           throwsFormatException,
         );
@@ -185,7 +195,7 @@ void main() {
           id: first,
           direction: 'download',
           scope: scope,
-          before: capture(),
+          before: await capture(),
         );
         expect(
           () => journal.recordSnapshot(first, 'a' * 64, archiveHash: 'b' * 64),
@@ -198,13 +208,16 @@ void main() {
     },
   );
 
-  test('invalid metadata or database does not become a clean comparison', () {
-    File('${root.path}/appdata.json').writeAsStringSync('{bad');
-    expect(capture, throwsFormatException);
-    File('${root.path}/appdata.json').writeAsStringSync(metadata());
-    File('${root.path}/cookie.db').writeAsBytesSync(List.filled(4096, 33));
-    expect(capture, throwsA(isA<SqliteException>()));
-  });
+  test(
+    'invalid metadata or database does not become a clean comparison',
+    () async {
+      File('${root.path}/appdata.json').writeAsStringSync('{bad');
+      await expectLater(capture(), throwsFormatException);
+      File('${root.path}/appdata.json').writeAsStringSync(metadata());
+      File('${root.path}/cookie.db').writeAsBytesSync(List.filled(4096, 33));
+      await expectLater(capture(), throwsA(isA<SqliteException>()));
+    },
+  );
 
   test('captured optional archive policy survives filtering its flag', () {
     final enabled = jsonEncode({
@@ -232,24 +245,32 @@ void main() {
     );
   });
 
-  test('confirmed baseline survives reopen and candidate acknowledgement', () {
-    var journal = DataSyncContentJournal.open(root.path);
-    final before = capture();
-    expect(journal.baseline(scope), isNull);
-    journal.begin(id: first, direction: 'upload', scope: scope, before: before);
-    expect(() => journal.confirm(first), throwsStateError);
-    journal.recordSnapshot(first, before, archiveHash: 'b' * 64);
-    journal.close();
-    journal = DataSyncContentJournal.open(root.path);
-    expect(journal.baseline(scope), isNull);
-    journal.confirm(first);
-    journal.acknowledge(first);
-    journal.close();
-    journal = DataSyncContentJournal.open(root.path);
-    expect(journal.baseline(scope), before);
-    expect(journal.lookup(first), isNull);
-    journal.close();
-  });
+  test(
+    'confirmed baseline survives reopen and candidate acknowledgement',
+    () async {
+      var journal = DataSyncContentJournal.open(root.path);
+      final before = await capture();
+      expect(journal.baseline(scope), isNull);
+      journal.begin(
+        id: first,
+        direction: 'upload',
+        scope: scope,
+        before: before,
+      );
+      expect(() => journal.confirm(first), throwsStateError);
+      journal.recordSnapshot(first, before, archiveHash: 'b' * 64);
+      journal.close();
+      journal = DataSyncContentJournal.open(root.path);
+      expect(journal.baseline(scope), isNull);
+      journal.confirm(first);
+      journal.acknowledge(first);
+      journal.close();
+      journal = DataSyncContentJournal.open(root.path);
+      expect(journal.baseline(scope), before);
+      expect(journal.lookup(first), isNull);
+      journal.close();
+    },
+  );
 
   test('older receipt cannot regress a later confirmed baseline', () {
     final journal = DataSyncContentJournal.open(root.path);
@@ -287,10 +308,10 @@ void main() {
     }
   });
 
-  test('download guard rejects changes before any replacement', () {
+  test('download guard rejects changes before any replacement', () async {
     final journal = DataSyncContentJournal.open(root.path);
     try {
-      final before = capture();
+      final before = await capture();
       journal.begin(
         id: first,
         direction: 'download',
@@ -299,8 +320,8 @@ void main() {
       );
       journal.verifyBeforeImport(first, before);
       File('${root.path}/comic_source/one.data').writeAsStringSync('later');
-      expect(
-        () => journal.verifyBeforeImport(first, capture()),
+      await expectLater(
+        () async => journal.verifyBeforeImport(first, await capture()),
         throwsA(isA<DataSyncContentConflict>()),
       );
       expect(journal.lookup(first)!.after, isNull);
@@ -309,13 +330,13 @@ void main() {
     }
   });
 
-  test('corrupted candidates are retained rather than acknowledged', () {
+  test('corrupted candidates are retained rather than acknowledged', () async {
     final journal = DataSyncContentJournal.open(root.path);
     journal.begin(
       id: first,
       direction: 'download',
       scope: scope,
-      before: capture(),
+      before: await capture(),
     );
     final db = sqlite3.open('${root.path}/${DataSyncContentJournal.fileName}');
     db.execute("UPDATE content_operations SET digest = 'bad'");

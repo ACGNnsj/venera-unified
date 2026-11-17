@@ -49,7 +49,7 @@ abstract final class AppDataArchive {
                 (throw StateError('Missing upload content intent'));
             content.recordSnapshot(
               syncContentId,
-              DataSyncContentFingerprint.capture(
+              await DataSyncContentFingerprint.capture(
                 stagingPath,
                 excludedFields: operation.scope.excludedFields,
                 archiveSyncEnabled: operation.scope.archiveSyncEnabled,

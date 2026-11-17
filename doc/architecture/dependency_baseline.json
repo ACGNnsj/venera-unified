@@ -1244,6 +1244,7 @@
     "foundation/translations.dart",
     "foundation/tray.dart",
     "foundation/wide_page_split.dart",
+    "foundation/white_border_native.dart",
     "foundation/window_hotkey.dart",
     "foundation/window_hotkey_controller.dart",
     "foundation/window_placement.dart",
