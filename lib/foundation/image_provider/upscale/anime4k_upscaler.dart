@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
 import 'anime4k_native.dart';
+import 'native_png.dart';
 
 /// Anime4K 超分辨率算法实现
 ///
@@ -87,13 +88,7 @@ class Anime4KUpscaler {
           (params.pushGradStrength * 255).round().clamp(0, 0xFFFF),
         );
         if (fused != null) {
-          final img.Image fusedImage = img.Image.fromBytes(
-            width: newWidth,
-            height: newHeight,
-            bytes: fused.buffer,
-            order: img.ChannelOrder.rgba,
-          );
-          return Uint8List.fromList(img.encodePng(fusedImage));
+          return encodeUpscalePng(fused, newWidth, newHeight);
         }
       }
 
@@ -111,19 +106,17 @@ class Anime4KUpscaler {
           (params.pushStrength * 255).round().clamp(0, 0xFFFF),
           (params.pushGradStrength * 255).round().clamp(0, 0xFFFF),
         );
-        final img.Image result = img.Image.fromBytes(
-          width: newWidth,
-          height: newHeight,
-          bytes: rgba.buffer,
-          order: img.ChannelOrder.rgba,
-        );
-        return Uint8List.fromList(img.encodePng(result));
+        return encodeUpscalePng(rgba, newWidth, newHeight);
       } catch (_) {
         // Native library not built for this platform; Dart fallback below.
       }
 
       final result = upscaler.upscalePixels(upscaled);
-      return Uint8List.fromList(img.encodePng(result));
+      return encodeUpscalePng(
+        result.getBytes(order: img.ChannelOrder.rgba),
+        result.width,
+        result.height,
+      );
     } catch (e, s) {
       debugPrint('Anime4K upscale error: $e\n$s');
       return null;

@@ -4,6 +4,7 @@ import 'package:venera_unified/foundation/image_translation/ort_ffi.dart';
 import 'package:venera_unified/foundation/log.dart';
 
 import 'anime4k_native.dart';
+import 'native_png.dart';
 
 /// Cross-platform ACNet 2x super-resolution over [OrtFfiSession].
 ///
@@ -232,13 +233,7 @@ abstract final class AcnetFfiPipeline {
             scale,
           );
       if (outRgba == null) return null;
-      final out = img.Image.fromBytes(
-        width: ow,
-        height: oh,
-        bytes: outRgba.buffer,
-        order: img.ChannelOrder.rgba,
-      );
-      return Uint8List.fromList(img.encodePng(out));
+      return encodeUpscalePng(outRgba, ow, oh);
     } catch (e, s) {
       Log.error('ACNet', 'pipeline failed: $e\n$s');
       return null;
