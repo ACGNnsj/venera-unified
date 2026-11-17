@@ -21,7 +21,7 @@ permissions:
 jobs:
   apple-directory-access:
     name: Apple 目录授权与跨会话恢复
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
@@ -29,11 +29,15 @@ jobs:
 
   rhttp-ios:
     name: iOS Rhttp 原生依赖兼容性
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
-      - run: sudo xcode-select --switch /Applications/Xcode_16.4.app
+      - name: 选择最新 Xcode
+        run: |
+          LATEST=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          echo "using $LATEST"
+          sudo xcode-select --switch "$LATEST"
       - name: 准备 iOS Rust 工具链
         run: python3 .github/scripts/prepare_rust_toolchain.py --target aarch64-apple-ios
       - name: 验证锁定原生依赖可用于 iOS
