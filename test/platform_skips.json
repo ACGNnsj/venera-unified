@@ -7,7 +7,7 @@
       "checkout_commit": "29c3b0202b01d06f849fc0f0eec1cca3bce52d1f",
       "source_tree_sha": "e88f2572ce359b4af8d2cb5859fa902aad249ebe",
       "quality_run": "43434471214",
-      "expected_skips": 170
+      "expected_skips": 172
     },
     "windows": {
       "kind": "executed",
@@ -454,6 +454,14 @@
           "the compiled flavor controls the actual application update service"
         ],
         "reason": "用例在 _expectTv 时做真实更新端点检查；CI 共享出口遇 api.github.com 限流/不可达时按设计 skip，产品侧解析失败仍会失败。"
+      },
+      {
+        "path": "test/features/reader/white_border_native_test.dart",
+        "cases": [
+          "WhiteBorderNative parity with horizontalWhiteBorderInsets bordered, dark, over-wide and wide pages",
+          "WhiteBorderNative parity with horizontalWhiteBorderInsets length mismatch mirrors the Dart (0, 0) guard"
+        ],
+        "reason": "venera_white_border 未为此平台构建（WhiteBorderNative.available 为假）；测试按设计 skip，本地 Windows 有库时实际执行。"
       }
     ],
     "windows": [
