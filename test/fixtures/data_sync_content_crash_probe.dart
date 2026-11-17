@@ -7,7 +7,7 @@ import 'package:sqlite3/sqlite3.dart';
 import 'package:venera_unified/features/sync/data_sync_content_fingerprint.dart';
 import 'package:venera_unified/features/sync/data_sync_content_journal.dart';
 
-void main(List<String> args) {
+Future<void> main(List<String> args) async {
   final root = args[0];
   final phase = args[1];
   const id = '22222222-2222-4222-8222-222222222222';
@@ -16,7 +16,7 @@ void main(List<String> args) {
     excludedFields: '',
     archiveSyncEnabled: false,
   );
-  String capture() =>
+  Future<String> capture() =>
       DataSyncContentFingerprint.capture(root, excludedFields: '');
   void stop(String at) {
     if (phase != at) return;
@@ -34,7 +34,7 @@ void main(List<String> args) {
 
   final journal = DataSyncContentJournal.open(root);
   try {
-    final before = capture();
+    final before = await capture();
     if (phase == 'businessCommit') {
       final db = sqlite3.open('$root/history.db');
       // Deliberately keep the connection and WAL open until process death.
@@ -51,7 +51,7 @@ void main(List<String> args) {
       }),
       flush: true,
     );
-    journal.recordSnapshot(id, capture());
+    journal.recordSnapshot(id, await capture());
     stop('snapshot');
     // The parent seeds a protocol baseline; receipt validation itself is covered
     // by production upload/import integration, not this process fixture.

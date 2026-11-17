@@ -39,9 +39,9 @@ void main() {
         db.execute('CREATE TABLE records (id INTEGER PRIMARY KEY, value TEXT)');
         db.execute("INSERT INTO records VALUES (1, 'before')");
         db.close();
-        String capture() =>
+        Future<String> capture() =>
             DataSyncContentFingerprint.capture(root.path, excludedFields: '');
-        final before = capture();
+        final before = await capture();
         var journal = DataSyncContentJournal.open(root.path);
         journal.begin(
           id: first,
@@ -63,7 +63,7 @@ void main() {
             'acknowledged',
           ].contains(phase);
           expect(
-            journal.baseline(scope) == capture(),
+            journal.baseline(scope) == await capture(),
             phase == 'candidate' || confirmed,
           );
           expect(
@@ -73,7 +73,7 @@ void main() {
             isFalse,
           );
           if (phase == 'businessCommit') {
-            expect(capture(), isNot(before));
+            expect(await capture(), isNot(before));
           } else {
             final record = journal.lookup(second);
             expect(record == null, phase == 'acknowledged');
@@ -92,7 +92,7 @@ void main() {
                 journal.confirm(second);
                 journal.acknowledge(second);
               }
-              expect(journal.baseline(scope), isNot(capture()));
+              expect(journal.baseline(scope), isNot(await capture()));
             }
           }
         } finally {
