@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart' as archive_pkg;
+import 'package:archive/archive_io.dart' as archive_io;
 import 'package:venera_native/venera_native.dart' show extractSevenZip;
 import 'package:path/path.dart' as path_utils;
 
@@ -137,18 +138,30 @@ abstract final class ArchiveSecurity {
         continue;
       }
       final expectedSize = verifiedSizes[entry.name] ?? entry.size;
-      Uint8List? content;
+      final targetFile = File(target);
+      await targetFile.parent.create(recursive: true);
+      // Stream each entry straight to disk instead of inflating it into a
+      // second in-memory copy: writeContent decodes directly into the file,
+      // so only one entry is ever live no matter how long the package is.
+      var complete = false;
       try {
-        content = entry.readBytes();
+        final fileOutput = archive_io.OutputFileStream(targetFile.path);
+        try {
+          entry.writeContent(fileOutput);
+        } finally {
+          fileOutput.closeSync();
+        }
+        complete = targetFile.lengthSync() == expectedSize;
       } catch (_) {
-        content = null;
+        complete = false;
       }
-      // Some archives, including the ones zip_flutter writes, are valid but
-      // unreadable through archive's lazy entry objects. The central directory
-      // validated above carries each entry's offset and sizes, so read it from
-      // there instead of reaching for a native library.
-      if (content == null || content.length != expectedSize) {
+      if (!complete) {
+        // Some archives, including the ones zip_flutter writes, are valid but
+        // unreadable through archive's lazy entry objects. The central directory
+        // validated above carries each entry's offset and sizes, so read it from
+        // there instead of reaching for a native library.
         final header = headers[entry.name];
+        Uint8List? content;
         if (header != null) {
           content = readZipEntry(
             bytes,
@@ -158,13 +171,12 @@ abstract final class ArchiveSecurity {
             compressionMethod: header.compressionMethod,
           );
         }
+        if (content == null || content.length != expectedSize) {
+          throw const FormatException('Archive entry could not be read');
+        }
+        await targetFile.writeAsBytes(content, flush: true);
       }
-      if (content == null || content.length != expectedSize) {
-        throw const FormatException('Archive entry could not be read');
-      }
-      final targetFile = File(target);
-      await targetFile.parent.create(recursive: true);
-      await targetFile.writeAsBytes(content, flush: true);
+      entry.clear();
     }
   }
 
