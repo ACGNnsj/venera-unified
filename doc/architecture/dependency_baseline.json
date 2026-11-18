@@ -1205,6 +1205,7 @@
     "foundation/image_transpose_native.dart",
     "foundation/image_work.dart",
     "foundation/init.dart",
+    "foundation/js_crypto_native.dart",
     "foundation/js_engine.dart",
     "foundation/js_pool.dart",
     "foundation/harmonyos.dart",

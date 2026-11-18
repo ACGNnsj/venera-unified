@@ -39,6 +39,7 @@ import 'package:venera_unified/network/request_scope.dart';
 import 'package:venera_unified/foundation/init.dart';
 
 import 'consts.dart';
+import 'js_crypto_native.dart';
 import 'log.dart';
 
 class JavaScriptRuntimeException implements Exception {
@@ -1906,16 +1907,41 @@ mixin class _JSEngineApi {
         case "base64":
           return isEncode ? base64Encode(value) : base64Decode(value);
         case "md5":
-          return Uint8List.fromList(md5.convert(value).bytes);
+          return JsCryptoNative.tryHash(1, value) ??
+              Uint8List.fromList(md5.convert(value).bytes);
         case "sha1":
-          return Uint8List.fromList(sha1.convert(value).bytes);
+          return JsCryptoNative.tryHash(2, value) ??
+              Uint8List.fromList(sha1.convert(value).bytes);
         case "sha256":
-          return Uint8List.fromList(sha256.convert(value).bytes);
+          return JsCryptoNative.tryHash(3, value) ??
+              Uint8List.fromList(sha256.convert(value).bytes);
         case "sha512":
-          return Uint8List.fromList(sha512.convert(value).bytes);
+          return JsCryptoNative.tryHash(4, value) ??
+              Uint8List.fromList(sha512.convert(value).bytes);
         case "hmac":
           var key = data["key"];
           var hash = data["hash"];
+          final nativeMac = JsCryptoNative.tryHmac(
+            switch (hash) {
+              "md5" => 1,
+              "sha1" => 2,
+              "sha256" => 3,
+              "sha512" => 4,
+              _ => 0,
+            },
+            key,
+            value,
+          );
+          if (nativeMac != null) {
+            if (data['isString'] == true) {
+              final hex = StringBuffer();
+              for (final b in nativeMac) {
+                hex.write(b.toRadixString(16).padLeft(2, '0'));
+              }
+              return hex.toString();
+            }
+            return nativeMac;
+          }
           var hmac = Hmac(switch (hash) {
             "md5" => md5,
             "sha1" => sha1,
@@ -1933,6 +1959,14 @@ mixin class _JSEngineApi {
           }
         case "aes-ecb":
           var key = data["key"];
+          final nativeEcb = JsCryptoNative.tryAes(
+            1,
+            isEncode,
+            key,
+            null,
+            value,
+          );
+          if (nativeEcb != null) return nativeEcb;
           var cipher = ECBBlockCipher(AESEngine());
           cipher.init(isEncode, KeyParameter(key));
           var offset = 0;
@@ -1944,6 +1978,8 @@ mixin class _JSEngineApi {
         case "aes-cbc":
           var key = data["key"];
           var iv = data["iv"];
+          final nativeCbc = JsCryptoNative.tryAes(2, isEncode, key, iv, value);
+          if (nativeCbc != null) return nativeCbc;
           var cipher = CBCBlockCipher(AESEngine());
           cipher.init(isEncode, ParametersWithIV(KeyParameter(key), iv));
           var offset = 0;

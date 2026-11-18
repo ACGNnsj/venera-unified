@@ -1,0 +1,24 @@
+[package]
+name = "venera_js_crypto"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+# Pure-Rust RustCrypto; no C compiler needed beyond the platform linker.
+# Mirrors native/zip_stream release shape (tiny, dependency-free binary).
+aes = "0.8"
+hmac = "0.12"
+md-5 = "0.10"
+sha1 = "0.10"
+sha2 = "0.10"
+
+# Keep the per-ABI binary tiny and dependency-free.
+[profile.release]
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true
+codegen-units = 1
