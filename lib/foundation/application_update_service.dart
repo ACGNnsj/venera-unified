@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:venera_unified/network/app_dio.dart'
-    show Dio, Options, RHttpAdapter;
+    show Dio, DioException, DioExceptionType, Options, RHttpAdapter;
 import 'package:venera_unified/network/request_scope.dart';
 
 import 'operation_failure.dart';
@@ -38,6 +38,7 @@ class ApplicationUpdateService {
     this.enabled = true,
     this.forHarmonyOS = false,
     this.forAndroidTv = false,
+    this.requestTimeout = const Duration(seconds: 30),
   }) : _createClient = createClient,
        _currentVersion = currentVersion;
 
@@ -46,6 +47,7 @@ class ApplicationUpdateService {
   final bool enabled;
   final bool forHarmonyOS;
   final bool forAndroidTv;
+  final Duration requestTimeout;
   final _pending = <RequestScope, Future<void>>{};
   final _cleanupFailures = <ApplicationUpdateCleanupFailure>[];
   bool _closed = false;
@@ -104,13 +106,24 @@ class ApplicationUpdateService {
     Object? cause;
     StackTrace? causeStack;
     String? available;
+    Timer? deadline;
+    var timedOut = false;
+    final includePrerelease = allowsPrereleaseUpdates(version);
+    final requestUrl = includePrerelease
+        ? '$releasesApiBase?per_page=20'
+        : '$releasesApiBase/latest';
     try {
       scope.check();
-      final includePrerelease = allowsPrereleaseUpdates(version);
+      // Cancel the actual request on expiry, then join native cleanup below.
+      // A Future.timeout alone would leave the HTTP operation running.
+      deadline = Timer(requestTimeout, () {
+        if (!scope.isCancelled) {
+          timedOut = true;
+          scope.cancel();
+        }
+      });
       final response = await dio.get<Object?>(
-        includePrerelease
-            ? '$releasesApiBase?per_page=20'
-            : '$releasesApiBase/latest',
+        requestUrl,
         cancelToken: scope.cancelToken,
         options: Options(headers: {'Accept': 'application/vnd.github+json'}),
       );
@@ -146,18 +159,24 @@ class ApplicationUpdateService {
           ? latest
           : null;
     } catch (error, stack) {
-      cause = error;
+      cause = timedOut
+          ? TimeoutException(
+              'Application update request timed out',
+              requestTimeout,
+            )
+          : error;
       causeStack = stack;
-      if (scope.isCancelled) throw const RequestCancelled();
+      if (scope.isCancelled && !timedOut) throw const RequestCancelled();
       Error.throwWithStackTrace(
-        OperationFailure(
-          message: 'Failed to check application updates',
-          cause: error,
-          stackTrace: stack,
+        ApplicationUpdateFailure(
+          error: cause,
+          stack: stack,
+          requestUrl: requestUrl,
         ),
         stack,
       );
     } finally {
+      deadline?.cancel();
       final failures = <({Object error, StackTrace stack})>[];
       Future<void> release(FutureOr<void> Function() action) async {
         try {
@@ -349,6 +368,88 @@ class ApplicationUpdateService {
           (error: failure, stack: failure.stackTrace ?? StackTrace.current),
       ]);
     }
+  }
+}
+
+enum ApplicationUpdateFailureReason {
+  timeout,
+  connection,
+  rateLimit,
+  http,
+  metadata,
+  unknown,
+}
+
+class ApplicationUpdateFailure extends OperationFailure {
+  ApplicationUpdateFailure({
+    required Object error,
+    required StackTrace stack,
+    required String requestUrl,
+  }) : reason = _reason(error),
+       statusCode = error is DioException ? error.response?.statusCode : null,
+       super(
+         message:
+             'Failed to check application updates\nGET $requestUrl\n$error'
+             '${_responseDiagnostics(error)}',
+         cause: error,
+         stackTrace: stack,
+       );
+
+  final ApplicationUpdateFailureReason reason;
+  final int? statusCode;
+
+  static ApplicationUpdateFailureReason _reason(Object error) {
+    if (error is TimeoutException) {
+      return ApplicationUpdateFailureReason.timeout;
+    }
+    if (error is FormatException) {
+      return ApplicationUpdateFailureReason.metadata;
+    }
+    if (error is! DioException) return ApplicationUpdateFailureReason.unknown;
+    final response = error.response;
+    final data = response?.data;
+    if (response?.statusCode == 429 ||
+        (response?.statusCode == 403 &&
+            (response?.headers.map['x-ratelimit-remaining']?.contains('0') ==
+                    true ||
+                (data is Map &&
+                    data['message'] is String &&
+                    (data['message'] as String).toLowerCase().contains(
+                      'rate limit',
+                    ))))) {
+      return ApplicationUpdateFailureReason.rateLimit;
+    }
+    if (error.error is FormatException) {
+      return ApplicationUpdateFailureReason.metadata;
+    }
+    return switch (error.type) {
+      DioExceptionType.connectionTimeout ||
+      DioExceptionType.sendTimeout ||
+      DioExceptionType.receiveTimeout => ApplicationUpdateFailureReason.timeout,
+      DioExceptionType.connectionError || DioExceptionType.badCertificate =>
+        ApplicationUpdateFailureReason.connection,
+      DioExceptionType.badResponse => ApplicationUpdateFailureReason.http,
+      _ => ApplicationUpdateFailureReason.unknown,
+    };
+  }
+
+  static String _responseDiagnostics(Object error) {
+    if (error is! DioException || error.response == null) return '';
+    final response = error.response!;
+    final diagnostics = ['HTTP ${response.statusCode}'];
+    for (final name in [
+      'x-ratelimit-remaining',
+      'x-ratelimit-reset',
+      'retry-after',
+    ]) {
+      final values = response.headers.map[name];
+      if (values != null) diagnostics.add('$name: ${values.join(', ')}');
+    }
+    final data = response.data;
+    if (data is Map && data['message'] is String) {
+      diagnostics.add(data['message'] as String);
+    }
+    return '\n${diagnostics.join('\n')}';
   }
 }
 
