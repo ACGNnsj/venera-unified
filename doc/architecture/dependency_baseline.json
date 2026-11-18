@@ -1252,6 +1252,7 @@
     "foundation/window_placement_tracker.dart",
     "foundation/zip_entry_reader.dart",
     "foundation/zip_stream_native.dart",
+    "foundation/zip_stream_sink.dart",
     "foundation/zip_stream_writer.dart",
     "foundation/zip_writer.dart",
     "network/app_dio.dart",

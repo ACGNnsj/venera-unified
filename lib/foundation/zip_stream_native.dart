@@ -4,8 +4,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
+import 'zip_stream_sink.dart';
 
-import 'zip_stream_writer.dart';
 
 /// Hand-written dart:ffi binding to `native/zip_stream` (venera_zip_stream).
 ///

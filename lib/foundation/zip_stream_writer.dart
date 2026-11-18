@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:path/path.dart' as p;
 
 import 'zip_stream_native.dart';
+import 'zip_stream_sink.dart';
 
 /// Ordering shared with [ZipStreamWriter.writeDirectory]: EPUB requires its
 /// `mimetype` entry to come first; every other archive does not care about
@@ -81,12 +82,6 @@ abstract final class ZipStreamWriter {
 
 /// One open archive; entries append in call order, the central directory and
 /// end record land on [close].
-abstract interface class ZipStreamSink {
-  Future<void> addStored(String name, Uint8List data);
-  Future<void> addDeflated(String name, Uint8List data, {int level = 6});
-  Future<void> close();
-}
-
 /// Pure-Dart [ZipStreamSink]: local headers stream per entry, central
 /// directory + end record land on [close]. Deterministic output (fixed DOS
 /// timestamp); no zip64 in this PoC (entries are capped below 4 GiB).
