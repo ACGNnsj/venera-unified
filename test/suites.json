@@ -449,10 +449,11 @@
       "id": "native-image-codecs",
       "include": [
         "native/anime4k/src/**/*.rs",
-        "native/jpg_encode/src/**/*.rs"
+        "native/jpg_encode/src/**/*.rs",
+        "native/zip_stream/src/**/*.rs"
       ],
       "kind": "native",
-      "entry": "cargo test --locked --manifest-path native/anime4k/Cargo.toml; cargo test --locked --manifest-path native/jpg_encode/Cargo.toml",
+      "entry": "cargo test --locked --manifest-path native/anime4k/Cargo.toml; cargo test --locked --manifest-path native/jpg_encode/Cargo.toml; cargo test --locked --manifest-path native/zip_stream/Cargo.toml",
       "ci": ".github/workflows/build.yml / Build"
     }
   ],
