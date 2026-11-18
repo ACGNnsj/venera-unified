@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 
+import 'package:image/image.dart' as img;
 import 'package:venera_saf/venera_saf.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/features/local_comics/local.dart';
@@ -47,7 +48,7 @@ Future<void> _createPdfFromComic({
   }
 
   if (!multiChapters) {
-    var files = Directory(baseDir).listSync();
+    var files = await Directory(baseDir).list().toList();
     reorderFiles(files);
 
     for (var file in files) {
@@ -55,7 +56,9 @@ Future<void> _createPdfFromComic({
     }
   } else {
     for (var chapter in comic.downloadedChapters) {
-      var files = Directory(FilePath.join(baseDir, chapter)).listSync();
+      var files = await Directory(
+        FilePath.join(baseDir, chapter),
+      ).list().toList();
       reorderFiles(files);
       for (var file in files) {
         images.add(file.path);
@@ -181,7 +184,7 @@ Future<File> createPdfFromComicIsolate(
     } else if (message[0] == 'decode') {
       final reply = sendPort!;
       final id = message[1] as int;
-      Image.decodeImage(message[2] as Uint8List).then<void>(
+      _decodePdfImageBytes(message[2] as Uint8List).then<void>(
         (image) {
           reply.send(['image', id, image]);
         },
@@ -500,4 +503,39 @@ class PdfGenerator {
     data = Uint8List.fromList(ZLibCodec(level: 9).encode(data));
     return (width: width, height: height, data: data);
   }
+}
+
+/// Engine decode first (previous behavior); pure-Dart package:image fallback
+/// for platforms without a Flutter codec (ohos, some Linux builds).
+Future<Image> _decodePdfImageBytes(Uint8List data) async {
+  Object? failure;
+  try {
+    return await Image.decodeImage(data);
+  } catch (e) {
+    failure = e;
+  }
+  img.Image? fallback;
+  try {
+    fallback = img.decodeImage(data);
+  } catch (_) {}
+  if (fallback != null) return _imageFromPackageImage(fallback);
+  throw failure;
+}
+
+/// Converts a package:image decode into the engine-shaped [Image] packing
+/// (0xAABBGGRR per pixel) that PdfGenerator._getImage consumes.
+Image _imageFromPackageImage(img.Image decoded) {
+  final pixels = Uint32List(decoded.width * decoded.height);
+  var i = 0;
+  for (var y = 0; y < decoded.height; y++) {
+    for (var x = 0; x < decoded.width; x++) {
+      final pixel = decoded.getPixel(x, y);
+      pixels[i++] =
+          pixel.r.toInt() |
+          (pixel.g.toInt() << 8) |
+          (pixel.b.toInt() << 16) |
+          (pixel.a.toInt() << 24);
+    }
+  }
+  return Image(pixels, decoded.width, decoded.height);
 }

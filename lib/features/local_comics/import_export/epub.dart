@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:uuid/uuid.dart';
@@ -5,7 +6,7 @@ import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/features/local_comics/local.dart';
 import 'package:venera_unified/foundation/file_type.dart';
 import 'package:venera_unified/foundation/file_interaction.dart';
-import 'package:venera_unified/foundation/zip_writer.dart';
+import 'package:venera_unified/foundation/zip_stream_writer.dart';
 
 import 'comic_export_service.dart';
 
@@ -31,38 +32,40 @@ Future<File> createEpubComic(
   String cacheDir,
   String outFilePath,
 ) async {
-  // A private temp directory keeps concurrent exports from deleting each
-  // other's staging files.
-  final workingDir = await Directory(cacheDir).createTemp('epub-');
+  // Entries stream straight into the archive (Rust writer when its library is
+  // present, pure-Dart otherwise): no staging directory, one image in memory
+  // at a time. cacheDir stays for signature compatibility. Concurrent exports
+  // share nothing on disk, so their staging cannot collide.
+  final sink = await ZipStreamWriter.openSink(outFilePath);
   try {
-    // mimetype
-    await workingDir.joinFile('mimetype').writeAsString('application/epub+zip');
+    // mimetype: EPUB requires it first and stored (uncompressed).
+    await sink.addStored(
+      'mimetype',
+      Uint8List.fromList(utf8.encode('application/epub+zip')),
+    );
 
     // META-INF
-    await Directory(FilePath.join(workingDir.path, 'META-INF')).create();
-    await File(
-      FilePath.join(workingDir.path, 'META-INF', 'container.xml'),
-    ).writeAsString('''
+    await sink.addDeflated(
+      'META-INF/container.xml',
+      Uint8List.fromList(
+        utf8.encode('''
 <?xml version="1.0"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
   <rootfiles>
     <rootfile full-path="content.opf" media-type="application/oebps-package+xml"/>
   </rootfiles>
 </container>
-  ''');
-
-    await Directory(FilePath.join(workingDir.path, 'OEBPS')).create();
+  '''),
+      ),
+    );
 
     // copy images, create html files
-    final imageDir = Directory(
-      FilePath.join(workingDir.path, 'OEBPS', 'images'),
-    );
-    await imageDir.create();
     final coverExt = data.cover.extension;
     final coverMime = FileType.fromExtension(coverExt).mime;
-    await imageDir
-        .joinFile('cover.$coverExt')
-        .writeAsBytes(await data.cover.readAsBytes());
+    await sink.addDeflated(
+      'OEBPS/images/cover.$coverExt',
+      await data.cover.readAsBytes(),
+    );
     int imgIndex = 0;
     int chapterIndex = 0;
     var manifestStrBuilder = StringBuffer();
@@ -76,9 +79,10 @@ Future<File> createEpubComic(
       var images = <String>[];
       for (final image in data.chapters[chapter]!) {
         final ext = image.extension;
-        await imageDir
-            .joinFile('img$imgIndex.$ext')
-            .writeAsBytes(await image.readAsBytes());
+        await sink.addDeflated(
+          'OEBPS/images/img$imgIndex.$ext',
+          await image.readAsBytes(),
+        );
         images.add('images/img$imgIndex.$ext');
         var mime = FileType.fromExtension(ext).mime;
         manifestStrBuilder.writeln(
@@ -86,17 +90,15 @@ Future<File> createEpubComic(
         );
         imgIndex++;
       }
-      var html = File(
-        FilePath.join(workingDir.path, 'OEBPS', '$chapterIndex.html'),
-      );
-      await html.writeAsString('''
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" 
+      final html =
+          '''
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title>${_escapeEpubXml(chapter)}</title>
     <style type="text/css">
-        img { 
+        img {
             max-width: 100%;
             height: auto;
         }
@@ -113,7 +115,11 @@ ${images.map((e) => '        <img src="$e" alt="$e"/>').join('\n')}
     </div>
 </body>
 </html>
-    ''');
+    ''';
+      await sink.addDeflated(
+        'OEBPS/$chapterIndex.html',
+        Uint8List.fromList(utf8.encode(html)),
+      );
       manifestStrBuilder.writeln(
         '        <item id="chapter$chapterIndex" href="OEBPS/$chapterIndex.html" media-type="application/xhtml+xml"/>',
       );
@@ -121,16 +127,16 @@ ${images.map((e) => '        <img src="$e" alt="$e"/>').join('\n')}
     }
 
     // content.opf
-    final contentOpf = File(FilePath.join(workingDir.path, 'content.opf'));
     final uuid = const Uuid().v4();
     var spineStrBuilder = StringBuffer();
     for (var i = 0; i < chapterIndex; i++) {
       var idRef = 'idref="chapter$i"';
       spineStrBuilder.writeln('        <itemref $idRef/>');
     }
-    await contentOpf.writeAsString('''
+    final contentOpf =
+        '''
 <?xml version="1.0" encoding="UTF-8"?>
-<package version="3.0" 
+<package version="3.0"
     xmlns="http://www.idpf.org/2007/opf"
     xmlns:dc="http://purl.org/dc/elements/1.1/">
     <metadata>
@@ -140,16 +146,19 @@ ${images.map((e) => '        <img src="$e" alt="$e"/>').join('\n')}
         <meta name="cover" content="cover_image"/>
     </metadata>
     <manifest>
-${manifestStrBuilder.toString()}       
+${manifestStrBuilder.toString()}
     </manifest>
     <spine toc="toc">
 ${spineStrBuilder.toString()}
     </spine>
 </package>
-  ''');
+  ''';
+    await sink.addDeflated(
+      'content.opf',
+      Uint8List.fromList(utf8.encode(contentOpf)),
+    );
 
     // toc.ncx
-    final tocNcx = File(FilePath.join(workingDir.path, 'toc.ncx'));
     var navMapStrBuilder = StringBuffer();
     var playOrder = 2;
     final chapterNames = data.chapters.keys.toList();
@@ -165,7 +174,8 @@ ${spineStrBuilder.toString()}
       playOrder++;
     }
 
-    await tocNcx.writeAsString('''
+    final tocNcx =
+        '''
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx" version="2005-1">
@@ -182,13 +192,19 @@ ${spineStrBuilder.toString()}
 ${navMapStrBuilder.toString()}
     </navMap>
 </ncx>
-  ''');
+  ''';
+    await sink.addDeflated('toc.ncx', Uint8List.fromList(utf8.encode(tocNcx)));
 
-    await writeZipFromDirectory(workingDir.path, outFilePath);
-
+    await sink.close();
     return File(outFilePath);
-  } finally {
-    await workingDir.delete(recursive: true);
+  } catch (_) {
+    try {
+      await sink.close();
+    } catch (_) {}
+    try {
+      await File(outFilePath).delete();
+    } catch (_) {}
+    rethrow;
   }
 }
 

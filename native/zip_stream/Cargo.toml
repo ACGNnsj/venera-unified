@@ -1,0 +1,20 @@
+[package]
+name = "venera_zip_stream"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+# Default features are pure-Rust (miniz_oxide backend, no C compiler needed
+# beyond the platform linker). Mirrors jpg_encode single-codec shape.
+flate2 = "1"
+
+# Keep the per-ABI binary tiny and dependency-free.
+[profile.release]
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true
+codegen-units = 1
