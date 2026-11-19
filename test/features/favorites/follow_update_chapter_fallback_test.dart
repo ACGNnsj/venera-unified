@@ -67,6 +67,32 @@ void main() {
     expect(trackingRow()['last_check_time'], 200);
   });
 
+  test('present time refreshes the count baseline before time disappears', () {
+    for (final time in ['2026-01-02', '2026-01-02', '2026-01-03']) {
+      repository.applyFollowUpdate(
+        'tracking',
+        item(),
+        time,
+        100,
+        chapterCount: 9,
+      );
+      expect(trackingRow()['chapter_count'], 9);
+      db.execute('UPDATE tracking SET has_new_update = 0;');
+      expect(
+        repository.applyFollowUpdate(
+          'tracking',
+          item(),
+          null,
+          200,
+          chapterCount: 9,
+        ),
+        isFalse,
+      );
+      expect(trackingRow()['has_new_update'], 0);
+      db.execute('UPDATE tracking SET chapter_count = 5;');
+    }
+  });
+
   test('missing updateTime with a bigger count flags and rebaselines', () {
     db.execute('UPDATE tracking SET chapter_count = 5;');
     expect(

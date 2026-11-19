@@ -410,6 +410,13 @@ class FavoritesRepository {
     if (row == null) throw StateError('Favorite no longer exists');
     updateInfo(folder, item);
     if (updateTime != null) {
+      // Keep the fallback baseline current if a source later stops giving dates.
+      if (chapterCount != null) {
+        db.execute(
+          'UPDATE ${_table(folder)} SET chapter_count = ? WHERE id = ? AND type = ?;',
+          [chapterCount, item.id, item.type.value],
+        );
+      }
       if (row['last_update_time'] == updateTime) {
         updateCheckTime(folder, item.id, item.type.value, checkedAt);
         return false;
