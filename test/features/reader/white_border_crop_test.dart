@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:venera_unified/features/reader/comic_image.dart';
 import 'package:venera_unified/features/reader/display_image_provider.dart';
+import 'package:venera_unified/features/reader/image_precache.dart';
 import 'package:venera_unified/features/reader/white_border_crop.dart';
 import 'package:venera_unified/foundation/image_provider/reader_image.dart';
 import 'package:venera_unified/foundation/image_work.dart';
@@ -190,12 +191,20 @@ Widget _view(
   ),
 );
 
-void _cleanup(WidgetTester tester, ReaderWhiteBorderCrop crop, ImageWork work) {
+void _cleanup(
+  WidgetTester tester,
+  ReaderWhiteBorderCrop crop,
+  ImageWork work, {
+  ReaderImagePrecache? precache,
+}) {
   addTearDown(() async {
     await tester.pumpWidget(const SizedBox());
     crop.dispose();
     var closed = false;
-    final closing = work.dispose().then((_) => closed = true);
+    final closing = Future.wait([
+      if (precache != null) precache.dispose(),
+      work.dispose(),
+    ]).then((_) => closed = true);
     PaintingBinding.instance.imageCache.clear();
     PaintingBinding.instance.imageCache.clearLiveImages();
     await tester.pump();
@@ -222,12 +231,9 @@ void main() {
     final work = ImageWork();
     final crop = ReaderWhiteBorderCrop(work);
     final precache = ReaderImagePrecache(work: work);
-    _cleanup(tester, crop, work);
-    addTearDown(precache.dispose);
+    _cleanup(tester, crop, work, precache: precache);
     await tester.pumpWidget(const MaterialApp(home: SizedBox()));
-    for (final source in sources.skip(1)) {
-      precache.preload(source, ImageConfiguration.empty);
-    }
+    precache.replace(sources.skip(1), ImageConfiguration.empty);
     await _waitUntil(
       tester,
       () => sources
@@ -243,6 +249,7 @@ void main() {
       MaterialApp(
         home: ListView.builder(
           itemCount: sources.length,
+          // ignore: deprecated_member_use
           cacheExtent: 0,
           itemBuilder: (_, index) => ComicImage(
             key: ValueKey('crop-page-$index'),
