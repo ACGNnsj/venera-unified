@@ -72,7 +72,7 @@ enum ChapterOrder {
 /// Hides same-id, same-title repeats some sources pad directories with.
 abstract final class ChapterVisibility {
   static String _normalize(String value) =>
-      value.trim().toLowerCase().replaceAll(RegExp(r'\\s+'), ' ');
+      value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
   static bool _isDuplicate(Set<String> seen, String id, String title) {
     return !seen.add('$id\u0000${_normalize(title)}');
