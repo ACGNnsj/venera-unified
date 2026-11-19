@@ -7,13 +7,18 @@ import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
 
 void main() {
-  for (final reverse in [false, true]) {
+  for (final order in ['source', 'reverse']) {
     testWidgets(
-      'normal chapter read marks follow original indices; reverse=$reverse',
+      'normal chapter read marks follow original indices; order=$order',
       (tester) async {
-        final previous = appdata.settings['reverseChapterOrder'];
-        appdata.settings['reverseChapterOrder'] = reverse;
-        addTearDown(() => appdata.settings['reverseChapterOrder'] = previous);
+        final previousOrder = appdata.settings['chapterOrder'];
+        final previousLegacy = appdata.settings['reverseChapterOrder'];
+        appdata.settings['chapterOrder'] = order;
+        appdata.settings['reverseChapterOrder'] = false;
+        addTearDown(() {
+          appdata.settings['chapterOrder'] = previousOrder;
+          appdata.settings['reverseChapterOrder'] = previousLegacy;
+        });
         final history = History(
           type: const ComicType(17),
           time: DateTime(2026),

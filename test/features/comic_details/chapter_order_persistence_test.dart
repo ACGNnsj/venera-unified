@@ -27,6 +27,7 @@ Directory _prepare(WidgetTester tester) {
   appdata.settings['language'] = 'en-US';
   appdata.settings['disableSyncFields'] = '';
   appdata.settings['reverseChapterOrder'] = false;
+  appdata.settings['chapterOrder'] = 'source';
   registerShowMessageHandler((_, _) {});
   addTearDown(() async {
     for (final gate in _gates) {
@@ -123,7 +124,9 @@ void main() {
         final gate = Completer<void>();
         _gates.add(gate);
         final exclusive = AppDataOperations.instance.run(() => gate.future);
-        await tester.tap(find.text('Descending'));
+        await tester.tap(find.byIcon(Icons.sort));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Reversed source order'));
         await tester.pump();
         expect(
           tester.getTopLeft(find.text('Second chapter')).dx,
@@ -151,6 +154,7 @@ void main() {
             jsonDecode(File('${root.path}/appdata.json').readAsStringSync())
                 as Map;
         expect((saved['settings'] as Map)['reverseChapterOrder'], isTrue);
+        expect((saved['settings'] as Map)['chapterOrder'], 'reverse');
         await tester.pumpWidget(const SizedBox());
       },
     );
@@ -183,7 +187,9 @@ void main() {
         ),
       );
       final blocked = Directory('${root.path}/appdata.json')..createSync();
-      await tester.tap(find.text('Descending'));
+      await tester.tap(find.byIcon(Icons.sort));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Reversed source order'));
       final owner = tester.state<SettingsSaveState>(
         find.byType(ComicChaptersView),
       );

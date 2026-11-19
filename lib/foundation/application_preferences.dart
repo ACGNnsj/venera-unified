@@ -44,6 +44,19 @@ abstract final class AppPreferences {
     'reverseChapterOrder',
     false,
   );
+  // Global default chapter order; 'source', 'reverse', 'titleAscending'
+  // or 'titleDescending'. Pre-migration users with [reverseChapterOrder]
+  // set keep reversed until they pick an order (see ChapterOrder.resolve).
+  static const chapterOrder = ChoicePreference('chapterOrder', 'source', [
+    'source',
+    'reverse',
+    'titleAscending',
+    'titleDescending',
+  ]);
+  static const hideDuplicateChapters = BoolPreference(
+    'hideDuplicateChapters',
+    false,
+  );
   static const minimizeToTray = BoolPreference('minimizeToTray', false);
   static const all = <Preference<Object>>[
     language,
@@ -53,6 +66,8 @@ abstract final class AppPreferences {
     cacheRetentionDays,
     authorizationRequired,
     reverseChapterOrder,
+    chapterOrder,
+    hideDuplicateChapters,
     minimizeToTray,
   ];
 }

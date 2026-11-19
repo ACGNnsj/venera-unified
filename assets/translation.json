@@ -1520,7 +1520,13 @@
     "Blue grey": "蓝灰色",
     "Show search history clear button": "显示搜索历史清空按钮",
     "Show the clear (trash) button on the search history header.": "在搜索历史标题栏显示清空按钮。",
-    "Record each search with its source, filters and page, and reopen entries where you left off.": "记录每次搜索的来源、筛选条件和页码，并从上次离开的位置重新打开。"
+    "Record each search with its source, filters and page, and reopen entries where you left off.": "记录每次搜索的来源、筛选条件和页码，并从上次离开的位置重新打开。",
+    "Source order": "源顺序",
+    "Reversed source order": "反向源顺序",
+    "Chapter title ascending": "章节标题升序",
+    "Chapter title descending": "章节标题降序",
+    "Hide duplicate chapters": "隐藏重复章节",
+    "Default chapter order": "默认章节顺序"
   },
   "zh_TW": {
     "Crop white side borders": "自動裁切左右白邊",
@@ -3043,6 +3049,12 @@
     "Blue grey": "藍灰色",
     "Show search history clear button": "顯示搜尋歷史清除按鈕",
     "Show the clear (trash) button on the search history header.": "在搜尋歷史標題列顯示清除按鈕。",
-    "Record each search with its source, filters and page, and reopen entries where you left off.": "記錄每次搜尋的來源、篩選條件和頁碼，並從上次離開的位置重新開啟。"
+    "Record each search with its source, filters and page, and reopen entries where you left off.": "記錄每次搜尋的來源、篩選條件和頁碼，並從上次離開的位置重新開啟。",
+    "Source order": "源順序",
+    "Reversed source order": "反向源順序",
+    "Chapter title ascending": "章節標題升序",
+    "Chapter title descending": "章節標題降序",
+    "Hide duplicate chapters": "隱藏重複章節",
+    "Default chapter order": "預設章節順序"
   }
 }

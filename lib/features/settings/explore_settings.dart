@@ -87,9 +87,19 @@ class _ExploreSettingsState extends State<ExploreSettings> {
           title: "Show update status on comic tile".tl,
           preference: DiscoveryPreferences.showUpdateStatusOnTile,
         ).toSliver(),
+        SelectSetting.preference(
+          title: "Default chapter order".tl,
+          preference: AppPreferences.chapterOrder,
+          optionTranslation: {
+            'source': "Source order".tl,
+            'reverse': "Reversed source order".tl,
+            'titleAscending': "Chapter title ascending".tl,
+            'titleDescending': "Chapter title descending".tl,
+          },
+        ).toSliver(),
         SwitchSetting.preference(
-          title: "Reverse default chapter order".tl,
-          preference: AppPreferences.reverseChapterOrder,
+          title: "Hide duplicate chapters".tl,
+          preference: AppPreferences.hideDuplicateChapters,
         ).toSliver(),
         PopupWindowSetting(
           title: "Keyword blocking".tl,

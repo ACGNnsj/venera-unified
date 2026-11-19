@@ -15,6 +15,7 @@ import 'package:venera_unified/foundation/opencc.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
+import 'chapter_order.dart';
 
 class ComicChaptersView extends StatefulWidget {
   const ComicChaptersView({
@@ -45,14 +46,19 @@ class ComicChaptersView extends StatefulWidget {
 }
 
 class _ComicChaptersViewState extends SettingsSaveState<ComicChaptersView> {
-  bool? _preview;
+  String? _previewOrder;
+  bool? _previewHide;
   int _request = 0;
 
-  bool get reverse =>
-      _preview ??
-      GlobalPreferenceStore(
-        appdata.settings,
-      ).read(AppPreferences.reverseChapterOrder);
+  GlobalPreferenceStore get _prefs => GlobalPreferenceStore(appdata.settings);
+
+  ChapterOrder get order => ChapterOrder.resolve(
+    _previewOrder ?? _prefs.read(AppPreferences.chapterOrder),
+    legacyReverse: _prefs.read(AppPreferences.reverseChapterOrder),
+  );
+
+  bool get hideDuplicates =>
+      _previewHide ?? _prefs.read(AppPreferences.hideDuplicateChapters);
 
   @override
   void initState() {
@@ -64,19 +70,39 @@ class _ComicChaptersViewState extends SettingsSaveState<ComicChaptersView> {
     if (mounted) setState(() {});
   }
 
-  void _setReverse(bool value) {
-    if (!acceptsSettingsChanges || value == reverse) return;
+  void _setOrder(ChapterOrder value) {
+    if (!acceptsSettingsChanges || value == order) return;
     final request = ++_request;
-    setState(() => _preview = value);
+    setState(() => _previewOrder = value.name);
     saveSetting(
-      AppPreferences.reverseChapterOrder.key,
+      AppPreferences.chapterOrder.key,
+      () => appdata.updateSettings((draft) {
+        final store = GlobalPreferenceStore(draft);
+        store.write(AppPreferences.chapterOrder, value.name);
+        store.write(
+          AppPreferences.reverseChapterOrder,
+          value == ChapterOrder.reverse,
+        );
+      }),
+      onSaved: () {
+        if (request == _request) setState(() => _previewOrder = null);
+      },
+    );
+  }
+
+  void _setHide(bool value) {
+    if (!acceptsSettingsChanges || value == hideDuplicates) return;
+    final request = ++_request;
+    setState(() => _previewHide = value);
+    saveSetting(
+      AppPreferences.hideDuplicateChapters.key,
       () => appdata.updateSettings((draft) {
         GlobalPreferenceStore(
           draft,
-        ).write(AppPreferences.reverseChapterOrder, value);
+        ).write(AppPreferences.hideDuplicateChapters, value);
       }),
       onSaved: () {
-        if (request == _request) setState(() => _preview = null);
+        if (request == _request) setState(() => _previewHide = null);
       },
     );
   }
@@ -88,7 +114,12 @@ class _ComicChaptersViewState extends SettingsSaveState<ComicChaptersView> {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           settingsSaveStatus,
-          _ChapterOrderSegment(reverse: reverse, onChanged: _setReverse),
+          _ChapterOrderMenu(
+            order: order,
+            hideDuplicates: hideDuplicates,
+            onOrder: _setOrder,
+            onHide: _setHide,
+          ),
         ],
       ),
     );
@@ -97,7 +128,8 @@ class _ComicChaptersViewState extends SettingsSaveState<ComicChaptersView> {
             chapters: widget.chapters,
             history: widget.history,
             readChapter: widget.readChapter,
-            reverse: reverse,
+            order: order,
+            hideDuplicates: hideDuplicates,
             orderControl: orderControl,
             collectionId: widget.collectionId,
             onCollectionTabAction: widget.onCollectionTabAction,
@@ -106,7 +138,8 @@ class _ComicChaptersViewState extends SettingsSaveState<ComicChaptersView> {
             chapters: widget.chapters,
             history: widget.history,
             readChapter: widget.readChapter,
-            reverse: reverse,
+            order: order,
+            hideDuplicates: hideDuplicates,
             orderControl: orderControl,
           );
   }
@@ -123,12 +156,14 @@ class _NormalComicChapters extends StatefulWidget {
     required this.chapters,
     this.history,
     required this.readChapter,
-    required this.reverse,
+    required this.order,
+    required this.hideDuplicates,
     required this.orderControl,
   });
 
   final ComicChapters chapters;
-  final bool reverse;
+  final ChapterOrder order;
+  final bool hideDuplicates;
   final Widget orderControl;
 
   final History? history;
@@ -163,7 +198,18 @@ class _NormalComicChaptersState extends State<_NormalComicChapters> {
     final chapters = widget.chapters;
     return SliverLayoutBuilder(
       builder: (context, constrains) {
-        int length = chapters.length;
+        final display = ChapterVisibility.display(
+          order: widget.order,
+          ids: [
+            for (var k = 0; k < chapters.length; k++) chapters.ids.elementAt(k),
+          ],
+          titles: [
+            for (var k = 0; k < chapters.length; k++)
+              chapters[chapters.ids.elementAt(k)]!,
+          ],
+          hideDuplicates: widget.hideDuplicates,
+        );
+        int length = display.length;
         bool canShowAll = showAll;
         if (!showAll) {
           var width = constrains.crossAxisExtent - 16;
@@ -172,7 +218,7 @@ class _NormalComicChaptersState extends State<_NormalComicChapters> {
             crossItems += 1;
           }
           length = math.min(length, crossItems * 8);
-          if (length == chapters.length) {
+          if (length == display.length) {
             canShowAll = true;
           }
         }
@@ -202,20 +248,19 @@ class _NormalComicChaptersState extends State<_NormalComicChapters> {
             ),
             SliverGrid(
               delegate: SliverChildBuilderDelegate((context, i) {
-                if (widget.reverse) {
-                  i = chapters.length - i - 1;
-                }
-                var key = chapters.ids.elementAt(i);
+                final actual = display[i];
+                var key = chapters.ids.elementAt(actual);
                 var value = chapters[key]!;
                 bool visited =
-                    history?.readEpisode.contains((i + 1).toString()) ?? false;
+                    history?.readEpisode.contains((actual + 1).toString()) ??
+                    false;
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
                   child: Material(
                     color: context.colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(16),
                     child: ClickInkWell(
-                      onTap: () => widget.readChapter(i + 1),
+                      onTap: () => widget.readChapter(actual + 1),
                       borderRadius: BorderRadius.circular(16),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -253,7 +298,7 @@ class _NormalComicChaptersState extends State<_NormalComicChapters> {
                         showAll = true;
                       });
                     },
-                    label: Text("${"Show all".tl} (${chapters.length})"),
+                    label: Text("${"Show all".tl} (${display.length})"),
                   ).paddingTop(12),
                 ),
               ),
@@ -270,14 +315,16 @@ class _GroupedComicChapters extends StatefulWidget {
     required this.chapters,
     this.history,
     required this.readChapter,
-    required this.reverse,
+    required this.order,
+    required this.hideDuplicates,
     required this.orderControl,
     this.collectionId,
     this.onCollectionTabAction,
   });
 
   final ComicChapters chapters;
-  final bool reverse;
+  final ChapterOrder order;
+  final bool hideDuplicates;
   final Widget orderControl;
 
   final History? history;
@@ -365,7 +412,14 @@ class _GroupedComicChaptersState extends State<_GroupedComicChapters>
         var group = _groups.isEmpty
             ? const <String, String>{}
             : chapters.getGroupByIndex(index);
-        int length = group.length;
+        final groupIds = group.keys.toList();
+        final display = ChapterVisibility.display(
+          order: widget.order,
+          ids: groupIds,
+          titles: [for (final id in groupIds) group[id]!],
+          hideDuplicates: widget.hideDuplicates,
+        );
+        int length = display.length;
         bool canShowAll = showAll;
         if (!showAll) {
           var width = constrains.crossAxisExtent - 16;
@@ -374,7 +428,7 @@ class _GroupedComicChaptersState extends State<_GroupedComicChapters>
             crossItems += 1;
           }
           length = math.min(length, crossItems * 8);
-          if (length == group.length) {
+          if (length == display.length) {
             canShowAll = true;
           }
         }
@@ -437,21 +491,19 @@ class _GroupedComicChaptersState extends State<_GroupedComicChapters>
             SliverPadding(padding: const EdgeInsets.only(top: 8)),
             SliverGrid(
               delegate: SliverChildBuilderDelegate((context, i) {
-                if (widget.reverse) {
-                  i = group.length - i - 1;
-                }
-                var key = group.keys.elementAt(i);
+                final actual = display[i];
+                var key = groupIds[actual];
                 var value = group[key]!;
                 var chapterIndex = 0;
                 for (var j = 0; j < chapters.groupCount; j++) {
                   if (j == index) {
-                    chapterIndex += i;
+                    chapterIndex += actual;
                     break;
                   }
                   chapterIndex += chapters.getGroupByIndex(j).length;
                 }
                 String rawIndex = (chapterIndex + 1).toString();
-                String groupedIndex = "${index + 1}-${i + 1}";
+                String groupedIndex = "${index + 1}-${actual + 1}";
                 bool visited = false;
                 if (history != null) {
                   visited =
@@ -502,7 +554,7 @@ class _GroupedComicChaptersState extends State<_GroupedComicChapters>
                         showAll = true;
                       });
                     },
-                    label: Text("${"Show all".tl} (${group.length})"),
+                    label: Text("${"Show all".tl} (${display.length})"),
                   ).paddingTop(12),
                 ),
               ),
@@ -514,33 +566,62 @@ class _GroupedComicChaptersState extends State<_GroupedComicChapters>
   }
 }
 
-class _ChapterOrderSegment extends StatelessWidget {
-  const _ChapterOrderSegment({required this.reverse, required this.onChanged});
+class _ChapterOrderMenu extends StatelessWidget {
+  const _ChapterOrderMenu({
+    required this.order,
+    required this.hideDuplicates,
+    required this.onOrder,
+    required this.onHide,
+  });
 
-  final bool reverse;
+  final ChapterOrder order;
+  final bool hideDuplicates;
+  final ValueChanged<ChapterOrder> onOrder;
+  final ValueChanged<bool> onHide;
 
-  final ValueChanged<bool> onChanged;
+  static String label(ChapterOrder value) {
+    switch (value) {
+      case ChapterOrder.source:
+        return "Source order".tl;
+      case ChapterOrder.reverse:
+        return "Reversed source order".tl;
+      case ChapterOrder.titleAscending:
+        return "Chapter title ascending".tl;
+      case ChapterOrder.titleDescending:
+        return "Chapter title descending".tl;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: "Order".tl,
-      child: SegmentedButton<bool>(
-        selected: {reverse},
-        showSelectedIcon: false,
-        style: const ButtonStyle(
-          visualDensity: VisualDensity.compact,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 10)),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Tooltip(
+          message: "Hide duplicate chapters".tl,
+          child: IconButton(
+            visualDensity: VisualDensity.compact,
+            isSelected: hideDuplicates,
+            icon: const Icon(Icons.filter_alt_outlined),
+            selectedIcon: const Icon(Icons.filter_alt),
+            onPressed: () => onHide(!hideDuplicates),
+          ),
         ),
-        segments: [
-          ButtonSegment<bool>(value: false, label: Text("Ascending".tl)),
-          ButtonSegment<bool>(value: true, label: Text("Descending".tl)),
-        ],
-        onSelectionChanged: (selected) {
-          onChanged(selected.first);
-        },
-      ),
+        PopupMenuButton<ChapterOrder>(
+          tooltip: "Order".tl,
+          icon: const Icon(Icons.sort),
+          initialValue: order,
+          onSelected: onOrder,
+          itemBuilder: (_) => [
+            for (final o in ChapterOrder.values)
+              CheckedPopupMenuItem(
+                value: o,
+                checked: o == order,
+                child: Text(label(o)),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

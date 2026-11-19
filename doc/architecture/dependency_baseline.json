@@ -626,6 +626,7 @@
     "features/comic_details/action_button.dart",
     "features/comic_details/actions.dart",
     "features/comic_details/archive_download_dialog.dart",
+    "features/comic_details/chapter_order.dart",
     "features/comic_details/chapters.dart",
     "features/comic_details/comic_details.dart",
     "features/comic_details/comic_page.dart",

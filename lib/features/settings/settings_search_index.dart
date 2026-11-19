@@ -77,8 +77,9 @@ final settingsSearchIndex = <SettingsSearchEntry>[
     0,
     keywords: ['update'],
   ),
+  const SettingsSearchEntry('Default chapter order', 0, keywords: ['chapter']),
   const SettingsSearchEntry(
-    'Reverse default chapter order',
+    'Hide duplicate chapters',
     0,
     keywords: ['chapter'],
   ),

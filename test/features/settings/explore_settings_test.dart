@@ -100,7 +100,7 @@ void main() {
         'showHistoryStatusOnTile': 1,
         'showDetailedReadingProgress': 'true',
         'showUpdateStatusOnTile': 'false',
-        'reverseChapterOrder': 'bad',
+        'chapterOrder': 'bad',
         'autoAddLanguageFilter': {},
         'initialPage': '-1',
         'comicListDisplayMode': 'continuous',
@@ -120,7 +120,7 @@ void main() {
         ('Show history on comic tile', false),
         ('Show detailed reading progress', false),
         ('Show update status on comic tile', true),
-        ('Reverse default chapter order', false),
+        ('Hide duplicate chapters', false),
       ]) {
         final field = await _show(tester, title);
         expect(
@@ -132,6 +132,11 @@ void main() {
           value,
         );
       }
+      final order = await _show(tester, 'Default chapter order');
+      expect(
+        find.descendant(of: order, matching: find.text('Source order')),
+        findsOneWidget,
+      );
       final language = await _show(tester, 'Auto Language Filters');
       expect(
         find.descendant(of: language, matching: find.text('None')),
