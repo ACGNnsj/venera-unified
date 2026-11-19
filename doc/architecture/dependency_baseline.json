@@ -616,6 +616,7 @@
     "components/settings_save_state.dart",
     "components/side_bar.dart",
     "components/summary_header.dart",
+    "components/toolbox.dart",
     "components/window_frame.dart",
     "components/window_hotkey_scope.dart",
     "components/window_selection_task.dart",

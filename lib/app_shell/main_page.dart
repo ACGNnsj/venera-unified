@@ -16,6 +16,7 @@ import 'package:venera_unified/foundation/tray.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../components/navigation_bar.dart';
+import '../components/toolbox.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 import '../foundation/context.dart';
 import 'home_page.dart';
@@ -111,6 +112,13 @@ class _MainPageState extends State<MainPage> {
             label: "Tasks".tl,
             onTap: () {
               to(() => const TasksPage(), preventDuplicate: true);
+            },
+          ),
+          PaneActionEntry(
+            icon: Icons.handyman_outlined,
+            label: "Toolbox".tl,
+            onTap: () {
+              showToolbox(context);
             },
           ),
           PaneActionEntry(

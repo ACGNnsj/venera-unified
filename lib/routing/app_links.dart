@@ -155,6 +155,32 @@ Future<bool> handleAppLink(Uri uri, {bool Function()? isActive}) async {
   return false;
 }
 
+/// Synchronous comic-link match for UI callbacks that cannot await (e.g.
+/// embedded webview navigation delegates). Returns true when the URL belongs
+/// to a source link handler; handling itself runs fire-and-forget.
+bool tryHandleComicLink(Uri uri) {
+  final target = comicLinkTarget(uri);
+  for (final source in ComicSource.all()) {
+    final handler = source.linkHandler;
+    if (handler == null) continue;
+    if (!handler.domains.any(
+      (domain) => domain.toLowerCase() == target.uri.host.toLowerCase(),
+    )) {
+      continue;
+    }
+    String? id;
+    try {
+      id = handler.linkToId(target.uri.toString());
+    } catch (_) {
+      return false;
+    }
+    if (id == null || id.isEmpty) return false;
+    unawaited(handleAppLink(uri));
+    return true;
+  }
+  return false;
+}
+
 /// Custom `venera-unified://` branch. Returns true only when consumed.
 ///
 /// A link whose source is not installed degrades to an aggregated search
