@@ -33,10 +33,21 @@ class SourceRepositoriesPanel extends StatelessWidget {
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerLeft,
-            child: FilledButton.icon(
-              onPressed: () => _editRepository(context),
-              icon: const Icon(Icons.add),
-              label: Text('Add repository'.tl),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  onPressed: () => _editRepository(context),
+                  icon: const Icon(Icons.add),
+                  label: Text('Add repository'.tl),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: () => _bindSource(context),
+                  icon: const Icon(Icons.link),
+                  label: Text('Manual binding'.tl),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
@@ -125,6 +136,49 @@ class SourceRepositoriesPanel extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _bindSource(BuildContext context) async {
+    final store = SourceRepositories.instance;
+    final source = await showDialog<ComicSource>(
+      context: context,
+      builder: (context) => ListenableBuilder(
+        listenable: Listenable.merge([store, ComicSourceManager()]),
+        builder: (context, _) {
+          final unbound = ComicSource.all().where((source) {
+            final origin = store.originFor(source.key);
+            return origin == null ||
+                (origin.kind == 'repository' &&
+                    store.find(origin.repositoryId) == null);
+          }).toList();
+          return SimpleDialog(
+            title: Text('Manual binding'.tl),
+            children: [
+              if (unbound.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text('No sources need manual binding'.tl),
+                ),
+              for (final source in unbound)
+                SimpleDialogOption(
+                  onPressed: () => Navigator.pop(context, source),
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(source.name),
+                    subtitle: Text(source.key),
+                  ),
+                ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'.tl),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    if (source == null || !context.mounted) return;
+    await showSourceOriginPicker(context, source, createClient: createClient);
   }
 
   int _linkedCount(SourceRepository repository) => ComicSource.all()
@@ -735,8 +789,9 @@ class _SourceRepositoryCatalogPageState
 
 Future<void> showSourceOriginPicker(
   BuildContext context,
-  ComicSource source,
-) async {
+  ComicSource source, {
+  Dio Function()? createClient,
+}) async {
   final repository = await showDialog<SourceRepository>(
     context: context,
     builder: (_) => _SourceOriginPicker(source: source),
@@ -744,7 +799,11 @@ Future<void> showSourceOriginPicker(
   if (repository == null || !context.mounted) return;
   await showPopUpWidget(
     context,
-    SourceRepositoryCatalogPage(repository: repository, sourceToLink: source),
+    SourceRepositoryCatalogPage(
+      repository: repository,
+      sourceToLink: source,
+      createClient: createClient,
+    ),
   );
 }
 

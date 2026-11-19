@@ -21,6 +21,8 @@ import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../support/comic_source_fixture.dart';
+
 Future<void> _until(WidgetTester tester, bool Function() done) async {
   for (var i = 0; i < 500 && !done(); i++) {
     await tester.runAsync(
@@ -422,6 +424,81 @@ void main() {
       expect(fixture.queue.tasks.length, tasks);
     },
   );
+
+  testWidgets('manual binding links an installed source to a repository', (
+    tester,
+  ) async {
+    final fixture = await _prepare(tester);
+    final manager = ComicSourceManager();
+    fixture.adapter.contents =
+        '[{"key":"unassigned","name":"Catalog match","version":"1.0.0","url":"https://example.test/source.js"}]';
+    manager.add(ComicSourceFixture(key: 'linked'));
+    manager.add(ComicSourceFixture(key: 'unassigned'));
+    manager.add(ComicSourceFixture(key: 'orphaned'));
+    manager.add(ComicSourceFixture(key: 'missing-id'));
+    manager.add(ComicSourceFixture(key: 'local'));
+    appdata.settings['comicSourceRepositories'] = [
+      {
+        'id': 'one',
+        'name': 'Example',
+        'url': 'https://example.test/catalog.json',
+      },
+    ];
+    appdata.settings['comicSourceOrigins'] = {
+      'linked': const SourceOrigin(
+        kind: 'repository',
+        repositoryId: 'one',
+      ).toJson(),
+      'orphaned': const SourceOrigin(
+        kind: 'repository',
+        repositoryId: 'removed',
+      ).toJson(),
+      'local': const SourceOrigin(kind: 'file').toJson(),
+      'missing-id': const SourceOrigin(kind: 'repository').toJson(),
+    };
+    await tester.pumpWidget(fixture.host());
+
+    expect(find.text('Manual binding'), findsOneWidget);
+    await tester.tap(find.text('Manual binding'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('unassigned'), findsOneWidget);
+    expect(find.text('orphaned'), findsOneWidget);
+    expect(find.text('missing-id'), findsOneWidget);
+    expect(find.text('local'), findsNothing);
+    expect(find.text('linked'), findsNothing);
+    await tester.tap(find.text('unassigned'));
+    await tester.pumpAndSettle();
+    expect(find.text('Manage source origin'), findsOneWidget);
+    await tester.tap(find.text('Example').last);
+    await _until(
+      tester,
+      () => find.text('Catalog match').evaluate().isNotEmpty,
+    );
+    await _press(tester, 'Use this repository');
+    await tester.pumpAndSettle();
+    await _press(tester, 'Link repository');
+    await _until(tester, () => find.text('Link repository').evaluate().isEmpty);
+
+    expect(
+      fixture.saved['comicSourceOrigins']['unassigned']['repositoryId'],
+      'one',
+    );
+    expect(fixture.queue.tasks, isEmpty);
+  });
+
+  testWidgets('manual binding shows an empty state without installed sources', (
+    tester,
+  ) async {
+    final fixture = await _prepare(tester);
+    await tester.pumpWidget(fixture.host());
+    await tester.tap(find.text('Manual binding'));
+    await tester.pumpAndSettle();
+    expect(find.text('No sources need manual binding'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SimpleDialog), findsNothing);
+  });
 
   for (final size in [const Size(375, 812), const Size(812, 375)]) {
     testWidgets('editor supports $size with dark large text and reduced motion', (
