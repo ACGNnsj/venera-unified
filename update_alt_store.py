@@ -20,7 +20,7 @@ def is_project_release_url(url):
 def clean_release_history(data):
     """Keep this app's distribution history separate from the original app."""
     for app in data.get("apps", []):
-        if app.get("bundleIdentifier") != "com.github.cyrilpeng.veneranext":
+        if app.get("bundleIdentifier") not in ("io.github.venera.unified", "com.github.cyrilpeng.veneranext"):
             continue
         app["versions"] = [
             entry for entry in app.get("versions", [])
@@ -64,36 +64,23 @@ def fetch_latest_release(repo_url):
         raise
 
 def extract_version(tag_name):
-    version_match = re.search(r"(\d+\.\d+\.\d+)", tag_name)
+    version_match = re.fullmatch(r"v?(\d+\.\d+\.\d+)", tag_name)
     if not version_match:
         raise RuntimeError(f"Could not parse version from tag_name: {tag_name}")
     return version_match.group(1)
 
 def find_ipa_asset(assets, version):
-    ipa_assets = [
-        asset for asset in assets
-        if asset.get("name", "").lower().endswith(".ipa")
-    ]
-
     expected_name = re.compile(
-        rf"^(?:VeneraNext|VeneraUnified)-ios-{re.escape(version)}(?:\+\d+)?\.ipa$",
+        rf"(?:VeneraNext|VeneraUnified)-ios-{re.escape(version)}(?:\+\d+)?\.ipa",
         re.IGNORECASE,
     )
-    for asset in ipa_assets:
-        if expected_name.match(asset["name"]):
-            return asset
-
-    for asset in ipa_assets:
-        name = asset["name"].lower()
-        if name.startswith(("veneranext-ios-", "veneraunified-ios-")) and version in name:
-            return asset
-
+    ipa_assets = [asset for asset in assets if expected_name.fullmatch(asset.get("name", ""))]
     if len(ipa_assets) == 1:
         return ipa_assets[0]
 
     available = ", ".join(asset.get("name", "<unnamed>") for asset in assets)
     raise RuntimeError(
-        "IPA file not found in release assets. "
+        "Release must contain exactly one matching iOS IPA. "
         f"Available assets: {available or '<none>'}"
     )
 
@@ -130,7 +117,9 @@ def update_json_file_release(json_file, latest_release):
     download_url = asset["browser_download_url"]
     if not is_project_release_url(download_url):
         raise RuntimeError("IPA download URL must belong to project releases")
-    size = asset["size"]
+    size = asset.get("size")
+    if type(size) is not int or size <= 0:
+        raise RuntimeError("IPA size must be a positive integer")
 
     clean_release_history(data)
 
@@ -141,6 +130,8 @@ def update_json_file_release(json_file, latest_release):
         "downloadURL": download_url,
         "size": size
     }
+    if "+" in asset["name"]:
+        version_entry["buildVersion"] = asset["name"].rsplit("+", 1)[1][:-4]
 
     app["versions"] = [
         item for item in app.setdefault("versions", [])
