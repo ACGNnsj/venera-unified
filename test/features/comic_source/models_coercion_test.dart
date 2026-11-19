@@ -86,6 +86,63 @@ void main() {
     });
   });
 
+  test(
+    'source timestamps normalize seconds and milliseconds across models',
+    () {
+      final expected = DateTime.fromMillisecondsSinceEpoch(
+        1700000000000,
+      ).toString().substring(0, 19);
+      for (final value in <num>[
+        1700000000,
+        1700000000.0,
+        1700000000000,
+        1700000000000.0,
+      ]) {
+        final comment = Comment.fromJson({'time': value});
+        final details = ComicDetails.fromJson({
+          'uploadTime': value,
+          'updateTime': value,
+        });
+        expect(comment.time, expected, reason: '$value');
+        expect(details.uploadTime, expected, reason: '$value');
+        expect(details.updateTime, expected, reason: '$value');
+        expect(details.findUpdateTime(), expected.split(' ').first);
+      }
+    },
+  );
+
+  test('missing and invalid timestamps do not break source models', () {
+    for (final value in <num?>[
+      null,
+      0,
+      -1,
+      double.nan,
+      double.infinity,
+      1e30,
+    ]) {
+      expect(Comment.fromJson({'time': value}).time, isNull);
+      final details = ComicDetails.fromJson({
+        'uploadTime': value,
+        'updateTime': value,
+      });
+      expect(details.uploadTime, isNull);
+      expect(details.updateTime, isNull);
+    }
+    const date = '2026-11-19 12:30:00';
+    expect(Comment.fromJson({'time': date}).time, date);
+    final details = ComicDetails.fromJson({
+      'uploadTime': date,
+      'updateTime': date,
+    });
+    expect(details.uploadTime, date);
+    expect(details.updateTime, date);
+    expect(() => Comment.fromJson({'time': () => 1}), throwsArgumentError);
+    expect(
+      () => ComicDetails.fromJson({'updateTime': () => 1}),
+      throwsArgumentError,
+    );
+  });
+
   group('ComicChapters.fromJson', () {
     test('null 与标量返回空章节，回调这类非数据值算无效结果', () {
       expect(ComicChapters.fromJson(null).length, 0);

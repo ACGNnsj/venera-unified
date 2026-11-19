@@ -37,21 +37,7 @@ class Comment {
   final bool? isLiked;
   int? voteStatus; // 1: upvote, -1: downvote, 0: none
 
-  static String? parseTime(dynamic value) {
-    if (value == null) return null;
-    if (value is int) {
-      if (value < 10000000000) {
-        return DateTime.fromMillisecondsSinceEpoch(
-          value * 1000,
-        ).toString().substring(0, 19);
-      } else {
-        return DateTime.fromMillisecondsSinceEpoch(
-          value,
-        ).toString().substring(0, 19);
-      }
-    }
-    return value.toString();
-  }
+  static String? parseTime(dynamic value) => coerceTime(value);
 
   Comment.fromJson(Map<String, dynamic> json)
     : userName = coerceString(json["userName"]),
@@ -242,8 +228,8 @@ class ComicDetails with HistoryMixin {
       isLiked = coerceBool(json["isLiked"]),
       commentCount = coerceInt(json["commentCount"]),
       uploader = coerceNullableString(json["uploader"]),
-      uploadTime = coerceNullableString(json["uploadTime"]),
-      updateTime = coerceNullableString(json["updateTime"]),
+      uploadTime = coerceTime(json["uploadTime"]),
+      updateTime = coerceTime(json["updateTime"]),
       url = coerceNullableString(json["url"]),
       stars = coerceDouble(json["stars"]),
       maxPage = coerceInt(json["maxPage"]),

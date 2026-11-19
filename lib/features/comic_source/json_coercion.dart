@@ -23,6 +23,20 @@ String? coerceNullableString(dynamic value) {
   return coerceString(value);
 }
 
+/// 数字时间戳兼容秒/毫秒；日期字符串按书源原文保留。
+String? coerceTime(dynamic value) {
+  if (value is! num) return coerceNullableString(value);
+  if (!value.isFinite || value <= 0) return null;
+  final timestamp = value.toInt();
+  try {
+    return DateTime.fromMillisecondsSinceEpoch(
+      timestamp < 10000000000 ? timestamp * 1000 : timestamp,
+    ).toString().substring(0, 19);
+  } on RangeError {
+    return null;
+  }
+}
+
 int? coerceInt(dynamic value) {
   if (value == null) return null;
   if (value is int) return value;
