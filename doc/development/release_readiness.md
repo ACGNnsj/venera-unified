@@ -26,7 +26,7 @@ merged into this release.
   The new synthetic local-reader decode probe passed all 20 measurements with
   Flutter 3.41.4 on Windows. It is not an Android frame-pacing test, a decoded
   image-cache test, or a runtime fix. See the
-  [diagnostic record](../experiments/webdav_reader_performance.zh.md).
+
 - #107/#115 still need original-environment confirmation; do not repeat the
   existing retest notices early. #111 has a reporter response that v1.18.1
   starts normally; keep the agreed observation window without a no-response

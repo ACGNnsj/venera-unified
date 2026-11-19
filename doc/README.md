@@ -51,12 +51,8 @@ English index: [README.en.md](README.en.md)
 
 ## 实验和任务跟踪
 
-- [Android TV Alpha 实验](experiments/android_tv.zh.md)
-- [漫画源安装任务交互设计](experiments/source_installation_tasks.zh.md)
-- [漫画源与源仓库管理设计](experiments/source_repositories.zh.md)
 - [图片增强实验](experiments/image_enhancement.zh.md)
 - [去混淆像素复制优化](experiments/image_descrambling.zh.md)
-- [WebDAV 阅读卡顿分阶段排查](experiments/webdav_reader_performance.zh.md)
 - [AVIF 格式识别与解码评估](experiments/avif_decoder.zh.md)
 - [图像翻译（实验）](experiments/image_translation.zh.md)
 - [Android 端超分加速与 NNAPI 门控](experiments/android-upscale-acceleration.zh.md)
