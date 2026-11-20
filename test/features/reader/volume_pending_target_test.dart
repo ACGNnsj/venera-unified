@@ -15,9 +15,11 @@ import 'package:venera_unified/features/local_comics/local_comics.dart';
 import 'package:venera_unified/features/reader/platform_effects.dart'
     show ReaderPlatformEffectsScope;
 import 'package:venera_unified/features/reader/reader_page.dart';
+import 'package:venera_unified/features/reader/volume_controller.dart';
 import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/log.dart';
+import 'package:venera_unified/foundation/reader_diagnostics.dart';
 import 'package:venera_unified/routing/app_navigation.dart';
 
 import 'support/favorites_read_fixture.dart';
@@ -33,6 +35,7 @@ void main() {
     final previousHistory = _historyOwner;
     final directory = Directory.systemTemp.createTempSync('volume-pending-');
     final key = GlobalKey<_ReaderState>();
+    late _PendingVolumeLease lease;
     Log.isMuted = true;
     try {
       App.dataPath = directory.path;
@@ -87,7 +90,14 @@ void main() {
             builder: (context, child) =>
                 ReaderPlatformEffectsScope(child: child!),
             navigatorKey: appNavigation.rootNavigatorKey,
-            home: Scaffold(body: OverlayWidget(_Reader(key: key))),
+            home: Scaffold(
+              body: OverlayWidget(
+                _Reader(
+                  key: key,
+                  volumeConnect: (send) => lease = _PendingVolumeLease(send),
+                ),
+              ),
+            ),
           ),
         ),
       );
@@ -109,6 +119,22 @@ void main() {
       await frames(50);
       expect(reader.isPageAnimating, isFalse);
       expect(reader.page, 1);
+      reader.readerDiagnostics.start(
+        mode: ReaderDiagnosticMode.continuous,
+        processingEnabled: false,
+        appVersion: 'test',
+        refreshRate: 60,
+      );
+      List<dynamic> volumeEvents() =>
+          ((jsonDecode(reader.readerDiagnostics.exportJson())
+                      as Map)['navigationEvents']
+                  as List)
+              .where(
+                (event) =>
+                    event['event'] == 'volumeNext' ||
+                    event['event'] == 'volumePrevious',
+              )
+              .toList();
       // Start an animated jump and assert before any frame can settle it.
       var started = false;
       for (var i = 0; i < 60 && !started; i++) {
@@ -122,15 +148,21 @@ void main() {
       expect(started, isTrue);
       expect(reader.controller.state.pendingPage, 5);
       // A consecutive turn must chain from the pending target (5),
-      // not re-request from the settled page (1).
-      expect(reader.toNextPage(), isTrue);
-      expect(reader.controller.state.pendingPage, 6);
-      expect(reader.toPrevPage(), isTrue);
+      // then finish the old animation with an immediate jump.
+      lease.send(2);
+      await tester.pump();
+      await tester.pump();
+      expect(reader.controller.state.pendingPage, isNull);
+      expect(reader.page, 6);
+      lease.send(1);
+      await tester.pump();
+      await tester.pump();
       expect(reader.controller.state.pendingPage, 5);
       // Settle deterministically through the immediate path.
       expect(reader.toPage(5, animated: false), isTrue);
       expect(reader.isPageAnimating, isFalse);
       expect(reader.page, 5);
+      expect(volumeEvents().map((event) => event['targetPage']), [6, 5]);
       // Idle turns still step from the settled page.
       expect(reader.toNextPage(), isTrue);
       expect(reader.controller.state.pendingPage, 6);
@@ -181,7 +213,7 @@ Widget _libraryView(Widget child) {
 }
 
 class _Reader extends Reader {
-  _Reader({required super.key})
+  _Reader({required super.key, this.volumeConnect})
     : super(
         onClosed: () {},
         type: ComicType.local,
@@ -202,11 +234,17 @@ class _Reader extends Reader {
           'max_page': 30,
         }),
       );
+  final ReaderVolumeConnection Function(void Function(Object?))? volumeConnect;
   @override
   ReaderState createState() => _ReaderState();
 }
 
 class _ReaderState extends ReaderState {
+  @override
+  bool get supportsVolumeKeys => (widget as _Reader).volumeConnect != null;
+  @override
+  ReaderVolumeConnection createVolumeConnection(void Function(Object?) send) =>
+      (widget as _Reader).volumeConnect!(send);
   @override
   void setImageCacheSize() {}
   @override
@@ -215,4 +253,13 @@ class _ReaderState extends ReaderState {
   void disposeReaderWindow() {}
   @override
   void updateHistory() {}
+}
+
+class _PendingVolumeLease implements ReaderVolumeConnection {
+  _PendingVolumeLease(this.send);
+  final void Function(Object?) send;
+  @override
+  Future<void> get ready => Future.value();
+  @override
+  Future<void> closeAndWait() async {}
 }

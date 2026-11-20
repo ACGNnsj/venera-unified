@@ -70,6 +70,7 @@ import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/reader_settings.dart';
 import 'package:venera_unified/foundation/reader_preferences.dart';
+import 'package:venera_unified/foundation/reader_preference_store.dart';
 import 'package:venera_unified/foundation/comic_type.dart';
 import 'package:venera_unified/foundation/comic_layout.dart';
 import 'package:venera_unified/foundation/log.dart';
@@ -342,7 +343,7 @@ class ReaderState extends State<Reader>
     final titles = chapters?.titles.toList(growable: false);
     final source = ComicSource.find(comicType.sourceKey);
     final layout = pageLayout;
-    final count = maxPage;
+    final count = layout.pageCount(images?.length);
     return ReaderProgressRequest(
       identity: _ReaderInputTarget(
         (
@@ -368,27 +369,31 @@ class ReaderState extends State<Reader>
       reversed:
           currentMode == ReaderMode.galleryRightToLeft ||
           currentMode == ReaderMode.continuousRightToLeft,
-      isCurrent: () =>
-          mounted &&
-          !_stateDisposed &&
-          !_sessionFrozen &&
-          !_session.isHeld &&
-          (route?.isCurrent ?? true) &&
-          !controller.isDisposed &&
-          identical(controller.content, content) &&
-          !content.isLoading &&
-          viewport != null &&
-          identical(imageViewController, viewport) &&
-          cid == comic &&
-          type == comicType &&
-          chapter == ep &&
-          mode == currentMode &&
-          maxPage == count &&
-          pageLayout.sameScreensAs(layout) &&
-          identical(widget.chapters, chapters) &&
-          identical(ComicSource.find(comicType.sourceKey), source) &&
-          listEquals(chapters?.ids.toList(growable: false), ids) &&
-          listEquals(chapters?.titles.toList(growable: false), titles),
+      isCurrent: () {
+        if (!mounted ||
+            _stateDisposed ||
+            _sessionFrozen ||
+            _session.isHeld ||
+            !(route?.isCurrent ?? true) ||
+            controller.isDisposed ||
+            !identical(controller.content, content) ||
+            content.isLoading ||
+            viewport == null ||
+            !identical(imageViewController, viewport) ||
+            cid != comic ||
+            type != comicType ||
+            chapter != ep ||
+            mode != currentMode) {
+          return false;
+        }
+        final currentLayout = pageLayout;
+        return currentLayout.pageCount(images?.length) == count &&
+            currentLayout.sameScreensAs(layout) &&
+            identical(widget.chapters, chapters) &&
+            identical(ComicSource.find(comicType.sourceKey), source) &&
+            listEquals(chapters?.ids.toList(growable: false), ids) &&
+            listEquals(chapters?.titles.toList(growable: false), titles);
+      },
       toPage: toPage,
       toChapter: toChapter,
     );
@@ -537,7 +542,7 @@ class ReaderState extends State<Reader>
   ReaderChapterCommentsRequest? createChapterCommentsRequest() {
     if (_sessionFrozen ||
         controller.isDisposed ||
-        !preferences.showChapterComments) {
+        !_activePreferences.read(ReaderPreferences.showChapterComments)) {
       return null;
     }
     final chapters = widget.chapters;
@@ -711,19 +716,22 @@ class ReaderState extends State<Reader>
         currentMode,
         range,
       ),
-      isCurrent: () =>
-          mounted &&
-          !_sessionFrozen &&
-          access.isCurrent &&
-          identical(HistoryScope.readImages(context), imageFavorites) &&
-          cid == comic &&
-          type == comicType &&
-          eid == chapterId &&
-          page == imagePage &&
-          mode == currentMode &&
-          pageLayout.sameScreensAs(layout) &&
-          identical(images, currentImages) &&
-          identical(ComicSource.find(comicType.sourceKey), source),
+      isCurrent: () {
+        if (!mounted ||
+            _sessionFrozen ||
+            !access.isCurrent ||
+            !identical(HistoryScope.readImages(context), imageFavorites) ||
+            cid != comic ||
+            type != comicType ||
+            eid != chapterId ||
+            page != imagePage ||
+            mode != currentMode) {
+          return false;
+        }
+        return pageLayout.sameScreensAs(layout) &&
+            identical(images, currentImages) &&
+            identical(ComicSource.find(comicType.sourceKey), source);
+      },
       read: () => sourcePage == null
           ? Future.value()
           : access.isCollected(
@@ -901,7 +909,8 @@ class ReaderState extends State<Reader>
   late final controller = ReaderController(
     pageCount: () => totalPages,
     chapterCount: () => maxChapter,
-    animationEnabled: () => preferences.enablePageAnimation,
+    animationEnabled: () =>
+        _activePreferences.read(ReaderPreferences.enablePageAnimation),
     viewport: () => imageViewController,
     onChanged: update,
     onPageNavigationChanged: _onPageNavigationChanged,
@@ -1011,14 +1020,9 @@ class ReaderState extends State<Reader>
     if (widget.chapters == null) return false;
     var source = ComicSource.find(type.sourceKey);
     if (source?.chapterCommentsLoader == null) return false;
-    return appdata.settings
-                .readerSettings(cid, type.sourceKey)
-                .showChapterComments ==
-            true &&
-        appdata.settings
-                .readerSettings(cid, type.sourceKey)
-                .showChapterCommentsAtEnd ==
-            true;
+    final settings = _activePreferences;
+    return settings.read(ReaderPreferences.showChapterComments) &&
+        settings.read(ReaderPreferences.showChapterCommentsAtEnd);
   }
 
   @override
@@ -1169,6 +1173,8 @@ class ReaderState extends State<Reader>
 
   ReaderSettings get preferences =>
       appdata.settings.readerSettings(cid, type.sourceKey);
+
+  ReaderSettings readBrightnessSettings() => preferences;
 
   bool _automaticReadingRefreshQueued = false;
   bool _screenAwakePaused = false;
@@ -1656,6 +1662,17 @@ class ReaderState extends State<Reader>
 
   late final _volumeController = ReaderVolumeController(
     connect: createVolumeConnection,
+    onInput: (forward) {
+      if (!readerDiagnostics.isRecording || !_canReceiveVolume) return;
+      readerDiagnostics.recordNavigation(
+        forward
+            ? ReaderDiagnosticNavigation.volumeNext
+            : ReaderDiagnosticNavigation.volumePrevious,
+        page: page,
+        targetPage: _targetPage + (forward ? 1 : -1),
+        chapter: chapter,
+      );
+    },
     nextPage: () {
       return _canReceiveVolume && toNextPage();
     },
@@ -2310,8 +2327,11 @@ abstract mixin class ReaderImagePerPageHandler {
 
   ReaderPageLayout get pageLayout {
     _syncWideImages();
-    final perPage = imagesPerPage;
-    final singleFirst = showSingleImageOnFirstPage();
+    final preferences = _activePreferences;
+    final perPage = _readImagesPerPage(preferences);
+    final singleFirst = preferences.read(
+      ReaderPreferences.showSingleImageOnFirstPage,
+    );
     final regrouped = _regroupedLayout;
     final imageCount = images?.length ?? 0;
     final validRegrouped =
@@ -2360,22 +2380,27 @@ abstract mixin class ReaderImagePerPageHandler {
     return after.screenOf(before.imagesOf(screen).$1);
   }
 
-  bool showSingleImageOnFirstPage() => appdata.settings
-      .readerSettings(cid, type.sourceKey)
-      .showSingleImageOnFirstPage;
+  ReaderPreferenceStore get _activePreferences => ReaderPreferenceStore(
+    settings: appdata.settings,
+    comicId: cid,
+    sourceKey: type.sourceKey,
+  );
+
+  bool showSingleImageOnFirstPage() =>
+      _activePreferences.read(ReaderPreferences.showSingleImageOnFirstPage);
 
   /// The number of images displayed on one screen
-  int get imagesPerPage {
-    if (mode.isContinuous) return 1;
-    if (isPortrait) {
-      return appdata.settings
-          .readerSettings(cid, type.sourceKey)
-          .readerScreenPicNumberForPortrait;
-    } else {
-      return appdata.settings
-          .readerSettings(cid, type.sourceKey)
-          .readerScreenPicNumberForLandscape;
-    }
+  int get imagesPerPage => _readImagesPerPage(_activePreferences);
+
+  int _readImagesPerPage(ReaderPreferenceStore preferences) {
+    if (mode.isContinuous || appdata.settings.tvLowMemoryEnabled) return 1;
+    return preferences
+        .read(
+          isPortrait
+              ? ReaderPreferences.readerScreenPicNumberForPortrait
+              : ReaderPreferences.readerScreenPicNumberForLandscape,
+        )
+        .toInt();
   }
 
   /// Check if the number of images per page has changed.

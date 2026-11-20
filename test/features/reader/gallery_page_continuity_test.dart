@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -15,8 +16,40 @@ import 'package:venera_unified/features/reader/reader_controller.dart';
 import 'package:venera_unified/features/reader/reader_viewport.dart';
 import 'package:venera_unified/foundation/image_work.dart';
 import 'package:venera_unified/foundation/image_provider/reader_image.dart';
+import 'package:venera_unified/foundation/reader_diagnostics.dart';
 
 void main() {
+  testWidgets('regrouped pager retains scroll diagnostics', (tester) async {
+    final diagnostics = ReaderDiagnostics();
+    final fixture = _Fixture('ltr', pageCount: 4, diagnostics: diagnostics);
+    diagnostics.start(
+      mode: ReaderDiagnosticMode.paged,
+      processingEnabled: false,
+      appVersion: 'test',
+      refreshRate: 60,
+    );
+    try {
+      await fixture.mount(tester);
+      final previous = fixture.gallery.controller;
+      await fixture.setImagesPerPage(tester, 2);
+      final controller = fixture.gallery.controller;
+      expect(controller, isNot(same(previous)));
+      List<dynamic> events() =>
+          (jsonDecode(diagnostics.exportJson()) as Map)['navigationEvents']
+              as List;
+      final count = events().length;
+      controller.notifyListeners();
+      expect(events(), hasLength(count + 1));
+      controller.position.isScrollingNotifier.value = true;
+      expect(events(), hasLength(count + 2));
+      controller.position.isScrollingNotifier.value = false;
+      expect(tester.takeException(), isNull);
+    } finally {
+      await fixture.dispose(tester);
+      diagnostics.dispose();
+    }
+  });
+
   for (final direction in ['ltr', 'rtl', 'vertical']) {
     testWidgets('accepted $direction target decodes before it is mounted', (
       tester,
@@ -284,15 +317,17 @@ class _Fixture {
     this.preloadCount = 0,
     this.imagesPerPage = 1,
     this.pageCount = 2,
+    this.diagnostics,
   });
   final String direction;
   final int preloadCount;
   final int imagesPerPage;
   final int pageCount;
+  final ReaderDiagnostics? diagnostics;
   int progressUpdates = 0;
   final reports = <(bool, bool)>[];
   final directory = Directory.systemTemp.createTempSync('gallery-continuity-');
-  final work = ImageWork();
+  late final work = ImageWork(diagnostics: diagnostics);
   final viewport = ReaderViewportBinding();
   final key = GlobalKey<GalleryModeState>();
   final repaint = GlobalKey();
@@ -372,6 +407,11 @@ class _Fixture {
       observeImageReadiness: true,
     );
     await tester.binding.setSurfaceSize(size);
+    await pumpGallery(tester);
+    await decode(tester, () => paintedImage(1)?.image != null);
+  }
+
+  Future<void> pumpGallery(WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData(
@@ -396,7 +436,34 @@ class _Fixture {
         ),
       ),
     );
-    await decode(tester, () => paintedImage(1)?.image != null);
+  }
+
+  Future<void> setImagesPerPage(WidgetTester tester, int value) async {
+    final before = data;
+    data = ReaderGalleryData(
+      content: before.content,
+      layout: ReaderPageLayout(
+        imagesPerPage: value,
+        singleImageOnFirstPage: before.layout.singleImageOnFirstPage,
+      ),
+      vertical: before.vertical,
+      reverse: before.reverse,
+      commentsAtEnd: before.commentsAtEnd,
+      firstChapter: before.firstChapter,
+      lastChapter: before.lastChapter,
+      preloadCount: before.preloadCount,
+      doubleTapCollect: before.doubleTapCollect,
+      centerLongPressZoom: before.centerLongPressZoom,
+      pageAnimation: before.pageAnimation,
+      sourceKey: before.sourceKey,
+      comicId: before.comicId,
+      chapterId: before.chapterId,
+      showImageDimensions: before.showImageDimensions,
+      observeImageReadiness: before.observeImageReadiness,
+      pageMargin: before.pageMargin,
+      decodePixelBudget: before.decodePixelBudget,
+    );
+    await pumpGallery(tester);
   }
 
   Future<void> turnWithoutDiscardingFrame(
