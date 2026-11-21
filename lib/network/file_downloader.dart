@@ -110,6 +110,9 @@ class FileDownloader {
           _blocks.add(_DownloadBlock(i, i + _kChunkSize, 0, false));
         }
       }
+      // Persist the block plan before any range request so an early failure (or
+      // process death) still leaves a resumable status file.
+      await _writeStatus();
     }
   }
 
