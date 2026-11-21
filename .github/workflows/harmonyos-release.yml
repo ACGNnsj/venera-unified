@@ -109,7 +109,19 @@ jobs:
           echo "FLUTTER_OH_SDK=$sdk" >> "$GITHUB_ENV"
           echo "$sdk/bin" >> "$GITHUB_PATH"
           "$sdk/bin/flutter" --version
-          "$sdk/bin/flutter" precache --ohos --linux
+          for attempt in 1 2 3; do
+            if "$sdk/bin/flutter" precache --ohos --linux; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            if [ "$attempt" -eq 2 ]; then
+              echo "FLUTTER_STORAGE_BASE_URL=https://storage.googleapis.com" >> "$GITHUB_ENV"
+              export FLUTTER_STORAGE_BASE_URL=https://storage.googleapis.com
+            fi
+            sleep 15
+          done
           ohpm --version
           hvigorw --version
 
