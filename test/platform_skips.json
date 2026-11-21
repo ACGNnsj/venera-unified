@@ -363,7 +363,7 @@
       {
         "path": "test/network/rhttp_stream_callback_test.dart",
         "cases": [
-          "native cancellation retains response callback until Dart acknowledges"
+          "native cancellation finishes only after Dart callbacks acknowledge"
         ],
         "reason": "源码明确限定 Windows host 的 rhttp stream callback 回归，由 Windows 清单实际执行；此平台不适用。"
       },
@@ -417,13 +417,6 @@
           "inpaint native matches Dart pixels and is >=2x faster"
         ],
         "reason": "venera_inpaint 未为此平台构建（InpaintNative.available 为假）；测试按设计 skip，本地 Windows 有库时实际执行。"
-      },
-      {
-        "path": "test/features/comic_source/source_selfhost_test.dart",
-        "cases": [
-          "parseCatalog (selfhost) real configs checkout parses when present (local only)"
-        ],
-        "reason": "需本机真实配置检出（local only）；CI 无此检出，按设计 skip。"
       },
       {
         "path": "test/foundation/avif_system_decoder_test.dart",
@@ -863,7 +856,7 @@
       {
         "path": "test/network/rhttp_stream_callback_test.dart",
         "cases": [
-          "native cancellation retains response callback until Dart acknowledges"
+          "native cancellation finishes only after Dart callbacks acknowledge"
         ],
         "reason": "源码明确限定 Windows host 的 rhttp stream callback 回归，由 Windows 清单实际执行；此平台不适用。"
       },

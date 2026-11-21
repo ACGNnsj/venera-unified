@@ -68,7 +68,7 @@ def build_ort(native, output):
     if not source.exists():
         run(["git", "clone", "-c", "core.autocrlf=false", "-c", "core.eol=lf",
              "--depth", "1", "--branch", "v1.28.0",
-             "https://github.com/microsoft/onnxruntime.git", source])
+             "https://gitcode.com/gh_mirrors/on/onnxruntime.git", source])
     if run(["git", "-C", source, "rev-parse", "HEAD"], capture=True).strip() != revision:
         raise ValueError("Unexpected ONNX Runtime source revision")
     run(["git", "-C", source, "diff", "--exit-code", "HEAD"])

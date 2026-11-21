@@ -15,6 +15,15 @@ void main() {
       expect(resolveComicDirectory('comic-a', '/lib'), '/lib/comic-a');
     });
 
+    test('keeps backslashes in POSIX library names', () {
+      for (final library in [
+        r'/home/reader/Manga\Archive',
+        r'/home/reader/Manga\',
+      ]) {
+        expect(resolveComicDirectory('Book', library), '$library/Book');
+      }
+    });
+
     test('joins Windows library paths with Windows separators', () {
       final slash = String.fromCharCode(92);
       final library = ['C:', 'Users', 'reader', 'Library'].join(slash);

@@ -14,12 +14,14 @@ String resolveComicDirectory(String directory, String libraryPath) {
   if (directory.contains('/') || directory.contains('\\')) {
     return directory;
   }
-  if (libraryPath.endsWith('/') || libraryPath.endsWith('\\')) {
+  final separator =
+      libraryPath.startsWith(r'\\') ||
+          RegExp(r'^[a-zA-Z]:\\').hasMatch(libraryPath)
+      ? r'\'
+      : '/';
+  if (libraryPath.endsWith('/') || libraryPath.endsWith(separator)) {
     return '$libraryPath$directory';
   }
-  final separator = libraryPath.contains(String.fromCharCode(92))
-      ? String.fromCharCode(92)
-      : '/';
   return '$libraryPath$separator$directory';
 }
 

@@ -1,6 +1,7 @@
 from collections import Counter
 import copy
 import json
+import re
 from pathlib import Path
 import sys
 import tempfile
@@ -93,6 +94,31 @@ class ExecutionPartitionTest(unittest.TestCase):
         case['name'] = 'symbolic link boundary'
         report['tests'].append(dict(case))
         self.assertEqual(len(validate_skips(report, policy, 'windows', selected)['unexpected']), 1)
+
+
+class RepositorySkipPolicyTest(unittest.TestCase):
+    def test_current_callback_and_selfhost_cases_match_repository_skip_policy(self):
+        root = Path(__file__).resolve().parents[3]
+        manifest = json.loads((root / 'test/suites.json').read_text(encoding='utf-8'))
+        paths = ['test/network/rhttp_stream_callback_test.dart',
+                 'test/features/comic_source/source_selfhost_test.dart']
+        sources = {path: (root / path).read_text(encoding='utf-8') for path in paths}
+        policy = load_skip_policy(manifest, root=root)
+        # Both files declare literal, ungrouped test names. Read those names so
+        # renaming/removing a case cannot silently leave a stale allowance.
+        names = {path: re.findall(r"\btest\(\s*'([^']+)'", source)
+                 for path, source in sources.items()}
+        for path in paths:
+            self.assertTrue(names[path], path)
+        for platform in ('linux', 'windows', 'macos'):
+            with self.subTest(platform=platform):
+                report = {'suites': [{'path': path} for path in paths], 'tests': [
+                    {'path': path, 'name': name,
+                     'skipped': path == paths[0] and platform != 'windows'}
+                    for path in paths for name in names[path]]}
+                result = validate_skips(report, policy, platform, paths)
+                self.assertEqual(result['unexpected'], [])
+                self.assertEqual(result['stale'], [])
 
 
 if __name__ == '__main__':
