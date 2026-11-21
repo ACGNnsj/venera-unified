@@ -177,7 +177,7 @@ void main() {
     () async {
       final journal = DataSyncContentJournal.open(root.path);
       try {
-        expect(
+        await expectLater(
           () async => journal.begin(
             id: first,
             direction: 'download',
