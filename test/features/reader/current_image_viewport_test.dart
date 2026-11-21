@@ -14,6 +14,8 @@ import 'package:venera_unified/features/reader/reader_controller.dart';
 import 'package:venera_unified/features/reader/reader_viewport.dart';
 import 'package:venera_unified/foundation/image_work.dart';
 
+import 'support/reader_integration_fixture.dart' show ReaderLocalReadGate;
+
 void main() {
   for (final mode in ['vertical', 'ltr', 'rtl']) {
     for (final size in [const Size(375, 667), const Size(800, 400)]) {
@@ -169,8 +171,27 @@ void main() {
     'zoom panning updates selection without changing the scroll offset',
     (tester) async {
       final fixture = _Fixture();
+      final readGate = ReaderLocalReadGate(
+        File(fixture.imageKeys.first.substring(7)),
+      );
+      var frames = 0;
+      void releaseRead(Duration _) {
+        // Keep real IO pending beyond the old 80-pump loading budget.
+        if (++frames == 100) {
+          readGate.release();
+        } else {
+          tester.binding.addPostFrameCallback(releaseRead);
+          tester.binding.scheduleFrame();
+        }
+      }
+
+      tester.binding.addPostFrameCallback(releaseRead);
       try {
-        await fixture.mount(tester);
+        await IOOverrides.runWithIOOverrides(
+          () => fixture.mount(tester),
+          readGate,
+        );
+        expect(readGate.completedReads, greaterThan(0));
         fixture.state.itemScrollController.jumpTo(index: 2, alignment: 0.4);
         await fixture.settle(tester);
         expect(fixture.navigation.state.page, 2);
@@ -181,6 +202,7 @@ void main() {
         expect(fixture.state.scrollController.offset, offset);
         expect(fixture.navigation.state.page, 1);
       } finally {
+        readGate.release();
         await fixture.dispose(tester);
       }
     },
@@ -314,7 +336,9 @@ class _Fixture {
   }
 
   Future<void> settle(WidgetTester tester) async {
-    for (var i = 0; i < 80; i++) {
+    // pump advances fake time; file IO and native decoding need real time.
+    final loading = Stopwatch()..start();
+    for (var i = 0; loading.elapsed < const Duration(seconds: 10); i++) {
       await tester.pump(const Duration(milliseconds: 20));
       await tester.runAsync(() => pumpEventQueue());
       final visible = state.imageStates.whereType<ComicImageState>().where(

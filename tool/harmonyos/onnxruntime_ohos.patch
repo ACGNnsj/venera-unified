@@ -90,3 +90,20 @@ index bb1cb1e..83de2c9 100644
        status = OrtApis::CreateStatus(ORT_FAIL, e.what());
      });
      return status;
+diff --git a/onnxruntime/core/mlas/lib/halfgemm_kernel_neon.cpp b/onnxruntime/core/mlas/lib/halfgemm_kernel_neon.cpp
+index d7f5a90..89326e4 100644
+--- a/onnxruntime/core/mlas/lib/halfgemm_kernel_neon.cpp
++++ b/onnxruntime/core/mlas/lib/halfgemm_kernel_neon.cpp
+@@ -177,6 +177,7 @@ MlasHalfGemmKernel<MLAS_HALF_GEMM_KERNEL_NEON>(
+ }
+
+
++#if defined(MLAS_F16VEC_INTRINSICS_SUPPORTED) && defined(MLAS_TARGET_ARM64)
+ const MLAS_HALFGEMM_DISPATCH MlasHalfGemmDispatchNeon = {
+     MlasHalfGemmOperation<MLAS_HALF_GEMM_KERNEL_NEON>,
+     nullptr,
+@@ -185,3 +186,4 @@ const MLAS_HALFGEMM_DISPATCH MlasHalfGemmDispatchNeon = {
+     MLAS_HALF_GEMM_KERNEL_NEON::KernelMaxM,
+     32 // kernel may read beyond buffer end by 32 bytes
+ };
++#endif
