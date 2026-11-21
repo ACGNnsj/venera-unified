@@ -3,7 +3,6 @@ import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'package:venera_unified/components/file_save_task.dart';
 import 'package:venera_unified/network/request_scope.dart';
 import 'dart:async';
-import 'package:venera_unified/foundation/app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
@@ -551,8 +550,8 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
                   iconColor: context.useTextColor(Colors.green),
                 ),
               ComicDetailActionButton(
-                icon: Icon(App.isOhos ? Icons.copy : Icons.share),
-                text: App.isOhos ? 'Copy'.tl : 'Share'.tl,
+                icon: const Icon(Icons.share),
+                text: 'Share'.tl,
                 onPressed: share,
                 iconColor: context.useTextColor(Colors.blue),
               ),
@@ -939,6 +938,9 @@ class _ComicPageState extends LoadingState<ComicPage, ComicDetails>
     return ComicChaptersView(
       chapters: comic.chapters!,
       history: history,
+      downloaded:
+          LocalManager().find(comic.id, comic.comicType)?.downloadedChapters ??
+          const [],
       readChapter: (chapter) => read(chapter),
       collectionId: collectionId,
       onCollectionTabAction: collectionId == null

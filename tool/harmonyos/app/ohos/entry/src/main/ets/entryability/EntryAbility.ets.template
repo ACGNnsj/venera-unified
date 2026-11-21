@@ -4,6 +4,10 @@ import {
 import { picker, fileIo, fileUri } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
 import { window } from '@kit.ArkUI';
+import { systemShare } from '@kit.ShareKit';
+import { pdfService } from '@kit.PDFKit';
+import { image } from '@kit.ImageKit';
+import { uniformTypeDescriptor } from '@kit.ArkData';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { GeneratedPluginRegistrant } from '../plugins/GeneratedPluginRegistrant';
 
@@ -20,6 +24,15 @@ interface DirectoryReceipt extends Receipt {
   preparing: Promise<void> | null;
   processed: number;
   total: number;
+}
+
+interface PdfReceipt {
+  document: pdfService.PdfDocument;
+  root: string;
+  pages: number;
+  rendering: Promise<string> | null;
+  closing: boolean;
+  released: boolean;
 }
 
 class BrowserHandler implements MethodCallHandler {
@@ -48,6 +61,7 @@ export default class EntryAbility extends FlutterAbility implements MethodCallHa
   private receipts: Map<string, Receipt> = new Map();
   private directoryReceipts: Map<string, DirectoryReceipt> = new Map();
   private selecting: boolean = false;
+  private pdfReceipts: Map<string, PdfReceipt> = new Map();
 
   configureFlutterEngine(engine: FlutterEngine): void {
     super.configureFlutterEngine(engine);
@@ -95,6 +109,27 @@ export default class EntryAbility extends FlutterAbility implements MethodCallHa
           break;
         case 'saveFile':
           result.success(await this.saveFile(call.argument('path') as string, call.argument('name') as string));
+          break;
+        case 'shareFile':
+          await this.shareFile(call.argument('path') as string, call.argument('name') as string);
+          result.success(null);
+          break;
+        case 'shareText':
+          await this.showShare(new systemShare.SharedData({
+            utd: uniformTypeDescriptor.UniformDataType.PLAIN_TEXT,
+            content: call.argument('text') as string
+          }));
+          result.success(null);
+          break;
+        case 'openPdf':
+          result.success(this.openPdf(call.argument('path') as string));
+          break;
+        case 'renderPdfPage':
+          result.success(await this.renderPdfPage(call.argument('token') as string, call.argument('index') as number));
+          break;
+        case 'closePdf':
+          await this.closePdf(call.argument('token') as string);
+          result.success(null);
           break;
         case 'setScreenAwake':
           const currentWindow = await window.getLastWindow(this.context);
@@ -311,6 +346,131 @@ export default class EntryAbility extends FlutterAbility implements MethodCallHa
       return true;
     } finally {
       this.selecting = false;
+    }
+  }
+
+  private async shareFile(path: string, name: string): Promise<void> {
+    const base = this.context.cacheDir;
+    if (typeof path !== 'string' || !path.startsWith(base + '/venera_unified/shares/') ||
+      /[\\\u0000]/.test(path.substring(base.length)) || /\/\.\.?($|\/)/.test(path)) {
+      throw new Error('Invalid share source');
+    }
+    let current = base;
+    const parts = path.substring(base.length + 1).split('/');
+    for (let i = 0; i < parts.length; i++) {
+      current += '/' + parts[i];
+      const stat = fileIo.lstatSync(current);
+      if (i === parts.length - 1 ? !stat.isFile() : !stat.isDirectory()) throw new Error('Invalid share source');
+    }
+    const filename = this.safeName(name);
+    const suffix = filename.includes('.') ? filename.substring(filename.lastIndexOf('.')).toLowerCase() : '';
+    await this.showShare(new systemShare.SharedData({
+      utd: suffix ? uniformTypeDescriptor.getUniformDataTypeByFilenameExtension(suffix) : uniformTypeDescriptor.UniformDataType.FILE,
+      uri: fileUri.getUriFromPath(path), title: filename
+    }));
+  }
+
+  private async showShare(data: systemShare.SharedData): Promise<void> {
+    if (this.selecting) throw new Error('A file dialog is already active');
+    const controller = new systemShare.ShareController(data);
+    this.selecting = true;
+    let dismissed: () => void = (): void => {};
+    const closed = new Promise<void>((resolve) => { dismissed = resolve; });
+    try {
+      controller.on('dismiss', dismissed);
+      // show() only acknowledges display. Keep the dialog/source alive until dismiss.
+      await controller.show(this.context, {});
+      await closed;
+    } finally {
+      try { controller.off('dismiss', dismissed); } finally { this.selecting = false; }
+    }
+  }
+
+  private openPdf(path: string): Map<string, Object> {
+    if (typeof path !== 'string' || !path.startsWith('/') || path.includes('://') || path.includes('\u0000')) {
+      throw new Error('Invalid PDF source');
+    }
+    const document = new pdfService.PdfDocument();
+    const token = util.generateRandomUUID();
+    const root = this.context.cacheDir + '/venera_unified/pdf_import/' + token;
+    try {
+      const status = document.loadDocument(path);
+      if (status === pdfService.ParseResult.PARSE_ERROR_PASSWORD) throw new Error('Password-protected PDF files are not supported');
+      if (status !== pdfService.ParseResult.PARSE_SUCCESS) throw new Error('Cannot open PDF (' + status + ')');
+      const pages = document.getPageCount();
+      if (!Number.isInteger(pages) || pages <= 0) throw new Error('PDF contains no pages');
+      fileIo.mkdirSync(root, true);
+      this.pdfReceipts.set(token, { document, root, pages, rendering: null, closing: false, released: false });
+      return new Map<string, Object>([['token', token], ['pages', pages]]);
+    } catch (error) {
+      document.releaseDocument();
+      throw error;
+    }
+  }
+
+  private async renderPdfPage(token: string, index: number): Promise<string> {
+    const receipt = this.pdfReceipts.get(token);
+    if (!receipt || receipt.closing || receipt.released) throw new Error('Unknown PDF session');
+    if (!Number.isInteger(index) || index < 0 || index >= receipt.pages) throw new Error('Invalid PDF page');
+    if (receipt.rendering) throw new Error('PDF render is already active');
+    receipt.rendering = this.renderPdfPageToFile(receipt, index);
+    try {
+      return await receipt.rendering;
+    } finally {
+      receipt.rendering = null;
+    }
+  }
+
+  private async renderPdfPageToFile(receipt: PdfReceipt, index: number): Promise<string> {
+    const page = receipt.document.getPage(index);
+    try {
+      const width = page.getWidth();
+      const height = page.getHeight();
+      if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) throw new Error('Invalid PDF page size');
+      const scale = Math.min(3, 3000 / Math.max(width, height));
+      const targetWidth = Math.max(1, Math.round(width * scale));
+      const targetHeight = Math.max(1, Math.round(height * scale));
+      const matrix = new pdfService.PdfMatrix();
+      matrix.x = 0; matrix.y = 0; matrix.width = targetWidth; matrix.height = targetHeight; matrix.rotate = 0;
+      const pixels = page.getAreaPixelMap(matrix, targetWidth, targetHeight, false, true);
+      try {
+        const packer = image.createImagePacker();
+        try {
+          const path = receipt.root + '/page.jpg';
+          const output = fileIo.openSync(path, fileIo.OpenMode.WRITE_ONLY | fileIo.OpenMode.CREATE | fileIo.OpenMode.TRUNC);
+          try {
+            await packer.packToFile(pixels, output.fd, { format: 'image/jpeg', quality: 92 });
+          } finally {
+            fileIo.closeSync(output);
+          }
+          return path;
+        } finally {
+          await packer.release();
+        }
+      } finally {
+        await pixels.release();
+      }
+    } finally {
+      page.release();
+    }
+  }
+
+  private async closePdf(token: string): Promise<void> {
+    const receipt = this.pdfReceipts.get(token);
+    if (!receipt || receipt.closing) throw new Error('Unknown PDF session');
+    receipt.closing = true;
+    try {
+      if (receipt.rendering) {
+        try { await receipt.rendering; } catch (_) { /* Render caller owns its failure. */ }
+      }
+      if (!receipt.released) {
+        receipt.document.releaseDocument();
+        receipt.released = true;
+      }
+      await this.removeOwnedTree(receipt.root);
+      this.pdfReceipts.delete(token);
+    } finally {
+      receipt.closing = false;
     }
   }
 

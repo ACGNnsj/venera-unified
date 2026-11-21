@@ -109,6 +109,11 @@ void main() {
   test(
     'file and text share one queue and await original native Future',
     () async {
+      final previousUsesClipboard = interaction.Share.usesClipboard;
+      interaction.Share.usesClipboard = () => false;
+      addTearDown(
+        () => interaction.Share.usesClipboard = previousUsesClipboard,
+      );
       final first = file('first.png', 1);
       final text = interaction.Share.shareText(
         'captured text',

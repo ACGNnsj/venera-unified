@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from ci_full_app import ASSET_PREFIX, METADATA_ASSET, audit_full_hap, export_install_guides
 from prepare_full_app import (EXTRA_LIBRARIES, FULL_CONFIG, ROOT, PROJECT_PACKAGES,
-                              NATIVE_NOTICE_ASSET, NATIVE_NOTICE_SOURCE, check_hosted_baseline,
+                              NATIVE_NOTICE_ASSET, NATIVE_NOTICE_SOURCE, ORT_NOTICE_ASSETS, check_hosted_baseline,
                               configure_pubspec, patch_pdfium_hook, patch_so_loader,
                               patch_sqlite_loader, patch_webview_native_profile,
                               patch_webview_environment_api)
@@ -351,12 +351,16 @@ class FullAppTests(unittest.TestCase):
             archive.writestr(ASSET_PREFIX + 'assets/init.js', b'real source asset')
             if omit != NATIVE_NOTICE_ASSET:
                 archive.writestr(ASSET_PREFIX + NATIVE_NOTICE_ASSET, NATIVE_NOTICE_SOURCE.read_bytes())
+            for name in ORT_NOTICE_ASSETS:
+                if name != omit:
+                    archive.writestr(ASSET_PREFIX + name, (ROOT / name).read_bytes())
             for name in (*LIBRARIES, *EXTRA_LIBRARIES, 'libapp.so', 'libflutter.so'):
                 if name != omit:
                     archive.writestr('libs/arm64-v8a/' + name, b'invalid' if corrupt_library else data)
             if extra:
                 archive.writestr('libs/arm64-v8a/' + extra, data)
         return path, metadata, {'assets/init.js': hashlib.sha256(b'real source asset').hexdigest(),
+                                **{name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in ORT_NOTICE_ASSETS},
                                 NATIVE_NOTICE_ASSET: hashlib.sha256(NATIVE_NOTICE_SOURCE.read_bytes()).hexdigest()}
 
     def test_full_reader_packaging_requires_all_real_native_libraries(self):
@@ -365,10 +369,15 @@ class FullAppTests(unittest.TestCase):
             result = audit_full_hap(path, metadata, assets)
             self.assertEqual(result['bundle_name'], FULL_CONFIG['bundle_name'])
             self.assertEqual(result['version_name'], build_inputs()['hap_version_name'])
-            self.assertEqual(len(result['libraries']), 9)
-            for name in EXTRA_LIBRARIES:
+            self.assertIn('libonnxruntime.so', {item['name'] for item in result['libraries']})
+            self.assertEqual(len(result['libraries']), 10)
+            for name in ORT_NOTICE_ASSETS:
+                without_notice = {key: value for key, value in assets.items() if key != name}
+                with self.assertRaisesRegex(ValueError, 'notice'):
+                    audit_full_hap(path, metadata, without_notice)
+            for name in (*EXTRA_LIBRARIES, *ORT_NOTICE_ASSETS):
                 path, metadata, assets = self.make_hap(Path(temporary), omit=name)
-                with self.assertRaises(ValueError):
+                with self.assertRaises((ValueError, KeyError)):
                     audit_full_hap(path, metadata, assets)
 
     def test_next_candidate_never_omits_the_reviewed_codec_notice(self):

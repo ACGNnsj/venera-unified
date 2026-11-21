@@ -17,19 +17,23 @@ import 'package:rhttp/src/rust/lib.dart' show CancellationToken;
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   test(
-    'native cancellation retains response callback until Dart acknowledges',
+    'native cancellation finishes only after Dart callbacks acknowledge',
     () async {
       await rhttp.Rhttp.init();
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
       server.listen((request) async {
-        request.response.contentLength = 1;
+        // Send headers but keep the body open so EOF cannot win cancellation.
+        request.response.contentLength = 2;
         request.response.write('x');
-        await request.response.close();
+        await request.response.flush();
       });
-      final entered = Completer<void>();
-      final release = Completer<void>();
+      const timeout = Duration(seconds: 10);
+      final responseEntered = Completer<void>();
+      final releaseResponse = Completer<void>();
+      final errorEntered = Completer<RhttpError>();
+      final releaseError = Completer<void>();
       final token = Completer<CancellationToken>();
-      final cancellationReported = Completer<void>();
       // ignore: invalid_use_of_internal_member
       final original = RustLib.instance.api as RustLibApiImpl;
       // ignore: invalid_use_of_protected_member
@@ -52,12 +56,12 @@ void main() {
         cancelable: true,
         onCancelToken: token.complete,
         onResponse: (_) async {
-          entered.complete();
-          await release.future;
+          responseEntered.complete();
+          await releaseResponse.future;
         },
-        onError: (error) {
-          expect(error, isA<RhttpError_RhttpCancelError>());
-          cancellationReported.complete();
+        onError: (error) async {
+          errorEntered.complete(error);
+          await releaseError.future;
         },
       );
       final bodyDone = Completer<void>();
@@ -67,26 +71,36 @@ void main() {
         onDone: bodyDone.complete,
       );
       addTearDown(() async {
-        if (!release.isCompleted) release.complete();
-        await handler.finished;
-        await subscription.cancel();
-        final nativeToken = await token.future;
-        if (!nativeToken.isDisposed) nativeToken.dispose();
-        await server.close(force: true);
+        if (!releaseResponse.isCompleted) releaseResponse.complete();
+        if (!releaseError.isCompleted) releaseError.complete();
+        try {
+          if (token.isCompleted) {
+            final nativeToken = await token.future;
+            await rust.cancelRequest(token: nativeToken).timeout(timeout);
+            await handler.finished.timeout(timeout);
+            if (!nativeToken.isDisposed) nativeToken.dispose();
+          }
+        } finally {
+          await subscription.cancel();
+        }
       });
-      await entered.future.timeout(const Duration(seconds: 10));
-      await rust.cancelRequest(token: await token.future);
-      await cancellationReported.future.timeout(const Duration(seconds: 10));
-      // FRB's Dart stream ends on its error before the held response ack arrives.
-      // Native completion must continue waiting; upstream 0.15.1 drops the ack
-      // receiver here and aborts when release completes.
-      await bodyDone.future.timeout(const Duration(seconds: 10));
+      await responseEntered.future.timeout(timeout);
+      await rust.cancelRequest(token: await token.future).timeout(timeout);
       var returned = false;
       final finished = handler.finished.then((_) => returned = true);
       await pumpEventQueue();
       expect(returned, isFalse);
-      release.complete();
-      await finished.timeout(const Duration(seconds: 10));
+
+      // The bridge first awaits the response ack, then polls body cancellation.
+      releaseResponse.complete();
+      expect(
+        await errorEntered.future.timeout(timeout),
+        isA<RhttpError_RhttpCancelError>(),
+      );
+      await bodyDone.future.timeout(timeout);
+      expect(returned, isFalse);
+      releaseError.complete();
+      await finished.timeout(timeout);
       expect(returned, isTrue);
     },
     skip: !Platform.isWindows,

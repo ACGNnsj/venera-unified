@@ -106,79 +106,85 @@ Future<void> _consumeInitialUri() async {
 }
 
 Future<bool> handleAppLink(Uri uri, {bool Function()? isActive}) async {
+  if (isActive?.call() == false || !await _waitForLinkSources()) return false;
   if (isActive?.call() == false) return false;
+  if (uri.scheme == appLinkScheme) return _handleAppLinkScheme(uri, isActive);
+  final comic = _matchWebComic(uri);
+  return comic != null && await _openWebComic(comic, isActive);
+}
+
+Future<bool> _waitForLinkSources() async {
   try {
     await _sourcesReady;
+    return true;
   } catch (error, stack) {
     Log.error('App links source initialization', error, stack);
     return false;
   }
-  if (await _handleAppLinkScheme(uri, isActive)) return true;
-  final target = comicLinkTarget(uri);
-  for (var source in ComicSource.all()) {
-    if (source.linkHandler != null) {
-      if (source.linkHandler!.domains.any(
-        (domain) => domain.toLowerCase() == target.uri.host.toLowerCase(),
-      )) {
-        String? id;
-        try {
-          id = source.linkHandler!.linkToId(target.uri.toString());
-        } catch (error, stack) {
-          Log.error('App links (${source.key})', error, stack);
-          continue;
-        }
-        if (id != null && id.isNotEmpty) {
-          if (appNavigation.mainNavigatorKey == null) {
-            await Future.delayed(const Duration(milliseconds: 200));
-          }
-          if (isActive?.call() == false) return false;
-          // Reader/settings routes live above the nested home navigator; open
-          // above the visible route instead of behind that overlay.
-          // comicLinkTarget strips nhentai/e-hentai trailing page numbers for
-          // id resolution; the page itself is forwarded into the reader.
-          (appNavigation.rootNavigatorKey.currentState?.canPop() == true
-                  ? appNavigation.rootNavigatorKey.currentContext
-                  : appNavigation.mainNavigatorKey?.currentContext)
-              ?.to(() {
-                return ComicPage(
-                  id: id!,
-                  sourceKey: source.key,
-                  initialPage: target.page,
-                );
-              });
-          return true;
-        }
-        return false;
-      }
-    }
-  }
-  return false;
 }
 
-/// Synchronous comic-link match for UI callbacks that cannot await (e.g.
-/// embedded webview navigation delegates). Returns true when the URL belongs
-/// to a source link handler; handling itself runs fire-and-forget.
-bool tryHandleComicLink(Uri uri) {
+({ComicSource source, String id, int? page})? _matchWebComic(Uri uri) {
+  if ((uri.scheme != 'https' && uri.scheme != 'http') ||
+      uri.host.isEmpty ||
+      uri.userInfo.isNotEmpty) {
+    return null;
+  }
   final target = comicLinkTarget(uri);
   for (final source in ComicSource.all()) {
     final handler = source.linkHandler;
-    if (handler == null) continue;
-    if (!handler.domains.any(
-      (domain) => domain.toLowerCase() == target.uri.host.toLowerCase(),
-    )) {
+    if (handler == null ||
+        !handler.domains.any(
+          (domain) => domain.toLowerCase() == uri.host.toLowerCase(),
+        )) {
       continue;
     }
-    String? id;
     try {
-      id = handler.linkToId(target.uri.toString());
-    } catch (_) {
-      return false;
+      final id = handler.linkToId(target.uri.toString());
+      if (id != null && id.trim().isNotEmpty) {
+        return (source: source, id: id, page: target.page);
+      }
+    } catch (error, stack) {
+      Log.error('App links (${source.key})', error, stack);
     }
-    if (id == null || id.isEmpty) return false;
-    unawaited(handleAppLink(uri));
-    return true;
   }
-  return false;
+  return null;
+}
+
+Future<bool> _openWebComic(
+  ({ComicSource source, String id, int? page}) comic,
+  bool Function()? isActive,
+) async {
+  if (appNavigation.mainNavigatorKey == null) {
+    await Future.delayed(const Duration(milliseconds: 200));
+  }
+  if (isActive?.call() == false) return false;
+  // Open above the visible reader or settings route, not behind it.
+  (appNavigation.rootNavigatorKey.currentState?.canPop() == true
+          ? appNavigation.rootNavigatorKey.currentContext
+          : appNavigation.mainNavigatorKey?.currentContext)
+      ?.to(
+        () => ComicPage(
+          id: comic.id,
+          sourceKey: comic.source.key,
+          initialPage: comic.page,
+        ),
+      );
+  return true;
+}
+
+/// Synchronous match for WebView navigation delegates. Opens a matched link
+/// after startup without calling the extension handler a second time.
+bool tryHandleComicLink(Uri uri) {
+  final comic = _matchWebComic(uri);
+  if (comic == null) return false;
+  unawaited(
+    _waitForLinkSources().then<void>((ready) async {
+      if (ready && ComicSource.all().contains(comic.source)) {
+        await _openWebComic(comic, null);
+      }
+    }),
+  );
+  return true;
 }
 
 /// Custom `venera-unified://` branch. Returns true only when consumed.

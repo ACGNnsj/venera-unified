@@ -3,7 +3,6 @@ import 'package:venera_unified/components/settings_save_state.dart';
 import 'package:venera_unified/components/tv_navigation.dart';
 import 'tv_input.dart';
 
-import 'package:venera_unified/foundation/app.dart';
 import 'package:venera_unified/features/reader/status_info.dart';
 import 'package:venera_unified/foundation/image_translation/translation_config.dart';
 import 'package:venera_unified/foundation/image_translation/translation_service.dart';
@@ -506,8 +505,8 @@ class ReaderScaffoldState extends State<ReaderScaffold> {
             onPressed: openChapterComments,
           ),
         ),
-      if (!App.isOhos) _TranslationToggle(data: widget.data, update: update),
-      if (!App.isOhos && widget.onTranslatePage != null)
+      _TranslationToggle(data: widget.data, update: update),
+      if (widget.onTranslatePage != null)
         Tooltip(
           message: "Translate page".tl,
           child: IconButton(

@@ -14,6 +14,12 @@ void main() {
     test('joins relative names onto the library', () {
       expect(resolveComicDirectory('comic-a', '/lib'), '/lib/comic-a');
     });
+
+    test('joins Windows library paths with Windows separators', () {
+      final slash = String.fromCharCode(92);
+      final library = ['C:', 'Users', 'reader', 'Library'].join(slash);
+      expect(resolveComicDirectory('Book', library), '$library${slash}Book');
+    });
   });
 
   group('generic SAF document ids', () {

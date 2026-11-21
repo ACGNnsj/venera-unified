@@ -332,15 +332,11 @@ enum ShareTextResult { shared, copied, skipped }
 class Share {
   static final _dialogs = PlatformDialogQueue();
 
-  /// Whether text sharing lands on the clipboard instead of a platform share
-  /// target. Desktop and HarmonyOS have none; tests pin this to the path they
-  /// cover.
-  static bool Function() usesClipboard = () => App.isDesktop || App.isOhos;
+  /// Desktop text sharing uses the clipboard; HarmonyOS uses ShareKit.
+  static bool Function() usesClipboard = () => App.isDesktop;
 
-  /// Whether a platform file-share target exists. Linux and HarmonyOS ship no
-  /// `share_plus` implementation, so they report that instead of letting the
-  /// plugin throw MissingPluginException after the source file was prepared.
-  static bool Function() canShareFiles = () => !App.isLinux && !App.isOhos;
+  /// Linux has no file-share implementation.
+  static bool Function() canShareFiles = () => !App.isLinux;
 
   static Future<void> shareFile({
     required Uint8List data,
@@ -351,7 +347,7 @@ class Share {
     void Function()? checkStop,
   }) => _dialogs.run(() async {
     checkStop?.call();
-    if (!canShareFiles()) {
+    if (!HarmonyOS.isCurrent && !canShareFiles()) {
       throw UnsupportedError('File sharing is unavailable on this platform');
     }
     Rect? actualOrigin;
@@ -366,13 +362,15 @@ class Share {
         checkStop?.call();
         actualOrigin = resolveOrigin?.call() ?? origin;
       },
-      share: (source) => s.SharePlus.instance.share(
-        s.ShareParams(
-          files: [s.XFile(source.path, mimeType: mime)],
-          title: source.name,
-          sharePositionOrigin: actualOrigin,
-        ),
-      ),
+      share: (source) => HarmonyOS.isCurrent
+          ? HarmonyOS.shareFile(source)
+          : s.SharePlus.instance.share(
+              s.ShareParams(
+                files: [s.XFile(source.path, mimeType: mime)],
+                title: source.name,
+                sharePositionOrigin: actualOrigin,
+              ),
+            ),
     );
   });
 
@@ -386,6 +384,10 @@ class Share {
     // Ported from venera (haukuen) 10cb52d: desktop cannot reach a share
     // target, so copy the text to the clipboard instead of a no-op share.
     // The caller owns user feedback so this file stays out of the UI layer.
+    if (HarmonyOS.isCurrent) {
+      await HarmonyOS.shareText(text);
+      return ShareTextResult.shared;
+    }
     if (usesClipboard()) {
       await Clipboard.setData(ClipboardData(text: text));
       return ShareTextResult.copied;

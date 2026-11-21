@@ -22,9 +22,10 @@ DEPS = BASE / "full-deps"
 PROJECT = BASE / "full-app"
 WEBVIEW_PACKAGES = tuple("flutter_inappwebview" + suffix for suffix in (
     "", "_platform_interface", "_ohos", "_android", "_ios", "_macos", "_web", "_windows"))
-EXTRA_LIBRARIES = ("libvenera_native.so", "libzip_flutter.so", "libinappwebview.so")
+EXTRA_LIBRARIES = ("libvenera_native.so", "libzip_flutter.so", "libinappwebview.so", "libonnxruntime.so")
 GIT_DEPENDENCIES = ("webview", "webview_api", "code_assets")
 PROJECT_PACKAGES = tuple(FULL_CONFIG["project_packages"])
+ORT_NOTICE_ASSETS = ("assets/ONNXRUNTIME_LICENSE.txt", "assets/ONNXRUNTIME_THIRD_PARTY_NOTICES.txt")
 NATIVE_NOTICE_ASSET = "assets/notices/VENERA_NATIVE_THIRD_PARTY_NOTICES.txt"
 NATIVE_NOTICE_SOURCE = ROOT / "packages/venera_native/notices/VENERA_NATIVE_THIRD_PARTY_NOTICES.txt"
 WEBVIEW_API_TYPES = ("browser_process_exit_kind.dart", "browser_process_exit_kind.g.dart",
@@ -530,6 +531,11 @@ def prepare_project(args):
             extras.get("build_script_sha256") != digest(Path(__file__).with_name("full_native_build.py")) or
             any(extras.get(key) != native.get(key) for key in ("sdk_profile", "sdk_version", "sdk_api"))):
         raise ValueError("Full app needs matching, audited extra native libraries")
+    if extras.get("onnxruntime") != {
+            "revision": "da9b5e364c465de65c49d91e696cd6485270757f",
+            "patch_sha256": digest(Path(__file__).with_name("onnxruntime_ohos.patch")),
+            "execution_providers": ["CPUExecutionProvider"]}:
+        raise ValueError("Full app needs the reviewed CPU-only ONNX Runtime build")
     destination = project / "ohos/entry/libs/arm64-v8a"
     destination.mkdir(parents=True, exist_ok=True)
     expected = {item["name"]: item["sha256"] for item in native["libraries"]}

@@ -193,6 +193,49 @@ abstract final class HarmonyOS {
       }) ??
       false;
 
+  static Future<void> shareFile(File source) => channel.invokeMethod<void>(
+    'shareFile',
+    {'path': source.path, 'name': p.basename(source.path)},
+  );
+
+  static Future<void> shareText(String text) =>
+      channel.invokeMethod<void>('shareText', {'text': text});
+
+  static Future<({String token, int pages})> openPdf(File source) async {
+    final result = await channel.invokeMapMethod<String, Object?>('openPdf', {
+      'path': source.path,
+    });
+    final token = result?['token'];
+    final pages = result?['pages'];
+    if (token is! String ||
+        !RegExp(r'^[0-9a-f-]{36}$').hasMatch(token) ||
+        pages is! int ||
+        pages <= 0) {
+      throw StateError('Invalid HarmonyOS PDF session');
+    }
+    return (token: token, pages: pages);
+  }
+
+  static Future<File> renderPdfPage(
+    String token,
+    int index, {
+    required String cachePath,
+  }) async {
+    final path = await channel.invokeMethod<String>('renderPdfPage', {
+      'token': token,
+      'index': index,
+    });
+    if (path == null ||
+        !_localPath(path) ||
+        !p.equals(path, p.join(cachePath, 'pdf_import', token, 'page.jpg'))) {
+      throw StateError('Invalid HarmonyOS PDF page cache');
+    }
+    return File(path);
+  }
+
+  static Future<void> closePdf(String token) =>
+      channel.invokeMethod<void>('closePdf', {'token': token});
+
   static Future<void> setScreenAwake(bool value) =>
       channel.invokeMethod<void>('setScreenAwake', {'awake': value});
 }

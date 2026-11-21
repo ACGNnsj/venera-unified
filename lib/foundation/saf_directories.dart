@@ -17,7 +17,10 @@ String resolveComicDirectory(String directory, String libraryPath) {
   if (libraryPath.endsWith('/') || libraryPath.endsWith('\\')) {
     return '$libraryPath$directory';
   }
-  return '$libraryPath/$directory';
+  final separator = libraryPath.contains(String.fromCharCode(92))
+      ? String.fromCharCode(92)
+      : '/';
+  return '$libraryPath$separator$directory';
 }
 
 /// True when [path] is a generic document-provider location whose suffix is a

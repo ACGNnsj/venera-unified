@@ -400,7 +400,7 @@ void main() {
   }
 
   testWidgets(
-    'HarmonyOS disables system sharing while image saving remains usable',
+    'HarmonyOS exposes system sharing while image saving remains usable',
     (tester) async {
       HarmonyOS.debugIsCurrent = true;
       addTearDown(() => HarmonyOS.debugIsCurrent = null);
@@ -419,17 +419,11 @@ void main() {
           matching: find.byType(IconButton),
         ),
       );
-      expect(share.onPressed, isNull);
-      expect(
-        find.byTooltip(
-          'System sharing is not available on HarmonyOS. Save the image to Files instead.',
-        ),
-        findsOneWidget,
-      );
+      expect(share.onPressed, isNotNull);
       await tester.tap(find.byIcon(Icons.share));
-      expect(calls, isEmpty);
+      expect(calls, ['share']);
       await tester.tap(find.byIcon(Icons.download));
-      expect(calls, ['save']);
+      expect(calls, ['share', 'save']);
     },
   );
 

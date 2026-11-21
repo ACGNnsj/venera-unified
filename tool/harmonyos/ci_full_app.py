@@ -12,7 +12,7 @@ from pathlib import Path
 
 from ci_build import CI, run_logged
 from native_build import ROOT, digest, require_within, validate_elf
-from prepare_full_app import BASE, DEPS, EXTRA_LIBRARIES, PROJECT, NATIVE_NOTICE_ASSET, NATIVE_NOTICE_SOURCE
+from prepare_full_app import BASE, DEPS, EXTRA_LIBRARIES, PROJECT, NATIVE_NOTICE_ASSET, NATIVE_NOTICE_SOURCE, ORT_NOTICE_ASSETS
 from prepare_probe import LIBRARIES
 from sideload import audit_device_types
 from release_context import build_inputs
@@ -43,6 +43,9 @@ def audit_full_hap(hap, metadata, expected_assets):
         raise ValueError("Incomplete full reader native manifest")
     if expected_assets.get(NATIVE_NOTICE_ASSET) != digest(NATIVE_NOTICE_SOURCE):
         raise ValueError("Missing reviewed native codec notice")
+    for name in ORT_NOTICE_ASSETS:
+        if expected_assets.get(name) != digest(ROOT / name):
+            raise ValueError("Missing reviewed ONNX Runtime notice")
     with zipfile.ZipFile(hap) as archive:
         names = archive.namelist()
         if len(names) != len(set(names)) or archive.testzip() is not None:

@@ -279,6 +279,11 @@ def verify_bundle(directory, expected, source):
     next_candidate = expected["schema"] >= 2
     native_names = NEXT_NATIVE if next_candidate else NATIVE
     source_names = tracked(source, commit)
+    if "tool/harmonyos/onnxruntime_ohos.patch" in source_names:
+        native_names = native_names | {"libonnxruntime.so"}
+        for name in ("assets/ONNXRUNTIME_LICENSE.txt", "assets/ONNXRUNTIME_THIRD_PARTY_NOTICES.txt"):
+            if name not in metadata["bundled_assets"]:
+                raise ValueError("Missing ONNX Runtime distribution notice")
     files = {n for n in source_names if n in {"pubspec.yaml", "pubspec.lock", "CHANGELOG.md"}
              or n.startswith("assets/") or n.startswith("shaders/")
              or (n.startswith("lib/") and n.endswith(".dart"))}

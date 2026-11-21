@@ -5,10 +5,57 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:venera_unified/foundation/appdata.dart';
 import 'package:venera_unified/foundation/app.dart';
+import 'package:venera_unified/foundation/harmonyos.dart';
 import 'package:venera_unified/routing/webview.dart';
 
 void main() {
   App.dataPath = 'webview-menu-test';
+  testWidgets('HarmonyOS embeds system/direct and rejects custom proxies', (
+    tester,
+  ) async {
+    final previousPlatform = InAppWebViewPlatform.instance;
+    final previousProxy = appdata.settings['proxy'];
+    final platform = _Platform();
+    InAppWebViewPlatform.instance = platform;
+    HarmonyOS.debugIsCurrent = true;
+    try {
+      for (final proxy in ['system', 'direct', 'localhost:7890']) {
+        platform.widgets.clear();
+        appdata.settings['proxy'] = proxy;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AppWebview(
+              key: ValueKey(proxy),
+              initialUrl: 'https://example.test/login',
+            ),
+          ),
+        );
+        for (var i = 0; i < 10; i++) {
+          await tester.pump();
+        }
+        if (proxy == 'localhost:7890') {
+          expect(platform.widgets, isEmpty);
+          expect(find.text('Retry'), findsOneWidget);
+        } else {
+          expect(platform.widgets, isNotEmpty);
+          expect(
+            platform.widgets.last.params.initialUrlRequest!.url.toString(),
+            'https://example.test/login',
+          );
+          expect(find.text('Open in Browser'), findsNothing);
+        }
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump();
+      }
+    } finally {
+      await tester.pumpWidget(const SizedBox());
+      HarmonyOS.debugIsCurrent = null;
+      appdata.settings['proxy'] = previousProxy;
+      if (previousPlatform != null) {
+        InAppWebViewPlatform.instance = previousPlatform;
+      }
+    }
+  });
   for (final change in ['none', 'null URL', 'replace', 'remove', 'cover']) {
     testWidgets(
       'webview copy menu awaits only the original controller: $change',

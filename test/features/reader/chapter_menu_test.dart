@@ -16,7 +16,14 @@ Widget _page(
   ReaderChapterMenuData data, {
   ValueChanged<int>? select,
   VoidCallback? close,
+  double textScale = 1,
 }) => MaterialApp(
+  builder: (context, child) => MediaQuery(
+    data: MediaQuery.of(
+      context,
+    ).copyWith(textScaler: TextScaler.linear(textScale)),
+    child: child!,
+  ),
   home: ReaderChaptersView(
     data: data,
     onSelect: select ?? (_) {},
@@ -239,6 +246,114 @@ void main() {
       expect(find.text('Chapter 899').hitTestable(), findsOneWidget);
     },
   );
+
+  testWidgets('thousand chapter ranges jump and select original indices', (
+    tester,
+  ) async {
+    final selections = <int>[];
+    final source = ComicChapters({
+      for (var i = 1; i <= 1000; i++) '$i': 'Chapter $i',
+    });
+    final data = ReaderChapterMenuData(source, currentChapter: 901);
+    await tester.pumpWidget(_page(data, select: selections.add));
+    await tester.pumpAndSettle();
+    expect(find.text('901–1000'), findsOneWidget);
+    await tester.tap(find.byType(DropdownButton<int>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('701–800').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Chapter 701').hitTestable(), findsOneWidget);
+    await tester.tap(find.text('Chapter 701'));
+    await tester.tap(find.text('Ascending'));
+    await tester.pumpAndSettle();
+    expect(find.text('Chapter 800').hitTestable(), findsOneWidget);
+    await tester.tap(find.text('Chapter 800'));
+    expect(selections, [701, 800]);
+    expect(data.groups, hasLength(1));
+    expect(data.groups.single.entries, hasLength(1000));
+    expect(data.matches(source), isTrue);
+    expect(find.byType(InkWell).evaluate().length, lessThan(80));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('range jumps preserve source groups and current location', (
+    tester,
+  ) async {
+    final selections = <int>[];
+    final source = ComicChapters.grouped({
+      'Extras': {'a': 'Extra 1', 'b': 'Extra 2', 'c': 'Extra 3'},
+      'Volume': {for (var i = 1; i <= 1005; i++) '$i': 'Volume chapter $i'},
+    });
+    final data = ReaderChapterMenuData(source, currentChapter: 904);
+    await tester.pumpWidget(_page(data, select: selections.add));
+    await tester.pumpAndSettle();
+    expect(find.text('904–1003'), findsOneWidget);
+    await tester.tap(find.byType(DropdownButton<int>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('704–803').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Volume chapter 701'));
+    expect(selections, [704]);
+    await tester.tap(find.text('Extras'));
+    await tester.pumpAndSettle();
+    expect(find.text('Extra 1').hitTestable(), findsOneWidget);
+    await tester.tap(find.byTooltip('Current chapter'));
+    await tester.pumpAndSettle();
+    expect(find.text('904–1003'), findsOneWidget);
+    expect(find.text('Volume chapter 901').hitTestable(), findsOneWidget);
+    expect(data.groups.map((group) => group.name), ['Extras', 'Volume']);
+    expect(data.matches(source), isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final scenario in [
+    (width: 600.0, scale: 1.0, columns: 2),
+    (width: 599.0, scale: 1.0, columns: 1),
+    (width: 800.0, scale: 2.0, columns: 1),
+  ]) {
+    testWidgets('chapter columns adapt without clipping $scenario', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(Size(scenario.width, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final title = 'A long chapter title that wraps naturally ' * 3;
+      await tester.pumpWidget(
+        _page(
+          ReaderChapterMenuData(
+            ComicChapters({'a': title, 'b': 'Second', 'c': 'Third'}),
+            currentChapter: 1,
+            downloaded: ['a'],
+            read: ['1'],
+          ),
+          textScale: scenario.scale,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final first = tester.getRect(find.text(title));
+      final second = tester.getRect(find.text('Second'));
+      if (scenario.columns == 2) {
+        expect(second.top, first.top);
+        expect(second.left, greaterThan(first.right));
+        expect(
+          tester.getTopLeft(find.text('Third')).dy,
+          greaterThan(first.bottom),
+        );
+      } else {
+        expect(second.top, greaterThan(first.bottom));
+      }
+      final paragraph = tester.renderObject<RenderParagraph>(find.text(title));
+      expect(paragraph.didExceedMaxLines, isFalse);
+      expect(
+        find.byIcon(Icons.download_done_rounded).hitTestable(),
+        findsOneWidget,
+      );
+      expect(
+        find.byIcon(Icons.check_circle_outline).hitTestable(),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets(
     'end positioning exposes preceding chapters without blank viewport',

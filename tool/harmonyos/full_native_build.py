@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -19,6 +20,7 @@ EXPORTS = {
                             "venera_7z_kind", "venera_7z_read"),
     "libzip_flutter.so": ("zip_open", "zip_close", "zip_entry_open", "zip_entry_fwrite", "zip_entry_read", "zip_extract"),
     "libinappwebview.so": ("RegisterEntryModule",),
+    "libonnxruntime.so": ("OrtGetApiBase",),
 }
 
 
@@ -59,6 +61,39 @@ def compile_libraries(native, output):
          "-lace_napi.z", "-luv", "-o", output / "libinappwebview.so"])
 
 
+def build_ort(native, output):
+    # CPU only; acceleration remains a separate, deferred platform project.
+    source = BASE / "onnxruntime-source"
+    revision = "da9b5e364c465de65c49d91e696cd6485270757f"
+    if not source.exists():
+        run(["git", "clone", "-c", "core.autocrlf=false", "-c", "core.eol=lf",
+             "--depth", "1", "--branch", "v1.28.0",
+             "https://github.com/microsoft/onnxruntime.git", source])
+    if run(["git", "-C", source, "rev-parse", "HEAD"], capture=True).strip() != revision:
+        raise ValueError("Unexpected ONNX Runtime source revision")
+    run(["git", "-C", source, "diff", "--exit-code", "HEAD"])
+    for upstream, asset in (("LICENSE", "ONNXRUNTIME_LICENSE.txt"),
+                            ("ThirdPartyNotices.txt", "ONNXRUNTIME_THIRD_PARTY_NOTICES.txt")):
+        if digest(source / upstream) != digest(ROOT / "assets" / asset):
+            raise ValueError("ONNX Runtime distribution notices differ from pinned source")
+    patch = Path(__file__).with_name("onnxruntime_ohos.patch")
+    build = output.parent / "onnxruntime-build"
+    run(["git", "-C", source, "apply", "--check", patch])
+    run(["git", "-C", source, "apply", patch])
+    try:
+        run(["cmake", "-S", source / "cmake", "-B", build, "-G", "Ninja",
+             f"-DCMAKE_TOOLCHAIN_FILE={native / 'build/cmake/ohos.toolchain.cmake'}",
+             "-DOHOS_ARCH=arm64-v8a", "-DCMAKE_BUILD_TYPE=Release",
+             *[f"-DCMAKE_{language}_FLAGS=-Wno-unused-command-line-argument" for language in ("C", "CXX", "ASM")],
+             "-Donnxruntime_BUILD_SHARED_LIB=ON", "-Donnxruntime_BUILD_UNIT_TESTS=OFF",
+             "-Donnxruntime_ENABLE_CPUINFO=OFF", "-Donnxruntime_DISABLE_RTTI=ON"])
+        run(["cmake", "--build", build, "--target", "onnxruntime", "--parallel", "2"])
+        shutil.copy2(build / "libonnxruntime.so.1.28.0", output / "libonnxruntime.so")
+    finally:
+        run(["git", "-C", source, "apply", "--reverse", patch])
+    return {"revision": revision, "patch_sha256": digest(patch), "execution_providers": ["CPUExecutionProvider"]}
+
+
 def inspect_reader_library(native, path):
     suffix = ".exe" if os.name == "nt" else ""
     if path.name == "libinappwebview.so":
@@ -72,7 +107,7 @@ def inspect_reader_library(native, path):
     else:
         record = inspect_library(native, path)
     symbols = run([native / f"llvm/bin/llvm-nm{suffix}", "-D", "--defined-only", path], capture=True)
-    defined = {line.split()[-1] for line in symbols.splitlines() if line.strip()}
+    defined = {line.split()[-1].split("@")[0] for line in symbols.splitlines() if line.strip()}
     if not set(EXPORTS[path.name]).issubset(defined):
         raise ValueError(f"Missing reader FFI exports: {path.name}")
     if path.name == "libvenera_native.so" and defined != set(EXPORTS[path.name]):
@@ -101,6 +136,7 @@ def main():
               "build_script_sha256": digest(Path(__file__))}
     try:
         compile_libraries(native, libraries)
+        report["onnxruntime"] = build_ort(native, libraries)
         report["libraries"] = [inspect_reader_library(native, libraries / name) for name in EXTRA_LIBRARIES]
         report["status"] = "cross_compile_pass"
     except Exception as error:

@@ -13,6 +13,9 @@ import 'package:venera_unified/features/favorites/favorites_scope.dart';
 import 'package:venera_unified/components/window_selection_task.dart';
 import 'package:venera_unified/features/local_comics/import_export/comic_import_service.dart';
 import 'package:venera_unified/features/local_comics/import_export/import_comic.dart';
+import 'package:venera_unified/features/local_comics/import_export/pdf_import.dart';
+import 'package:venera_unified/features/local_comics/import_export/document_import.dart';
+import 'package:venera_unified/foundation/persistence_failure.dart';
 import 'package:venera_unified/features/local_comics/import_export/import_presentation.dart';
 import 'package:venera_unified/features/local_comics/local.dart';
 import 'package:venera_unified/features/local_comics/local_comics_summary.dart';
@@ -181,6 +184,71 @@ void main() {
         await owner.delete(recursive: true);
       }
       return null;
+    });
+  }
+
+  for (final outcome in [
+    'success',
+    'cancel',
+    'renderFailure',
+    'notCommitted',
+    'unknown',
+  ]) {
+    test('HarmonyOS PDF page transaction: $outcome', () async {
+      final source = File(p.join(root.path, 'book.pdf'))
+        ..writeAsStringSync('%PDF');
+      final cache = Directory(p.join(App.cachePath, 'pdf_import', token));
+      final cancellation = DocumentImportCancellation();
+      var rendered = 0;
+      mock((call) async {
+        if (call.method == 'openPdf') {
+          cache.createSync(recursive: true);
+          return {'token': token, 'pages': 2};
+        }
+        if (call.method == 'renderPdfPage') {
+          expect(call.arguments['index'], rendered++);
+          if (outcome == 'renderFailure' && rendered == 2) {
+            throw PlatformException(code: 'render_failed');
+          }
+          final page = File(p.join(cache.path, 'page.jpg'))
+            ..writeAsBytesSync(png);
+          if (outcome == 'cancel') cancellation.cancel();
+          return page.path;
+        }
+        if (call.method == 'closePdf') cache.deleteSync(recursive: true);
+        return null;
+      });
+      final imported = PdfComicImporter.import(
+        source,
+        title: 'PDF book',
+        cancellation: cancellation,
+        registerComic: (comic) async {
+          if (outcome == 'notCommitted') {
+            throw PersistenceFailure(
+              commitState: PersistenceCommitState.notCommitted,
+              cause: StateError('rollback'),
+              stackTrace: StackTrace.current,
+            );
+          }
+          if (outcome == 'unknown') throw StateError('unknown commit');
+          await manager.add(comic);
+        },
+      );
+      if (outcome == 'success') {
+        final comic = await imported;
+        final output = Directory(p.join(manager.path, comic.directory));
+        expect(File(p.join(output.path, '0001.jpg')).readAsBytesSync(), png);
+        expect(File(p.join(output.path, '0002.jpg')).readAsBytesSync(), png);
+        expect(File(p.join(output.path, 'cover.jpg')).readAsBytesSync(), png);
+        expect(manager.findByName('PDF book'), isNotNull);
+      } else {
+        await expectLater(imported, throwsA(anything));
+        final output = Directory(p.join(manager.path, 'PDF book'));
+        expect(output.existsSync(), outcome == 'unknown');
+      }
+      expect(calls.last.method, 'closePdf');
+      expect(cache.existsSync(), isFalse);
+      expect(source.existsSync(), isTrue);
     });
   }
 
@@ -897,7 +965,16 @@ void main() {
         final pdf = tester.widget<RadioListTile<int>>(
           find.widgetWithText(RadioListTile<int>, 'PDF comic files'.tl),
         );
-        expect(pdf.enabled, isFalse);
+        expect(pdf.enabled, isNot(false));
+        await tester.ensureVisible(find.text('PDF comic files'.tl));
+        await tester.tap(find.text('PDF comic files'.tl));
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            'Select PDF comic files. Pages are imported as local images.'.tl,
+          ),
+          findsOneWidget,
+        );
         await tester.ensureVisible(find.text('Multiple archive files'.tl));
         await tester.tap(find.text('Multiple archive files'.tl));
         await tester.pumpAndSettle();

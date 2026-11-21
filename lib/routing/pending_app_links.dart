@@ -50,9 +50,7 @@ class PendingAppLinks {
 /// Ported from venera-prime `comicLinkTarget`: nhentai gallery pages look
 /// like `/g/<id>/<page>` and e-hentai/exhentai look like `/g/<id>/<token>/<page>`.
 /// The page is returned separately; the URI is rewritten without it so
-/// `linkToId` resolves the gallery id. Unified `ComicPage` has no reader-page
-/// parameter, so callers use the stripped URI for navigation (page kept for
-/// future use and covered by tests).
+/// `linkToId` resolves the gallery ID and the matched page opens in the reader.
 ({Uri uri, int? page}) comicLinkTarget(Uri uri) {
   final parts = uri.pathSegments.where((part) => part.isNotEmpty).toList();
   final host = uri.host.toLowerCase();

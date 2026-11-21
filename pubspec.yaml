@@ -103,6 +103,8 @@ flutter:
     - CHANGELOG.md
     - assets/translation.json
     - assets/init.js
+    - assets/ONNXRUNTIME_LICENSE.txt
+    - assets/ONNXRUNTIME_THIRD_PARTY_NOTICES.txt
     - assets/app_icon.png
     - assets/tray_icon.ico
     - assets/tags.json

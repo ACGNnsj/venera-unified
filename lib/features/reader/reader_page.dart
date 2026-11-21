@@ -937,6 +937,7 @@ class ReaderState extends State<Reader>
       currentChapter: chapter,
       downloaded:
           LocalManager().find(comic, comicType)?.downloadedChapters ?? const [],
+      read: history?.readEpisode ?? const [],
     );
     return ReaderChapterMenuRequest(
       data: data,

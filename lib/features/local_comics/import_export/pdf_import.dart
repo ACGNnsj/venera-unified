@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:venera_unified/foundation/app.dart';
 
 import 'package:flutter/foundation.dart' show compute;
 import 'package:image/image.dart' as image;
@@ -80,8 +81,12 @@ abstract final class PdfComicImporter {
   }) async {
     cancellation?.throwIfCancelled();
     if (HarmonyOS.isCurrent) {
-      throw UnsupportedError(
-        'PDFium is not available in this HarmonyOS experiment. Use CBZ/ZIP/EPUB instead.',
+      return _importHarmonyOS(
+        file,
+        title: title ?? file.basenameWithoutExt,
+        onProgress: onProgress,
+        cancellation: cancellation,
+        registerComic: registerComic,
       );
     }
     await pdfrxFlutterInitialize();
@@ -101,6 +106,62 @@ abstract final class PdfComicImporter {
       registerComic: registerComic,
     );
   }
+
+  static Future<LocalComic> _importHarmonyOS(
+    File file, {
+    required String title,
+    DocumentImportProgress? onProgress,
+    DocumentImportCancellation? cancellation,
+    Future<void> Function(LocalComic comic)? registerComic,
+  }) => LocalComicStorageGuard.instance.runImport(() async {
+    cancellation?.throwIfCancelled();
+    final pdf = await HarmonyOS.openPdf(file);
+    DocumentImportSession? session;
+    Object? operationError;
+    StackTrace? operationStack;
+    try {
+      try {
+        cancellation?.throwIfCancelled();
+        session = DocumentImportSession.start(title);
+        onProgress?.call(0, pdf.pages);
+        for (var index = 0; index < pdf.pages; index++) {
+          cancellation?.throwIfCancelled();
+          final page = await HarmonyOS.renderPdfPage(
+            pdf.token,
+            index,
+            cachePath: App.cachePath,
+          );
+          cancellation?.throwIfCancelled();
+          await session.copyPage(page, pageIndex: index + 1, extension: 'jpg');
+          cancellation?.throwIfCancelled();
+          if (index == 0) await session.copyCover(page, extension: 'jpg');
+          onProgress?.call(index + 1, pdf.pages);
+        }
+        cancellation?.throwIfCancelled();
+        final comic = session.finish(
+          author: '',
+          tags: const [],
+          cover: 'cover.jpg',
+        );
+        await session.output.register(comic, registerComic);
+        return comic;
+      } catch (error, stack) {
+        if (session != null) return await session.output.fail(error, stack);
+        Error.throwWithStackTrace(error, stack);
+      }
+    } catch (error, stack) {
+      operationError = error;
+      operationStack = stack;
+      rethrow;
+    } finally {
+      await _disposeDocument(
+        () => HarmonyOS.closePdf(pdf.token),
+        output: session?.output,
+        operationError: operationError,
+        operationStack: operationStack,
+      );
+    }
+  });
 
   /// Takes ownership of [document] and closes it even if conversion fails.
   /// A failing registrar must report notCommitted to permit deleting output.
@@ -127,7 +188,7 @@ abstract final class PdfComicImporter {
     } catch (error, stack) {
       if (!entered) {
         await _disposeDocument(
-          document,
+          document.dispose,
           operationError: error,
           operationStack: stack,
         );
@@ -209,7 +270,7 @@ abstract final class PdfComicImporter {
       rethrow;
     } finally {
       await _disposeDocument(
-        document,
+        document.dispose,
         output: session?.output,
         operationError: operationError,
         operationStack: operationStack,
@@ -218,13 +279,13 @@ abstract final class PdfComicImporter {
   }
 
   static Future<void> _disposeDocument(
-    PdfDocument document, {
+    Future<void> Function() dispose, {
     ComicImportOutput? output,
     Object? operationError,
     StackTrace? operationStack,
   }) async {
     try {
-      await document.dispose();
+      await dispose();
     } catch (error, stack) {
       if (operationError != null && output != null) {
         output.throwWithCleanup(operationError, operationStack!, error, stack);

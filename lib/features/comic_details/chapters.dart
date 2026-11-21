@@ -15,6 +15,8 @@ import 'package:venera_unified/foundation/opencc.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/translations.dart';
 import 'package:venera_unified/foundation/widget_utils.dart';
+import 'package:venera_unified/features/reader/reader.dart'
+    show ReaderChapterMenuData, ReaderChaptersView;
 import 'chapter_order.dart';
 
 class ComicChaptersView extends StatefulWidget {
@@ -22,6 +24,7 @@ class ComicChaptersView extends StatefulWidget {
     super.key,
     required this.chapters,
     this.history,
+    this.downloaded = const [],
     required this.readChapter,
     this.collectionId,
     this.onCollectionTabAction,
@@ -30,6 +33,7 @@ class ComicChaptersView extends StatefulWidget {
   final ComicChapters chapters;
 
   final History? history;
+  final Iterable<String> downloaded;
 
   final void Function(int chapter) readChapter;
 
@@ -68,6 +72,46 @@ class _ComicChaptersViewState extends SettingsSaveState<ComicChaptersView> {
 
   void _refresh() {
     if (mounted) setState(() {});
+  }
+
+  Future<void> _findChapter() async {
+    final chapters = widget.chapters;
+    final history = widget.history;
+    final group = history?.group;
+    var current = history?.ep ?? 1;
+    if (chapters.isGrouped &&
+        group != null &&
+        group > 0 &&
+        group <= chapters.groupCount) {
+      current = chapters.chapterIndex(current, group: group);
+    }
+    final data = ReaderChapterMenuData(
+      chapters,
+      currentChapter: current,
+      downloaded: widget.downloaded,
+      read: history?.readEpisode ?? const [],
+    );
+    final selected = await showDialog<int>(
+      context: context,
+      builder: (context) => Dialog(
+        clipBehavior: Clip.antiAlias,
+        child: SizedBox(
+          width: 600,
+          height: MediaQuery.sizeOf(context).height * 0.8,
+          child: ReaderChaptersView(
+            data: data,
+            onSelect: (value) => Navigator.of(context).pop(value),
+            onClose: () => Navigator.of(context).pop(),
+          ),
+        ),
+      ),
+    );
+    if (mounted &&
+        selected != null &&
+        identical(widget.chapters, chapters) &&
+        data.matches(chapters)) {
+      widget.readChapter(selected);
+    }
   }
 
   void _setOrder(ChapterOrder value) {
@@ -117,6 +161,7 @@ class _ComicChaptersViewState extends SettingsSaveState<ComicChaptersView> {
           _ChapterOrderMenu(
             order: order,
             hideDuplicates: hideDuplicates,
+            onFind: _findChapter,
             onOrder: _setOrder,
             onHide: _setHide,
           ),
@@ -571,12 +616,14 @@ class _ChapterOrderMenu extends StatelessWidget {
     required this.order,
     required this.hideDuplicates,
     required this.onOrder,
+    required this.onFind,
     required this.onHide,
   });
 
   final ChapterOrder order;
   final bool hideDuplicates;
   final ValueChanged<ChapterOrder> onOrder;
+  final VoidCallback onFind;
   final ValueChanged<bool> onHide;
 
   static String label(ChapterOrder value) {
@@ -597,6 +644,11 @@ class _ChapterOrderMenu extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        IconButton(
+          tooltip: 'Find chapter'.tl,
+          icon: const Icon(Icons.manage_search),
+          onPressed: onFind,
+        ),
         Tooltip(
           message: "Hide duplicate chapters".tl,
           child: IconButton(

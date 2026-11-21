@@ -39,11 +39,9 @@
     }
   },
   "unavailable": [
-    "PDF import (PDFium); existing Dart PDF export is retained",
     "persistent external directory references and custom storage locations (copy import requires device folder-selection support)",
-    "system sharing (use Save/Files or copy text instead)",
     "biometric app lock",
     "Android volume keys, SAF, foreground-service/background guarantees",
-    "verified WebView proxy override and platform-specific image codecs"
+    "custom WebView proxy override and verified platform-specific image codecs"
   ]
 }

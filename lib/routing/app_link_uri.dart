@@ -23,17 +23,23 @@ Uri? parseAppLink(String text) {
 /// - `venera-unified://comic?id=<id>&source=<key>&title=<optional>`
 /// - `venera-unified://c/<sourceKey>/<id>`
 ({String id, String sourceKey, String? title})? parseComicFromUri(Uri uri) {
-  if (uri.scheme != appLinkScheme) return null;
-  if (uri.host == 'c' && uri.pathSegments.length >= 2) {
-    return (
-      id: uri.pathSegments[1],
-      sourceKey: uri.pathSegments[0],
-      title: null,
-    );
-  } else if (uri.host == 'comic') {
+  if (uri.scheme != appLinkScheme || uri.userInfo.isNotEmpty || uri.hasPort) {
+    return null;
+  }
+  if (uri.host == 'c' && uri.pathSegments.length == 2) {
+    final [sourceKey, id] = uri.pathSegments;
+    if (sourceKey.trim().isEmpty || id.trim().isEmpty) return null;
+    return (id: id, sourceKey: sourceKey, title: null);
+  }
+  if (uri.host == 'comic' && uri.path.isEmpty) {
     final id = uri.queryParameters['id'];
     final sourceKey = uri.queryParameters['source'];
-    if (id == null || sourceKey == null) return null;
+    if (id == null ||
+        id.trim().isEmpty ||
+        sourceKey == null ||
+        sourceKey.trim().isEmpty) {
+      return null;
+    }
     return (id: id, sourceKey: sourceKey, title: uri.queryParameters['title']);
   }
   return null;

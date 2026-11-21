@@ -46,6 +46,37 @@ void main() {
     }
   });
 
+  testWidgets('reader chapter drawer filters persisted read chapters', (
+    tester,
+  ) async {
+    final fixture = await ReaderIntegrationFixture.create(tester);
+    try {
+      final saved = readerResumeHistory()..readEpisode.add('2');
+      await fixture.mount(
+        tester,
+        pushed: false,
+        savedHistory: saved,
+        chapters: const ComicChapters({
+          'one': 'Current chapter',
+          'two': 'Previously read',
+          'three': 'Never read',
+        }),
+      );
+      final shell = tester.state<ReaderScaffoldState>(
+        find.byType(ReaderScaffold),
+      );
+      shell.openChapterDrawer();
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilterChip, 'Unread'));
+      await tester.pumpAndSettle();
+      expect(find.text('Previously read'), findsNothing);
+      expect(find.text('Never read'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    } finally {
+      await fixture.dispose(tester);
+    }
+  });
+
   testWidgets('chapter drawer routes repeated IDs to their flattened chapter', (
     tester,
   ) async {

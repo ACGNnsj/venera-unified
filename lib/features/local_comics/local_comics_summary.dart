@@ -181,16 +181,10 @@ class _LocalComicsSummaryState extends State<LocalComicsSummary> {
   }
 }
 
-/// Indices of the import methods to offer, in dialog order.
-///
-/// PDF import renders pages through PDFium, which the experimental HarmonyOS
-/// HAP does not ship, so that entry is hidden there instead of letting the
-/// user pick files and fail at render time. Indices are the ones the dialog
-/// switches on, so hiding must not renumber the remaining entries.
+/// Stable import-method indices; HarmonyOS renders PDF pages with PDFKit.
 @visibleForTesting
 List<int> importMethodIndices(int count, {required bool isOhos}) => [
-  for (var index = 0; index < count; index++)
-    if (index != 4 || !isOhos) index,
+  for (var index = 0; index < count; index++) index,
 ];
 
 class _ImportComicsWidget extends StatefulWidget {
@@ -283,7 +277,6 @@ class _ImportComicsWidgetState extends State<_ImportComicsWidget> {
                       return RadioListTile<int>(
                         title: Text(importMethods[index]),
                         value: index,
-                        enabled: index != 4,
                       );
                     })
                   else

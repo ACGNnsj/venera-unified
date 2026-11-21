@@ -143,6 +143,10 @@ class Fixture:
         expected = self.context(tagged=tagged)
         next_candidate = expected['schema'] >= 2
         native_names = release.NEXT_NATIVE if next_candidate else release.NATIVE
+        ort_assets = ('assets/ONNXRUNTIME_LICENSE.txt', 'assets/ONNXRUNTIME_THIRD_PARTY_NOTICES.txt') \
+            if 'tool/harmonyos/onnxruntime_ohos.patch' in release.tracked(self.source, self.source_commit) else ()
+        if ort_assets:
+            native_names = native_names | {'libonnxruntime.so'}
         names = release.asset_names(expected['version'], guide_delivery=expected.get('guide_delivery'))
         source_files = {
             name: release.sha256(release.blob(self.source, self.source_commit, name))
@@ -176,6 +180,7 @@ class Fixture:
                    for name in ('webview', 'webview_api', 'code_assets')},
                 'sqlite3': {'version': '2.7.4', 'sha256': 'c' * 64, 'prepared_sha256': 'f' * 64},
             }
+        metadata['bundled_assets'].update({name: source_files[name] for name in ort_assets})
         if metadata_change:
             metadata_change(metadata)
         app = {'bundleName': release.BUNDLE, 'versionName': expected['version'].split('-')[0],
@@ -191,9 +196,11 @@ class Fixture:
         }
         if next_candidate:
             members[release.ASSETS + release.NOTICE] = release.blob(self.source, self.source_commit, release.NOTICE_SOURCE)
+        members.update({release.ASSETS + name: release.blob(self.source, self.source_commit, name)
+                        for name in ort_assets})
         expected_assets = {name: release.sha256(members[release.ASSETS + name])
                            for name in ('assets/page.txt', 'pubspec.yaml', 'CHANGELOG.md',
-                                        *((release.NOTICE,) if next_candidate else ()))}
+                                         *((release.NOTICE,) if next_candidate else ()), *ort_assets)}
         if members_change:
             members_change(members)
         self.output.mkdir(exist_ok=True)
@@ -698,6 +705,28 @@ class HarmonyReleaseTests(unittest.TestCase):
             expected = self.fixture.bundle(members_change=change)
             with self.subTest(change=change), self.assertRaises((ValueError, KeyError)):
                 self.verify(expected)
+
+    def test_current_source_requires_ort_and_exact_distribution_notices(self):
+        fixture = self.fixture
+        fixture.unified_mainline()
+        notices = ('assets/ONNXRUNTIME_LICENSE.txt', 'assets/ONNXRUNTIME_THIRD_PARTY_NOTICES.txt')
+        write(fixture.root, 'tool/harmonyos/onnxruntime_ohos.patch', 'reviewed OHOS patch\n')
+        for name in notices:
+            write(fixture.root, name, 'pinned upstream notice\n')
+        fixture.pubspec += ''.join('    - ' + name + '\n' for name in notices)
+        write(fixture.root, 'pubspec.yaml', fixture.pubspec.replace('1.18.2+243', '1.18.3+245'))
+        fixture.release_commit = commit(fixture.root)
+        fixture.sync_mainline_source()
+        self.verify(fixture.bundle())
+        for change in (
+            lambda m: m['native_libraries'].pop('libonnxruntime.so'),
+            *[lambda m, name=name: m['bundled_assets'].pop(name) for name in notices],
+        ):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.verify(fixture.bundle(metadata_change=change))
+        for name in notices:
+            with self.subTest(name=name), self.assertRaises((ValueError, KeyError)):
+                self.verify(fixture.bundle(members_change=lambda m: m.update({release.ASSETS + name: b'altered'})))
 
     def test_missing_extra_and_modified_companion_assets_are_rejected(self):
         fixture = self.fixture

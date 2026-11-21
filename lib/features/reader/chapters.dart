@@ -46,90 +46,238 @@ class _ChapterMenuBody extends StatefulWidget {
 
 class _ChapterMenuBodyState extends State<_ChapterMenuBody> {
   bool _descending = false;
+  bool _unread = false;
+  String _query = '';
+  int _location = 0;
+  final _search = TextEditingController();
+  final _ranges = <int, int>{};
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final data = widget.data;
     final colors = Theme.of(context).colorScheme;
     final textScale = MediaQuery.textScalerOf(context);
+    final filtering = _query.isNotEmpty || _unread;
+    final matches = [
+      if (filtering)
+        for (final group in data.groups)
+          for (final entry in group.entries)
+            if ((!_unread || !entry.read) &&
+                (entry.title.toLowerCase().contains(_query) ||
+                    (group.name?.toLowerCase().contains(_query) ?? false)))
+              (group.name, entry),
+    ];
+    if (_descending) matches.sort((a, b) => b.$2.index.compareTo(a.$2.index));
     return Material(
       color: colors.surface,
       child: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(
-                children: [
-                  IconButton(
-                    tooltip: 'Back'.tl,
-                    constraints: const BoxConstraints(
-                      minWidth: 48,
-                      minHeight: 48,
-                    ),
-                    onPressed: widget.onClose,
-                    icon: const Icon(Icons.arrow_back),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final columns =
+                constraints.maxWidth >= 600 && textScale.scale(16) <= 16
+                ? 2
+                : 1;
+            return Column(
+              children: [
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: constraints.maxHeight * 0.6,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Chapters'.tl,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (!data.isGrouped)
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: TextButton.icon(
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(48, 48),
-                    ),
-                    icon: Icon(
-                      _descending ? Icons.arrow_downward : Icons.arrow_upward,
-                    ),
-                    label: Text(_descending ? 'Descending'.tl : 'Ascending'.tl),
-                    onPressed: () => setState(() => _descending = !_descending),
-                  ),
-                ),
-              ),
-            if (data.isGrouped && data.groups.isNotEmpty)
-              TabBar(
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                tabs: [
-                  for (final group in data.groups)
-                    Tab(
-                      height: math.max(48, textScale.scale(16) * 1.4 + 16),
-                      child: Text(
-                        group.name!,
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                ],
-              ),
-            const Divider(height: 1),
-            Expanded(
-              child: data.groups.isEmpty
-                  ? _empty()
-                  : TabBarView(
+                  child: SingleChildScrollView(
+                    child: Column(
                       children: [
-                        for (var i = 0; i < data.groups.length; i++)
-                          _ChapterList(
-                            key: ValueKey((i, _descending)),
-                            group: data.groups[i],
-                            currentChapter: data.currentChapter,
-                            descending: _descending,
-                            onSelect: widget.onSelect,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                tooltip: 'Back'.tl,
+                                constraints: const BoxConstraints(
+                                  minWidth: 48,
+                                  minHeight: 48,
+                                ),
+                                onPressed: widget.onClose,
+                                icon: const Icon(Icons.arrow_back),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Chapters'.tl,
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Current chapter'.tl,
+                                icon: const Icon(Icons.my_location),
+                                onPressed: () {
+                                  _search.clear();
+                                  DefaultTabController.of(
+                                    context,
+                                  ).animateTo(data.initialGroup);
+                                  setState(() {
+                                    _query = '';
+                                    _unread = false;
+                                    _ranges.clear();
+                                    _location++;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: TextField(
+                            controller: _search,
+                            decoration: InputDecoration(
+                              labelText: 'Search'.tl,
+                              prefixIcon: const Icon(Icons.search),
+                            ),
+                            onChanged: (value) => setState(
+                              () => _query = value.trim().toLowerCase(),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: FilterChip(
+                              label: Text('Unread'.tl),
+                              selected: _unread,
+                              onSelected: (value) =>
+                                  setState(() => _unread = value),
+                            ),
+                          ),
+                        ),
+                        if (!data.isGrouped)
+                          Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  minimumSize: const Size(48, 48),
+                                ),
+                                icon: Icon(
+                                  _descending
+                                      ? Icons.arrow_downward
+                                      : Icons.arrow_upward,
+                                ),
+                                label: Text(
+                                  _descending
+                                      ? 'Descending'.tl
+                                      : 'Ascending'.tl,
+                                ),
+                                onPressed: () =>
+                                    setState(() => _descending = !_descending),
+                              ),
+                            ),
+                          ),
+                        if (data.isGrouped && data.groups.isNotEmpty)
+                          TabBar(
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.start,
+                            tabs: [
+                              for (final group in data.groups)
+                                Tab(
+                                  height: math.max(
+                                    48,
+                                    textScale.scale(16) * 1.4 + 16,
+                                  ),
+                                  child: Text(
+                                    group.name!,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                            ],
                           ),
                       ],
                     ),
-            ),
-          ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: filtering
+                      ? matches.isEmpty
+                            ? _empty()
+                            : ListView.builder(
+                                key: ValueKey((_query, _unread, _descending)),
+                                itemCount: (matches.length / columns).ceil(),
+                                itemBuilder: (context, row) => _chapterRow(
+                                  row * columns,
+                                  columns,
+                                  matches.length,
+                                  (index) {
+                                    final (name, entry) = matches[index];
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        if (name != null)
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(
+                                              20,
+                                              8,
+                                              16,
+                                              0,
+                                            ),
+                                            child: Text(
+                                              name,
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.labelSmall,
+                                            ),
+                                          ),
+                                        _ChapterListTile(
+                                          entry: entry,
+                                          active:
+                                              entry.index ==
+                                              data.currentChapter,
+                                          onTap: () =>
+                                              widget.onSelect(entry.index),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              )
+                      : data.groups.isEmpty
+                      ? _empty()
+                      : TabBarView(
+                          children: [
+                            for (var i = 0; i < data.groups.length; i++)
+                              _ChapterList(
+                                key: ValueKey((i, _descending, _location)),
+                                group: data.groups[i],
+                                currentChapter: data.currentChapter,
+                                descending: _descending,
+                                columns: columns,
+                                rangeStart: _ranges[i],
+                                onRangeChanged: (range) => setState(() {
+                                  _ranges[i] = range;
+                                  _location++;
+                                }),
+                                onSelect: widget.onSelect,
+                              ),
+                          ],
+                        ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -148,11 +296,17 @@ class _ChapterList extends StatefulWidget {
     required this.group,
     required this.currentChapter,
     required this.descending,
+    required this.columns,
+    required this.rangeStart,
+    required this.onRangeChanged,
     required this.onSelect,
   });
   final ReaderChapterGroup group;
   final int currentChapter;
   final bool descending;
+  final int columns;
+  final int? rangeStart;
+  final ValueChanged<int> onRangeChanged;
   final ValueChanged<int> onSelect;
   @override
   State<_ChapterList> createState() => _ChapterListState();
@@ -180,7 +334,15 @@ class _ChapterListState extends State<_ChapterList> {
       (entry) => entry.index == widget.currentChapter,
     );
     if (pivot < 0) pivot = widget.descending ? entries.length - 1 : 0;
+    final range = widget.rangeStart ?? pivot ~/ 100 * 100;
+    if (widget.rangeStart != null) {
+      pivot = widget.descending
+          ? math.min(range + 99, entries.length - 1)
+          : range;
+    }
     if (widget.descending) pivot = entries.length - 1 - pivot;
+    pivot ~/= widget.columns;
+    final rowCount = (entries.length / widget.columns).ceil();
     Widget tile(int displayIndex) {
       final entry = at(displayIndex);
       return IndexedSemantics(
@@ -194,33 +356,89 @@ class _ChapterListState extends State<_ChapterList> {
       );
     }
 
-    return Scrollbar(
-      controller: _controller,
-      child: CustomScrollView(
-        controller: _controller,
-        center: _center,
-        semanticChildCount: entries.length,
-        slivers: [
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (_, index) => tile(pivot - 1 - index),
-              childCount: pivot,
-              addSemanticIndexes: false,
+    Widget row(int index) => _chapterRow(
+      index * widget.columns,
+      widget.columns,
+      entries.length,
+      tile,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (entries.length > 100)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: DropdownButton<int>(
+              value: range,
+              isExpanded: true,
+              itemHeight: null,
+              items: [
+                for (var start = 0; start < entries.length; start += 100)
+                  DropdownMenuItem(
+                    value: start,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        '${entries[start].index}–${entries[math.min(start + 99, entries.length - 1)].index}',
+                      ),
+                    ),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value != null) widget.onRangeChanged(value);
+              },
             ),
           ),
-          SliverList(
-            key: _center,
-            delegate: SliverChildBuilderDelegate(
-              (_, index) => tile(pivot + index),
-              childCount: entries.length - pivot,
-              addSemanticIndexes: false,
+        Expanded(
+          child: Scrollbar(
+            controller: _controller,
+            child: CustomScrollView(
+              controller: _controller,
+              center: _center,
+              semanticChildCount: entries.length,
+              slivers: [
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, index) => row(pivot - 1 - index),
+                    childCount: pivot,
+                    addSemanticIndexes: false,
+                  ),
+                ),
+                SliverList(
+                  key: _center,
+                  delegate: SliverChildBuilderDelegate(
+                    (_, index) => row(pivot + index),
+                    childCount: rowCount - pivot,
+                    addSemanticIndexes: false,
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
+
+Widget _chapterRow(
+  int start,
+  int columns,
+  int length,
+  Widget Function(int) tile,
+) => columns == 1
+    ? tile(start)
+    : Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var column = 0; column < columns; column++)
+            Expanded(
+              child: start + column < length
+                  ? tile(start + column)
+                  : const SizedBox.shrink(),
+            ),
+        ],
+      );
 
 /// A centered viewport normally permits offset zero even when its trailing
 /// sliver is shorter than the viewport. Bound that empty range during layout:
@@ -303,10 +521,21 @@ class _ChapterListTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: active ? FontWeight.bold : FontWeight.normal,
-                      color: active ? colors.primary : colors.onSurface,
+                      color: active
+                          ? colors.primary
+                          : entry.read
+                          ? colors.outline
+                          : colors.onSurface,
                     ),
                   ),
                 ),
+                if (entry.read) ...[
+                  const SizedBox(width: 12),
+                  Icon(
+                    Icons.check_circle_outline,
+                    semanticLabel: 'Chapter read'.tl,
+                  ),
+                ],
                 if (entry.downloaded) ...[
                   const SizedBox(width: 12),
                   Padding(

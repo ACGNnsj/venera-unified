@@ -7,24 +7,34 @@ class ReaderChapterMenuData {
     ComicChapters source, {
     required int currentChapter,
     Iterable<String> downloaded = const [],
+    Iterable<String> read = const [],
   }) {
     final downloadedIds = downloaded.toSet();
+    final readKeys = read.toSet();
     var index = 0;
+    var groupIndex = 0;
     ReaderChapterGroup group(
       String? name,
       Iterable<MapEntry<String, String>> entries,
-    ) => ReaderChapterGroup._(
-      name,
-      List.unmodifiable([
-        for (final entry in entries)
-          ReaderChapterEntry._(
-            ++index,
-            entry.key,
-            entry.value,
-            downloadedIds.contains(entry.key),
-          ),
-      ]),
-    );
+    ) {
+      groupIndex++;
+      return ReaderChapterGroup._(
+        name,
+        List.unmodifiable([
+          for (final (localIndex, entry) in entries.indexed)
+            ReaderChapterEntry._(
+              ++index,
+              entry.key,
+              entry.value,
+              downloadedIds.contains(entry.key),
+              readKeys.contains('$index') ||
+                  (source.isGrouped &&
+                      readKeys.contains('$groupIndex-${localIndex + 1}')),
+            ),
+        ]),
+      );
+    }
+
     final groups = List<ReaderChapterGroup>.unmodifiable(
       source.isGrouped
           ? [
@@ -95,11 +105,18 @@ class ReaderChapterGroup {
 }
 
 class ReaderChapterEntry {
-  const ReaderChapterEntry._(this.index, this.id, this.title, this.downloaded);
+  const ReaderChapterEntry._(
+    this.index,
+    this.id,
+    this.title,
+    this.downloaded,
+    this.read,
+  );
   final int index;
   final String id;
   final String title;
   final bool downloaded;
+  final bool read;
 }
 
 /// Bound by the reader to its original content and session.

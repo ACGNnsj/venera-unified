@@ -20,7 +20,11 @@ function fixture(t) {
   assert.ok(path.resolve(root).startsWith(path.resolve(os.tmpdir()) + path.sep));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const state = { uris: [], supported: true, copies: 0, selections: 0, options: null, failRemove: false, copy: null };
+  Object.assign(state, { shared: [], dismiss: null, pdfPages: 2, pdfSize: [4000, 2000], pdfLoads: 0, pdfReleases: 0, pageReleases: 0, pixelReleases: 0, packerReleases: 0, rendered: [], parseResult: 0, packError: false });
   const fileIo = {
+    OpenMode: { READ_ONLY: fs.constants.O_RDONLY, WRITE_ONLY: fs.constants.O_WRONLY, CREATE: fs.constants.O_CREAT, TRUNC: fs.constants.O_TRUNC },
+    openSync: (value, mode) => ({ fd: fs.openSync(value, mode) }),
+    closeSync: (file) => fs.closeSync(typeof file === 'number' ? file : file.fd),
     accessSync: fs.existsSync,
     mkdirSync: (value, recursive = false) => fs.mkdirSync(value, { recursive }),
     lstatSync: (value) => fs.lstatSync(value, { bigint: true }),
@@ -44,6 +48,33 @@ function fixture(t) {
   }
   const context = vm.createContext({
     FlutterAbility, Map, Error, Promise, fileIo,
+    systemShare: {
+      SharedData: class { constructor(record) { this.record = record; } },
+      ShareController: class {
+        constructor(data) { state.shared.push(data.record); }
+        on(_event, callback) { state.dismiss = callback; }
+        off() { state.dismiss = null; }
+        async show() { if (state.showError) throw new Error('share unavailable'); }
+      },
+    },
+    uniformTypeDescriptor: { getUniformDataTypeByFilenameExtension: (suffix) => suffix === '.png' ? 'general.png' : 'general.file', UniformDataType: { FILE: 'general.file', PLAIN_TEXT: 'general.plain-text' } },
+    pdfService: {
+      ParseResult: { PARSE_SUCCESS: 0, PARSE_ERROR_PASSWORD: 3 }, PdfMatrix: class {},
+      PdfDocument: class {
+        loadDocument() { state.pdfLoads++; return state.parseResult; }
+        getPageCount() { return state.pdfPages; }
+        releaseDocument() { state.pdfReleases++; }
+        getPage(index) { return {
+          getWidth: () => state.pdfSize[0], getHeight: () => state.pdfSize[1], getRotation: () => 0,
+          getAreaPixelMap: (_matrix, width, height) => { state.rendered.push({ index, width, height }); return { release: async () => { state.pixelReleases++; } }; },
+          release: () => { state.pageReleases++; },
+        }; }
+      },
+    },
+    image: { createImagePacker: () => ({
+      packToFile: async (_pixel, fd) => { fs.writeFileSync(fd, 'jpeg page'); if (state.packError) throw new Error('encode failed'); if (state.pack) await state.pack(); },
+      release: async () => { state.packerReleases++; },
+    }) },
     canIUse: () => state.supported,
     util: { generateRandomUUID: () => randomUUID() },
     fileUri: {
@@ -248,4 +279,92 @@ test('copy failure retains the operation and numeric system error code', async (
     message: 'prepareDirectory (13900011): no space',
   });
   await call('releaseDirectory', receipt);
+});
+
+test('file sharing grants a file URI and waits for panel dismissal without removing source', async (t) => {
+  const { root, state, call } = fixture(t);
+  const source = root + '/venera_unified/shares/one/page.png';
+  fs.mkdirSync(path.dirname(source), { recursive: true }); fs.writeFileSync(source, 'page');
+  let done = false;
+  const sharing = call('shareFile', { path: source, name: 'page.png' }).then(() => { done = true; });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(done, false);
+  assert.equal(state.shared[0].uri, pathToFileURL(source).href);
+  assert.equal(state.shared[0].utd, 'general.png');
+  assert.equal(fs.existsSync(source), true);
+  state.dismiss(); await sharing;
+  assert.equal(fs.existsSync(source), true);
+  assert.equal(state.dismiss, null);
+  await assert.rejects(call('shareFile', { path: path.join(root, 'outside.png'), name: 'outside.png' }), /Invalid share source/);
+});
+
+test('share failure releases busy guard and text uses the system share sheet', async (t) => {
+  const { state, call } = fixture(t);
+  state.showError = true;
+  await assert.rejects(call('shareText', { text: 'hello' }), /share unavailable/);
+  state.showError = false;
+  const sharing = call('shareText', { text: 'hello' });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(state.shared[1].content, 'hello'); state.dismiss(); await sharing;
+});
+
+test('PDF pages render sequentially into owned cache capped at 3000 and release every resource', async (t) => {
+  const { root, state, call } = fixture(t);
+  const source = path.join(root, 'book.pdf'); fs.writeFileSync(source, '%PDF');
+  const pdf = await call('openPdf', { path: '/selected/book.pdf' });
+  assert.equal(pdf.pages, 2);
+  const page = await call('renderPdfPage', { token: pdf.token, index: 0 });
+  assert.equal(fs.readFileSync(page, 'utf8'), 'jpeg page');
+  assert.deepEqual(state.rendered, [{ index: 0, width: 3000, height: 1500 }]);
+  assert.equal(state.pageReleases, 1); assert.equal(state.pixelReleases, 1); assert.equal(state.packerReleases, 1);
+  await assert.rejects(call('renderPdfPage', { token: pdf.token, index: 2 }), /Invalid PDF page/);
+  await assert.rejects(call('closePdf', { token: 'unknown' }), /Unknown PDF/);
+  await call('closePdf', { token: pdf.token });
+  assert.equal(state.pdfReleases, 1); assert.equal(fs.existsSync(path.dirname(page)), false);
+  assert.equal(fs.existsSync(source), true);
+});
+
+test('PDF render and parse failures release native resources and partial cache', async (t) => {
+  const { root, state, call } = fixture(t);
+  const source = path.join(root, 'book.pdf'); fs.writeFileSync(source, '%PDF');
+  state.parseResult = 3;
+  await assert.rejects(call('openPdf', { path: '/selected/book.pdf' }), /Password-protected/);
+  assert.equal(state.pdfReleases, 1);
+  state.parseResult = 0;
+  const pdf = await call('openPdf', { path: '/selected/book.pdf' });
+  state.packError = true;
+  await assert.rejects(call('renderPdfPage', { token: pdf.token, index: 0 }), /encode failed/);
+  assert.equal(state.pageReleases, 1); assert.equal(state.pixelReleases, 1); assert.equal(state.packerReleases, 1);
+  await call('closePdf', { token: pdf.token });
+  assert.equal(state.pdfReleases, 2);
+  assert.deepEqual(fs.readdirSync(path.join(root, 'venera_unified', 'pdf_import')), []);
+});
+
+test('PDF close joins in-flight packing before releasing and removing cache', async (t) => {
+  const { state, call } = fixture(t);
+  let finish;
+  state.pack = () => new Promise(resolve => { finish = resolve; });
+  const pdf = await call('openPdf', { path: '/selected/book.pdf' });
+  const rendering = call('renderPdfPage', { token: pdf.token, index: 0 });
+  const closing = call('closePdf', { token: pdf.token });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(state.pdfReleases, 0);
+  assert.equal(state.pageReleases, 0);
+  await assert.rejects(call('renderPdfPage', { token: pdf.token, index: 1 }), /Unknown PDF/);
+  finish();
+  const rendered = await rendering; await closing;
+  assert.equal(state.pdfReleases, 1); assert.equal(state.pageReleases, 1);
+  assert.equal(fs.existsSync(rendered), false);
+});
+
+test('PDF cache cleanup retries never reuse or release a closed document twice', async (t) => {
+  const { state, call } = fixture(t);
+  const pdf = await call('openPdf', { path: '/selected/book.pdf' });
+  state.failRemove = true;
+  await assert.rejects(call('closePdf', { token: pdf.token }), /cleanup failure/);
+  assert.equal(state.pdfReleases, 1);
+  await assert.rejects(call('renderPdfPage', { token: pdf.token, index: 0 }), /Unknown PDF/);
+  state.failRemove = false;
+  await call('closePdf', { token: pdf.token });
+  assert.equal(state.pdfReleases, 1);
 });
