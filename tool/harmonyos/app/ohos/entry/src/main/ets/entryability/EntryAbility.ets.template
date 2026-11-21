@@ -404,7 +404,8 @@ export default class EntryAbility extends FlutterAbility implements MethodCallHa
       return new Map<string, Object>([['token', token], ['pages', pages]]);
     } catch (error) {
       document.releaseDocument();
-      throw error;
+      // ArkTS rejects rethrowing a value of arbitrary type (arkts-limited-throw).
+      throw new Error((error as Error).message);
     }
   }
 
