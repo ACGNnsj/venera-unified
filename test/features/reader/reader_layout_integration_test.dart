@@ -235,6 +235,12 @@ void main() {
                   .where((image) => image.visibleInReader)
                   .every((image) => image.readyForAutoReading),
             );
+            // The takeover decision runs after the released image reports its
+            // size, so wait for the settled page instead of a single frame.
+            await pumpReaderUntil(
+              tester,
+              () => reader.page == (largerNeighbor ? 8 : 4),
+            );
             await tester.pump();
             expect(reader.page, largerNeighbor ? 8 : 4);
             expect(reader.history!.page, largerNeighbor ? 8 : 4);
