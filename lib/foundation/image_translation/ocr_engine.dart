@@ -7,12 +7,24 @@ import 'ocr_models.dart';
 import 'ocr_types.dart';
 import 'ocr_worker.dart';
 
+({Uint8List rgba, int width, int height}) decodeOcrPage(Uint8List imageBytes) {
+  final decoded = img.decodeImage(imageBytes);
+  if (decoded == null) {
+    throw Exception('Could not decode the page image for OCR.');
+  }
+  return (
+    rgba: decoded.getBytes(order: img.ChannelOrder.rgba),
+    width: decoded.width,
+    height: decoded.height,
+  );
+}
+
 /// On-demand Japanese OCR for one reader page.
 ///
 /// Decodes the page image, ships it to a worker isolate ([runOcrPage]) and
-/// returns the recognized blocks. One shot per call: models are ensured first
-/// (downloaded on first use), ORT sessions open inside the isolate and close
-/// when the call finishes.
+/// returns recognized blocks and source dimensions. One shot per call: models
+/// are ensured first (downloaded on first use), ORT sessions open inside the
+/// isolate and close when the call finishes.
 abstract class OcrEngine {
   /// 第一页验证后记住的、NNAPI 输出可信的模型路径。
   static final _verifiedModels = <String>{};
@@ -26,19 +38,15 @@ abstract class OcrEngine {
   /// the same (index, count, received, total) shape as [ensureOcrModels].
   /// Throws [OcrModelException] when models cannot be fetched or verified,
   /// and a readable [Exception] when the ONNX Runtime library is missing.
-  static Future<List<OcrBlock>> recognizePage(
+  static Future<({List<OcrBlock> blocks, int width, int height})> recognizePage(
     Uint8List imageBytes, {
     void Function(int index, int count, int received, int total)?
     onDownloadProgress,
   }) async {
     var paths = await ensureOcrModels(onProgress: onDownloadProgress);
-    var decoded = img.decodeImage(imageBytes);
-    if (decoded == null) {
-      throw Exception('Could not decode the page image for OCR.');
-    }
-    var rgba = decoded.getBytes(order: img.ChannelOrder.rgba);
+    final decoded = decodeOcrPage(imageBytes);
     var transferable = TransferableTypedData.fromList([
-      Uint8List.sublistView(rgba),
+      Uint8List.sublistView(decoded.rgba),
     ]);
     var request = OcrPageRequest(
       pixels: transferable,
@@ -56,7 +64,11 @@ abstract class OcrEngine {
       if (outcome.accelerationRejected) {
         _accelerationRejected = true;
       }
-      return outcome.blocks;
+      return (
+        blocks: outcome.blocks,
+        width: decoded.width,
+        height: decoded.height,
+      );
     } catch (e) {
       throw Exception(_readableError(e));
     }

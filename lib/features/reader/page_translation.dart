@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:image/image.dart' as img;
 import 'package:venera_unified/components/appbar.dart';
 import 'package:venera_unified/foundation/context.dart';
 import 'package:venera_unified/foundation/image_translation/ocr_engine.dart';
@@ -71,9 +70,9 @@ class _PageTranslationPageState extends State<PageTranslationPage> {
       _progress = 0;
       _error = '';
     });
-    List<OcrBlock> blocks;
+    late final ({List<OcrBlock> blocks, int width, int height}) recognition;
     try {
-      blocks = await OcrEngine.recognizePage(
+      recognition = await OcrEngine.recognizePage(
         widget.imageBytes,
         onDownloadProgress: (index, count, received, total) {
           if (!mounted || total <= 0) return;
@@ -96,6 +95,7 @@ class _PageTranslationPageState extends State<PageTranslationPage> {
     }
     if (!mounted) return;
     setState(() => _stage = _Stage.translating);
+    final blocks = recognition.blocks;
     List<String> translated;
     try {
       translated = await PublicTranslator.translate([
@@ -106,7 +106,6 @@ class _PageTranslationPageState extends State<PageTranslationPage> {
       return;
     }
     if (!mounted) return;
-    final decoded = img.decodeImage(widget.imageBytes);
     setState(() {
       _blocks = [
         for (var i = 0; i < blocks.length; i++)
@@ -114,8 +113,8 @@ class _PageTranslationPageState extends State<PageTranslationPage> {
             source: blocks[i].text,
             translation: translated[i],
             rect: blocks[i].rect,
-            imageWidth: decoded?.width ?? 1,
-            imageHeight: decoded?.height ?? 1,
+            imageWidth: recognition.width,
+            imageHeight: recognition.height,
           ),
       ];
       _stage = _Stage.done;
