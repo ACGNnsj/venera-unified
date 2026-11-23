@@ -203,6 +203,21 @@ Run them with `cargo test --locked -p rhttp-core` under
 `RUSTFLAGS="--cfg reqwest_unstable"` (same flag as the callback regressions
 below).
 
+## URL origin security update (2026-11-23)
+
+The complete-lockfile CI audit reported
+[RUSTSEC-2026-0592](https://rustsec.org/advisories/RUSTSEC-2026-0592.html)
+in `url` 2.5.7: recursively nested `blob:` URLs can overflow the stack during
+`Url::origin()`. The precise Cargo update selects the first fixed version,
+`url` 2.5.9, and its required `form_urlencoded` 1.2.3 dependency. Only these
+two lockfile versions and checksums change. Both retain their existing
+crates.io sources and MIT/Apache-2.0 licensing.
+
+The generated bridge, Rust toolchain, Reqwest settings, callback-drain patch
+and exact libc 0.2.189 iOS compatibility pin remain unchanged. The full
+RustSec audit and fresh cloud native/platform checks validate this update;
+no vulnerability exclusion is added.
+
 ## Building the patched source
 
 Windows/Linux CMake, Android Gradle and iOS/macOS pod scripts all invoke the
