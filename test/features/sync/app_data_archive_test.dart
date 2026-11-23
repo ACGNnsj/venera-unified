@@ -7,6 +7,20 @@ import 'package:venera_unified/features/sync/app_data_archive.dart';
 
 import '../../support/zip_fixture.dart';
 
+void _createSource(Directory source) {
+  for (final name in ['history.db', 'local_favorite.db', 'cookie.db']) {
+    final db = sqlite3.open('${source.path}/$name');
+    try {
+      db.execute('CREATE TABLE content (value TEXT);');
+      db.execute('INSERT INTO content VALUES (?);', [name]);
+    } finally {
+      db.close();
+    }
+  }
+  Directory('${source.path}/comic_source').createSync();
+  File('${source.path}/comic_source/source.js').writeAsStringSync('// source');
+}
+
 void main() {
   late Directory root;
   setUp(() => root = Directory.systemTemp.createTempSync('app-data-archive-'));
@@ -18,19 +32,7 @@ void main() {
       final source = Directory('${root.path}/source')..createSync();
       final cache = Directory('${root.path}/cache')..createSync();
       final output = '${root.path}/backup.venera';
-      for (final name in ['history.db', 'local_favorite.db', 'cookie.db']) {
-        final db = sqlite3.open('${source.path}/$name');
-        try {
-          db.execute('CREATE TABLE content (value TEXT);');
-          db.execute('INSERT INTO content VALUES (?);', [name]);
-        } finally {
-          db.close();
-        }
-      }
-      Directory('${source.path}/comic_source').createSync();
-      File(
-        '${source.path}/comic_source/source.js',
-      ).writeAsStringSync('// source');
+      _createSource(source);
       await AppDataArchive.create(
         dataPath: source.path,
         cachePath: cache.path,
@@ -58,6 +60,80 @@ void main() {
       }
     },
   );
+
+  test('zip_flutter failure falls back to ordered stream output', () async {
+    final source = Directory('${root.path}/source')..createSync();
+    final cache = Directory('${root.path}/cache')..createSync();
+    final output = '${root.path}/backup.venera';
+    _createSource(source);
+
+    await AppDataArchive.create(
+      dataPath: source.path,
+      cachePath: cache.path,
+      destinationPath: output,
+      settingsJson: '{"settings":{"language":"en-US"}}',
+      debugZipFlutterFailure: true,
+    );
+
+    final archive = ZipDecoder().decodeBytes(File(output).readAsBytesSync());
+    expect(archive.map((entry) => entry.name).toList(), [
+      'history.db',
+      'local_favorite.db',
+      'cookie.db',
+      'appdata.json',
+      'comic_source/source.js',
+    ]);
+    expect(
+      utf8.decode(
+        archive.firstWhere((entry) => entry.name == 'appdata.json').content,
+      ),
+      '{"settings":{"language":"en-US"}}',
+    );
+    expect(
+      utf8.decode(
+        archive
+            .firstWhere((entry) => entry.name == 'comic_source/source.js')
+            .content,
+      ),
+      '// source',
+    );
+    expect(cache.listSync(), isEmpty);
+    final extracted = '${root.path}/fallback-extracted';
+    await AppDataArchive.extract(output, extracted);
+    for (final name in ['history.db', 'local_favorite.db', 'cookie.db']) {
+      final db = sqlite3.open('$extracted/$name');
+      try {
+        expect(db.select('SELECT value FROM content;').single['value'], name);
+      } finally {
+        db.close();
+      }
+    }
+  });
+
+  test('stream writer failure removes archive and staging output', () async {
+    final source = Directory('${root.path}/source')..createSync();
+    final cache = Directory('${root.path}/cache')..createSync();
+    final staging = '${root.path}/staging';
+    final output = '${root.path}/backup.venera';
+    _createSource(source);
+
+    await expectLater(
+      AppDataArchive.create(
+        dataPath: source.path,
+        cachePath: cache.path,
+        destinationPath: output,
+        settingsJson: '{}',
+        stagingDirectoryPath: staging,
+        debugZipFlutterFailure: true,
+        debugFailAfterStreamWrite: true,
+      ),
+      throwsStateError,
+    );
+
+    expect(File(output).existsSync(), isFalse);
+    expect(Directory(staging).existsSync(), isFalse);
+    expect(cache.listSync(), isEmpty);
+  });
 
   test('creation does not overwrite an existing archive', () async {
     final target = File('${root.path}/existing.venera')

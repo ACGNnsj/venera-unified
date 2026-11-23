@@ -7,6 +7,7 @@ import 'app_data_snapshot.dart';
 import 'data_sync_content_journal.dart';
 import 'data_sync_content_fingerprint.dart';
 import 'package:crypto/crypto.dart';
+import '../../foundation/zip_stream_writer.dart';
 
 /// Archive filesystem work with explicit paths; no application settings or UI.
 abstract final class AppDataArchive {
@@ -17,6 +18,8 @@ abstract final class AppDataArchive {
     required String settingsJson,
     String? stagingDirectoryPath,
     String? syncContentId,
+    bool debugZipFlutterFailure = false,
+    bool debugFailAfterStreamWrite = false,
   }) async {
     final destination = File(destinationPath);
     if (destination.existsSync()) {
@@ -40,7 +43,13 @@ abstract final class AppDataArchive {
           stagingPath,
           settingsJson: settingsJson,
         );
-        _writeZip(entries, stagingPath, destinationPath);
+        await _writeZip(
+          entries,
+          stagingPath,
+          destinationPath,
+          debugZipFlutterFailure: debugZipFlutterFailure,
+          debugFailAfterStreamWrite: debugFailAfterStreamWrite,
+        );
         if (syncContentId != null) {
           final content = DataSyncContentJournal.open(dataPath);
           try {
@@ -80,13 +89,18 @@ abstract final class AppDataArchive {
 ///
 /// zip_flutter has no native build on every platform the app runs on (for
 /// example ohos), and its Dart entry point throws there, so the archive is
-/// encoded with the pure Dart encoder when the native writer is unavailable.
-void _writeZip(
+/// streamed through the shared writer when zip_flutter is unavailable.
+Future<void> _writeZip(
   List<String> entries,
   String stagingPath,
-  String destinationPath,
-) {
+  String destinationPath, {
+  bool debugZipFlutterFailure = false,
+  bool debugFailAfterStreamWrite = false,
+}) async {
   try {
+    if (debugZipFlutterFailure) {
+      throw StateError('Injected zip_flutter failure');
+    }
     final zip = ZipFile.open(destinationPath);
     try {
       for (final name in entries) {
@@ -106,14 +120,24 @@ void _writeZip(
       }
     }
   }
-  final archive = archive_io.Archive();
-  for (final name in entries) {
-    final file = File(p.join(stagingPath, name));
-    archive.addFile(archive_io.ArchiveFile.bytes(name, file.readAsBytesSync()));
+  final sink = await ZipStreamWriter.openSink(destinationPath);
+  try {
+    for (final name in entries) {
+      final bytes = await File(p.join(stagingPath, name)).readAsBytes();
+      await sink.addDeflated(name, bytes);
+      if (debugFailAfterStreamWrite) {
+        throw StateError('Injected stream writer failure');
+      }
+    }
+    await sink.close();
+  } catch (_) {
+    try {
+      await sink.close();
+    } catch (_) {
+      // Preserve the original write failure; create() removes partial output.
+    }
+    rethrow;
   }
-  File(
-    destinationPath,
-  ).writeAsBytesSync(archive_io.ZipEncoder().encodeBytes(archive));
 }
 
 Future<void> _deleteTemporary(FileSystemEntity entity) async {
