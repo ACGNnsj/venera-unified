@@ -589,7 +589,7 @@ class HistoryManager with ChangeNotifier {
         () => HistoryRepository(db).completedAmong(identities),
       );
     } finally {
-      db.dispose();
+      db.close();
     }
   });
 
