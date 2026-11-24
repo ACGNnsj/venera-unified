@@ -1,4 +1,5 @@
-﻿import argparse
+import argparse
+import json
 import os
 import re
 import sys
@@ -24,7 +25,7 @@ def read_text(path: str) -> str:
 def extract_release_notes(tag: str) -> str:
     text = read_text("CHANGELOG.md")
     pattern = (
-        rf"^##[^\S\r\n]+{re.escape(tag)}[^\S\r\n]*$\n"
+        rf"^##[^\S\r\n]+{re.escape(tag)}(?:[^\S\r\n]+-[^\S\r\n]+\d{{4}}-\d{{2}}-\d{{2}})?[^\S\r\n]*$\n"
         r"(?P<body>.*?)(?=^##[^\S\r\n]+|\Z)"
     )
     match = re.search(pattern, text, re.MULTILINE | re.DOTALL)
@@ -34,6 +35,18 @@ def extract_release_notes(tag: str) -> str:
     if not body:
         fail(f"CHANGELOG.md section for {tag} is empty")
     return body
+
+
+def include_independent_beta_note(notes: str) -> str:
+    try:
+        policy = json.loads(read_text(".github/harmonyos-next.json"))
+    except FileNotFoundError:
+        return notes
+    if policy.get("distribution") != "independent_beta":
+        return notes
+    return notes + ("\n\n鸿蒙继续通过独立 Actions 工作流提供未签名 Beta 测试包："
+                    "[HarmonyOS Beta](https://github.com/ACGNnsj/venera-unified/actions/workflows/harmonyos-release.yml)。"
+                    "本次正式版不包含 HAP，鸿蒙设备验收仍待完成。")
 
 
 def validate_pubspec_version(tag: str) -> None:
@@ -121,7 +134,7 @@ def main() -> None:
     validate_pubspec_version(tag)
     validate_flutter_rust_bridge_lock()
     validate_windows_installer_metadata()
-    notes = extract_release_notes(tag)
+    notes = include_independent_beta_note(extract_release_notes(tag))
 
     if args.write_notes:
         Path(args.write_notes).write_text(notes + "\n", encoding="utf-8")

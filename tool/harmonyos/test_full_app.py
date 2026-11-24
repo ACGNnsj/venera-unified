@@ -66,6 +66,13 @@ class FullAppTests(unittest.TestCase):
             with self.subTest(runtime_acceptance=policy):
                 device_acceptance = repository_guides | {'runtime_acceptance': policy}
                 self.assertEqual(validate_context(device_acceptance, '1' * 40, environment), device_acceptance)
+        for mode in ('bundled', 'independent_beta'):
+            with self.subTest(distribution=mode):
+                distributed = repository_guides | {'distribution': mode}
+                self.assertEqual(validate_context(distributed, '1' * 40, environment), distributed)
+        for invalid in ('disabled', '', False, None):
+            with self.subTest(distribution=invalid), self.assertRaisesRegex(ValueError, 'source-bound'):
+                validate_context(context | {'distribution': invalid}, '1' * 40, environment)
         for invalid in ('disabled', '', False, None):
             with self.subTest(runtime_acceptance=invalid), self.assertRaisesRegex(ValueError, 'source-bound'):
                 validate_context(context | {'runtime_acceptance': invalid}, '1' * 40, environment)

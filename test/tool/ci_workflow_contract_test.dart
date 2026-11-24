@@ -44,18 +44,38 @@ void main() {
       .cast<YamlMap>()
       .toList();
 
-  test('release waits for quality, every platform and the mandatory HAP', () {
+  test('release waits for every gate under its committed distribution', () {
     expect(needs(release), {
       'Release_Metadata',
       'Quality',
       'Build',
       'HarmonyOS',
     });
+    final metadata = mainJobs['Release_Metadata'] as YamlMap;
+    expect(
+      metadata['outputs']['bundled_harmonyos'],
+      contains('steps.harmonyos_policy.outputs.bundled_release'),
+    );
     final hap = mainJobs['HarmonyOS'] as YamlMap;
     expect(needs(hap), {'Release_Metadata', 'Quality'});
     expect(hap['uses'], './.github/workflows/harmonyos-release.yml');
-    expect(hap.containsKey('if'), isFalse);
+    expect(
+      hap['if'],
+      "needs.Release_Metadata.outputs.bundled_harmonyos == 'true'",
+    );
     expect(hap.containsKey('continue-on-error'), isFalse);
+    final condition = (release['if'] as String).replaceAll(RegExp(r'\s+'), ' ');
+    expect(condition, contains("always() && github.event_name == 'push'"));
+    expect(condition, contains("startsWith(github.ref, 'refs/tags/v')"));
+    for (final job in ['Release_Metadata', 'Quality', 'Build']) {
+      expect(condition, contains("needs.$job.result == 'success'"));
+    }
+    expect(
+      condition,
+      contains(
+        "(needs.Release_Metadata.outputs.bundled_harmonyos == 'true' && needs.HarmonyOS.result == 'success') || (needs.Release_Metadata.outputs.bundled_harmonyos == 'false' && needs.HarmonyOS.result == 'skipped')",
+      ),
+    );
     expect((mainJobs['Build'] as YamlMap)['with']['quality_checked'], isTrue);
     expect(
       (main['on'] as YamlMap).keys,
@@ -92,6 +112,17 @@ void main() {
       expect(draft, contains('--notes-file ../release_notes.md'));
       expect(draft, contains(r'--release-files "${files[@]}"'));
       expect(draft, contains('../outputs/harmonyos/*'));
+      final hapDownload = steps(
+        release,
+      ).singleWhere((step) => step['with']?['name'] == 'harmonyos-release');
+      expect(
+        hapDownload['if'],
+        "needs.Release_Metadata.outputs.bundled_harmonyos == 'true'",
+      );
+      expect(
+        commandStep(release, 'harmonyos_release.py verify \\')['if'],
+        "needs.Release_Metadata.outputs.bundled_harmonyos == 'true'",
+      );
       expect(
         commandStep(release, 'android_tv_build.py verify-release')['run'],
         contains('--directory ../outputs'),
